@@ -1,0 +1,30 @@
+from setuptools import setup, find_packages
+
+setup(
+    name='DataML',
+    packages=find_packages(),
+    install_requires=['numpy', 'keras', 'h5py', 'tensorflow'],
+    entry_points={'console_scripts' : ['DataML=DataML:DataML']},
+    py_modules=['DataML'],
+    version='20180817b',
+    description='Multilabel machine learning for combined experimental data',
+    long_description= """ Multilabel machine learning for combined experimental data """,
+    author='Nicola Ferralis',
+    author_email='ferralis@mit.edu',
+    url='https://github.mit.edu/ferralis/DoECFdata',
+    download_url='https://github.mit.edu/ferralis/DoECFdata',
+    keywords=['Machine learning', 'physics'],
+    license='GPLv2',
+    platforms='any',
+    classifiers=[
+     'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
+     'Development Status :: 5 - Production/Stable',
+     'Programming Language :: Python',
+     'Programming Language :: Python :: 3',
+     'Programming Language :: Python :: 3.5',
+     'Programming Language :: Python :: 3.6',
+     'Intended Audience :: Science/Research',
+     'Topic :: Scientific/Engineering :: Chemistry',
+     'Topic :: Scientific/Engineering :: Physics',
+     ],
+)
