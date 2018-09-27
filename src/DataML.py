@@ -229,11 +229,11 @@ def train(learnFile):
     print('\n  =============================================')
     print('  \033[1mKeras MLP\033[0m - Model Configuration')
     print('  =============================================')
-    print("\n Training set file:",learnFile)
-    print("\n Data size:", A.shape,"\n")
     for conf in model.get_config():
         print(conf,"\n")
 
+    print(" Training set file:",learnFile)
+    print(" Data size:", A.shape,"\n")
     print(" Number of learning labels:",dP.numLabels)
     print(" Number unique classes: ", numUniqueClasses)
     print(" Total number of points per data:",En.size)
