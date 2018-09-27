@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML
-* 20180817b
+* 20180927a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -11,7 +11,7 @@
 print(__doc__)
 
 import numpy as np
-import sys, os.path, getopt, time, configparser, pickle
+import sys, os.path, getopt, time, configparser, pickle, h5py
 
 #***************************************************
 ''' This is needed for installation through pip '''
