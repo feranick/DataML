@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML
-* 20180927a
+* 20181010b
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -102,7 +102,10 @@ def main():
     for o, a in opts:
         if o in ("-t" , "--train"):
             try:
-                train(sys.argv[2])
+                if len(sys.argv)<4:
+                    train(sys.argv[2], None)
+                else:
+                    train(sys.argv[2], sys.argv[3])
             except:
                 usage()
                 sys.exit(2)
@@ -121,7 +124,7 @@ def main():
 #************************************
 ''' Training '''
 #************************************
-def train(learnFile):
+def train(learnFile, testFile):
     import tensorflow as tf
     dP = Conf()
     
@@ -140,18 +143,22 @@ def train(learnFile):
         from keras.backend.tensorflow_backend import set_session
         set_session(tf.Session(config=conf))
 
-    from tensorflow.contrib.learn.python.learn import monitors as monitor_lib
+    #from tensorflow.contrib.learn.python.learn import monitors as monitor_lib
 
     En, A, Cl = readLearnFile(learnFile)
     learnFileRoot = os.path.splitext(learnFile)[0]
+    if testFile != None:
+        En_test, A_test, Cl_test = readLearnFile(testFile)
+        totA = np.vstack((A, A_test))
+        totCl = np.append(Cl, Cl_test)
+    else:
+        totA = A
+        totCl = Cl
 
     tb_directory = "keras_MLP"
     model_directory = "."
     model_name = model_directory+"/keras_model.hd5"
     model_le = model_directory+"/keras_le.pkl"
-    
-    totA = A
-    totCl = Cl
     
     #************************************
     ''' Label Encoding '''
@@ -162,17 +169,25 @@ def train(learnFile):
     le = preprocessing.LabelEncoder()
     totCl2 = le.fit_transform(totCl)
     Cl2 = le.transform(Cl)
+    if testFile != None:
+        Cl2_test = le.transform(Cl_test)
+    print(totCl2.shape)
     '''
     le = MultiClassReductor()
-    le.fit(np.unique(Cl, axis=0))
+    le.fit(np.unique(totCl, axis=0))
     Cl2 = le.transform(Cl)
 
-    numUniqueClasses = np.unique(Cl2).size
-    print(" Number of learning labels:",dP.numLabels)
-    print(" Number unique classes: ", numUniqueClasses)
-    print(" Total number of points per data:",En.size)
+    print("  Number of learning labels:",dP.numLabels)
+    print("  Number unique classes (training): ", np.unique(Cl).size)
     
-    print("\n Label Encoder saved in:", model_le,"\n")
+    if testFile != None:
+        Cl2_test = le.transform(Cl_test)
+        print("  Number unique classes (validation):", np.unique(Cl_test).size)
+        print("  Number unique classes (total): ", np.unique(totCl).size)
+
+    print("  Total number of points per data:",En.size)
+    
+    print("\n  Label Encoder saved in:", model_le,"\n")
     with open(model_le, 'ab') as f:
         f.write(pickle.dumps(le))
 
@@ -180,8 +195,9 @@ def train(learnFile):
     ''' Training '''
     #************************************
     #totCl2 = keras.utils.to_categorical(totCl2, num_classes=np.unique(totCl).size)
-    Cl2 = keras.utils.to_categorical(Cl2, num_classes=np.unique(Cl).size+1)
-    #Cl2_test = keras.utils.to_categorical(Cl2_test, num_classes=np.unique(Cl).size+1)
+    Cl2 = keras.utils.to_categorical(Cl2, num_classes=np.unique(totCl).size+1)
+    if testFile != None:
+        Cl2_test = keras.utils.to_categorical(Cl2_test, num_classes=np.unique(totCl).size+1)
 
     if dP.fullSizeBatch == True:
         dP.batch_size = A.shape[0]
@@ -194,7 +210,7 @@ def train(learnFile):
             input_dim=A.shape[1],
             kernel_regularizer=keras.regularizers.l2(dP.l2)))
         model.add(keras.layers.Dropout(dP.drop))
-    model.add(keras.layers.Dense(np.unique(Cl).size+1, activation = 'softmax'))
+    model.add(keras.layers.Dense(np.unique(totCl).size+1, activation = 'softmax'))
 
     #optim = opt.SGD(lr=0.0001, decay=1e-6, momentum=0.9, nesterov=True)
     optim = keras.optimizers.Adam(lr=dP.l_rate, beta_1=0.9,
@@ -210,12 +226,20 @@ def train(learnFile):
             batch_size=dP.batch_size,
             write_graph=True, write_grads=True, write_images=True)
     tbLogs = [tbLog]
-    log = model.fit(A, Cl2,
-        epochs=dP.epochs,
-        batch_size=dP.batch_size,
-        callbacks = tbLogs,
-        verbose=2,
-	validation_split=dP.cv_split)
+    if testFile != None:
+        log = model.fit(A, Cl2,
+            epochs=dP.epochs,
+            batch_size=dP.batch_size,
+            callbacks = tbLogs,
+            verbose=2,
+            validation_data=(A_test, Cl2_test))
+    else:
+        log = model.fit(A, Cl2,
+            epochs=dP.epochs,
+            batch_size=dP.batch_size,
+            callbacks = tbLogs,
+            verbose=2,
+	        validation_split=dP.cv_split)
 
     accuracy = np.asarray(log.history['acc'])
     loss = np.asarray(log.history['loss'])
@@ -229,14 +253,17 @@ def train(learnFile):
     print('\n  =============================================')
     print('  \033[1mKeras MLP\033[0m - Model Configuration')
     print('  =============================================')
-    for conf in model.get_config():
-        print(conf,"\n")
-
-    print(" Training set file:",learnFile)
-    print(" Data size:", A.shape,"\n")
-    print(" Number of learning labels:",dP.numLabels)
-    print(" Number unique classes: ", numUniqueClasses)
-    print(" Total number of points per data:",En.size)
+    #for conf in model.get_config():
+    #    print(conf,"\n")
+    print("  Training set file:",learnFile)
+    print("  Data size:", A.shape,"\n")
+    print("  Number of learning labels:",dP.numLabels)
+    print("  Number unique classes (training): ", np.unique(Cl).size)
+    if testFile != None:
+        Cl2_test = le.transform(Cl_test)
+        print("  Number unique classes (validation):", np.unique(Cl_test).size)
+        print("  Number unique classes (total): ", np.unique(totCl).size)
+    print("  Total number of points per data:",En.size)
     printParam()
 
     print('\n  ==========================================')
@@ -305,7 +332,7 @@ def predict(testFile):
 ''' Open Learning Data '''
 #************************************
 def readLearnFile(learnFile):
-    print("\n Opening learning file: "+learnFile+"\n")
+    print("\n  Opening learning file: "+learnFile+"\n")
     try:
         if os.path.splitext(learnFile)[1] == ".npy":
             M = np.load(learnFile)
@@ -316,7 +343,7 @@ def readLearnFile(learnFile):
             with open(learnFile, 'r') as f:
                 M = np.loadtxt(f, unpack =False)
     except:
-        print("\033[1m" + " Learning file not found \n" + "\033[0m")
+        print("\033[1m" + "  Learning file not found \n" + "\033[0m")
         return
 
     dP = Conf()
@@ -404,8 +431,10 @@ class MultiClassReductor():
 #************************************
 def usage():
     print('\n Usage:\n')
-    print(' Train:')
+    print(' Train (Random cross validation):')
     print('  python3 DataML.py -t <learningFile>\n')
+    print(' Train (With validation):')
+    print('  python3 DataML.py -t <learningFile> <validationFile>\n')
     print(' Predict:')
     print('  python3 DataML.py -p <testFile>\n')
     print(' Requires python 3.x. Not compatible with python 2.x\n')
