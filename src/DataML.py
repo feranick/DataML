@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML
-* 20181010b
+* 20181012a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -171,12 +171,11 @@ def train(learnFile, testFile):
     Cl2 = le.transform(Cl)
     if testFile != None:
         Cl2_test = le.transform(Cl_test)
-    print(totCl2.shape)
     '''
     le = MultiClassReductor()
     le.fit(np.unique(totCl, axis=0))
     Cl2 = le.transform(Cl)
-
+    
     print("  Number of learning labels:",dP.numLabels)
     print("  Number unique classes (training): ", np.unique(Cl).size)
     
@@ -308,8 +307,9 @@ def predict(testFile):
     predictions = model.predict(R, verbose=1)
     pred_class = np.argmax(predictions)
     
+    print(pred_class)
     if pred_class.size >0:
-        predValue = le.inverse_transform(pred_class)
+        predValue = le.inverse_transform([pred_class])[0]
     else:
         predValue = 0
 
@@ -421,7 +421,7 @@ class MultiClassReductor():
         return Cl
     
     def inverse_transform(self,a):
-        return self.totalClass[int(a)]
+        return [self.totalClass[int(a[0])]]
 
     def classes_(self):
         return self.totalClass
