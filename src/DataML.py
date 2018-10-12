@@ -282,7 +282,7 @@ def train(learnFile, testFile):
         plotWeights(En, A, model)
 
 #************************************
-''' Open Learning Data '''
+''' Prediction '''
 #************************************
 def predict(testFile):
     dP = Conf()
@@ -433,7 +433,7 @@ def usage():
     print('\n Usage:\n')
     print(' Train (Random cross validation):')
     print('  python3 DataML.py -t <learningFile>\n')
-    print(' Train (With validation):')
+    print(' Train (with external validation):')
     print('  python3 DataML.py -t <learningFile> <validationFile>\n')
     print(' Predict:')
     print('  python3 DataML.py -p <testFile>\n')
