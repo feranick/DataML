@@ -6,7 +6,7 @@
 * ConvertLabel
 * Convert normalized Label into actual label
 *
-* version: 20181024a
+* version: 20181024b
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 *
@@ -18,6 +18,15 @@ import numpy as np
 import sys, os.path, h5py, pickle
 from random import uniform
 
+#***************************************************
+''' This is needed for installation through pip '''
+#***************************************************
+def ConvertLabel():
+    main()
+
+#***************************************************
+''' Main '''
+#***************************************************
 def main():
 
     if len(sys.argv) < 2:
