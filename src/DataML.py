@@ -268,15 +268,15 @@ def train(learnFile, testFile):
     print('\n  ========================================================')
     print('  \033[1mKeras MLP\033[0m - Training Summary')
     print('  ========================================================')
-    print("\n  \033[1mAccuracy\033[0m - Average: {0:.2f}%; Max: {1:.2f}%; Last: {1:.2f}%".format(100*np.average(accuracy),
+    print("\n  \033[1mAccuracy\033[0m - Average: {0:.2f}%; Max: {1:.2f}%; Last: {2:.2f}%".format(100*np.average(accuracy),
             100*np.amax(accuracy), 100*accuracy[-1]))
-    print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {1:.4f}".format(np.average(loss), np.amin(loss), loss[-1]))
+    print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(loss), np.amin(loss), loss[-1]))
     print('\n\n  ========================================================')
     print('  \033[1mKeras MLP\033[0m - Validation Summary')
     print('  ========================================================')
-    print("\n  \033[1mAccuracy\033[0m - Average: {0:.2f}%; Max: {1:.2f}%; Last: {1:.2f}%".format(100*np.average(val_acc),
+    print("\n  \033[1mAccuracy\033[0m - Average: {0:.2f}%; Max: {1:.2f}%; Last: {2:.2f}%".format(100*np.average(val_acc),
         100*np.amax(val_acc), 100*val_acc[-1]))
-    print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {1:.4f}\n".format(np.average(val_loss), np.amin(val_loss), val_loss[-1]))
+    print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}\n".format(np.average(val_loss), np.amin(val_loss), val_loss[-1]))
     #print("\n  Validation - Loss: {0:.2f}; accuracy: {1:.2f}%".format(score[0], 100*score[1]))
     print('  ========================================================\n')
 
