@@ -6,7 +6,7 @@
 * ConvertLabel
 * Convert normalized Label into actual label
 *
-* version: 20181024b
+* version: 20181025a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 *
@@ -18,15 +18,6 @@ import numpy as np
 import sys, os.path, h5py, pickle
 from random import uniform
 
-#***************************************************
-''' This is needed for installation through pip '''
-#***************************************************
-def ConvertLabel():
-    main()
-
-#***************************************************
-''' Main '''
-#***************************************************
 def main():
 
     if len(sys.argv) < 2:
@@ -53,25 +44,31 @@ class Normalizer(object):
         self.M = M
         self.includeFirst = dP.normalizeLabel
         self.YnormTo = dP.YnormTo
+        self.stepNormLabel = dP.stepNormLabel
         self.min = np.zeros([self.M.shape[1]])
         self.max = np.zeros([self.M.shape[1]])
+        
+        self.data = np.arange(0,1,self.stepNormLabel)
+        
         if self.includeFirst:
-            for i in range(0,M.shape[1]):
-                self.min[i] = np.amin(self.M[1:,i])
-                self.max[i] = np.amax(self.M[1:,i])
-        else:
-            for i in range(0,M.shape[1]-1):
-                self.min[i] = np.amin(self.M[1:,i+1])
-                self.max[i] = np.amax(self.M[1:,i+1])
+            self.min[0] = np.amin(self.M[1:,0])
+            self.max[0] = np.amax(self.M[1:,0])
+        
+        for i in range(1,M.shape[1]):
+            self.min[i] = np.amin(self.M[1:,i])
+            self.max[i] = np.amax(self.M[1:,i])
     
     def transform_matrix(self,y):
         Mn = np.copy(y)
         if self.includeFirst:
-            for i in range(0,y.shape[1]):
-                Mn[1:,i] = np.multiply(y[1:,i] - self.min[i], self.YnormTo/(self.max[i] - self.min[i]))
-        else:
-            for i in range(0,y.shape[1]-1):
-                Mn[1:,i+1] = np.multiply(y[1:,i+1] - self.min[i], self.YnormTo/(self.max[i] - self.min[i]))
+            Mn[1:,0] = np.multiply(y[1:,0] - self.min[0], self.YnormTo/(self.max[0] - self.min[0]))
+            customData = CustomRound(self.data)
+        
+            for i in range(1,y.shape[0]):
+                Mn[i,0] = customData(Mn[i,0])
+
+        for i in range(1,y.shape[1]):
+            Mn[1:,i] = np.multiply(y[1:,i] - self.min[i], self.YnormTo/(self.max[i] - self.min[i]))
         return Mn
     
     def transform_valid(self,V):
