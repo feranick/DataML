@@ -4,7 +4,7 @@
 *********************************************
 *
 * ConvertLabel
-* Convert normalized Label into actual label
+* Convert normalized labels into actual labels
 *
 * version: 20181025c
 *
@@ -17,7 +17,17 @@ print(__doc__)
 import numpy as np
 import sys, os.path, h5py, pickle
 from random import uniform
+from bisect import bisect_left
 
+#***************************************************
+''' This is needed for installation through pip '''
+#***************************************************
+def ConvertLabel():
+    main()
+
+#************************************
+''' Main '''
+#************************************
 def main():
 
     if len(sys.argv) < 2:
