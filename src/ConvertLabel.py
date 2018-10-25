@@ -6,7 +6,7 @@
 * ConvertLabel
 * Convert normalized Label into actual label
 *
-* version: 20181025a
+* version: 20181025c
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 *
@@ -43,6 +43,7 @@ class Normalizer(object):
     def __init__(self, M):
         self.M = M
         self.includeFirst = dP.normalizeLabel
+        self.useCustomRound = dP.useCustomRound
         self.YnormTo = dP.YnormTo
         self.stepNormLabel = dP.stepNormLabel
         self.min = np.zeros([self.M.shape[1]])
@@ -62,10 +63,10 @@ class Normalizer(object):
         Mn = np.copy(y)
         if self.includeFirst:
             Mn[1:,0] = np.multiply(y[1:,0] - self.min[0], self.YnormTo/(self.max[0] - self.min[0]))
-            customData = CustomRound(self.data)
-        
-            for i in range(1,y.shape[0]):
-                Mn[i,0] = customData(Mn[i,0])
+            if self.useCustomRound:
+                customData = CustomRound(self.data)
+                for i in range(1,y.shape[0]):
+                    Mn[i,0] = customData(Mn[i,0])
 
         for i in range(1,y.shape[1]):
             Mn[1:,i] = np.multiply(y[1:,i] - self.min[i], self.YnormTo/(self.max[i] - self.min[i]))
@@ -84,6 +85,27 @@ class Normalizer(object):
     def save(self, name):
         with open(name, 'ab') as f:
             f.write(pickle.dumps(self))
+
+#************************************
+''' CustomRound '''
+#************************************
+class CustomRound:
+    def __init__(self,iterable):
+        self.data = sorted(iterable)
+
+    def __call__(self,x):
+        data = self.data
+        ndata = len(data)
+        idx = bisect_left(data,x)
+        if idx <= 0:
+            return data[0]
+        elif idx >= ndata:
+            return data[ndata-1]
+        x0 = data[idx-1]
+        x1 = data[idx]
+        if abs(x-x0) < abs(x-x1):
+            return x0
+        return x1
 
 #************************************
 ''' Main initialization routine '''
