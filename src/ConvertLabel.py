@@ -6,7 +6,7 @@
 * ConvertLabel
 * Convert normalized labels into actual labels
 *
-* version: 20181025c
+* version: 20181026a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 *
@@ -36,14 +36,14 @@ def main():
         return
     
     try:
-        le = pickle.loads(open(sys.argv[1], "rb").read())
-        print(" Opening pkl file with normalization data:",sys.argv[1],"\n")
+        norm = pickle.loads(open(sys.argv[1], "rb").read())
+    print(" Opening pkl file with normalization data:",sys.argv[1],"\n")
     except:
         print("\033[1m" + " pkl file not found \n" + "\033[0m")
         return
 
     print(" Normalized label:",sys.argv[2])
-    print(" Actual label:",le.transform_inverse_single(float(sys.argv[2])),"\n")
+    print(" Actual label:",norm.transform_inverse_single(float(sys.argv[2])),"\n")
 
 
 #************************************
