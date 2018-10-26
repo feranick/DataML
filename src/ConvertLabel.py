@@ -37,7 +37,7 @@ def main():
     
     try:
         norm = pickle.loads(open(sys.argv[1], "rb").read())
-    print(" Opening pkl file with normalization data:",sys.argv[1],"\n")
+        print(" Opening pkl file with normalization data:",sys.argv[1],"\n")
     except:
         print("\033[1m" + " pkl file not found \n" + "\033[0m")
         return
