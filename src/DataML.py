@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML
-* 20181025c
+* 20181026a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -12,15 +12,16 @@ print(__doc__)
 
 import numpy as np
 import sys, os.path, getopt, time, configparser, pickle, h5py
+from bisect import bisect_left
 
 #***************************************************
-''' This is needed for installation through pip '''
+# This is needed for installation through pip
 #***************************************************
 def DataML():
     main()
 
 #************************************
-''' Parameters '''
+# Parameters
 #************************************
 class Conf():
     def __init__(self):
@@ -84,7 +85,7 @@ class Conf():
             print("Error in creating configuration file")
 
 #************************************
-''' Main '''
+# Main
 #************************************
 def main():
     start_time = time.clock()
@@ -112,7 +113,10 @@ def main():
 
         if o in ("-p" , "--predict"):
             try:
-                predict(sys.argv[2])
+                if len(sys.argv)<4:
+                    predict(sys.argv[2], None)
+                else:
+                    predict(sys.argv[2], sys.argv[3])
             except:
                 usage()
                 sys.exit(2)
@@ -122,7 +126,7 @@ def main():
                             total_time/60, total_time/3600),"\n")
 
 #************************************
-''' Training '''
+# Training
 #************************************
 def train(learnFile, testFile):
     import tensorflow as tf
@@ -161,7 +165,7 @@ def train(learnFile, testFile):
     model_le = model_directory+"/keras_le.pkl"
     
     #************************************
-    ''' Label Encoding '''
+    # Label Encoding
     #************************************
     '''
     # sklearn preprocessing is only for single labels
@@ -191,7 +195,7 @@ def train(learnFile, testFile):
         f.write(pickle.dumps(le))
 
     #************************************
-    ''' Training '''
+    # Training
     #************************************
     #totCl2 = keras.utils.to_categorical(totCl2, num_classes=np.unique(totCl).size)
     Cl2 = keras.utils.to_categorical(Cl2, num_classes=np.unique(totCl).size+1)
@@ -284,9 +288,9 @@ def train(learnFile, testFile):
         plotWeights(En, A, model)
 
 #************************************
-''' Prediction '''
+# Prediction
 #************************************
-def predict(testFile):
+def predict(testFile, normFile):
     dP = Conf()
     if dP.useTFKeras:
         import tensorflow.keras as keras  #tf.keras
@@ -308,10 +312,20 @@ def predict(testFile):
     model = keras.models.load_model("keras_model.hd5")
     predictions = model.predict(R, verbose=1)
     pred_class = np.argmax(predictions)
+
+    if normFile != None:
+        try:
+            norm = pickle.loads(open(normFile, "rb").read())
+            print("\n Opening pkl file with normalization data:",normFile,"\n")
+        except:
+            print("\033[1m" + " pkl file not found \n" + "\033[0m")
+            return
     
-    print(pred_class)
     if pred_class.size >0:
-        predValue = le.inverse_transform([pred_class])[0]
+        if normFile != None:
+            predValue = norm.transform_inverse_single(le.inverse_transform([pred_class])[0])
+        else:
+            predValue = le.inverse_transform([pred_class])[0]
     else:
         predValue = 0
 
@@ -319,8 +333,7 @@ def predict(testFile):
     rosterPred = np.where(predictions[0]>0.1)[0]
 
     if dP.numLabels == 1:
-        print('\033[1m' + '\n Predicted value (Keras) = ' + str(predValue) +
-          '  (probability = ' + str(predProb) + '%)\033[0m\n')
+        print('\033[1m' + '\n Predicted value (Keras) = {0:.2f} (probability = {1:.2f}%)\033[0m\n'.format(predValue, predProb))
     else:
         print('\n ==========================================')
         print('\033[1m' + ' Predicted value \033[0m(probability = ' + str(predProb) + '%)')
@@ -331,7 +344,7 @@ def predict(testFile):
         print(' ==========================================\n')
 
 #************************************
-''' Open Learning Data '''
+# Open Learning Data
 #************************************
 def readLearnFile(learnFile):
     print("\n  Opening learning file: "+learnFile+"\n")
@@ -359,7 +372,7 @@ def readLearnFile(learnFile):
     return En, A, Cl
 
 #************************************
-''' Print NN Info '''
+# Print NN Info
 #************************************
 def printParam():
     dP = Conf()
@@ -381,7 +394,7 @@ def printParam():
     #print('  ================================================\n')
 
 #************************************
-''' Open Learning Data '''
+# Open Learning Data
 #************************************
 def plotWeights(En, A, model):
     import matplotlib.pyplot as plt
@@ -407,7 +420,7 @@ def plotWeights(En, A, model):
     plt.savefig('keras_MLP_weights' + '.png', dpi = 160, format = 'png')  # Save plot
 
 #************************************
-''' MultiClassReductor '''
+# MultiClassReductor
 #************************************
 class MultiClassReductor():
     def __self__(self):
@@ -429,7 +442,78 @@ class MultiClassReductor():
         return self.totalClass
 
 #************************************
-''' Lists the program usage '''
+# Normalizer
+#************************************
+class Normalizer(object):
+    def __init__(self, M):
+        self.M = M
+        self.includeFirst = dP.normalizeLabel
+        self.useCustomRound = dP.useCustomRound
+        self.YnormTo = dP.YnormTo
+        self.stepNormLabel = dP.stepNormLabel
+        self.min = np.zeros([self.M.shape[1]])
+        self.max = np.zeros([self.M.shape[1]])
+        
+        self.data = np.arange(0,1,self.stepNormLabel)
+        
+        if self.includeFirst:
+            self.min[0] = np.amin(self.M[1:,0])
+            self.max[0] = np.amax(self.M[1:,0])
+        
+        for i in range(1,M.shape[1]):
+            self.min[i] = np.amin(self.M[1:,i])
+            self.max[i] = np.amax(self.M[1:,i])
+    
+    def transform_matrix(self,y):
+        Mn = np.copy(y)
+        if self.includeFirst:
+            Mn[1:,0] = np.multiply(y[1:,0] - self.min[0], self.YnormTo/(self.max[0] - self.min[0]))
+            if self.useCustomRound:
+                customData = CustomRound(self.data)
+                for i in range(1,y.shape[0]):
+                    Mn[i,0] = customData(Mn[i,0])
+
+        for i in range(1,y.shape[1]):
+            Mn[1:,i] = np.multiply(y[1:,i] - self.min[i], self.YnormTo/(self.max[i] - self.min[i]))
+        return Mn
+    
+    def transform_valid(self,V):
+        Vn = np.copy(V)
+        for i in range(0,V.shape[0]):
+            Vn[i,1] = np.multiply(V[i,1] - self.min[i], self.YnormTo/(self.max[i] - self.min[i]))
+        return Vn
+    
+    def transform_inverse_single(self,v):
+        vn = self.min[0] + v*(self.max[0] - self.min[0])/self.YnormTo
+        return vn
+
+    def save(self, name):
+        with open(name, 'ab') as f:
+            f.write(pickle.dumps(self))
+
+#************************************
+# CustomRound
+#************************************
+class CustomRound:
+    def __init__(self,iterable):
+        self.data = sorted(iterable)
+
+    def __call__(self,x):
+        data = self.data
+        ndata = len(data)
+        idx = bisect_left(data,x)
+        if idx <= 0:
+            return data[0]
+        elif idx >= ndata:
+            return data[ndata-1]
+        x0 = data[idx-1]
+        x1 = data[idx]
+        if abs(x-x0) < abs(x-x1):
+            return x0
+        return x1
+
+#************************************
+# Lists the program usage
 #************************************
 def usage():
     print('\n Usage:\n')
@@ -437,12 +521,14 @@ def usage():
     print('  python3 DataML.py -t <learningFile>\n')
     print(' Train (with external validation):')
     print('  python3 DataML.py -t <learningFile> <validationFile>\n')
-    print(' Predict:')
+    print(' Predict (no label normalization used):')
     print('  python3 DataML.py -p <testFile>\n')
+    print(' Predict (labels normalized with pkl file):')
+    print('  python3 DataML.py -p <testFile> <pkl normalization file>\n')
     print(' Requires python 3.x. Not compatible with python 2.x\n')
 
 #************************************
-''' Main initialization routine '''
+# Main initialization routine
 #************************************
 if __name__ == "__main__":
     sys.exit(main())
