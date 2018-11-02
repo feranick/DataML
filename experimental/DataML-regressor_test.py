@@ -218,7 +218,9 @@ def train(learnFile, testFile):
             input_dim=A.shape[1],
             kernel_regularizer=keras.regularizers.l2(dP.l2)))
         model.add(keras.layers.Dropout(dP.drop))
-    model.add(keras.layers.Dense(1, activation = 'softmax'))
+    model.add(keras.layers.Dense(1))
+    #model.add(keras.layers.Dense(np.unique(totCl).size+1, activation = 'softmax'))
+    #model.add(keras.layers.Dense(1, activation = 'softmax'))
 
     #optim = opt.SGD(lr=0.0001, decay=1e-6, momentum=0.9, nesterov=True)
     optim = keras.optimizers.Adam(lr=dP.l_rate, beta_1=0.9,
@@ -262,6 +264,7 @@ def train(learnFile, testFile):
     model.save(model_name)
     #keras.utils.plot_model(model, to_file=model_directory+'/keras_MLP_model.png', show_shapes=True)
 
+    '''
     try:
         with open("a.txt", 'r') as f:
             print('\n Opening sample data for prediction...')
@@ -272,6 +275,7 @@ def train(learnFile, testFile):
 
     R=np.array([Rtot[1,:]])
     Rx=Rtot[0,:]
+    '''
 
     #le = pickle.loads(open("keras_le.pkl", "rb").read())
     #model = keras.models.load_model("keras_model.hd5")
@@ -339,11 +343,8 @@ def predict(testFile, normFile):
     le = pickle.loads(open("keras_le.pkl", "rb").read())
     model = keras.models.load_model("keras_model.hd5")
     #predictions = model.predict(R, verbose=1)
-    predictions = model.predict(R).flatten()
+    predictions = model.predict(R).flatten()[0]
     print(predictions)
-    
-    '''
-    pred_class = np.argmax(predictions)
 
     if normFile != None:
         try:
@@ -352,6 +353,10 @@ def predict(testFile, normFile):
         except:
             print("\033[1m" + " pkl file not found \n" + "\033[0m")
             return
+
+    print(norm.transform_inverse_single(predictions))
+    '''
+    pred_class = np.argmax(predictions)
     
     if pred_class.size >0:
         if normFile != None:
