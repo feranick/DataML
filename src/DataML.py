@@ -109,9 +109,9 @@ def main():
                     train(sys.argv[2], None)
                 else:
                     train(sys.argv[2], sys.argv[3])
-            #except:
-            #    usage()
-            #    sys.exit(2)
+            except:
+                usage()
+                sys.exit(2)
 
         if o in ("-p" , "--predict"):
             try:
@@ -288,7 +288,6 @@ def train(learnFile, testFile):
 
     if dP.regressor:
         predictions = model.predict(A_test)
-        print(predictions)
         printParam()
         print('\n  ========================================================')
         print('  \033[1mKeras MLP - Regressor\033[0m - Training Summary')
