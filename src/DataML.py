@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 '''
 **********************************************************
-* DataML Classifier and Regressor
-* 20181102a
+* DataML
+* 20181026a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -36,7 +36,6 @@ class Conf():
             
     def datamlDef(self):
         self.conf['Parameters'] = {
-            'regressor' : False,
             'l_rate' : 0.001,
             'l_rdecay' : 1e-4,
             'HL' : [20,30,40,50,60,70],
@@ -60,7 +59,6 @@ class Conf():
             self.datamlDef = self.conf['Parameters']
             self.sysDef = self.conf['System']
         
-            self.regressor = self.conf.getboolean('Parameters','regressor')
             self.l_rate = self.conf.getfloat('Parameters','l_rate')
             self.l_rdecay = self.conf.getfloat('Parameters','l_rdecay')
             self.HL = eval(self.datamlDef['HL'])
@@ -109,9 +107,9 @@ def main():
                     train(sys.argv[2], None)
                 else:
                     train(sys.argv[2], sys.argv[3])
-            #except:
-            #    usage()
-            #    sys.exit(2)
+            except:
+                usage()
+                sys.exit(2)
 
         if o in ("-p" , "--predict"):
             try:
@@ -149,21 +147,10 @@ def train(learnFile, testFile):
         from keras.backend.tensorflow_backend import set_session
         set_session(tf.Session(config=conf))
 
-    tb_directory = "keras_MLP"
-    model_directory = "."
-    learnFileRoot = os.path.splitext(learnFile)[0]
-
-    if dP.regressor:
-        print("Using DataML as Regressor")
-        model_name = model_directory+"/keras_model_regressor.hd5"
-    else:
-        print("Using DataML as Classifier")
-        model_name = model_directory+"/keras_model.hd5"
-        model_le = model_directory+"/keras_le.pkl"
-
     #from tensorflow.contrib.learn.python.learn import monitors as monitor_lib
 
     En, A, Cl = readLearnFile(learnFile)
+    learnFileRoot = os.path.splitext(learnFile)[0]
     if testFile != None:
         En_test, A_test, Cl_test = readLearnFile(testFile)
         totA = np.vstack((A, A_test))
@@ -172,65 +159,53 @@ def train(learnFile, testFile):
         totA = A
         totCl = Cl
 
-    print("  Total number of points per data:",En.size)
-    print("  Number of learning labels: {0:d}\n".format(int(dP.numLabels)))
+    tb_directory = "keras_MLP"
+    model_directory = "."
+    model_name = model_directory+"/keras_model.hd5"
+    model_le = model_directory+"/keras_le.pkl"
     
-    if dP.regressor:
-        Cl2 = np.copy(Cl)
-        if testFile != None:
-            Cl2_test = np.copy(Cl_test)
-    else:
+    #************************************
+    # Label Encoding
+    #************************************
+    '''
+    # sklearn preprocessing is only for single labels
+    from sklearn import preprocessing
+    le = preprocessing.LabelEncoder()
+    totCl2 = le.fit_transform(totCl)
+    Cl2 = le.transform(Cl)
+    if testFile != None:
+        Cl2_test = le.transform(Cl_test)
+    '''
+    le = MultiClassReductor()
+    le.fit(np.unique(totCl, axis=0))
+    Cl2 = le.transform(Cl)
     
-        #************************************
-        # Label Encoding
-        #************************************
-        '''
-        # sklearn preprocessing is only for single labels
-        from sklearn import preprocessing
-        le = preprocessing.LabelEncoder()
-        totCl2 = le.fit_transform(totCl)
-        Cl2 = le.transform(Cl)
-        if testFile != None:
-            Cl2_test = le.transform(Cl_test)
-        '''
-        le = MultiClassReductor()
-        le.fit(np.unique(totCl, axis=0))
-        Cl2 = le.transform(Cl)
+    print("  Number of learning labels:",dP.numLabels)
+    print("  Number unique classes (training): ", np.unique(Cl).size)
     
-        print("  Number unique classes (training): ", np.unique(Cl).size)
-    
-        if testFile != None:
-            Cl2_test = le.transform(Cl_test)
-            print("  Number unique classes (validation):", np.unique(Cl_test).size)
-            print("  Number unique classes (total): ", np.unique(totCl).size)
-            
-        print("\n  Label Encoder saved in:", model_le,"\n")
-        with open(model_le, 'ab') as f:
-            f.write(pickle.dumps(le))
+    if testFile != None:
+        Cl2_test = le.transform(Cl_test)
+        print("  Number unique classes (validation):", np.unique(Cl_test).size)
+        print("  Number unique classes (total): ", np.unique(totCl).size)
 
-        #totCl2 = keras.utils.to_categorical(totCl2, num_classes=np.unique(totCl).size)
-        Cl2 = keras.utils.to_categorical(Cl2, num_classes=np.unique(totCl).size+1)
-        if testFile != None:
-            Cl2_test = keras.utils.to_categorical(Cl2_test, num_classes=np.unique(totCl).size+1)
+    print("  Total number of points per data:",En.size)
+    
+    print("\n  Label Encoder saved in:", model_le,"\n")
+    with open(model_le, 'ab') as f:
+        f.write(pickle.dumps(le))
 
     #************************************
     # Training
     #************************************
+    #totCl2 = keras.utils.to_categorical(totCl2, num_classes=np.unique(totCl).size)
+    Cl2 = keras.utils.to_categorical(Cl2, num_classes=np.unique(totCl).size+1)
+    if testFile != None:
+        Cl2_test = keras.utils.to_categorical(Cl2_test, num_classes=np.unique(totCl).size+1)
 
     if dP.fullSizeBatch == True:
         dP.batch_size = A.shape[0]
-
-    #************************************
-    ### Define optimizer
-    #************************************
-    #optim = opt.SGD(lr=0.0001, decay=1e-6, momentum=0.9, nesterov=True)
-    optim = keras.optimizers.Adam(lr=dP.l_rate, beta_1=0.9,
-                    beta_2=0.999, epsilon=1e-08,
-                    decay=dP.l_rdecay,
-                    amsgrad=False)
-    #************************************
+    
     ### Build model
-    #************************************
     model = keras.models.Sequential()
     for i in range(len(dP.HL)):
         model.add(keras.layers.Dense(dP.HL[i],
@@ -238,17 +213,17 @@ def train(learnFile, testFile):
             input_dim=A.shape[1],
             kernel_regularizer=keras.regularizers.l2(dP.l2)))
         model.add(keras.layers.Dropout(dP.drop))
+    model.add(keras.layers.Dense(np.unique(totCl).size+1, activation = 'softmax'))
 
-    if dP.regressor:
-        model.add(keras.layers.Dense(1))
-        model.compile(loss='mse',
+    #optim = opt.SGD(lr=0.0001, decay=1e-6, momentum=0.9, nesterov=True)
+    optim = keras.optimizers.Adam(lr=dP.l_rate, beta_1=0.9,
+                    beta_2=0.999, epsilon=1e-08,
+                    decay=dP.l_rdecay,
+                    amsgrad=False)
+
+    model.compile(loss='categorical_crossentropy',
         optimizer=optim,
-        metrics=['mae'])
-    else:
-        model.add(keras.layers.Dense(np.unique(totCl).size+1, activation = 'softmax'))
-        model.compile(loss='categorical_crossentropy',
-            optimizer=optim,
-            metrics=['accuracy'])
+        metrics=['accuracy'])
 
     tbLog = keras.callbacks.TensorBoard(log_dir=tb_directory, histogram_freq=120,
             batch_size=dP.batch_size,
@@ -269,10 +244,15 @@ def train(learnFile, testFile):
             verbose=2,
 	        validation_split=dP.cv_split)
 
+    accuracy = np.asarray(log.history['acc'])
+    loss = np.asarray(log.history['loss'])
+    val_loss = np.asarray(log.history['val_loss'])
+    val_acc = np.asarray(log.history['val_acc'])
+
     #score = model.evaluate(A_test, Cl2_test, batch_size=A.shape[1])
     model.save(model_name)
     keras.utils.plot_model(model, to_file=model_directory+'/keras_MLP_model.png', show_shapes=True)
-
+    
     print('\n  =============================================')
     print('  \033[1mKeras MLP\033[0m - Model Configuration')
     print('  =============================================')
@@ -281,52 +261,28 @@ def train(learnFile, testFile):
     print("  Training set file:",learnFile)
     print("  Data size:", A.shape,"\n")
     print("  Number of learning labels:",dP.numLabels)
+    print("  Number unique classes (training): ", np.unique(Cl).size)
+    if testFile != None:
+        Cl2_test = le.transform(Cl_test)
+        print("  Number unique classes (validation):", np.unique(Cl_test).size)
+        print("  Number unique classes (total): ", np.unique(totCl).size)
     print("  Total number of points per data:",En.size)
+    printParam()
 
-    loss = np.asarray(log.history['loss'])
-    val_loss = np.asarray(log.history['val_loss'])
-
-    if dP.regressor:
-        predictions = model.predict(A_test)
-        print(predictions)
-        printParam()
-        print('\n  ========================================================')
-        print('  \033[1mKeras MLP - Regressor\033[0m - Training Summary')
-        print('  ========================================================')
-        print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(loss), np.amin(loss), loss[-1]))
-        print('\n\n  ========================================================')
-        print('  \033[1mKeras MLP - Regressor \033[0m - Validation Summary')
-        print('  ========================================================')
-        print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}\n".format(np.average(val_loss), np.amin(val_loss), val_loss[-1]))
-        #print("\n  Validation - Loss: {0:.2f}; accuracy: {1:.2f}%".format(score[0], 100*score[1]))
-        print("  Real value | Predicted value")
-        print("  ----------------------------")
-        for i in range(0,len(predictions)):
-            print("  {0:.2f}       | {1:.2f}".format(Cl2_test[i], predictions[i][0]))
-        print('  ========================================================\n')
-    else:
-        accuracy = np.asarray(log.history['acc'])
-        val_acc = np.asarray(log.history['val_acc'])
-        print("  Number unique classes (training): ", np.unique(Cl).size)
-        if testFile != None:
-            Cl2_test = le.transform(Cl_test)
-            print("  Number unique classes (validation):", np.unique(Cl_test).size)
-            print("  Number unique classes (total): ", np.unique(totCl).size)
-        printParam()
-        print('\n  ========================================================')
-        print('  \033[1mKeras MLP - Classiefier \033[0m - Training Summary')
-        print('  ========================================================')
-        print("\n  \033[1mAccuracy\033[0m - Average: {0:.2f}%; Max: {1:.2f}%; Last: {2:.2f}%".format(100*np.average(accuracy),
+    print('\n  ========================================================')
+    print('  \033[1mKeras MLP\033[0m - Training Summary')
+    print('  ========================================================')
+    print("\n  \033[1mAccuracy\033[0m - Average: {0:.2f}%; Max: {1:.2f}%; Last: {2:.2f}%".format(100*np.average(accuracy),
             100*np.amax(accuracy), 100*accuracy[-1]))
-        print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(loss), np.amin(loss), loss[-1]))
-        print('\n\n  ========================================================')
-        print('  \033[1mKeras MLP - Classifier \033[0m - Validation Summary')
-        print('  ========================================================')
-        print("\n  \033[1mAccuracy\033[0m - Average: {0:.2f}%; Max: {1:.2f}%; Last: {2:.2f}%".format(100*np.average(val_acc),
+    print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(loss), np.amin(loss), loss[-1]))
+    print('\n\n  ========================================================')
+    print('  \033[1mKeras MLP\033[0m - Validation Summary')
+    print('  ========================================================')
+    print("\n  \033[1mAccuracy\033[0m - Average: {0:.2f}%; Max: {1:.2f}%; Last: {2:.2f}%".format(100*np.average(val_acc),
         100*np.amax(val_acc), 100*val_acc[-1]))
-        print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}\n".format(np.average(val_loss), np.amin(val_loss), val_loss[-1]))
-        #print("\n  Validation - Loss: {0:.2f}; accuracy: {1:.2f}%".format(score[0], 100*score[1]))
-        print('  ========================================================\n')
+    print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}\n".format(np.average(val_loss), np.amin(val_loss), val_loss[-1]))
+    #print("\n  Validation - Loss: {0:.2f}; accuracy: {1:.2f}%".format(score[0], 100*score[1]))
+    print('  ========================================================\n')
 
     if dP.plotWeightsFlag == True:
         plotWeights(En, A, model)
@@ -351,6 +307,11 @@ def predict(testFile, normFile):
 
     R=np.array([Rtot[1,:]])
     Rx=Rtot[0,:]
+    
+    le = pickle.loads(open("keras_le.pkl", "rb").read())
+    model = keras.models.load_model("keras_model.hd5")
+    predictions = model.predict(R, verbose=1)
+    pred_class = np.argmax(predictions)
 
     if normFile != None:
         try:
@@ -360,54 +321,27 @@ def predict(testFile, normFile):
             print("\033[1m" + " pkl file not found \n" + "\033[0m")
             return
     
-    if dP.regressor:
-        model = keras.models.load_model("keras_model_regressor.hd5")
-        predictions = model.predict(R).flatten()[0]
-        print('  ========================================================')
-        print('  \033[1mKeras MLP - Regressor\033[0m - Prediction')
-        print('  ========================================================')
+    if pred_class.size >0:
         if normFile != None:
-            predValue = norm.transform_inverse_single(predictions)
-            print('\033[1m\n  Predicted value = {0:.2f}\033[0m (normalized: {1:.2f})\n'.format(predValue, predictions))
+            predValue = norm.transform_inverse_single(le.inverse_transform([pred_class])[0])
         else:
-            predValue = predictions
-            print('\033[1m\n  Predicted value (normalized) = {0:.2f}\033[0m\n'.format(predValue))
-        print('  ========================================================\n')
-        
+            predValue = le.inverse_transform([pred_class])[0]
     else:
-        le = pickle.loads(open("keras_le.pkl", "rb").read())
-        model = keras.models.load_model("keras_model.hd5")
-        predictions = model.predict(R, verbose=1)
-        pred_class = np.argmax(predictions)
-        predProb = round(100*predictions[0][pred_class],2)
-        rosterPred = np.where(predictions[0]>0.1)[0]
+        predValue = 0
 
-        print('\n  ========================================================')
-        print('  \033[1mKeras MLP - Classifier\033[0m - Prediction')
-        print('  ========================================================')
+    predProb = round(100*predictions[0][pred_class],2)
+    rosterPred = np.where(predictions[0]>0.1)[0]
 
-        if dP.numLabels == 1:
-
-            if pred_class.size >0:
-                if normFile != None:
-                    predValue = norm.transform_inverse_single(le.inverse_transform([pred_class])[0])
-                    print('\033[1m\n  Predicted value = {0:.2f} (probability = {1:.2f}%)\033[0m\n'.format(predValue, predProb))
-                else:
-                    predValue = le.inverse_transform([pred_class])[0]
-                    print('\033[1m\n  Predicted value (normalized) = {0:.2f} (probability = {1:.2f}%)\033[0m\n'.format(predValue, predProb))
-            else:
-                predValue = 0
-                print('\033[1m\n  No predicted value (probability = {0:.2f}%)\033[0m\n'.format(predProb))
-            print('  ========================================================\n')
-
-        else:
-            print('\n ==========================================')
-            print('\033[1m' + ' Predicted value \033[0m(probability = ' + str(predProb) + '%)')
-            print(' ==========================================\n')
-            print("  1:", str(predValue[0]),"%")
-            print("  2:",str(predValue[1]),"%")
-            print("  3:",str((predValue[1]/0.5)*(100-99.2-.3)),"%\n")
-            print(' ==========================================\n')
+    if dP.numLabels == 1:
+        print('\033[1m' + '\n Predicted value (Keras) = {0:.2f} (probability = {1:.2f}%)\033[0m\n'.format(predValue, predProb))
+    else:
+        print('\n ==========================================')
+        print('\033[1m' + ' Predicted value \033[0m(probability = ' + str(predProb) + '%)')
+        print(' ==========================================\n')
+        print("  ACN:", str(predValue[0]),"%")
+        print("  Water:",str(predValue[1]),"%")
+        print("  AcetoNL:",str((predValue[1]/0.5)*(100-99.2-.3)),"%\n")
+        print(' ==========================================\n')
 
 #************************************
 # Open Learning Data
