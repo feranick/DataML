@@ -6,7 +6,7 @@
 * ConvertLabel
 * Convert normalized labels into actual labels
 *
-* version: 20181026a
+* version: 20181102b
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 *
@@ -47,23 +47,30 @@ def main():
 
 
 #************************************
-''' Normalizer '''
+# Normalizer
 #************************************
 class Normalizer(object):
     def __init__(self, M):
         self.M = M
-        self.includeFirst = dP.normalizeLabel
+        self.normalizeLabel = dP.normalizeLabel
+        self.useGeneralNormLabel = dP.useGeneralNormLabel
         self.useCustomRound = dP.useCustomRound
+        self.minGeneralLabel = dP.minGeneralLabel
+        self.maxGeneralLabel = dP.maxGeneralLabel
         self.YnormTo = dP.YnormTo
         self.stepNormLabel = dP.stepNormLabel
-        self.min = np.zeros([self.M.shape[1]])
-        self.max = np.zeros([self.M.shape[1]])
         
         self.data = np.arange(0,1,self.stepNormLabel)
-        
-        if self.includeFirst:
-            self.min[0] = np.amin(self.M[1:,0])
-            self.max[0] = np.amax(self.M[1:,0])
+        self.min = np.zeros([self.M.shape[1]])
+        self.max = np.zeros([self.M.shape[1]])
+    
+        if self.normalizeLabel:
+            if self.useGeneralNormLabel:
+                self.min[0] = dP.minGeneralLabel
+                self.max[0] = dP.maxGeneralLabel
+            else:
+                self.min[0] = np.amin(self.M[1:,0])
+                self.max[0] = np.amax(self.M[1:,0])
         
         for i in range(1,M.shape[1]):
             self.min[i] = np.amin(self.M[1:,i])
@@ -71,7 +78,7 @@ class Normalizer(object):
     
     def transform_matrix(self,y):
         Mn = np.copy(y)
-        if self.includeFirst:
+        if self.normalizeLabel:
             Mn[1:,0] = np.multiply(y[1:,0] - self.min[0], self.YnormTo/(self.max[0] - self.min[0]))
             if self.useCustomRound:
                 customData = CustomRound(self.data)
