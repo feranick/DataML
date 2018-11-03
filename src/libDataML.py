@@ -1,56 +1,21 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 '''
-*********************************************
-*
-* ConvertLabel
-* Convert normalized labels into actual labels
-*
-* version: 20181102b
-*
+**********************************************************
+* libDataML - Library for DataML
+* 20181102c
+* Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
-*
-***********************************************
+***********************************************************
 '''
-print(__doc__)
-
 import numpy as np
-import sys, os.path, h5py, pickle
-from random import uniform
+import pickle
 from bisect import bisect_left
-
-#***************************************************
-''' This is needed for installation through pip '''
-#***************************************************
-def ConvertLabel():
-    main()
-
-#************************************
-''' Main '''
-#************************************
-def main():
-
-    if len(sys.argv) < 2:
-        print(' Usage:\n  python3 ConvertLabel.py <pkl file> <number to convert>')
-        print(' Requires python 3.x. Not compatible with python 2.x\n')
-        return
-    
-    try:
-        norm = pickle.loads(open(sys.argv[1], "rb").read())
-        print(" Opening pkl file with normalization data:",sys.argv[1],"\n")
-    except:
-        print("\033[1m" + " pkl file not found \n" + "\033[0m")
-        return
-
-    print(" Normalized label:",sys.argv[2])
-    print(" Actual label:",norm.transform_inverse_single(float(sys.argv[2])),"\n")
-
 
 #************************************
 # Normalizer
 #************************************
 class Normalizer(object):
-    def __init__(self, M):
+    def __init__(self, M, dP):
         self.M = M
         self.normalizeLabel = dP.normalizeLabel
         self.useGeneralNormLabel = dP.useGeneralNormLabel
@@ -79,20 +44,23 @@ class Normalizer(object):
     def transform_matrix(self,y):
         Mn = np.copy(y)
         if self.normalizeLabel:
-            Mn[1:,0] = np.multiply(y[1:,0] - self.min[0], self.YnormTo/(self.max[0] - self.min[0]))
+            Mn[1:,0] = np.multiply(y[1:,0] - self.min[0], self.YnormTo/(self.max[0] - 
+self.min[0]))
             if self.useCustomRound:
                 customData = CustomRound(self.data)
                 for i in range(1,y.shape[0]):
                     Mn[i,0] = customData(Mn[i,0])
 
         for i in range(1,y.shape[1]):
-            Mn[1:,i] = np.multiply(y[1:,i] - self.min[i], self.YnormTo/(self.max[i] - self.min[i]))
+            Mn[1:,i] = np.multiply(y[1:,i] - self.min[i], self.YnormTo/(self.max[i] - 
+self.min[i]))
         return Mn
-    
+        
     def transform_valid(self,V):
         Vn = np.copy(V)
         for i in range(0,V.shape[0]):
-            Vn[i,1] = np.multiply(V[i,1] - self.min[i], self.YnormTo/(self.max[i] - self.min[i]))
+            Vn[i,1] = np.multiply(V[i,1] - self.min[i], self.YnormTo/(self.max[i] - 
+self.min[i]))
         return Vn
     
     def transform_inverse_single(self,v):
@@ -104,7 +72,7 @@ class Normalizer(object):
             f.write(pickle.dumps(self))
 
 #************************************
-''' CustomRound '''
+# CustomRound
 #************************************
 class CustomRound:
     def __init__(self,iterable):
@@ -123,9 +91,3 @@ class CustomRound:
         if abs(x-x0) < abs(x-x1):
             return x0
         return x1
-
-#************************************
-''' Main initialization routine '''
-#************************************
-if __name__ == "__main__":
-    sys.exit(main())

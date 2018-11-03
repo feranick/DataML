@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20181102a
+* 20181102c
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -12,7 +12,7 @@ print(__doc__)
 
 import numpy as np
 import sys, os.path, getopt, time, configparser, pickle, h5py
-from bisect import bisect_left
+from libDataML import Normalizer
 
 #***************************************************
 # This is needed for installation through pip
@@ -114,14 +114,14 @@ def main():
                 sys.exit(2)
 
         if o in ("-p" , "--predict"):
-            try:
-                if len(sys.argv)<4:
-                    predict(sys.argv[2], None)
-                else:
-                    predict(sys.argv[2], sys.argv[3])
-            except:
-                usage()
-                sys.exit(2)
+            #try:
+            if len(sys.argv)<4:
+                predict(sys.argv[2], None)
+            else:
+                predict(sys.argv[2], sys.argv[3])
+            #except:
+            #    usage()
+            #sys.exit(2)
 
     total_time = time.clock() - start_time
     print(" Total time: {0:.1f}s or {1:.1f}m or {2:.1f}h".format(total_time,
@@ -352,12 +352,12 @@ def predict(testFile, normFile):
     Rx=Rtot[0,:]
 
     if normFile != None:
-        try:
-            norm = pickle.loads(open(normFile, "rb").read())
-            print("\n Opening pkl file with normalization data:",normFile,"\n")
-        except:
-            print("\033[1m" + " pkl file not found \n" + "\033[0m")
-            return
+        #try:
+        norm = pickle.loads(open(normFile, "rb").read())
+        print("\n Opening pkl file with normalization data:",normFile,"\n")
+        #except:
+        #    print("\033[1m" + " pkl file not found \n" + "\033[0m")
+        #    return
     
     if dP.regressor:
         model = keras.models.load_model("keras_model_regressor.hd5")
@@ -505,84 +505,6 @@ class MultiClassReductor():
 
     def classes_(self):
         return self.totalClass
-
-#************************************
-# Normalizer
-#************************************
-class Normalizer(object):
-    def __init__(self, M):
-        self.M = M
-        self.normalizeLabel = dP.normalizeLabel
-        self.useGeneralNormLabel = dP.useGeneralNormLabel
-        self.useCustomRound = dP.useCustomRound
-        self.minGeneralLabel = dP.minGeneralLabel
-        self.maxGeneralLabel = dP.maxGeneralLabel
-        self.YnormTo = dP.YnormTo
-        self.stepNormLabel = dP.stepNormLabel
-        
-        self.data = np.arange(0,1,self.stepNormLabel)
-        self.min = np.zeros([self.M.shape[1]])
-        self.max = np.zeros([self.M.shape[1]])
-    
-        if self.normalizeLabel:
-            if self.useGeneralNormLabel:
-                self.min[0] = dP.minGeneralLabel
-                self.max[0] = dP.maxGeneralLabel
-            else:
-                self.min[0] = np.amin(self.M[1:,0])
-                self.max[0] = np.amax(self.M[1:,0])
-        
-        for i in range(1,M.shape[1]):
-            self.min[i] = np.amin(self.M[1:,i])
-            self.max[i] = np.amax(self.M[1:,i])
-    
-    def transform_matrix(self,y):
-        Mn = np.copy(y)
-        if self.normalizeLabel:
-            Mn[1:,0] = np.multiply(y[1:,0] - self.min[0], self.YnormTo/(self.max[0] - self.min[0]))
-            if self.useCustomRound:
-                customData = CustomRound(self.data)
-                for i in range(1,y.shape[0]):
-                    Mn[i,0] = customData(Mn[i,0])
-
-        for i in range(1,y.shape[1]):
-            Mn[1:,i] = np.multiply(y[1:,i] - self.min[i], self.YnormTo/(self.max[i] - self.min[i]))
-        return Mn
-    
-    def transform_valid(self,V):
-        Vn = np.copy(V)
-        for i in range(0,V.shape[0]):
-            Vn[i,1] = np.multiply(V[i,1] - self.min[i], self.YnormTo/(self.max[i] - self.min[i]))
-        return Vn
-    
-    def transform_inverse_single(self,v):
-        vn = self.min[0] + v*(self.max[0] - self.min[0])/self.YnormTo
-        return vn
-
-    def save(self, name):
-        with open(name, 'ab') as f:
-            f.write(pickle.dumps(self))
-
-#************************************
-# CustomRound
-#************************************
-class CustomRound:
-    def __init__(self,iterable):
-        self.data = sorted(iterable)
-
-    def __call__(self,x):
-        data = self.data
-        ndata = len(data)
-        idx = bisect_left(data,x)
-        if idx <= 0:
-            return data[0]
-        elif idx >= ndata:
-            return data[ndata-1]
-        x0 = data[idx-1]
-        x1 = data[idx]
-        if abs(x-x0) < abs(x-x1):
-            return x0
-        return x1
 
 #************************************
 # Lists the program usage
