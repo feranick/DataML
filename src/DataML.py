@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20181102c
+* 20181106a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -11,7 +11,8 @@
 print(__doc__)
 
 import numpy as np
-import sys, os.path, getopt, time, configparser, pickle, h5py
+import pandas as pd
+import sys, os.path, getopt, time, configparser, pickle, h5py, csv
 from libDataML import Normalizer
 
 #***************************************************
@@ -93,7 +94,7 @@ def main():
     start_time = time.clock()
     try:
         opts, args = getopt.getopt(sys.argv[1:],
-                                   "tph:", ["train", "predict", "help"])
+                                   "tpbh:", ["train", "predict", "batch", "help"])
     except:
         usage()
         sys.exit(2)
@@ -122,6 +123,16 @@ def main():
             except:
                 usage()
                 sys.exit(2)
+                
+        if o in ("-b" , "--batch"):
+            #try:
+            if len(sys.argv)<4:
+                batchPredict(sys.argv[2], None)
+            else:
+                batchPredict(sys.argv[2], sys.argv[3])
+            #except:
+            #    usage()
+            #    sys.exit(2)
 
     total_time = time.clock() - start_time
     print(" Total time: {0:.1f}s or {1:.1f}m or {2:.1f}h".format(total_time,
@@ -352,12 +363,12 @@ def predict(testFile, normFile):
     Rx=Rtot[0,:]
 
     if normFile != None:
-        #try:
-        norm = pickle.loads(open(normFile, "rb").read())
-        print("\n Opening pkl file with normalization data:",normFile,"\n")
-        #except:
-        #    print("\033[1m" + " pkl file not found \n" + "\033[0m")
-        #    return
+        try:
+            norm = pickle.loads(open(normFile, "rb").read())
+            print("\n Opening pkl file with normalization data:",normFile,"\n")
+        except:
+            print("\033[1m" + " pkl file not found \n" + "\033[0m")
+            return
     
     if dP.regressor:
         model = keras.models.load_model("keras_model_regressor.hd5")
@@ -407,6 +418,54 @@ def predict(testFile, normFile):
             print("  2:",str(predValue[1]),"%")
             print("  3:",str((predValue[1]/0.5)*(100-99.2-.3)),"%\n")
             print(' ==========================================\n')
+
+#************************************
+# Batch Prediction
+#************************************
+def batchPredict(testFile, normFile):
+    dP = Conf()
+    if dP.useTFKeras:
+        import tensorflow.keras as keras  #tf.keras
+    else:
+        import keras   # pure Keras
+
+    En_test, A_test, Cl_test = readLearnFile(testFile)
+
+    try:
+        norm = pickle.loads(open(normFile, "rb").read())
+        print("\n Opening pkl file with normalization data:",normFile,"\n")
+    except:
+        print("\033[1m" + " pkl file not found \n" + "\033[0m")
+        return
+
+    summaryFileName = os.path.splitext(testFile)[0]+"_summary.csv"
+    summaryFile = np.array([['DataML','Regressor'],['Real Value','Prediction']])
+
+    if dP.regressor:
+        model = keras.models.load_model("keras_model_regressor.hd5")
+        predictions = model.predict(A_test)
+        print('\n  ========================================================')
+        print('  \033[1mKeras MLP - Regressor \033[0m - Validation Summary')
+        print('  ========================================================')
+        print("  Real value | Predicted value")
+        print("  ----------------------------")
+        for i in range(0,len(predictions)):
+            if normFile != None:
+                predValue = norm.transform_inverse_single(predictions[i][0])
+                realValue = norm.transform_inverse_single(Cl_test[i])
+            else:
+                realValue = Cl_test[i]
+                predValue = predictions[i][0]
+            
+            print("  {0:.2f}       | {1:.2f}".format(realValue, predValue))
+            summaryFile = np.vstack((summaryFile,[realValue,predValue]))
+        print('  ========================================================\n')
+    else:
+        print(" Not yet implemented for classifier")
+
+    df = pd.DataFrame(summaryFile)
+    df.to_csv(summaryFileName, index=False, header=False)
+    print(" Prediction summary saved in:",summaryFileName,"\n")
 
 #************************************
 # Open Learning Data
@@ -485,28 +544,6 @@ def plotWeights(En, A, model):
     plt.savefig('keras_MLP_weights' + '.png', dpi = 160, format = 'png')  # Save plot
 
 #************************************
-# MultiClassReductor
-#************************************
-class MultiClassReductor():
-    def __self__(self):
-        self.name = name
-    
-    def fit(self,tc):
-        self.totalClass = tc.tolist()
-    
-    def transform(self,y):
-        Cl = np.zeros(y.shape[0])
-        for j in range(len(y)):
-            Cl[j] = self.totalClass.index(np.array(y[j]).tolist())
-        return Cl
-    
-    def inverse_transform(self,a):
-        return [self.totalClass[int(a[0])]]
-
-    def classes_(self):
-        return self.totalClass
-
-#************************************
 # Lists the program usage
 #************************************
 def usage():
@@ -519,6 +556,10 @@ def usage():
     print('  python3 DataML.py -p <testFile>\n')
     print(' Predict (labels normalized with pkl file):')
     print('  python3 DataML.py -p <testFile> <pkl normalization file>\n')
+    print(' Batch predict (no label normalization used):')
+    print('  python3 DataML.py -b <validationFile>\n')
+    print(' Batch predict (labels normalized with pkl file):')
+    print('  python3 DataML.py -b <validationFile> <pkl normalization file>\n')
     print(' Requires python 3.x. Not compatible with python 2.x\n')
 
 #************************************
