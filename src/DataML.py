@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20181106a
+* 20181106b
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -105,14 +105,14 @@ def main():
 
     for o, a in opts:
         if o in ("-t" , "--train"):
-            try:
-                if len(sys.argv)<4:
-                    train(sys.argv[2], None)
-                else:
-                    train(sys.argv[2], sys.argv[3])
-            except:
-                usage()
-                sys.exit(2)
+            #try:
+            if len(sys.argv)<4:
+                train(sys.argv[2], None)
+            else:
+                train(sys.argv[2], sys.argv[3])
+            #except:
+            #    usage()
+            #   sys.exit(2)
 
         if o in ("-p" , "--predict"):
             try:
@@ -365,7 +365,7 @@ def predict(testFile, normFile):
     if normFile != None:
         try:
             norm = pickle.loads(open(normFile, "rb").read())
-            print("\n Opening pkl file with normalization data:",normFile,"\n")
+            print("\n  Opening pkl file with normalization data:",normFile,"\n")
         except:
             print("\033[1m" + " pkl file not found \n" + "\033[0m")
             return
@@ -433,19 +433,19 @@ def batchPredict(testFile, normFile):
 
     try:
         norm = pickle.loads(open(normFile, "rb").read())
-        print("\n Opening pkl file with normalization data:",normFile,"\n")
+        print("\n  Opening pkl file with normalization data:",normFile,"\n")
     except:
         print("\033[1m" + " pkl file not found \n" + "\033[0m")
         return
 
     summaryFileName = os.path.splitext(testFile)[0]+"_summary.csv"
-    summaryFile = np.array([['DataML','Regressor'],['Real Value','Prediction']])
 
     if dP.regressor:
+        summaryFile = np.array([['DataML','Regressor'],['Real Value','Prediction']])
         model = keras.models.load_model("keras_model_regressor.hd5")
         predictions = model.predict(A_test)
         print('\n  ========================================================')
-        print('  \033[1mKeras MLP - Regressor \033[0m - Validation Summary')
+        print('  \033[1mKeras MLP - Regressor \033[0m - Batch Prediction')
         print('  ========================================================')
         print("  Real value | Predicted value")
         print("  ----------------------------")
@@ -459,9 +459,28 @@ def batchPredict(testFile, normFile):
             
             print("  {0:.2f}       | {1:.2f}".format(realValue, predValue))
             summaryFile = np.vstack((summaryFile,[realValue,predValue]))
-        print('  ========================================================\n')
     else:
-        print(" Not yet implemented for classifier")
+        summaryFile = np.array([['DataML','Classifier',''],['Real Class','Predicted Class', 'Probability']])
+        le = pickle.loads(open("keras_le.pkl", "rb").read())
+        model = keras.models.load_model("keras_model.hd5")
+        predictions = model.predict(A_test)
+        print('\n  ========================================================')
+        print('  \033[1mKeras MLP - Classifier \033[0m - Batch Prediction')
+        print('  ========================================================')
+        print("  Real class | Predicted class | Probability")
+        print("  ----------------------------------------")
+        for i in range(predictions.shape[0]):
+            predClass = np.argmax(predictions[i])
+            predProb = round(100*predictions[i][predClass],2)
+            if normFile != None:
+                predValue = norm.transform_inverse_single(le.inverse_transform([predClass])[0])
+                realValue = norm.transform_inverse_single(Cl_test[i])
+            else:
+                predValue = le.inverse_transform([predClass])[0]
+                realValue = Cl_test[i]
+            print("  {0:.2f}       | {1:.2f}        | {2:.2f}".format(realValue, predValue, predProb))
+            summaryFile = np.vstack((summaryFile,[realValue,predValue,predProb]))
+    print('  ========================================================\n')
 
     df = pd.DataFrame(summaryFile)
     df.to_csv(summaryFileName, index=False, header=False)
@@ -542,6 +561,28 @@ def plotWeights(En, A, model):
     plt.xlabel('Raman shift [1/cm]')
     plt.legend(loc='upper right')
     plt.savefig('keras_MLP_weights' + '.png', dpi = 160, format = 'png')  # Save plot
+
+#************************************
+# MultiClassReductor
+#************************************
+class MultiClassReductor():
+    def __self__(self):
+        self.name = name
+    
+    def fit(self,tc):
+        self.totalClass = tc.tolist()
+    
+    def transform(self,y):
+        Cl = np.zeros(y.shape[0])
+        for j in range(len(y)):
+            Cl[j] = self.totalClass.index(np.array(y[j]).tolist())
+        return Cl
+    
+    def inverse_transform(self,a):
+        return [self.totalClass[int(a[0])]]
+
+    def classes_(self):
+        return self.totalClass
 
 #************************************
 # Lists the program usage
