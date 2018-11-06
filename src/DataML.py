@@ -13,7 +13,7 @@ print(__doc__)
 import numpy as np
 import pandas as pd
 import sys, os.path, getopt, time, configparser, pickle, h5py, csv
-from libDataML import Normalizer
+from libDataML import *
 
 #***************************************************
 # This is needed for installation through pip
@@ -561,28 +561,6 @@ def plotWeights(En, A, model):
     plt.xlabel('Raman shift [1/cm]')
     plt.legend(loc='upper right')
     plt.savefig('keras_MLP_weights' + '.png', dpi = 160, format = 'png')  # Save plot
-
-#************************************
-# MultiClassReductor
-#************************************
-class MultiClassReductor():
-    def __self__(self):
-        self.name = name
-    
-    def fit(self,tc):
-        self.totalClass = tc.tolist()
-    
-    def transform(self,y):
-        Cl = np.zeros(y.shape[0])
-        for j in range(len(y)):
-            Cl[j] = self.totalClass.index(np.array(y[j]).tolist())
-        return Cl
-    
-    def inverse_transform(self,a):
-        return [self.totalClass[int(a[0])]]
-
-    def classes_(self):
-        return self.totalClass
 
 #************************************
 # Lists the program usage
