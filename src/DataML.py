@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20181108a
+* 20181121a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -34,6 +34,18 @@ class Conf():
             print(" Configuration file: \""+confFileName+"\" does not exist: Creating one.\n")
             self.createConfig()
         self.readConfig(self.configFile)
+        if self.regressor:
+            self.modelName = "keras_model_regressor.hd5"
+            self.summaryFileName = "keras_summary_regressor.csv"
+        else:
+            self.modelName = "keras_model.hd5"
+            self.summaryFileName = "keras_summary_classifier.csv"
+        
+        self.tb_directory = "keras_MLP"
+        self.model_directory = "./"
+        self.model_name = self.model_directory+self.modelName
+        self.model_le = self.model_directory+"keras_le.pkl"
+        self.model_png = self.model_directory+"/keras_MLP_model.png"
             
     def datamlDef(self):
         self.conf['Parameters'] = {
@@ -105,14 +117,14 @@ def main():
 
     for o, a in opts:
         if o in ("-t" , "--train"):
-            try:
-                if len(sys.argv)<4:
-                    train(sys.argv[2], None)
-                else:
-                    train(sys.argv[2], sys.argv[3])
-            except:
-                usage()
-                sys.exit(2)
+            #try:
+            if len(sys.argv)<4:
+                train(sys.argv[2], None)
+            else:
+                train(sys.argv[2], sys.argv[3])
+            #except:
+            #    usage()
+            #    sys.exit(2)
 
         if o in ("-p" , "--predict"):
             try:
@@ -160,19 +172,7 @@ def train(learnFile, testFile):
         from keras.backend.tensorflow_backend import set_session
         set_session(tf.Session(config=conf))
 
-    tb_directory = "keras_MLP"
-    model_directory = "."
     learnFileRoot = os.path.splitext(learnFile)[0]
-
-    if dP.regressor:
-        print("Using DataML as Regressor")
-        model_name = model_directory+"/keras_model_regressor.hd5"
-    else:
-        print("Using DataML as Classifier")
-        model_name = model_directory+"/keras_model.hd5"
-        model_le = model_directory+"/keras_le.pkl"
-
-    #from tensorflow.contrib.learn.python.learn import monitors as monitor_lib
 
     En, A, Cl = readLearnFile(learnFile)
     if testFile != None:
@@ -215,8 +215,8 @@ def train(learnFile, testFile):
             print("  Number unique classes (validation):", np.unique(Cl_test).size)
             print("  Number unique classes (total): ", np.unique(totCl).size)
             
-        print("\n  Label Encoder saved in:", model_le,"\n")
-        with open(model_le, 'ab') as f:
+        print("\n  Label Encoder saved in:", dP.model_le,"\n")
+        with open(dP.model_le, 'ab') as f:
             f.write(pickle.dumps(le))
 
         #totCl2 = keras.utils.to_categorical(totCl2, num_classes=np.unique(totCl).size)
@@ -261,7 +261,7 @@ def train(learnFile, testFile):
             optimizer=optim,
             metrics=['accuracy'])
 
-    tbLog = keras.callbacks.TensorBoard(log_dir=tb_directory, histogram_freq=120,
+    tbLog = keras.callbacks.TensorBoard(log_dir=dP.tb_directory, histogram_freq=120,
             batch_size=dP.batch_size,
             write_graph=True, write_grads=True, write_images=True)
     tbLogs = [tbLog]
@@ -280,8 +280,8 @@ def train(learnFile, testFile):
             verbose=2,
 	        validation_split=dP.cv_split)
 
-    model.save(model_name)
-    keras.utils.plot_model(model, to_file=model_directory+'/keras_MLP_model.png', show_shapes=True)
+    model.save(dP.model_name)
+    keras.utils.plot_model(model, to_file=dP.model_png, show_shapes=True)
 
     print('\n  =============================================')
     print('  \033[1mKeras MLP\033[0m - Model Configuration')
@@ -298,7 +298,6 @@ def train(learnFile, testFile):
 
     if dP.regressor:
         val_mae = np.asarray(log.history['val_mean_absolute_error'])
-        predictions = model.predict(A_test)
         printParam()
         print('\n  ==========================================================')
         print('  \033[1mKeras MLP - Regressor\033[0m - Training Summary')
@@ -309,14 +308,17 @@ def train(learnFile, testFile):
         print('  ========================================================')
         print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(val_loss), np.amin(val_loss), val_loss[-1]))
         print("  \033[1mMean Abs Err\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}\n".format(np.average(val_mae), np.amin(val_mae), val_mae[-1]))
-        print('  ========================================================')
-        print("  Real value | Predicted value | val_loss | val_mean_abs_err")
-        print("  -----------------------------------------------------------")
-        for i in range(0,len(predictions)):
-            score = model.evaluate(np.array([A_test[i]]), np.array([Cl_test[i]]), batch_size=dP.batch_size, verbose = 0)
-            print("  {0:.2f}\t\t| {1:.2f}\t\t| {2:.4f}\t| {3:.4f} ".format(Cl2_test[i],
-                predictions[i][0], score[0], score[1]))
-        print('\n  ==========================================================\n')
+        if testFile:
+            predictions = model.predict(A_test)
+        
+            print('  ===========================================================')
+            print("  Real value | Predicted value | val_loss | val_mean_abs_err")
+            print("  -----------------------------------------------------------")
+            for i in range(0,len(predictions)):
+                score = model.evaluate(np.array([A_test[i]]), np.array([Cl_test[i]]), batch_size=dP.batch_size, verbose = 0)
+                print("  {0:.2f}\t\t| {1:.2f}\t\t| {2:.4f}\t| {3:.4f} ".format(Cl2_test[i],
+                    predictions[i][0], score[0], score[1]))
+            print('\n  ===========================================================\n')
     else:
         accuracy = np.asarray(log.history['acc'])
         val_acc = np.asarray(log.history['val_acc'])
@@ -339,18 +341,20 @@ def train(learnFile, testFile):
         100*np.amax(val_acc), 100*val_acc[-1]))
         print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}\n".format(np.average(val_loss), np.amin(val_loss), val_loss[-1]))
 
-        print('  ========================================================')
-        print("  Real class\t| Predicted class\t| Probability")
-        print("  ---------------------------------------------------")
-        predictions = model.predict(A_test)
-        for i in range(predictions.shape[0]):
-            predClass = np.argmax(predictions[i])
-            predProb = round(100*predictions[i][predClass],2)
-            predValue = le.inverse_transform([predClass])[0]
-            realValue = Cl_test[i]
-            print("  {0:.2f}\t\t| {1:.2f}\t\t\t| {2:.2f}".format(realValue, predValue, predProb))
-        #print("\n  Validation - Loss: {0:.2f}; accuracy: {1:.2f}%".format(score[0], 100*score[1]))
-        print('\n  ========================================================\n')
+        if testFile:
+            predictions = model.predict(A_test)
+            print('  ===========================================================')
+            print("  Real class\t| Predicted class\t| Probability")
+            print("  ---------------------------------------------------")
+
+            for i in range(predictions.shape[0]):
+                predClass = np.argmax(predictions[i])
+                predProb = round(100*predictions[i][predClass],2)
+                predValue = le.inverse_transform([predClass])[0]
+                realValue = Cl_test[i]
+                print("  {0:.2f}\t\t| {1:.2f}\t\t\t| {2:.2f}".format(realValue, predValue, predProb))
+            #print("\n  Validation - Loss: {0:.2f}; accuracy: {1:.2f}%".format(score[0], 100*score[1]))
+            print('\n  ==========================================================\n')
 
     if dP.plotWeightsFlag == True:
         plotWeights(En, A, model)
@@ -365,29 +369,21 @@ def predict(testFile, normFile):
     else:
         import keras   # pure Keras
     
-    try:
-        with open(testFile, 'r') as f:
-            print('\n Opening sample data for prediction...')
-            Rtot = np.loadtxt(f, unpack =True)
-    except:
-        print('\033[1m' + '\n Sample data file not found \n ' + '\033[0m')
-        return
-
-    R=np.array([Rtot[1,:]])
-    Rx=Rtot[0,:]
+    R = readTestFile(testFile)
+    model = keras.models.load_model(dP.model_name)
 
     if normFile != None:
         try:
-            norm = pickle.loads(open(normFile, "rb").read())
-            print("\n  Opening pkl file with normalization data:",normFile)
+            norm = pickle.loads(open(dP.normFile, "rb").read())
+            print("\n  Opening pkl file with normalization data:",dP.normFile)
         except:
             print("\033[1m pkl file not found \033[0m")
             return
+
     
     if dP.regressor:
-        model = keras.models.load_model("keras_model_regressor.hd5")
         predictions = model.predict(R).flatten()[0]
-        print('  ========================================================')
+        print('\n  ========================================================')
         print('  \033[1mKeras MLP - Regressor\033[0m - Prediction')
         print('  ========================================================')
         if normFile != None:
@@ -399,14 +395,13 @@ def predict(testFile, normFile):
         print('  ========================================================\n')
         
     else:
-        le = pickle.loads(open("keras_le.pkl", "rb").read())
-        model = keras.models.load_model("keras_model.hd5")
-        predictions = model.predict(R, verbose=1)
+        le = pickle.loads(open(dP.model_le, "rb").read())
+        predictions = model.predict(R, verbose=0)
         pred_class = np.argmax(predictions)
         predProb = round(100*predictions[0][pred_class],2)
         rosterPred = np.where(predictions[0]>0.1)[0]
 
-        print('  ========================================================')
+        print('\n  ========================================================')
         print('  \033[1mKeras MLP - Classifier\033[0m - Prediction')
         print('  ========================================================')
 
@@ -444,6 +439,7 @@ def batchPredict(testFile, normFile):
         import keras   # pure Keras
 
     En_test, A_test, Cl_test = readLearnFile(testFile)
+    model = keras.models.load_model(dP.model_name)
 
     if normFile != None:
         try:
@@ -454,9 +450,7 @@ def batchPredict(testFile, normFile):
             return
 
     if dP.regressor:
-        summaryFileName = os.path.splitext(testFile)[0]+"_regressor-summary.csv"
         summaryFile = np.array([['DataML','Regressor','',''],['Real Value','Prediction','val_loss','val_abs_mean_error']])
-        model = keras.models.load_model("keras_model_regressor.hd5")
         predictions = model.predict(A_test)
         score = model.evaluate(A_test, Cl_test, batch_size=dP.batch_size, verbose = 0)
         print('  ==========================================================')
@@ -479,10 +473,8 @@ def batchPredict(testFile, normFile):
             summaryFile = np.vstack((summaryFile,[realValue,predValue,score[0], score[1]]))
         print('  ==========================================================\n')
     else:
-        summaryFileName = os.path.splitext(testFile)[0]+"_classifier-summary.csv"
         summaryFile = np.array([['DataML','Classifier',''],['Real Class','Predicted Class', 'Probability']])
-        le = pickle.loads(open("keras_le.pkl", "rb").read())
-        model = keras.models.load_model("keras_model.hd5")
+        le = pickle.loads(open(dP.model_le, "rb").read())
         predictions = model.predict(A_test)
         print('  ========================================================')
         print('  \033[1mKeras MLP - Classifier\033[0m - Batch Prediction')
@@ -503,8 +495,8 @@ def batchPredict(testFile, normFile):
         print('  ========================================================\n')
 
     df = pd.DataFrame(summaryFile)
-    df.to_csv(summaryFileName, index=False, header=False)
-    print(" Prediction summary saved in:",summaryFileName,"\n")
+    df.to_csv(dP.summaryFileName, index=False, header=False)
+    print(" Prediction summary saved in:",dP.summaryFileName,"\n")
 
 #************************************
 # Open Learning Data
@@ -533,6 +525,17 @@ def readLearnFile(learnFile):
         Cl = M[1:,[0,dP.numLabels-1]]
 
     return En, A, Cl
+
+#************************************
+# Open Testing Data
+#************************************
+def readTestFile(testFile):
+    with open(testFile, 'r') as f:
+        print('\n  Opening sample data for prediction:\n  ',testFile)
+        Rtot = np.loadtxt(f, unpack =True)
+    R=np.array([Rtot[1,:]])
+    Rx=np.array([Rtot[0,:]])
+    return R
 
 #************************************
 # Print NN Info
