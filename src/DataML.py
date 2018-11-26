@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20181121a
+* 20181126a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -103,6 +103,7 @@ class Conf():
 # Main
 #************************************
 def main():
+    dP = Conf()
     start_time = time.clock()
     try:
         opts, args = getopt.getopt(sys.argv[1:],
