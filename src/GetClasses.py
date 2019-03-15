@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * GetClasses
-* 20190314a
+* 20190315a
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
 '''
@@ -32,13 +32,14 @@ def main():
         le = pickle.loads(open(sys.argv[2], "rb").read())
         print("\n Classes: ",le.classes_())
 
-        normText = ""
+        normText = []
         for i in le.classes_():
-            normText += "{0:.2f}  {1:.2f}\n".format(i,norm.transform_inverse_single(i))
+            #normText += "{0:.2f}  {1:.2f}\n".format(i,norm.transform_inverse_single(i))
+            normText.append(norm.transform_inverse_single(i))
         print("\n Normalized classes: \n",normText)
 
         with open(os.path.splitext(sys.argv[1])[0]+".txt", "w+") as text_file:
-            text_file.write(normText)
+            text_file.write(str(normText))
         print("\n Classes saved in:",os.path.splitext(sys.argv[1])[0]+".txt\n")
     except:
         print("\n Invalid/missing File \n")

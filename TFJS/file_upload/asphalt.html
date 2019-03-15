@@ -10,10 +10,11 @@
     <h1>ML - test - Asphalt</h1>
     <form action="javascript:void(0);" id="the_form">
       <input type="file" id="the_file" required="required" accept=".csv"/>
-      <input type="submit" value="Go" class="btn"/>
+      <input type="submit" value="Predict" class="btn"/>
     </form>
     <div id="file_info"></div>
     <div id="list"></div>
+    <div id="list2"></div>
   </div>
 <script type="text/javascript">
 
@@ -37,10 +38,10 @@
               var table = document.createElement('table');
 	      var data = JSON.parse("[[" + rows + "]]");
 	      	      
-	      document.getElementById('list').innerText = data;
-
+	      //document.getElementById('list').innerText = data;
               predict(data);
-
+	     
+	     //setClasses();
             /*
               for (var i = 0; i < rows.length; i++){
                 var tr = document.createElement('tr');
@@ -80,8 +81,26 @@ async function predict(data){
     document.getElementById('list').innerText = xp;
 
     const prediction = model.predict(xp);
-    document.getElementById('list').innerText = prediction.dataSync();
+    var results = prediction.dataSync().indexOf(1);
+    norm = await getClasses();
+    //console.info(results, norm[results]);
+    
+    document.getElementById('list').innerText = "Predicted value: "+norm[results];
+    //document.getElementById('list2').innerText = norm;
     }
+
+async function getClasses() {
+    const response = await fetch("./norm.txt");
+    const normal = await response.text();
+    var allNames = JSON.parse("[" + normal + "]");
+    //console.info(allNames);
+    return allNames[0];
+    }
+
+async function setClasses() {
+     normalClasses = await getClasses();
+     document.getElementById('list2').innerText = normalClasses;
+}
 
  document.getElementById('the_form').addEventListener('submit', handleFileSelect, false);
  document.getElementById('the_file').addEventListener('change', fileInfo, false);
