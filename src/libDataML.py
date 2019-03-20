@@ -2,7 +2,7 @@
 '''
 **********************************************************
 * libDataML - Library for DataML
-* 20190312a
+* 20190320b
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -60,6 +60,13 @@ class Normalizer(object):
         Vn = np.copy(V)
         for i in range(0,V.shape[0]):
             Vn[i,1] = np.multiply(V[i,1] - self.min[i+1],
+                self.YnormTo/(self.max[i+1] - self.min[i+1]))
+        return Vn
+    
+    def transform_valid_data(self,V):
+        Vn = np.copy(V)
+        for i in range(0,V.shape[1]):
+            Vn[0][i] = np.multiply(V[0][i] - self.min[i+1],
                 self.YnormTo/(self.max[i+1] - self.min[i+1]))
         return Vn
     

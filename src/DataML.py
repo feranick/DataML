@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20190312a
+* 20190320b
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -375,12 +375,13 @@ def predict(testFile, normFile):
 
     if normFile != None:
         try:
-            norm = pickle.loads(open(dP.normFile, "rb").read())
-            print("\n  Opening pkl file with normalization data:",dP.normFile)
+            norm = pickle.loads(open(normFile, "rb").read())
+            print("\n  Opening pkl file with normalization data:",normFile)
+            print(" Normalizing validation file for prediction...")
+            R = norm.transform_valid_data(R)
         except:
             print("\033[1m pkl file not found \033[0m")
             return
-
     
     if dP.regressor:
         predictions = model.predict(R).flatten()[0]
