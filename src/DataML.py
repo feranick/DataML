@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20190320b
+* 20190320c
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -451,6 +451,7 @@ def batchPredict(testFile, normFile):
             print("\033[1m" + " pkl file not found \n" + "\033[0m")
             return
 
+    covMatrix = np.empty((0,2))
     if dP.regressor:
         summaryFile = np.array([['DataML','Regressor','',''],['Real Value','Prediction','val_loss','val_abs_mean_error']])
         predictions = model.predict(A_test)
@@ -473,6 +474,7 @@ def batchPredict(testFile, normFile):
             
             print("  {0:.2f}\t\t| {1:.2f}\t\t| {2:.4f}\t| {3:.4f} ".format(realValue, predValue, score[0], score[1]))
             summaryFile = np.vstack((summaryFile,[realValue,predValue,score[0], score[1]]))
+            covMatrix = np.vstack((covMatrix,[realValue,predValue]))
         print('  ==========================================================\n')
     else:
         summaryFile = np.array([['DataML','Classifier',''],['Real Class','Predicted Class', 'Probability']])
@@ -494,11 +496,21 @@ def batchPredict(testFile, normFile):
                 realValue = Cl_test[i]
             print("  {0:.2f}\t\t| {1:.2f}\t\t\t| {2:.2f}".format(realValue, predValue, predProb))
             summaryFile = np.vstack((summaryFile,[realValue,predValue,predProb]))
+            covMatrix = np.vstack((covMatrix,[realValue,predValue]))
+            
         print('  ========================================================\n')
+
+    from scipy.stats import pearsonr, spearmanr
+    pearsonr_corr, _ = pearsonr(covMatrix[:,0],covMatrix[:,1])
+    summaryFile = np.vstack((summaryFile,['PearsonR',pearsonr_corr,'']))
+    spearmanr_corr, _ = pearsonr(covMatrix[:,0],covMatrix[:,1])
+    summaryFile = np.vstack((summaryFile,['SpearmanR',spearmanr_corr,'']))
+    print(" PearsonR correlation: {0:0.3f}".format(pearsonr_corr))
+    print(" SpearmanR correlation: {0:0.4f}".format(spearmanr_corr))
 
     df = pd.DataFrame(summaryFile)
     df.to_csv(dP.summaryFileName, index=False, header=False)
-    print(" Prediction summary saved in:",dP.summaryFileName,"\n")
+    print("\n Prediction summary saved in:",dP.summaryFileName,"\n")
 
 #************************************
 # Open Learning Data
