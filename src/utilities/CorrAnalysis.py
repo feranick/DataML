@@ -6,7 +6,7 @@
 * CorrAnalysis
 * Correlation analysis
 *
-* version: 20190320b
+* version: 20190326a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 *
@@ -48,8 +48,8 @@ def main():
     P,headP = readParamFile(sys.argv[1], dP.trainCol)
     V,headV = readParamFile(sys.argv[1], dP.predCol)
     rootFile = os.path.splitext(sys.argv[1])[0]
-    pearsonFile = rootFile + '-p' + str(dP.predCol[0]) + '_pearsonR.csv'
-    spearmanFile = rootFile + '-p' + str(dP.predCol[0]) + '_spearmanR.csv'
+    pearsonFile = rootFile + '_pearsonR.csv'
+    spearmanFile = rootFile + '_spearmanR.csv'
 
     pearsonR=np.empty((V.shape[1],P.shape[1]))
     spearmanR=np.empty((V.shape[1],P.shape[1]))
@@ -74,8 +74,8 @@ def main():
     print(" SpearmanR correlation summary saved in:",spearmanFile,"\n")
 
     if dP.plotCorr:
-        plotCorrelation(dfP)
-        plotCorrelation(dfS)
+        plotCorrelation(dfP, "PearsonR correlation")
+        plotCorrelation(dfS, "SpearmanR correlation")
 
 #************************************
 # Open Learning Data
@@ -98,7 +98,44 @@ def readParamFile(paramFile, lims):
 #************************************
 # Open Learning Data
 #************************************
-def plotCorrelation(dfP):
+def plotCorrelation(dfP, title):
+    import matplotlib.pyplot as plt
+    data = dfP.to_numpy()
+    Rlabels = dfP.index.tolist()
+    Clabels = dfP.columns.values
+
+    fig, ax = plt.subplots(figsize=(18, 7))
+    im = ax.imshow(data)
+
+    ax.set_xticks(np.arange(len(Clabels)))
+    ax.set_yticks(np.arange(len(Rlabels)))
+    ax.set_xticklabels(Clabels)
+    ax.set_yticklabels(Rlabels)
+
+    # Rotate the tick labels and set their alignment.
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+         rotation_mode="anchor")
+
+    '''
+    # Loop over data dimensions and create text annotations.
+    for i in range(len(Rlabels)):
+        for j in range(len(Clabels)):
+            text = ax.text(j, i, data[i, j],
+                       ha="center", va="center", color="w")
+    '''
+
+    cbar = ax.figure.colorbar(im, ax=ax, cmap="YlGn")
+    cbar.ax.set_ylabel("correlation", rotation=-90, va="bottom")
+    
+    ax.set_title(title)
+    #fig.tight_layout()
+    ax.grid(which="minor", color="w", linestyle='-', linewidth=3)
+    plt.show()
+
+#************************************
+# Open Learning Data
+#************************************
+def plotCorrelationOld(dfP):
     import seaborn as sns
     import matplotlib.pyplot as plt
     mask = np.zeros_like(dfP, dtype=np.bool)
