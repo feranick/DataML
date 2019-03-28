@@ -2,7 +2,7 @@
 '''
 **********************************************************
 * libDataML - Library for DataML
-* 20190327a
+* 20190327c
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -24,6 +24,7 @@ class Normalizer(object):
         self.maxGeneralLabel = dP.maxGeneralLabel
         self.YnormTo = dP.YnormTo
         self.stepNormLabel = dP.stepNormLabel
+        self.saveNormalized = dP.saveNormalized
         
         self.data = np.arange(0,1,self.stepNormLabel)
         self.min = np.zeros([self.M.shape[1]])
@@ -50,10 +51,10 @@ class Normalizer(object):
                 customData = CustomRound(self.data)
                 for i in range(1,y.shape[0]):
                     Mn[i,0] = customData(Mn[i,0])
-
-        for i in range(1,y.shape[1]):
-            Mn[1:,i] = np.multiply(y[1:,i] - self.min[i],
-                self.YnormTo/(self.max[i] - self.min[i]))
+        if self.saveNormalized:
+            for i in range(1,y.shape[1]):
+                Mn[1:,i] = np.multiply(y[1:,i] - self.min[i],
+                    self.YnormTo/(self.max[i] - self.min[i]))
         return Mn
         
     def transform_valid(self,V):
@@ -65,9 +66,10 @@ class Normalizer(object):
     
     def transform_valid_data(self,V):
         Vn = np.copy(V)
-        for i in range(0,V.shape[1]):
-            Vn[0][i] = np.multiply(V[0][i] - self.min[i+1],
-                self.YnormTo/(self.max[i+1] - self.min[i+1]))
+        if self.saveNormalized:
+            for i in range(0,V.shape[1]):
+                Vn[0][i] = np.multiply(V[0][i] - self.min[i+1],
+                    self.YnormTo/(self.max[i+1] - self.min[i+1]))
         return Vn
     
     def transform_inverse_single(self,v):
