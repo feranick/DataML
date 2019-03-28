@@ -6,9 +6,10 @@
 * CorrAnalysis
 * Correlation analysis
 *
-* version: 20190326a
+* version: 20190328a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
+* Licence: GPL 2 or newer
 *
 ***********************************************
 '''
@@ -20,7 +21,6 @@ import sys, os.path, h5py, pickle
 from random import uniform
 from bisect import bisect_left
 from scipy.stats import pearsonr, spearmanr
-from libDataML import *
 
 #************************************
 # Parameters definition
