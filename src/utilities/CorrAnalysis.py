@@ -43,12 +43,14 @@ class dP:
     graphX = [40,41,42,43,44]
     graphY = [2,3,4,5,6]
     
-    corrMin = .6
+    corrMin = .75
     corrMax = 1
+    #corrMin = -1
+    #corrMax = -.75
 
     plotCorr = True
-    plotGraphs = True
-    plotGraphsThreshold = False
+    plotGraphs = False
+    plotGraphsThreshold = True
 
 #************************************
 # Main
