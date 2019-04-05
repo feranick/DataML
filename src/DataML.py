@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20190327c
+* 20190405a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -12,7 +12,7 @@ print(__doc__)
 
 import numpy as np
 import pandas as pd
-import sys, os.path, getopt, time, configparser, pickle, h5py, csv
+import sys, os.path, getopt, time, configparser, pickle, h5py, csv, math
 from libDataML import *
 
 #***************************************************
@@ -118,14 +118,14 @@ def main():
 
     for o, a in opts:
         if o in ("-t" , "--train"):
-            try:
-                if len(sys.argv)<4:
-                    train(sys.argv[2], None)
-                else:
-                    train(sys.argv[2], sys.argv[3])
-            except:
-                usage()
-                sys.exit(2)
+            #try:
+            if len(sys.argv)<4:
+                train(sys.argv[2], None)
+            else:
+                train(sys.argv[2], sys.argv[3])
+            #except:
+            #    usage()
+            #    sys.exit(2)
 
         if o in ("-p" , "--predict"):
             try:
@@ -289,9 +289,18 @@ def train(learnFile, testFile):
     print('  =============================================')
     #for conf in model.get_config():
     #    print(conf,"\n")
-    print("  Training set file:",learnFile)
-    print("  Data size:", A.shape,"\n")
-    print("  Number of learning labels:",dP.numLabels)
+    print("  Data size:", A.shape)
+    print("\n  Training set file:",learnFile)
+    
+    if testFile != None:
+        print("  Testing set file:",testFile)
+        print("\n  Training set file datapoints:", A.shape[0])
+        print("  Testing set file datapoints:", A_test.shape[0])
+    else:
+        print("  Testing data set from training file:",dP.cv_split*100,"%")
+        print("\n  Training set file datapoints:", math.floor(A.shape[0]*(1-dP.cv_split)))
+        print("  Testing set datapoints:", math.ceil(A.shape[0]*dP.cv_split))
+    print("\n  Number of learning labels:",dP.numLabels)
     print("  Total number of points per data:",En.size)
 
     loss = np.asarray(log.history['loss'])

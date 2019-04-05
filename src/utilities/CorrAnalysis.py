@@ -6,7 +6,7 @@
 * CorrAnalysis
 * Correlation analysis
 *
-* version: 20190401d
+* version: 20190403a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
@@ -31,26 +31,26 @@ class dP:
     
     numHeadRows = 1
     
-    trainCol = [7,54]
-    predCol = [1,7]
-    #trainCol = [1,61]
-    #predCol = [61,92]
+    #trainCol = [7,54]
+    #predCol = [1,7]
+    trainCol = [1,61]
+    predCol = [61,92]
     valueForNan = -1
     
-    #graphX = [8,10,12,13,14]
-    #graphY = [62,69,78,79,80,81]
+    graphX = [8,10,12,13,14]
+    graphY = [62,69,78,79,80,81]
     
-    graphX = [40,41,42,43,44]
-    graphY = [2,3,4,5,6]
+    validRows = [40,41,42,43]
     
-    corrMin = .75
-    corrMax = 1
-    #corrMin = -1
-    #corrMax = -.75
+    #corrMin = .8
+    #corrMax = 1
+    corrMin = -1
+    corrMax = -.6
 
     plotCorr = True
     plotGraphs = False
     plotGraphsThreshold = True
+    plotValidData = True
 
 #************************************
 # Main
@@ -99,12 +99,12 @@ def main():
         plotCorrelations(dfSpearman, "SpearmanR_correlation", pdf)
 
     if dP.plotGraphs:
-        num = plotGraphs(dfP, dP.graphX, dP.graphY, pdf)
+        num = plotGraphs(dfP, dP.graphX, dP.graphY, dP.validRows, pdf)
         print(" ",num,"Manually selected plots saved in:",plotFile,"\n")
 
     if dP.plotGraphsThreshold:
-        num1 = plotGraphThreshold(dfP, dfPearson, "PearsonR_correlation", pdf)
-        num2 = plotGraphThreshold(dfP, dfPearson, "SpearmanR_correlation", pdf)
+        num1 = plotGraphThreshold(dfP, dfPearson, dP.validRows, "PearsonR_correlation", pdf)
+        num2 = plotGraphThreshold(dfP, dfPearson, dP.validRows, "SpearmanR_correlation", pdf)
         print(" ",num1+num2,"XY plots with correlation in [",dP.corrMin,",",dP.corrMax,"] saved in:",plotFile,"\n")
     pdf.close()
 
@@ -170,7 +170,7 @@ def plotCorrelations(dfP, title, pdf):
 #************************************
 # Pllot Graphs based on manual input
 #************************************
-def plotGraphs(dfP, X, Y, pdf):
+def plotGraphs(dfP, X, Y, validRows, pdf):
     num = 0
     for i in X:
         for j in Y:
@@ -178,6 +178,8 @@ def plotGraphs(dfP, X, Y, pdf):
             xlabels = dfP.columns.values[i]
             #plt.figure()
             plt.plot(dfP.iloc[:,i],dfP.iloc[:,j], 'bo')
+            if dP.plotValidData:
+             plt.plot(dfP.iloc[validRows,i].to_list(),dfP.iloc[validRows, j].to_list(), 'ro')
             plt.xlabel(xlabels)
             plt.ylabel(ylabels)
             for k, txt, in enumerate(dfP.iloc[:,0].to_list()):
@@ -191,11 +193,14 @@ def plotGraphs(dfP, X, Y, pdf):
 #************************************
 # Plot Graphs based on threshold
 #************************************
-def plotGraphThreshold(dfP, dfC, title, pdf):
+def plotGraphThreshold(dfP, dfC, validRows, title, pdf):
     num = 0
+    #print(dfP.loc[validRows,1])
     for col in dfC.columns:
         for ind in dfC[dfC[col].between(dP.corrMin,dP.corrMax)].index:
             plt.plot(dfP[col].to_list(),dfP[ind].to_list(), 'bo')
+            if dP.plotValidData:
+                plt.plot(dfP.loc[validRows,col].to_list(),dfP.loc[validRows, ind].to_list(), 'ro')
             plt.xlabel(col)
             plt.ylabel(ind)
             plt.title(title+": {0:.3f}".format(dfC[col].loc[ind]))
