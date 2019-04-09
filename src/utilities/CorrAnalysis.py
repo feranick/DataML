@@ -6,7 +6,7 @@
 * CorrAnalysis
 * Correlation analysis
 *
-* version: 20190403a
+* version: 20190408a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
@@ -17,6 +17,7 @@ print(__doc__)
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 import sys, os.path, h5py, pickle
 from random import uniform
 from bisect import bisect_left
@@ -42,15 +43,17 @@ class dP:
     
     validRows = [40,41,42,43]
     
-    #corrMin = .8
-    #corrMax = 1
-    corrMin = -1
-    corrMax = -.6
+    corrMin = .8
+    corrMax = 1
+    #corrMin = -1
+    #corrMax = -.6
 
     plotCorr = True
     plotGraphs = False
     plotGraphsThreshold = True
     plotValidData = True
+    plotLinRegression = True
+    polyDegree = 1
 
 #************************************
 # Main
@@ -179,7 +182,7 @@ def plotGraphs(dfP, X, Y, validRows, pdf):
             #plt.figure()
             plt.plot(dfP.iloc[:,i],dfP.iloc[:,j], 'bo')
             if dP.plotValidData:
-             plt.plot(dfP.iloc[validRows,i].to_list(),dfP.iloc[validRows, j].to_list(), 'ro')
+                plt.plot(dfP.iloc[validRows,i].to_list(),dfP.iloc[validRows, j].to_list(), 'ro')
             plt.xlabel(xlabels)
             plt.ylabel(ylabels)
             for k, txt, in enumerate(dfP.iloc[:,0].to_list()):
@@ -198,14 +201,22 @@ def plotGraphThreshold(dfP, dfC, validRows, title, pdf):
     #print(dfP.loc[validRows,1])
     for col in dfC.columns:
         for ind in dfC[dfC[col].between(dP.corrMin,dP.corrMax)].index:
-            plt.plot(dfP[col].to_list(),dfP[ind].to_list(), 'bo')
+            x = dfP[col].to_list()
+            y = dfP[ind].to_list()
+            plt.plot(x,y, 'bo')
             if dP.plotValidData:
                 plt.plot(dfP.loc[validRows,col].to_list(),dfP.loc[validRows, ind].to_list(), 'ro')
             plt.xlabel(col)
             plt.ylabel(ind)
             plt.title(title+": {0:.3f}".format(dfC[col].loc[ind]))
             for k, txt, in enumerate(dfP.iloc[:,0].to_list()):
-                plt.annotate(txt,xy=(dfP[col].to_list()[k],dfP[ind].to_list()[k]), fontsize='x-small')
+                plt.annotate(txt,xy=(x[k],y[k]), fontsize='x-small')
+            if dP.plotLinRegression:
+                #z = np.polyfit(x, y, dP.polyDegree, full=True)
+                #print(z)
+                plt.plot(np.unique(x), np.poly1d(np.polyfit(x, y, dP.polyDegree))(np.unique(x)))
+                #slope, intercept, r_value, p_value, std_err = stats.linregress(x,y)
+                #plt.plot(np.unique(x),slope*np.unique(x)+intercept)
             #plt.legend(loc='upper left')
             pdf.savefig()
             plt.close()
