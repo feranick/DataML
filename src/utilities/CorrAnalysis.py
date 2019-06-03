@@ -125,9 +125,6 @@ def readParamFile(paramFile, lims):
             headP = np.genfromtxt(f, unpack = False, usecols=range(lims[0],lims[1]),
                 delimiter = ',', skip_header=dP.skipHeadRows, skip_footer=P.shape[0], dtype=np.str)
 
-        print(P)
-        print(headP)
-        print(dfP)
     except:
         print("\033[1m Param file:",paramFile," not found/broken \n\033[0m")
         return
