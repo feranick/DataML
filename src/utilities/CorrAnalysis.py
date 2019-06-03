@@ -6,7 +6,7 @@
 * CorrAnalysis
 * Correlation analysis
 *
-* version: 20190408a
+* version: 20190604a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
@@ -30,7 +30,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 #************************************
 class dP:
     
-    numHeadRows = 1
+    skipHeadRows = 0
     
     #trainCol = [7,54]
     #predCol = [1,7]
@@ -117,15 +117,17 @@ def main():
 def readParamFile(paramFile, lims):
     try:
         with open(paramFile, 'r') as f:
-            #P = np.genfromtxt(f, unpack = False, usecols=range(lims[0],lims[1]),
-            #    delimiter = ',', skip_header=dP.numHeadRows)
-            dfP = pd.read_csv(f, delimiter = ",")
+            dfP = pd.read_csv(f, delimiter = ",", skiprows=dP.skipHeadRows)
             P = dfP.iloc[:,range(lims[0],lims[1])].to_numpy()
             P[np.isnan(P)] = dP.valueForNan
 
         with open(paramFile, 'r') as f:
             headP = np.genfromtxt(f, unpack = False, usecols=range(lims[0],lims[1]),
-                delimiter = ',', skip_footer=P.shape[0], dtype=np.str)
+                delimiter = ',', skip_header=dP.skipHeadRows, skip_footer=P.shape[0], dtype=np.str)
+
+        print(P)
+        print(headP)
+        print(dfP)
     except:
         print("\033[1m Param file:",paramFile," not found/broken \n\033[0m")
         return
