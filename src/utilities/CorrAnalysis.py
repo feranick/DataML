@@ -6,7 +6,7 @@
 * CorrAnalysis
 * Correlation analysis
 *
-* version: 20190604a
+* version: 20190605a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
@@ -29,13 +29,14 @@ from matplotlib.backends.backend_pdf import PdfPages
 # Parameters definition
 #************************************
 class dP:
-    
-    skipHeadRows = 0
+    skipHeadRows = 1
     
     #trainCol = [7,54]
     #predCol = [1,7]
     trainCol = [1,61]
-    predCol = [61,92]
+    #trainCol = [61,106]
+    predCol = [1,61]
+    #predCol = [61,106]
     valueForNan = -1
     
     graphX = [8,10,12,13,14]
@@ -43,10 +44,10 @@ class dP:
     
     validRows = [40,41,42,43]
     
-    corrMin = .8
+    corrMin = .9
     corrMax = 1
     #corrMin = -1
-    #corrMax = -.6
+    #corrMax = -.7
 
     plotCorr = True
     plotGraphs = False
@@ -138,7 +139,7 @@ def plotCorrelations(dfP, title, pdf):
     Rlabels = dfP.index.tolist()
     Clabels = dfP.columns.values
 
-    fig, ax = plt.subplots(figsize=(18, 7))
+    fig, ax = plt.subplots(figsize=(20, 20))
     im = ax.imshow(data)
 
     ax.set_xticks(np.arange(len(Clabels)))
@@ -213,7 +214,10 @@ def plotGraphThreshold(dfP, dfC, validRows, title, pdf):
             if dP.plotLinRegression:
                 #z = np.polyfit(x, y, dP.polyDegree, full=True)
                 #print(z)
-                plt.plot(np.unique(x), np.poly1d(np.polyfit(x, y, dP.polyDegree))(np.unique(x)))
+                try:
+                    plt.plot(np.unique(x), np.poly1d(np.polyfit(x, y, dP.polyDegree))(np.unique(x)))
+                except:
+                    pass
                 #slope, intercept, r_value, p_value, std_err = stats.linregress(x,y)
                 #plt.plot(np.unique(x),slope*np.unique(x)+intercept)
             #plt.legend(loc='upper left')
