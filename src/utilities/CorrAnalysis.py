@@ -6,7 +6,7 @@
 * CorrAnalysis
 * Correlation analysis
 *
-* version: 20190605a
+* version: 20190605b
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
@@ -44,7 +44,7 @@ class dP:
     
     validRows = [40,41,42,43]
     
-    corrMin = .9
+    corrMin = .8
     corrMax = 1
     #corrMin = -1
     #corrMax = -.7
@@ -201,6 +201,7 @@ def plotGraphThreshold(dfP, dfC, validRows, title, pdf):
     #print(dfP.loc[validRows,1])
     for col in dfC.columns:
         for ind in dfC[dfC[col].between(dP.corrMin,dP.corrMax)].index:
+        
             x = dfP[col].to_list()
             y = dfP[ind].to_list()
             plt.plot(x,y, 'bo')
@@ -211,15 +212,15 @@ def plotGraphThreshold(dfP, dfC, validRows, title, pdf):
             plt.title(title+": {0:.3f}".format(dfC[col].loc[ind]))
             for k, txt, in enumerate(dfP.iloc[:,0].to_list()):
                 plt.annotate(txt,xy=(x[k],y[k]), fontsize='x-small')
-            if dP.plotLinRegression:
+            if dP.plotLinRegression and col != ind:
                 #z = np.polyfit(x, y, dP.polyDegree, full=True)
                 #print(z)
                 try:
+                    slope, intercept, r_value, p_value, std_err = stats.linregress(x,y)
+                    plt.text(min(x), max(y),"{0:s} = {2:.3f}*{1:s} + {3:.3f}".format(ind, col, slope, intercept))
                     plt.plot(np.unique(x), np.poly1d(np.polyfit(x, y, dP.polyDegree))(np.unique(x)))
                 except:
                     pass
-                #slope, intercept, r_value, p_value, std_err = stats.linregress(x,y)
-                #plt.plot(np.unique(x),slope*np.unique(x)+intercept)
             #plt.legend(loc='upper left')
             pdf.savefig()
             plt.close()
