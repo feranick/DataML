@@ -2,7 +2,7 @@
 '''
 **********************************************************
 * libDataML - Library for DataML
-* 20190327c
+* 20190807a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -35,8 +35,8 @@ class Normalizer(object):
                 self.min[0] = dP.minGeneralLabel
                 self.max[0] = dP.maxGeneralLabel
             else:
-                self.min[0] = np.amin(self.M[1:,0])
-                self.max[0] = np.amax(self.M[1:,0])
+                self.min[0] = np.nanmin(self.M[1:,0])
+                self.max[0] = np.nanmax(self.M[1:,0])
         
         for i in range(1,M.shape[1]):
             self.min[i] = np.amin(self.M[1:,i])
