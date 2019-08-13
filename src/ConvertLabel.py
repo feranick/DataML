@@ -6,13 +6,13 @@
 * ConvertLabel
 * Convert normalized labels into actual labels
 *
-* version: 20181102c
+* version: 20190813a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 *
 ***********************************************
 '''
-print(__doc__)
+#print(__doc__)
 
 import numpy as np
 import sys, os.path, h5py, pickle
@@ -31,13 +31,14 @@ def ConvertLabel():
 def main():
 
     if len(sys.argv) < 2:
+        print(__doc__)
         print(' Usage:\n  python3 ConvertLabel.py <pkl file> <number to convert>')
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
     
     try:
         norm = pickle.loads(open(sys.argv[1], "rb").read())
-        print(" Opening pkl file with normalization data:",sys.argv[1],"\n")
+        print("\n Opening pkl file with normalization data:",sys.argv[1],"\n")
     except:
         print("\033[1m" + " pkl file not found \n" + "\033[0m")
         return
