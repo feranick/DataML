@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20190807a
+* 20190813a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -326,7 +326,7 @@ def train(learnFile, testFile):
             print("  -----------------------------------------------------------")
             for i in range(0,len(predictions)):
                 score = model.evaluate(np.array([A_test[i]]), np.array([Cl_test[i]]), batch_size=dP.batch_size, verbose = 0)
-                print("  {0:.2f}\t\t| {1:.2f}\t\t| {2:.4f}\t| {3:.4f} ".format(Cl2_test[i],
+                print("  {0:.3f}\t\t| {1:.3f}\t\t| {2:.4f}\t| {3:.4f} ".format(Cl2_test[i],
                     predictions[i][0], score[0], score[1]))
             print('\n  ===========================================================\n')
     else:
