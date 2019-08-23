@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20190813a
+* 20190823a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -120,9 +120,12 @@ def main():
         if o in ("-t" , "--train"):
             try:
                 if len(sys.argv)<4:
-                    train(sys.argv[2], None)
+                    train(sys.argv[2], None, None)
                 else:
-                    train(sys.argv[2], sys.argv[3])
+                    if len(sys.argv)<5:
+                        train(sys.argv[2], sys.argv[3], None)
+                    else:
+                        train(sys.argv[2], sys.argv[3], sys.argv[4])
             except:
                 usage()
                 sys.exit(2)
@@ -154,7 +157,7 @@ def main():
 #************************************
 # Training
 #************************************
-def train(learnFile, testFile):
+def train(learnFile, testFile, normFile):
     import tensorflow as tf
     dP = Conf()
     
@@ -305,6 +308,15 @@ def train(learnFile, testFile):
 
     loss = np.asarray(log.history['loss'])
     val_loss = np.asarray(log.history['val_loss'])
+    
+    if normFile != None:
+        try:
+            norm = pickle.loads(open(normFile, "rb").read())
+            print("\n  Opening pkl file with normalization data:",normFile)
+            print(" Normalizing validation file for prediction...")
+        except:
+            print("\033[1m pkl file not found \033[0m")
+            return
 
     if dP.regressor:
         val_mae = np.asarray(log.history['val_mean_absolute_error'])
@@ -326,8 +338,12 @@ def train(learnFile, testFile):
             print("  -----------------------------------------------------------")
             for i in range(0,len(predictions)):
                 score = model.evaluate(np.array([A_test[i]]), np.array([Cl_test[i]]), batch_size=dP.batch_size, verbose = 0)
-                print("  {0:.3f}\t\t| {1:.3f}\t\t| {2:.4f}\t| {3:.4f} ".format(Cl2_test[i],
-                    predictions[i][0], score[0], score[1]))
+                if normFile != None:
+                    print("  {0:.3f} ({1:.3f})  |  {2:.3f} ({3:.3f})  | {4:.4f}  |  {5:.4f} ".format(norm.transform_inverse_single(Cl2_test[i]),
+                        Cl2_test[i], norm.transform_inverse_single(predictions[i][0]), predictions[i][0], score[0], score[1]))
+                else:
+                    print("  {0:.3f}\t\t| {1:.3f}\t\t| {2:.4f}\t| {3:.4f} ".format(Cl2_test[i],
+                        predictions[i][0], score[0], score[1]))
             print('\n  ===========================================================\n')
     else:
         accuracy = np.asarray(log.history['acc'])
@@ -362,7 +378,11 @@ def train(learnFile, testFile):
                 predProb = round(100*predictions[i][predClass],2)
                 predValue = le.inverse_transform([predClass])[0]
                 realValue = Cl_test[i]
-                print("  {0:.2f}\t\t| {1:.2f}\t\t\t| {2:.2f}".format(realValue, predValue, predProb))
+                if normFile != None:
+                    print("  {0:.2f} ({1:.2f})  |  {2:.2f} ({3:.2f})  |  {4:.2f}".format(norm.transform_inverse_single(realValue),
+                        realValue, norm.transform_inverse_single(predValue), predValue, predProb))
+                else:
+                    print("  {0:.2f}\t\t| {1:.2f}\t\t\t| {2:.2f}".format(realValue, predValue, predProb))
             #print("\n  Validation - Loss: {0:.2f}; accuracy: {1:.2f}%".format(score[0], 100*score[1]))
             print('\n  ==========================================================\n')
 
@@ -617,6 +637,8 @@ def usage():
     print('  python3 DataML.py -t <learningFile>\n')
     print(' Train (with external validation):')
     print('  python3 DataML.py -t <learningFile> <validationFile>\n')
+    print(' Train (with external validation, with labels normalized with pkl file):')
+    print('  python3 DataML.py -t <learningFile> <validationFile> <pkl normalization file>\n')
     print(' Predict (no label normalization used):')
     print('  python3 DataML.py -p <testFile>\n')
     print(' Predict (labels normalized with pkl file):')
