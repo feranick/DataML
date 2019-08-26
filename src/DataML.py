@@ -188,18 +188,18 @@ def train(learnFile, testFile, normFile):
     
     else:
         #conf.gpu_options.allow_growth = True
-        opts = tf.GPUOptions(per_process_gpu_memory_fraction=1)
-        conf = tf.ConfigProto(gpu_options=opts)
+        opts = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=1)
+        conf = tf.compat.v1.ConfigProto(gpu_options=opts)
     
         if dP.useTFKeras:
             print("Using tf.keras API")
             import tensorflow.keras as keras  #tf.keras
-            tf.Session(config=conf)
+            tf.compat.v1.Session(config=conf)
         else:
             print("Using pure keras API")
             import keras   # pure keras
             from keras.backend.tensorflow_backend import set_session
-            set_session(tf.Session(config=conf))
+            set_session(tf.compat.v1.Session(config=conf))
             
         def_val_mae = 'val_mean_absolute_error'
         def_acc = 'acc'
