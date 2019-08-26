@@ -65,6 +65,8 @@ class Conf():
     def sysDef(self):
         self.conf['System'] = {
             'useTFKeras' : False,
+            #'setMaxMem' : False,   # TensorFlow 2.0
+            #'maxMem' : 4096,       # TensorFlow 2.0
             }
 
     def readConfig(self,configFile):
@@ -86,6 +88,8 @@ class Conf():
             self.numLabels = self.conf.getint('Parameters','numLabels')
             self.plotWeightsFlag = self.conf.getboolean('Parameters','plotWeightsFlag')
             self.useTFKeras = self.conf.getboolean('System','useTFKeras')
+            #self.setMaxMem = self.conf.getboolean('System','setMaxMem')     # TensorFlow 2.0
+            #self.maxMem = self.conf.getint('System','maxMem')   # TensorFlow 2.0
         except:
             print(" Error in reading configuration file. Please check it\n")
 
@@ -161,12 +165,25 @@ def train(learnFile, testFile, normFile):
     import tensorflow as tf
     dP = Conf()
     
+    ### TensorFlow 1.x
     # Use this to restrict GPU memory allocation in TF
     opts = tf.GPUOptions(per_process_gpu_memory_fraction=1)
     #opts = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=1)     # Tensorflow 2.0
     conf = tf.ConfigProto(gpu_options=opts)
     #conf = tf.compat.v1.ConfigProto(gpu_options=opts)  # Tensorflow 2.0
     #conf.gpu_options.allow_growth = True
+    ###
+    
+    ### TensorFlow 2.0 only
+    #gpus = tf.config.experimental.list_physical_devices('GPU')
+    #if gpus:
+    #    for gpu in gpus:
+    #        tf.config.experimental.set_memory_growth(gpu, True)
+    #    if dP.setMaxMem:
+    #        tf.config.experimental.set_virtual_device_configuration(
+    #          gpus[0],
+    #          [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=dP.maxMem)])
+    ###
     
     if dP.useTFKeras:
         print("Using tf.keras API")
