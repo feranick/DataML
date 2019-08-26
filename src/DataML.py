@@ -65,6 +65,7 @@ class Conf():
     def sysDef(self):
         self.conf['System'] = {
             'useTFKeras' : False,
+            'useTF2' : False,
             #'setMaxMem' : False,   # TensorFlow 2.0
             #'maxMem' : 4096,       # TensorFlow 2.0
             }
@@ -88,6 +89,7 @@ class Conf():
             self.numLabels = self.conf.getint('Parameters','numLabels')
             self.plotWeightsFlag = self.conf.getboolean('Parameters','plotWeightsFlag')
             self.useTFKeras = self.conf.getboolean('System','useTFKeras')
+            self.useTF2 = self.conf.getboolean('System','useTF2')
             #self.setMaxMem = self.conf.getboolean('System','setMaxMem')     # TensorFlow 2.0
             #self.maxMem = self.conf.getint('System','maxMem')   # TensorFlow 2.0
         except:
@@ -165,37 +167,43 @@ def train(learnFile, testFile, normFile):
     import tensorflow as tf
     dP = Conf()
     
-    ### TensorFlow 1.x
-    # Use this to restrict GPU memory allocation in TF
-    opts = tf.GPUOptions(per_process_gpu_memory_fraction=1)
-    #opts = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=1)     # Tensorflow 2.0
-    conf = tf.ConfigProto(gpu_options=opts)
-    #conf = tf.compat.v1.ConfigProto(gpu_options=opts)  # Tensorflow 2.0
-    #conf.gpu_options.allow_growth = True
-    ###
-    
-    ### TensorFlow 2.0 only
-    #gpus = tf.config.experimental.list_physical_devices('GPU')
-    #if gpus:
-    #    for gpu in gpus:
-    #        tf.config.experimental.set_memory_growth(gpu, True)
-    #    if dP.setMaxMem:
-    #        tf.config.experimental.set_virtual_device_configuration(
-    #          gpus[0],
-    #          [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=dP.maxMem)])
-    ###
-    
-    if dP.useTFKeras:
+    if dP.useTF2:
         print("Using tf.keras API")
         import tensorflow.keras as keras  #tf.keras
-        #tf.compat.v1.Session(config=conf)  # Tensorflow 2.0
-        tf.Session(config=conf)
+        opts = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=1)     # Tensorflow 2.0
+        conf = tf.compat.v1.ConfigProto(gpu_options=opts)  # Tensorflow 2.0
+        
+        #gpus = tf.config.experimental.list_physical_devices('GPU')
+        #if gpus:
+        #   for gpu in gpus:
+        #       tf.config.experimental.set_memory_growth(gpu, True)
+        #       if dP.setMaxMem:
+        #            tf.config.experimental.set_virtual_device_configuration(
+        #             gpus[0],
+        #             [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=dP.maxMem)])
+        
+        def_val_mae = 'val_mae'
+        def_acc = 'acc'
+        def_val_acc = 'val_acc'
+    
     else:
-        print("Using pure keras API")
-        import keras   # pure keras
-        from keras.backend.tensorflow_backend import set_session
-        #set_session(tf.compat.v1.Session(config=conf))     # Tensorflow 2.0
-        set_session(tf.Session(config=conf))
+        #conf.gpu_options.allow_growth = True
+        opts = tf.GPUOptions(per_process_gpu_memory_fraction=1)
+        conf = tf.ConfigProto(gpu_options=opts)
+    
+        if dP.useTFKeras:
+            print("Using tf.keras API")
+            import tensorflow.keras as keras  #tf.keras
+            tf.Session(config=conf)
+        else:
+            print("Using pure keras API")
+            import keras   # pure keras
+            from keras.backend.tensorflow_backend import set_session
+            set_session(tf.Session(config=conf))
+            
+        def_val_mae = 'val_mean_absolute_error'
+        def_acc = 'accuracy'
+        def_val_acc = 'val_accuracy'
 
     learnFileRoot = os.path.splitext(learnFile)[0]
 
@@ -305,7 +313,8 @@ def train(learnFile, testFile, normFile):
             verbose=2,
 	        validation_split=dP.cv_split)
 
-    model.save(dP.model_name)
+    if not dP.useTF2:
+        model.save(dP.model_name)
     keras.utils.plot_model(model, to_file=dP.model_png, show_shapes=True)
 
     print('\n  =============================================')
@@ -340,7 +349,7 @@ def train(learnFile, testFile, normFile):
             return
 
     if dP.regressor:
-        val_mae = np.asarray(log.history['val_mean_absolute_error'])
+        val_mae = np.asarray(log.history[def_val_mae])
         printParam()
         print('\n  ==========================================================')
         print('  \033[1mKeras MLP - Regressor\033[0m - Training Summary')
@@ -367,8 +376,9 @@ def train(learnFile, testFile, normFile):
                         predictions[i][0], score[0], score[1]))
             print('\n  ===========================================================\n')
     else:
-        accuracy = np.asarray(log.history['acc'])
-        val_acc = np.asarray(log.history['val_acc'])
+        accuracy = np.asarray(log.history[def_acc])
+        val_acc = np.asarray(log.history[def_val_acc])
+        
         print("  Number unique classes (training): ", np.unique(Cl).size)
         if testFile != None:
             Cl2_test = le.transform(Cl_test)
