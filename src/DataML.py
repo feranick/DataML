@@ -177,14 +177,14 @@ def train(learnFile, testFile, normFile):
         #if gpus:
         #   for gpu in gpus:
         #       tf.config.experimental.set_memory_growth(gpu, True)
-        #       if dP.setMaxMem:
-        #            tf.config.experimental.set_virtual_device_configuration(
-        #             gpus[0],
-        #             [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=dP.maxMem)])
+        #   if dP.setMaxMem:
+        #       tf.config.experimental.set_virtual_device_configuration(
+        #         gpus[0],
+        #         [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=dP.maxMem)])
         
         def_val_mae = 'val_mae'
-        def_acc = 'acc'
-        def_val_acc = 'val_acc'
+        def_acc = 'accuracy'
+        def_val_acc = 'val_accuracy'
     
     else:
         #conf.gpu_options.allow_growth = True
@@ -202,8 +202,8 @@ def train(learnFile, testFile, normFile):
             set_session(tf.Session(config=conf))
             
         def_val_mae = 'val_mean_absolute_error'
-        def_acc = 'accuracy'
-        def_val_acc = 'val_accuracy'
+        def_acc = 'acc'
+        def_val_acc = 'val_acc'
 
     learnFileRoot = os.path.splitext(learnFile)[0]
 
