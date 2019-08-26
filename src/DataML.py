@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20190823a
+* 20190826a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -163,17 +163,21 @@ def train(learnFile, testFile, normFile):
     
     # Use this to restrict GPU memory allocation in TF
     opts = tf.GPUOptions(per_process_gpu_memory_fraction=1)
+    #opts = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=1)     # Tensorflow 2.0
     conf = tf.ConfigProto(gpu_options=opts)
+    #conf = tf.compat.v1.ConfigProto(gpu_options=opts)  # Tensorflow 2.0
     #conf.gpu_options.allow_growth = True
     
     if dP.useTFKeras:
         print("Using tf.keras API")
         import tensorflow.keras as keras  #tf.keras
+        #tf.compat.v1.Session(config=conf)  # Tensorflow 2.0
         tf.Session(config=conf)
     else:
         print("Using pure keras API")
         import keras   # pure keras
         from keras.backend.tensorflow_backend import set_session
+        #set_session(tf.compat.v1.Session(config=conf))     # Tensorflow 2.0
         set_session(tf.Session(config=conf))
 
     learnFileRoot = os.path.splitext(learnFile)[0]
