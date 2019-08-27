@@ -312,13 +312,8 @@ def train(learnFile, testFile, normFile):
             callbacks = tbLogs,
             verbose=2,
 	        validation_split=dP.cv_split)
-
-    if not dP.useTF2:
-        model.save(dP.model_name)
-    else:
-        #model.save('keras_model_regressor.hd5')
-        tf.keras.experimental.export_saved_model(model, dP.model_directory+"keras_model/")
-
+            
+    model.save(dP.model_name)
     keras.utils.plot_model(model, to_file=dP.model_png, show_shapes=True)
 
     print('\n  =============================================')
