@@ -312,8 +312,10 @@ def train(learnFile, testFile, normFile):
             callbacks = tbLogs,
             verbose=2,
 	        validation_split=dP.cv_split)
-            
-    model.save(dP.model_name)
+    if dP.useTF2:
+        model.save(dP.model_name, save_format='h5')
+    else:
+        model.save(dP.model_name)
     keras.utils.plot_model(model, to_file=dP.model_png, show_shapes=True)
 
     print('\n  =============================================')
