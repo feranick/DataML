@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20190826a
+* 20190826b
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -13,6 +13,8 @@ print(__doc__)
 import numpy as np
 import pandas as pd
 import sys, os.path, getopt, time, configparser, pickle, h5py, csv, math
+import tensorflow as tf
+from distutils.version import StrictVersion
 from libDataML import *
 
 #***************************************************
@@ -46,6 +48,10 @@ class Conf():
         self.model_name = self.model_directory+self.modelName
         self.model_le = self.model_directory+"keras_le.pkl"
         self.model_png = self.model_directory+"/keras_MLP_model.png"
+        if StrictVersion(tf.version.VERSION)<StrictVersion('2.0.0'):
+            self.useTF2 = False
+        else:
+            self.useTF2 = True
             
     def datamlDef(self):
         self.conf['Parameters'] = {
@@ -65,7 +71,6 @@ class Conf():
     def sysDef(self):
         self.conf['System'] = {
             'useTFKeras' : False,
-            'useTF2' : False,
             #'setMaxMem' : False,   # TensorFlow 2.0
             #'maxMem' : 4096,       # TensorFlow 2.0
             }
@@ -89,7 +94,6 @@ class Conf():
             self.numLabels = self.conf.getint('Parameters','numLabels')
             self.plotWeightsFlag = self.conf.getboolean('Parameters','plotWeightsFlag')
             self.useTFKeras = self.conf.getboolean('System','useTFKeras')
-            self.useTF2 = self.conf.getboolean('System','useTF2')
             #self.setMaxMem = self.conf.getboolean('System','setMaxMem')     # TensorFlow 2.0
             #self.maxMem = self.conf.getint('System','maxMem')   # TensorFlow 2.0
         except:
@@ -111,6 +115,9 @@ class Conf():
 def main():
     dP = Conf()
     start_time = time.perf_counter()
+    
+    print(" TensorFlow v.",StrictVersion(tf.version.VERSION) )
+    
     try:
         opts, args = getopt.getopt(sys.argv[1:],
                                    "tpbh:", ["train", "predict", "batch", "help"])
@@ -157,6 +164,7 @@ def main():
                 sys.exit(2)
 
     total_time = time.perf_counter() - start_time
+    print(" TensorFlow v.",StrictVersion(tf.version.VERSION) )
     print(" Total time: {0:.1f}s or {1:.1f}m or {2:.1f}h".format(total_time,
                             total_time/60, total_time/3600),"\n")
 
@@ -164,7 +172,6 @@ def main():
 # Training
 #************************************
 def train(learnFile, testFile, normFile):
-    import tensorflow as tf
     dP = Conf()
     
     if dP.useTF2:
@@ -323,6 +330,7 @@ def train(learnFile, testFile, normFile):
     print('  =============================================')
     #for conf in model.get_config():
     #    print(conf,"\n")
+    
     print("  Data size:", A.shape)
     print("\n  Training set file:",learnFile)
     
