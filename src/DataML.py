@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 import sys, os.path, getopt, time, configparser, pickle, h5py, csv, math
 import tensorflow as tf
-from distutils.version import StrictVersion
+from pkg_resources import parse_version
 from libDataML import *
 
 #***************************************************
@@ -48,7 +48,7 @@ class Conf():
         self.model_name = self.model_directory+self.modelName
         self.model_le = self.model_directory+"keras_le.pkl"
         self.model_png = self.model_directory+"/keras_MLP_model.png"
-        if StrictVersion(tf.version.VERSION)<StrictVersion('2.0.0'):
+        if parse_version(tf.version.VERSION) < parse_version('2.0.0-alpha0'):
             self.useTF2 = False
         else:
             self.useTF2 = True
@@ -116,7 +116,7 @@ def main():
     dP = Conf()
     start_time = time.perf_counter()
     
-    print(" TensorFlow v.",StrictVersion(tf.version.VERSION) )
+    print("TensorFlow v.",parse_version(tf.version.VERSION) )
     
     try:
         opts, args = getopt.getopt(sys.argv[1:],
@@ -164,7 +164,7 @@ def main():
                 sys.exit(2)
 
     total_time = time.perf_counter() - start_time
-    print(" TensorFlow v.",StrictVersion(tf.version.VERSION) )
+    print(" TensorFlow v.",parse_version(tf.version.VERSION) )
     print(" Total time: {0:.1f}s or {1:.1f}m or {2:.1f}h".format(total_time,
                             total_time/60, total_time/3600),"\n")
 
