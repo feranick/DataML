@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20190826b
+* 20190828a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -116,7 +116,7 @@ def main():
     dP = Conf()
     start_time = time.perf_counter()
     
-    print("TensorFlow v.",parse_version(tf.version.VERSION) )
+    print(" TensorFlow v.",parse_version(tf.version.VERSION) )
     
     try:
         opts, args = getopt.getopt(sys.argv[1:],
@@ -175,7 +175,7 @@ def train(learnFile, testFile, normFile):
     dP = Conf()
     
     if dP.useTF2:
-        print("Using tf.keras API")
+        print(" Using tf.keras API")
         import tensorflow.keras as keras  #tf.keras
         opts = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=1)     # Tensorflow 2.0
         conf = tf.compat.v1.ConfigProto(gpu_options=opts)  # Tensorflow 2.0
@@ -189,6 +189,7 @@ def train(learnFile, testFile, normFile):
         #         gpus[0],
         #         [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=dP.maxMem)])
         
+        def_mae = 'mae'
         def_val_mae = 'val_mae'
         def_acc = 'accuracy'
         def_val_acc = 'val_accuracy'
@@ -199,15 +200,16 @@ def train(learnFile, testFile, normFile):
         conf = tf.compat.v1.ConfigProto(gpu_options=opts)
     
         if dP.useTFKeras:
-            print("Using tf.keras API")
+            print(" Using tf.keras API")
             import tensorflow.keras as keras  #tf.keras
             tf.compat.v1.Session(config=conf)
         else:
-            print("Using pure keras API")
+            print(" Using pure keras API")
             import keras   # pure keras
             from keras.backend.tensorflow_backend import set_session
             set_session(tf.compat.v1.Session(config=conf))
-            
+        
+        def_mae = 'mean_absolute_error'
         def_val_mae = 'val_mean_absolute_error'
         def_acc = 'acc'
         def_val_acc = 'val_acc'
@@ -359,12 +361,14 @@ def train(learnFile, testFile, normFile):
 
     if dP.regressor:
         val_mae = np.asarray(log.history[def_val_mae])
+        mae = np.asarray(log.history[def_mae])
         printParam()
         print('\n  ==========================================================')
         print('  \033[1mKeras MLP - Regressor\033[0m - Training Summary')
         print('  ==========================================================')
         print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(loss), np.amin(loss), loss[-1]))
-        print('\n\n  ==========================================================')
+        print("  \033[1mMean Abs Err\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(mae), np.amin(mae), mae[-1]))
+        print('\n  ==========================================================')
         print('  \033[1mKeras MLP - Regressor \033[0m - Validation Summary')
         print('  ========================================================')
         print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(val_loss), np.amin(val_loss), val_loss[-1]))
