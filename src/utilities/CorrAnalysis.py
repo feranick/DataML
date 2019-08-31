@@ -6,7 +6,7 @@
 * CorrAnalysis
 * Correlation analysis
 *
-* version: 20190605b
+* version: 20190830a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
@@ -29,19 +29,21 @@ from matplotlib.backends.backend_pdf import PdfPages
 # Parameters definition
 #************************************
 class dP:
-    skipHeadRows = 1
+    skipHeadRows = 0
+    
+    #trainCol = [3,3553]   # Raw data
+    #predCol = [1,3]       # Raw data
+    
+    trainCol = [28,47]     # ML3
+    predCol = [5,7]        # ML-3
     
     #trainCol = [7,54]
     #predCol = [1,7]
-    trainCol = [1,61]
     #trainCol = [61,106]
-    predCol = [1,61]
+    #predCol = [28,47]
     #predCol = [61,106]
+
     valueForNan = -1
-    
-    graphX = [8,10,12,13,14]
-    graphY = [62,69,78,79,80,81]
-    
     validRows = [40,41,42,43]
     
     corrMin = .8
@@ -49,11 +51,17 @@ class dP:
     #corrMin = -1
     #corrMax = -.7
 
-    plotCorr = True
+    heatMapsCorr = True            # True: use for Master data
     plotGraphs = False
-    plotGraphsThreshold = True
+    plotGraphsThreshold = False
     plotValidData = True
     plotLinRegression = True
+    graphX = [8,10,12,13,14]
+    graphY = [62,69,78,79,80,81]
+    
+    plotCorr = False                # True: use for raw data (spectra, etc)
+    stepXticksPlot = 200
+    
     polyDegree = 1
 
 #************************************
@@ -97,10 +105,14 @@ def main():
 
     pdf = PdfPages(plotFile)
 
+    if dP.heatMapsCorr:
+        print(" Correlation heat maps saved in:",plotFile,"\n")
+        heatMapsCorrelations(dfPearson, "PearsonR_correlation", pdf)
+        heatMapsCorrelations(dfSpearman, "SpearmanR_correlation", pdf)
     if dP.plotCorr:
-        print(" Correlation charts saved in:",plotFile,"\n")
-        plotCorrelations(dfPearson, "PearsonR_correlation", pdf)
-        plotCorrelations(dfSpearman, "SpearmanR_correlation", pdf)
+        print(" Correlation plots saved in:",plotFile,"\n")
+        plotCorrelations(dfPearson, P, "PearsonR_correlation", pdf)
+        plotCorrelations(dfSpearman, P, "SpearmanR_correlation", pdf)
 
     if dP.plotGraphs:
         num = plotGraphs(dfP, dP.graphX, dP.graphY, dP.validRows, pdf)
@@ -134,12 +146,43 @@ def readParamFile(paramFile, lims):
 #************************************
 # Plot Correlations
 #************************************
-def plotCorrelations(dfP, title, pdf):
+def plotCorrelations(dfP, P, title, pdf):
+    data = dfP.to_numpy()
+    
+    plt.xlabel('Wavelength')
+    plt.ylabel('Correlation')
+    
+    Rlabels = dfP.index.tolist()
+    Clabels = np.int_(dfP.columns.values)
+    Clabels_plot = Clabels[::dP.stepXticksPlot]
+    
+    fig, (ax1, ax2) = plt.subplots(2,1, sharex = True,figsize=(10, 10))
+    
+    ax2.set_xticks(Clabels_plot)
+    ax2.set_xticklabels(Clabels_plot)
+    
+    # Rotate the tick labels and set their alignment.
+    plt.setp(ax2.get_xticklabels(), rotation=45, ha="right",
+         rotation_mode="anchor")
+    ax1.plot(Clabels, P[0])
+    ax1.set_title("Spectra")
+    
+    for i in range(len(data)):
+        ax2.plot(Clabels, data[i], label=Rlabels[i])
+    ax2.set_title(title)
+    ax2.legend(loc='upper left')
+    pdf.savefig()
+    plt.close
+
+#************************************
+# Plot Heat Maps Correlations
+#************************************
+def heatMapsCorrelations(dfP, title, pdf):
     data = dfP.to_numpy()
     Rlabels = dfP.index.tolist()
     Clabels = dfP.columns.values
 
-    fig, ax = plt.subplots(figsize=(20, 20))
+    fig, ax = plt.subplots(figsize=(20, 8))
     im = ax.imshow(data)
 
     ax.set_xticks(np.arange(len(Clabels)))
