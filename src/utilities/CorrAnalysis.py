@@ -6,7 +6,7 @@
 * CorrAnalysis
 * Correlation analysis
 *
-* version: 20190830a
+* version: 20190831a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
@@ -32,6 +32,7 @@ class dP:
     skipHeadRows = 0
     
     #trainCol = [3,3553]   # Raw data
+    #trainCol = [3,423]   # Raw data
     #predCol = [1,3]       # Raw data
     
     trainCol = [28,47]     # ML3
@@ -111,8 +112,8 @@ def main():
         heatMapsCorrelations(dfSpearman, "SpearmanR_correlation", pdf)
     if dP.plotCorr:
         print(" Correlation plots saved in:",plotFile,"\n")
-        plotCorrelations(dfPearson, P, "PearsonR_correlation", pdf)
-        plotCorrelations(dfSpearman, P, "SpearmanR_correlation", pdf)
+        plotCorrelations(dfPearson, P, "PearsonR_correlation", rootFile, pdf)
+        plotCorrelations(dfSpearman, P, "SpearmanR_correlation", rootFile, pdf)
 
     if dP.plotGraphs:
         num = plotGraphs(dfP, dP.graphX, dP.graphY, dP.validRows, pdf)
@@ -146,14 +147,14 @@ def readParamFile(paramFile, lims):
 #************************************
 # Plot Correlations
 #************************************
-def plotCorrelations(dfP, P, title, pdf):
+def plotCorrelations(dfP, P, title, filename ,pdf):
     data = dfP.to_numpy()
     
     plt.xlabel('Wavelength')
     plt.ylabel('Correlation')
     
     Rlabels = dfP.index.tolist()
-    Clabels = np.int_(dfP.columns.values)
+    Clabels = np.float_(dfP.columns.values)
     Clabels_plot = Clabels[::dP.stepXticksPlot]
     
     fig, (ax1, ax2) = plt.subplots(2,1, sharex = True,figsize=(10, 10))
@@ -164,8 +165,10 @@ def plotCorrelations(dfP, P, title, pdf):
     # Rotate the tick labels and set their alignment.
     plt.setp(ax2.get_xticklabels(), rotation=45, ha="right",
          rotation_mode="anchor")
-    ax1.plot(Clabels, P[0])
-    ax1.set_title("Spectra")
+    
+    for p in P:
+        ax1.plot(Clabels, p)
+    ax1.set_title(filename)
     
     for i in range(len(data)):
         ax2.plot(Clabels, data[i], label=Rlabels[i])
