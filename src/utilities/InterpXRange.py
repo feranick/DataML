@@ -6,7 +6,7 @@
 * InterpXRange
 * Interpolate X Range for master data
 *
-* version: 20190505a
+* version: 20190505b
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
@@ -26,11 +26,11 @@ class dP:
     skipHeadRows = 0
     valueForNan = -1
 
-    plotInterpFlag = True
+    plotInterpFlag = False
     
     setRange = True
-    rangeMin = 200
-    rangeMax = 800
+    rangeMin = 600
+    rangeMax = 700
 
 #************************************
 # Main
@@ -41,7 +41,11 @@ def main():
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
     
-    TFile = os.path.splitext(sys.argv[1])[0]+'_Interp.csv'
+    TFile = os.path.splitext(sys.argv[1])[0]
+    if dP.setRange:
+        TFile += '_Interp'+str(dP.rangeMin)+'-'+str(dP.rangeMax)+'.csv'
+    else:
+        TFile += '_Interp.csv'
     dfP = readParamFile(sys.argv[1])
 
     dfPint = interpolate(dfP)
