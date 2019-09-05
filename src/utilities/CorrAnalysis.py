@@ -6,7 +6,7 @@
 * CorrAnalysis
 * Correlation analysis
 *
-* version: 20190831a
+* version: 20190905a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
@@ -32,11 +32,11 @@ class dP:
     skipHeadRows = 0
     
     #trainCol = [3,3553]   # Raw data
-    #trainCol = [3,423]   # Raw data
-    #predCol = [1,3]       # Raw data
+    trainCol = [3,80000]   # Raw data
+    predCol = [1,3]       # Raw data
     
-    trainCol = [28,47]     # ML3
-    predCol = [5,7]        # ML-3
+    #trainCol = [28,47]     # ML3
+    #predCol = [5,7]        # ML-3
     
     #trainCol = [7,54]
     #predCol = [1,7]
@@ -52,7 +52,7 @@ class dP:
     #corrMin = -1
     #corrMax = -.7
 
-    heatMapsCorr = True            # True: use for Master data
+    heatMapsCorr = False            # True: use for Master data
     plotGraphs = False
     plotGraphsThreshold = False
     plotValidData = True
@@ -60,8 +60,8 @@ class dP:
     graphX = [8,10,12,13,14]
     graphY = [62,69,78,79,80,81]
     
-    plotCorr = False                # True: use for raw data (spectra, etc)
-    stepXticksPlot = 200
+    plotCorr = True                # True: use for raw data (spectra, etc)
+    stepXticksPlot = 1500
     
     polyDegree = 1
 
@@ -132,6 +132,10 @@ def readParamFile(paramFile, lims):
     try:
         with open(paramFile, 'r') as f:
             dfP = pd.read_csv(f, delimiter = ",", skiprows=dP.skipHeadRows)
+            if lims[1]>len(dfP.columns):
+                lims[1] = len(dfP.columns)
+                print(" Warning: Column range is larger than actual number of column. Using full dataset")
+            
             P = dfP.iloc[:,range(lims[0],lims[1])].to_numpy()
             P[np.isnan(P)] = dP.valueForNan
 
@@ -142,6 +146,7 @@ def readParamFile(paramFile, lims):
     except:
         print("\033[1m Param file:",paramFile," not found/broken \n\033[0m")
         return
+    print(P.shape)
     return P, headP, dfP
 
 #************************************
