@@ -6,7 +6,7 @@
 * CorrAnalysis
 * Correlation analysis
 *
-* version: 20190905a
+* version: 20190907a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
@@ -32,11 +32,11 @@ class dP:
     skipHeadRows = 0
     
     #trainCol = [3,3553]   # Raw data
-    trainCol = [3,80000]   # Raw data
-    predCol = [1,3]       # Raw data
+    #trainCol = [3,80000]   # Raw data
+    #predCol = [1,3]       # Raw data
     
-    #trainCol = [28,47]     # ML3
-    #predCol = [5,7]        # ML-3
+    trainCol = [28,47]     # ML3
+    predCol = [5,7]        # ML-3
     
     #trainCol = [7,54]
     #predCol = [1,7]
@@ -52,7 +52,8 @@ class dP:
     #corrMin = -1
     #corrMax = -.7
 
-    heatMapsCorr = False            # True: use for Master data
+    heatMapsCorr = True            # True: use for Master data
+    
     plotGraphs = False
     plotGraphsThreshold = False
     plotValidData = True
@@ -60,9 +61,10 @@ class dP:
     graphX = [8,10,12,13,14]
     graphY = [62,69,78,79,80,81]
     
-    plotCorr = True                # True: use for raw data (spectra, etc)
+    plotCorr = False                # True: use for raw data (spectra, etc)
     stepXticksPlot = 1500
-    
+    corrSpectraFull = False
+    corrSpectraMin = 0.8
     polyDegree = 1
 
 #************************************
@@ -114,6 +116,11 @@ def main():
         print(" Correlation plots saved in:",plotFile,"\n")
         plotCorrelations(dfPearson, P, "PearsonR_correlation", rootFile, pdf)
         plotCorrelations(dfSpearman, P, "SpearmanR_correlation", rootFile, pdf)
+        if not dP.corrSpectraFull:
+            dfPearson[dfPearson<dP.corrSpectraMin] = 0
+            dfSpearman[dfSpearman<dP.corrSpectraMin] = 0
+            plotCorrelations(dfPearson, P, "PearsonR_correlation (Corr > "+ str(dP.corrSpectraMin)+")", rootFile, pdf)
+            plotCorrelations(dfSpearman, P, "SpearmanR_correlation", rootFile, pdf)
 
     if dP.plotGraphs:
         num = plotGraphs(dfP, dP.graphX, dP.graphY, dP.validRows, pdf)
@@ -177,9 +184,9 @@ def plotCorrelations(dfP, P, title, filename ,pdf):
     
     for i in range(len(data)):
         ax2.plot(Clabels, data[i], label=Rlabels[i])
-    ax2.set_title(title)
-    ax2.legend(loc='upper left')
-    pdf.savefig()
+        ax2.set_title(title)
+        ax2.legend(loc='upper left')
+        pdf.savefig()
     plt.close
 
 #************************************
