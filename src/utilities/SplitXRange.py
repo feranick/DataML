@@ -27,27 +27,25 @@ class dP:
     valueForNan = -1
     skipNumRows = 2
 
-    rangeMin = 600
-    rangeMax = 700
-
 #************************************
 # Main
 #************************************
 def main():
-    if len(sys.argv) < 2:
-        print(' Usage:\n  python3 SplitXRange <paramFile>')
+    if len(sys.argv) < 3:
+        print(' Usage:\n  python3 SplitXRange <paramFile> <rangeMin> <rangeMax>')
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
     
     TFile = os.path.splitext(sys.argv[1])[0]
-    TFile += '_Interp'+str(dP.rangeMin)+'-'+str(dP.rangeMax)+'.csv'
-    dfP = readParamFile(sys.argv[1])
+    TFile += '_Interp'+str(sys.argv[2])+'-'+str(sys.argv[3])+'.csv'
+    print(" Saving data with restricted X range into:",TFile,"\n")
+    dfP = readParamFile(sys.argv[1], sys.argv[2], sys.argv[3])
     dfP.to_csv(TFile, index=True)
 
 #************************************
 # Open Learning Data
 #************************************
-def readParamFile(paramFile):
+def readParamFile(paramFile, rMin, rMax):
     try:
         with open(paramFile, 'r') as f:
             dfP = pd.read_csv(f, delimiter = ",",
@@ -58,7 +56,7 @@ def readParamFile(paramFile):
     sR = int(dP.skipNumRows)
     print(dfP)
 
-    dfP = dfP[0:sR].append(dfP[sR:][(dfP.index.values[sR:].astype(float) >= int(dP.rangeMin)) & (dfP.index.values[sR:].astype(float)<int(dP.rangeMax))])
+    dfP = dfP[0:sR].append(dfP[sR:][(dfP.index.values[sR:].astype(float) >= int(rMin)) & (dfP.index.values[sR:].astype(float)<int(rMax))])
         
     print(dfP)
     return dfP
