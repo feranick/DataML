@@ -6,7 +6,7 @@
 * CorrAnalysis
 * Correlation analysis
 *
-* version: 20190907a
+* version: 20190910a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
@@ -29,7 +29,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 # Parameters definition
 #************************************
 class dP:
-    skipHeadRows = 0
+    skipHeadRows = 1
     
     #trainCol = [3,3553]   # Raw data
     #trainCol = [3,80000]   # Raw data
@@ -37,6 +37,9 @@ class dP:
     
     trainCol = [28,47]     # ML3
     predCol = [5,7]        # ML-3
+    
+    #trainCol = [1,35]     # ML3
+    #predCol = [1,35]
     
     #trainCol = [7,54]
     #predCol = [1,7]
@@ -84,6 +87,8 @@ def main():
     spearmanFile = rootFile + '_spearmanR.csv'
     plotFile = rootFile + '_plots.pdf'
 
+
+    ### Old method ###
     pearsonR=np.empty((V.shape[1],P.shape[1]))
     spearmanR=np.empty((V.shape[1],P.shape[1]))
     for j in range(V.shape[1]):
@@ -101,12 +106,21 @@ def main():
         dfPearson.rename(index={i:headV[i]}, inplace=True)
         dfSpearman.rename(index={i:headV[i]}, inplace=True)
 
+    '''
+    ### New method ###
+    dfPearson = dfP.corr(method='pearson')
+    dfSpearman = dfP.corr(method='spearman')
+    '''
+    
     dfPearson.to_csv(pearsonFile, index=True, header=True)
     print("\n PearsonR correlation summary saved in:",pearsonFile,"\n")
     dfSpearman.to_csv(spearmanFile, index=True, header=True)
     print(" SpearmanR correlation summary saved in:",spearmanFile,"\n")
 
     pdf = PdfPages(plotFile)
+
+    #corr = dfP.corr(method='pearson')
+    #heatMapsCorrelations2(dfP)
 
     if dP.heatMapsCorr:
         print(" Correlation heat maps saved in:",plotFile,"\n")
@@ -141,7 +155,7 @@ def readParamFile(paramFile, lims):
             dfP = pd.read_csv(f, delimiter = ",", skiprows=dP.skipHeadRows)
             if lims[1]>len(dfP.columns):
                 lims[1] = len(dfP.columns)
-                print(" Warning: Column range is larger than actual number of column. Using full dataset")
+                print(" Warning: Column range is larger than actual number of columns. Using full dataset")
             
             P = dfP.iloc[:,range(lims[0],lims[1])].to_numpy()
             P[np.isnan(P)] = dP.valueForNan
@@ -226,7 +240,20 @@ def heatMapsCorrelations(dfP, title, pdf):
     #plt.savefig(title+".png", dpi = 160, format = 'png')  # Save plot
     #plt.show()
     plt.close()
-    
+
+
+def heatMapsCorrelations2(dfP):
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    cax = ax.matshow(dfP.corr(),cmap='coolwarm', vmin=-1, vmax=1)
+    fig.colorbar(cax)
+    ticks = np.arange(0,len(dfP.columns),1)
+    ax.set_xticks(ticks)
+    plt.xticks(rotation=90)
+    ax.set_yticks(ticks)
+    ax.set_xticklabels(dfP.columns)
+    ax.set_yticklabels(dfP.columns)
+    plt.show()
 
 #************************************
 # Pllot Graphs based on manual input
