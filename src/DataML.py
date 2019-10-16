@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20190828a
+* 20191016a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -174,6 +174,9 @@ def main():
 def train(learnFile, testFile, normFile):
     dP = Conf()
     
+    def_mae = 'mae'
+    def_val_mae = 'val_mae'
+    
     if dP.useTF2:
         print(" Using tf.keras API")
         import tensorflow.keras as keras  #tf.keras
@@ -189,8 +192,6 @@ def train(learnFile, testFile, normFile):
         #         gpus[0],
         #         [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=dP.maxMem)])
         
-        def_mae = 'mae'
-        def_val_mae = 'val_mae'
         def_acc = 'accuracy'
         def_val_acc = 'val_accuracy'
     
@@ -203,14 +204,14 @@ def train(learnFile, testFile, normFile):
             print(" Using tf.keras API")
             import tensorflow.keras as keras  #tf.keras
             tf.compat.v1.Session(config=conf)
+            def_mae = 'mean_absolute_error'
+            def_val_mae = 'val_mean_absolute_error'
         else:
             print(" Using pure keras API")
             import keras   # pure keras
             from keras.backend.tensorflow_backend import set_session
             set_session(tf.compat.v1.Session(config=conf))
         
-        def_mae = 'mean_absolute_error'
-        def_val_mae = 'val_mean_absolute_error'
         def_acc = 'acc'
         def_val_acc = 'val_acc'
 
