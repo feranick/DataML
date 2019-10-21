@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20191016a
+* 20191022a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -71,6 +71,7 @@ class Conf():
     def sysDef(self):
         self.conf['System'] = {
             'useTFKeras' : False,
+            'makeQuantizedTFlite' : False,
             #'setMaxMem' : False,   # TensorFlow 2.0
             #'maxMem' : 4096,       # TensorFlow 2.0
             }
@@ -94,6 +95,7 @@ class Conf():
             self.numLabels = self.conf.getint('Parameters','numLabels')
             self.plotWeightsFlag = self.conf.getboolean('Parameters','plotWeightsFlag')
             self.useTFKeras = self.conf.getboolean('System','useTFKeras')
+            self.makeQuantizedTFlite = self.conf.getboolean('System','makeQuantizedTFlite')
             #self.setMaxMem = self.conf.getboolean('System','setMaxMem')     # TensorFlow 2.0
             #self.maxMem = self.conf.getint('System','maxMem')   # TensorFlow 2.0
         except:
@@ -327,6 +329,9 @@ def train(learnFile, testFile, normFile):
     else:
         model.save(dP.model_name)
     keras.utils.plot_model(model, to_file=dP.model_png, show_shapes=True)
+    
+    if dP.makeQuantizedTFlite:
+        makeQuantizedTFmodel(A, model)
 
     print('\n  =============================================')
     print('  \033[1mKeras MLP\033[0m - Model Configuration')
@@ -646,6 +651,30 @@ def printParam():
         print('  Batch size:', dP.batch_size)
     print('  Number of labels:', dP.numLabels)
     #print('  ================================================\n')
+
+#************************************
+### Create Quantized tflite model
+#************************************
+def makeQuantizedTFmodel(A, model):
+    dP = Conf()
+    print("\n  Creating quantized TensorFlowLite Model...\n")
+    def representative_dataset_gen():
+        for i in range(A.shape[0]):
+            yield [A[i:i+1].astype(np.float32)]
+    try:
+        converter = tf.lite.TFLiteConverter.from_keras_model(model)    # TensorFlow 2.x
+    except:
+        converter = tf.lite.TFLiteConverter.from_keras_model_file(dP.model_name)  # TensorFlow 1.x
+
+    converter.optimizations = [tf.lite.Optimize.DEFAULT]
+    converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
+    converter.inference_input_type = tf.uint8
+    converter.inference_output_type = tf.uint8
+    converter.representative_dataset = representative_dataset_gen
+    tflite_quant_model = converter.convert()
+
+    with open(os.path.splitext(dP.model_name)[0]+'.tflite', 'wb') as o:
+        o.write(tflite_quant_model)
 
 #************************************
 # Open Learning Data
