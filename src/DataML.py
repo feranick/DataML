@@ -48,7 +48,7 @@ class Conf():
         self.model_name = self.model_directory+self.modelName
         self.model_le = self.model_directory+"keras_le.pkl"
         self.model_png = self.model_directory+"/keras_MLP_model.png"
-        if parse_version(tf.version.VERSION) < parse_version('2.0.0-alpha0'):
+        if parse_version(tf.version.VERSION) < parse_version('2.0.0'):
             self.useTF2 = False
         else:
             self.useTF2 = True
