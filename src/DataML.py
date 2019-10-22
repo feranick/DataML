@@ -146,14 +146,14 @@ def main():
                 sys.exit(2)
 
         if o in ("-p" , "--predict"):
-            #try:
-            if len(sys.argv)<4:
-                predict(sys.argv[2], None)
-            else:
-                predict(sys.argv[2], sys.argv[3])
-            #except:
-            #    usage()
-            #    sys.exit(2)
+            try:
+                if len(sys.argv)<4:
+                    predict(sys.argv[2], None)
+                else:
+                    predict(sys.argv[2], sys.argv[3])
+            except:
+                usage()
+                sys.exit(2)
                 
         if o in ("-b" , "--batch"):
             try:
