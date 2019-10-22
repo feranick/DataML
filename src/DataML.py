@@ -3,8 +3,8 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20191022b
-* Uses: Keras, TensorFlow
+* 20191022c
+* Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
 '''
@@ -37,17 +37,17 @@ class Conf():
             self.createConfig()
         self.readConfig(self.configFile)
         if self.regressor:
-            self.modelName = "keras_model_regressor.hd5"
-            self.summaryFileName = "keras_summary_regressor.csv"
+            self.modelName = "model_regressor.hd5"
+            self.summaryFileName = "summary_regressor.csv"
         else:
-            self.modelName = "keras_model.hd5"
-            self.summaryFileName = "keras_summary_classifier.csv"
+            self.modelName = "model.hd5"
+            self.summaryFileName = "summary_classifier.csv"
         
-        self.tb_directory = "keras_MLP"
+        self.tb_directory = "model_MLP"
         self.model_directory = "./"
         self.model_name = self.model_directory+self.modelName
-        self.model_le = self.model_directory+"keras_le.pkl"
-        self.model_png = self.model_directory+"/keras_MLP_model.png"
+        self.model_le = self.model_directory+"model_le.pkl"
+        self.model_png = self.model_directory+"/model_MLP.png"
         if parse_version(tf.version.VERSION) < parse_version('2.0.0'):
             self.useTF2 = False
         else:
@@ -70,7 +70,6 @@ class Conf():
             }
     def sysDef(self):
         self.conf['System'] = {
-            'useTFKeras' : True,
             'makeQuantizedTFlite' : False,
             'useTFlitePred' : False,
             'TFliteRuntime' : False,
@@ -96,7 +95,6 @@ class Conf():
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.numLabels = self.conf.getint('Parameters','numLabels')
             self.plotWeightsFlag = self.conf.getboolean('Parameters','plotWeightsFlag')
-            self.useTFKeras = self.conf.getboolean('System','useTFKeras')
             self.makeQuantizedTFlite = self.conf.getboolean('System','makeQuantizedTFlite')
             self.useTFlitePred = self.conf.getboolean('System','useTFlitePred')
             self.TFliteRuntime = self.conf.getboolean('System','TFliteRuntime')
@@ -121,8 +119,6 @@ class Conf():
 def main():
     dP = Conf()
     start_time = time.perf_counter()
-    
-    print(" TensorFlow v.",parse_version(tf.version.VERSION) )
     
     try:
         opts, args = getopt.getopt(sys.argv[1:],
@@ -170,7 +166,12 @@ def main():
                 sys.exit(2)
 
     total_time = time.perf_counter() - start_time
-    print(" TensorFlow v.",parse_version(tf.version.VERSION) )
+    
+    if dP.useTFlitePred:
+        print(" TensorFlow (Lite) v.",parse_version(tf.version.VERSION) )
+    else:
+        print(" TensorFlow v.",parse_version(tf.version.VERSION) )
+        
     print(" Total time: {0:.1f}s or {1:.1f}m or {2:.1f}h".format(total_time,
                             total_time/60, total_time/3600),"\n")
 
@@ -183,9 +184,9 @@ def train(learnFile, testFile, normFile):
     def_mae = 'mae'
     def_val_mae = 'val_mae'
     
+    import tensorflow.keras as keras
+    
     if dP.useTF2:
-        print(" Using tf.keras API")
-        import tensorflow.keras as keras  #tf.keras
         opts = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=1)     # Tensorflow 2.0
         conf = tf.compat.v1.ConfigProto(gpu_options=opts)  # Tensorflow 2.0
         
@@ -206,17 +207,9 @@ def train(learnFile, testFile, normFile):
         opts = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=1)
         conf = tf.compat.v1.ConfigProto(gpu_options=opts)
     
-        if dP.useTFKeras:
-            print(" Using tf.keras API")
-            import tensorflow.keras as keras  #tf.keras
-            tf.compat.v1.Session(config=conf)
-            def_mae = 'mean_absolute_error'
-            def_val_mae = 'val_mean_absolute_error'
-        else:
-            print(" Using pure keras API")
-            import keras   # pure keras
-            from keras.backend.tensorflow_backend import set_session
-            set_session(tf.compat.v1.Session(config=conf))
+        tf.compat.v1.Session(config=conf)
+        def_mae = 'mean_absolute_error'
+        def_val_mae = 'val_mean_absolute_error'
         
         def_acc = 'acc'
         def_val_acc = 'val_acc'
@@ -338,7 +331,7 @@ def train(learnFile, testFile, normFile):
         makeQuantizedTFmodel(A, model)
 
     print('\n  =============================================')
-    print('  \033[1mKeras MLP\033[0m - Model Configuration')
+    print('  \033[1m MLP\033[0m - Model Configuration')
     print('  =============================================')
     #for conf in model.get_config():
     #    print(conf,"\n")
@@ -374,12 +367,12 @@ def train(learnFile, testFile, normFile):
         mae = np.asarray(log.history[def_mae])
         printParam()
         print('\n  ==========================================================')
-        print('  \033[1mKeras MLP - Regressor\033[0m - Training Summary')
+        print('  \033[1m MLP - Regressor\033[0m - Training Summary')
         print('  ==========================================================')
         print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(loss), np.amin(loss), loss[-1]))
         print("  \033[1mMean Abs Err\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(mae), np.amin(mae), mae[-1]))
         print('\n  ==========================================================')
-        print('  \033[1mKeras MLP - Regressor \033[0m - Validation Summary')
+        print('  \033[1m MLP - Regressor \033[0m - Validation Summary')
         print('  ========================================================')
         print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(val_loss), np.amin(val_loss), val_loss[-1]))
         print("  \033[1mMean Abs Err\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}\n".format(np.average(val_mae), np.amin(val_mae), val_mae[-1]))
@@ -409,13 +402,13 @@ def train(learnFile, testFile, normFile):
             print("  Number unique classes (total): ", np.unique(totCl).size)
         printParam()
         print('\n  ========================================================')
-        print('  \033[1mKeras MLP - Classiefier \033[0m - Training Summary')
+        print('  \033[1m MLP - Classiefier \033[0m - Training Summary')
         print('  ========================================================')
         print("\n  \033[1mAccuracy\033[0m - Average: {0:.2f}%; Max: {1:.2f}%; Last: {2:.2f}%".format(100*np.average(accuracy),
             100*np.amax(accuracy), 100*accuracy[-1]))
         print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(loss), np.amin(loss), loss[-1]))
         print('\n\n  ========================================================')
-        print('  \033[1mKeras MLP - Classifier \033[0m - Validation Summary')
+        print('  \033[1m MLP - Classifier \033[0m - Validation Summary')
         print('  ========================================================')
         print("\n  \033[1mAccuracy\033[0m - Average: {0:.2f}%; Max: {1:.2f}%; Last: {2:.2f}%".format(100*np.average(val_acc),
         100*np.amax(val_acc), 100*val_acc[-1]))
@@ -465,7 +458,7 @@ def predict(testFile, normFile):
     if dP.regressor:
         #predictions = model.predict(R).flatten()[0]
         print('\n  ========================================================')
-        print('  \033[1mKeras MLP - Regressor\033[0m - Prediction')
+        print('  \033[1m MLP - Regressor\033[0m - Prediction')
         print('  ========================================================')
         if normFile != None:
             predValue = norm.transform_inverse_single(predictions)
@@ -483,7 +476,7 @@ def predict(testFile, normFile):
         rosterPred = np.where(predictions[0]>0.1)[0]
 
         print('\n  ========================================================')
-        print('  \033[1mKeras MLP - Classifier\033[0m - Prediction')
+        print('  \033[1m MLP - Classifier\033[0m - Prediction')
         print('  ========================================================')
 
         if dP.numLabels == 1:
@@ -514,11 +507,8 @@ def predict(testFile, normFile):
 #************************************
 def batchPredict(testFile, normFile):
     dP = Conf()
-    if dP.useTFKeras:
-        import tensorflow.keras as keras  #tf.keras
-    else:
-        import keras   # pure Keras
-
+    import tensorflow.keras as keras
+    
     En_test, A_test, Cl_test = readLearnFile(testFile)
     model = keras.models.load_model(dP.model_name)
 
@@ -536,7 +526,7 @@ def batchPredict(testFile, normFile):
         predictions = model.predict(A_test)
         score = model.evaluate(A_test, Cl_test, batch_size=dP.batch_size, verbose = 0)
         print('  ==========================================================')
-        print('  \033[1mKeras MLP - Regressor\033[0m - Batch Prediction')
+        print('  \033[1m MLP - Regressor\033[0m - Batch Prediction')
         print('  ==========================================================')
         print("  \033[1mOverall val_loss:\033[0m {0:.4f}; \033[1moverall val_abs_mean_loss:\033[0m {1:.4f}\n".format(score[0], score[1]))
         print('  ==========================================================')
@@ -560,7 +550,7 @@ def batchPredict(testFile, normFile):
         le = pickle.loads(open(dP.model_le, "rb").read())
         predictions = model.predict(A_test)
         print('  ========================================================')
-        print('  \033[1mKeras MLP - Classifier\033[0m - Batch Prediction')
+        print('  \033[1m MLP - Classifier\033[0m - Batch Prediction')
         print('  ========================================================')
         print("  Real class\t| Predicted class\t| Probability")
         print("  ---------------------------------------------------")
@@ -596,10 +586,8 @@ def batchPredict(testFile, normFile):
 #************************************
 def getPredictions(R):
     dP = Conf()
-    if dP.useTFKeras:
-        import tensorflow.keras as keras  #tf.keras
-    else:
-        import keras   # pure Keras
+    import tensorflow as tf
+    import tensorflow.keras as keras
         
     if dP.useTFlitePred:
         # Load TFLite model and allocate tensors.
@@ -616,6 +604,10 @@ def getPredictions(R):
         # Test model on random input data.
         input_shape = input_details[0]['shape']
         input_data = np.array(R, dtype=np.float32)
+        
+        print(input_data)
+        print(input_details)
+        
         interpreter.set_tensor(input_details[0]['index'], input_data)
 
         interpreter.invoke()
@@ -677,7 +669,7 @@ def readTestFile(testFile):
 def printParam():
     dP = Conf()
     print('\n  ================================================')
-    print('  \033[1mKeras MLP\033[0m - Parameters')
+    print('  \033[1m MLP\033[0m - Parameters')
     print('  ================================================')
     print('  Optimizer:','Adam',
                 '\n  Hidden layers:', dP.HL,
@@ -741,7 +733,7 @@ def plotWeights(En, A, model):
 
     plt.xlabel('Raman shift [1/cm]')
     plt.legend(loc='upper right')
-    plt.savefig('keras_MLP_weights' + '.png', dpi = 160, format = 'png')  # Save plot
+    plt.savefig('model_MLP_weights' + '.png', dpi = 160, format = 'png')  # Save plot
 
 #************************************
 # Lists the program usage
