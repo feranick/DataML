@@ -156,14 +156,14 @@ def main():
                 sys.exit(2)
                 
         if o in ("-b" , "--batch"):
-            try:
-                if len(sys.argv)<4:
-                    batchPredict(sys.argv[2], None)
-                else:
-                    batchPredict(sys.argv[2], sys.argv[3])
-            except:
-                usage()
-                sys.exit(2)
+            #try:
+            if len(sys.argv)<4:
+                batchPredict(sys.argv[2], None)
+            else:
+                batchPredict(sys.argv[2], sys.argv[3])
+            #except:
+            #    usage()
+            #    sys.exit(2)
 
     total_time = time.perf_counter() - start_time
     
@@ -456,6 +456,7 @@ def predict(testFile, normFile):
     predictions = getPredictions(R, loadModel())
     
     if dP.regressor:
+        predictions = getPredictions(R, loadModel()).flatten()[0]
         #predictions = model.predict(R).flatten()[0]
         print('\n  ========================================================')
         print('  \033[1m MLP - Regressor\033[0m - Prediction')
@@ -470,7 +471,7 @@ def predict(testFile, normFile):
         
     else:
         le = pickle.loads(open(dP.model_le, "rb").read())
-        #predictions = model.predict(R, verbose=0)
+        predictions = getPredictions(R, loadModel())
         pred_class = np.argmax(predictions)
         predProb = round(100*predictions[0][pred_class],2)
         rosterPred = np.where(predictions[0]>0.1)[0]
@@ -507,10 +508,10 @@ def predict(testFile, normFile):
 #************************************
 def batchPredict(testFile, normFile):
     dP = Conf()
-    import tensorflow.keras as keras
-    
     En_test, A_test, Cl_test = readLearnFile(testFile)
-    model = keras.models.load_model(dP.model_name)
+    #model = keras.models.load_model(dP.model_name)
+    
+    model = loadModel()
 
     if normFile != None:
         try:
@@ -521,9 +522,12 @@ def batchPredict(testFile, normFile):
             return
 
     covMatrix = np.empty((0,2))
+    
     if dP.regressor:
         summaryFile = np.array([['DataML','Regressor','',''],['Real Value','Prediction','val_loss','val_abs_mean_error']])
-        predictions = model.predict(A_test)
+        predictions = getPredictions(A_test, model)
+        predictions2 = model.predict(A_test)
+        
         score = model.evaluate(A_test, Cl_test, batch_size=dP.batch_size, verbose = 0)
         print('  ==========================================================')
         print('  \033[1m MLP - Regressor\033[0m - Batch Prediction')
@@ -548,7 +552,8 @@ def batchPredict(testFile, normFile):
     else:
         summaryFile = np.array([['DataML','Classifier',''],['Real Class','Predicted Class', 'Probability']])
         le = pickle.loads(open(dP.model_le, "rb").read())
-        predictions = model.predict(A_test)
+        predictions = getPredictions(A_test, model)
+        #predictions = model.predict(A_test)
         print('  ========================================================')
         print('  \033[1m MLP - Classifier\033[0m - Batch Prediction')
         print('  ========================================================')
@@ -607,10 +612,7 @@ def getPredictions(R, model):
         predictions = interpreter.get_tensor(output_details[0]['index'])[0][0]
         
     else:
-        if dP.regressor:
-            predictions = model.predict(R).flatten()[0]
-        else:
-            predictions = model.predict(R, verbose=0)
+        predictions = model.predict(R)
     return predictions
     
 #************************************
