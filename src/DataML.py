@@ -146,14 +146,14 @@ def main():
                 sys.exit(2)
 
         if o in ("-p" , "--predict"):
-            try:
-                if len(sys.argv)<4:
-                    predict(sys.argv[2], None)
-                else:
-                    predict(sys.argv[2], sys.argv[3])
-            except:
-                usage()
-                sys.exit(2)
+            #try:
+            if len(sys.argv)<4:
+                predict(sys.argv[2], None)
+            else:
+                predict(sys.argv[2], sys.argv[3])
+            #except:
+            #    usage()
+            #    sys.exit(2)
                 
         if o in ("-b" , "--batch"):
             try:
@@ -453,7 +453,7 @@ def predict(testFile, normFile):
             print("\033[1m pkl file not found \033[0m")
             return
     
-    predictions = getPredictions(R)
+    predictions = getPredictions(R, loadModel())
     
     if dP.regressor:
         #predictions = model.predict(R).flatten()[0]
@@ -584,19 +584,13 @@ def batchPredict(testFile, normFile):
 #************************************
 # Make prediction based on framework
 #************************************
-def getPredictions(R):
+def getPredictions(R, model):
     dP = Conf()
     import tensorflow as tf
     import tensorflow.keras as keras
         
     if dP.useTFlitePred:
-        # Load TFLite model and allocate tensors.
-        if dP.TFliteRuntime:
-            import tflite_runtime.interpreter as tflite
-            interpreter = tflite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'.tflite')
-        else:
-            interpreter = tf.lite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'.tflite')
-        interpreter.allocate_tensors()
+        interpreter = model  #needed to keep consistency with documentation
         # Get input and output tensors.
         input_details = interpreter.get_input_details()
         output_details = interpreter.get_output_details()
@@ -605,11 +599,7 @@ def getPredictions(R):
         input_shape = input_details[0]['shape']
         input_data = np.array(R, dtype=np.float32)
         
-        print(input_data)
-        print(input_details)
-        
         interpreter.set_tensor(input_details[0]['index'], input_data)
-
         interpreter.invoke()
 
         # The function `get_tensor()` returns a copy of the tensor data.
@@ -617,13 +607,32 @@ def getPredictions(R):
         predictions = interpreter.get_tensor(output_details[0]['index'])[0][0]
         
     else:
-        model = keras.models.load_model(dP.model_name)
         if dP.regressor:
             predictions = model.predict(R).flatten()[0]
         else:
             predictions = model.predict(R, verbose=0)
     return predictions
-
+    
+#************************************
+# Load saved models
+#************************************
+def loadModel():
+    dP = Conf()
+    if dP.TFliteRuntime:
+        import tflite_runtime.interpreter as tflite
+        # model here is intended as interpreter
+        model = tflite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'.tflite')
+        model.allocate_tensors()
+    else:
+        import tensorflow as tf
+        if dP.useTFlitePred:
+            # model here is intended as interpreter
+            model = tf.lite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'.tflite')
+            model.allocate_tensors()
+        else:
+            model = tf.keras.models.load_model(dP.model_name)
+    return model
+    
 #************************************
 # Open Learning Data
 #************************************
