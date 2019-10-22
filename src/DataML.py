@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20191022a
+* 20191022b
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -70,8 +70,10 @@ class Conf():
             }
     def sysDef(self):
         self.conf['System'] = {
-            'useTFKeras' : False,
+            'useTFKeras' : True,
             'makeQuantizedTFlite' : False,
+            'useTFlitePred' : False,
+            'TFliteRuntime' : False,
             #'setMaxMem' : False,   # TensorFlow 2.0
             #'maxMem' : 4096,       # TensorFlow 2.0
             }
@@ -96,6 +98,8 @@ class Conf():
             self.plotWeightsFlag = self.conf.getboolean('Parameters','plotWeightsFlag')
             self.useTFKeras = self.conf.getboolean('System','useTFKeras')
             self.makeQuantizedTFlite = self.conf.getboolean('System','makeQuantizedTFlite')
+            self.useTFlitePred = self.conf.getboolean('System','useTFlitePred')
+            self.TFliteRuntime = self.conf.getboolean('System','TFliteRuntime')
             #self.setMaxMem = self.conf.getboolean('System','setMaxMem')     # TensorFlow 2.0
             #self.maxMem = self.conf.getint('System','maxMem')   # TensorFlow 2.0
         except:
@@ -444,26 +448,22 @@ def train(learnFile, testFile, normFile):
 #************************************
 def predict(testFile, normFile):
     dP = Conf()
-    if dP.useTFKeras:
-        import tensorflow.keras as keras  #tf.keras
-    else:
-        import keras   # pure Keras
-    
     R = readTestFile(testFile)
-    model = keras.models.load_model(dP.model_name)
 
     if normFile != None:
         try:
             norm = pickle.loads(open(normFile, "rb").read())
             print("\n  Opening pkl file with normalization data:",normFile)
-            print(" Normalizing validation file for prediction...")
+            print("  Normalizing validation file for prediction...\n")
             R = norm.transform_valid_data(R)
         except:
             print("\033[1m pkl file not found \033[0m")
             return
     
+    predictions = getPredictions(R)
+    
     if dP.regressor:
-        predictions = model.predict(R).flatten()[0]
+        #predictions = model.predict(R).flatten()[0]
         print('\n  ========================================================')
         print('  \033[1mKeras MLP - Regressor\033[0m - Prediction')
         print('  ========================================================')
@@ -477,7 +477,7 @@ def predict(testFile, normFile):
         
     else:
         le = pickle.loads(open(dP.model_le, "rb").read())
-        predictions = model.predict(R, verbose=0)
+        #predictions = model.predict(R, verbose=0)
         pred_class = np.argmax(predictions)
         predProb = round(100*predictions[0][pred_class],2)
         rosterPred = np.where(predictions[0]>0.1)[0]
@@ -590,6 +590,47 @@ def batchPredict(testFile, normFile):
     df = pd.DataFrame(summaryFile)
     df.to_csv(dP.summaryFileName, index=False, header=False)
     print("\n Prediction summary saved in:",dP.summaryFileName,"\n")
+
+#************************************
+# Make prediction based on framework
+#************************************
+def getPredictions(R):
+    dP = Conf()
+    if dP.useTFKeras:
+        import tensorflow.keras as keras  #tf.keras
+    else:
+        import keras   # pure Keras
+        
+    if dP.useTFlitePred:
+        # Load TFLite model and allocate tensors.
+        if dP.TFliteRuntime:
+            import tflite_runtime.interpreter as tflite
+            interpreter = tflite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'.tflite')
+        else:
+            interpreter = tf.lite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'.tflite')
+        interpreter.allocate_tensors()
+        # Get input and output tensors.
+        input_details = interpreter.get_input_details()
+        output_details = interpreter.get_output_details()
+
+        # Test model on random input data.
+        input_shape = input_details[0]['shape']
+        input_data = np.array(R, dtype=np.float32)
+        interpreter.set_tensor(input_details[0]['index'], input_data)
+
+        interpreter.invoke()
+
+        # The function `get_tensor()` returns a copy of the tensor data.
+        # Use `tensor()` in order to get a pointer to the tensor.
+        predictions = interpreter.get_tensor(output_details[0]['index'])[0][0]
+        
+    else:
+        model = keras.models.load_model(dP.model_name)
+        if dP.regressor:
+            predictions = model.predict(R).flatten()[0]
+        else:
+            predictions = model.predict(R, verbose=0)
+    return predictions
 
 #************************************
 # Open Learning Data
