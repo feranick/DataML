@@ -156,14 +156,14 @@ def main():
                 sys.exit(2)
                 
         if o in ("-b" , "--batch"):
-            #try:
-            if len(sys.argv)<4:
-                batchPredict(sys.argv[2], None)
-            else:
-                batchPredict(sys.argv[2], sys.argv[3])
-            #except:
-            #    usage()
-            #    sys.exit(2)
+            try:
+                if len(sys.argv)<4:
+                    batchPredict(sys.argv[2], None)
+                else:
+                    batchPredict(sys.argv[2], sys.argv[3])
+            except:
+                usage()
+                sys.exit(2)
 
     total_time = time.perf_counter() - start_time
     
@@ -304,8 +304,7 @@ def train(learnFile, testFile, normFile):
             metrics=['accuracy'])
 
     tbLog = keras.callbacks.TensorBoard(log_dir=dP.tb_directory, histogram_freq=120,
-            batch_size=dP.batch_size,
-            write_graph=True, write_grads=True, write_images=True)
+            write_graph=True, write_images=True)
     tbLogs = [tbLog]
     if testFile != None:
         log = model.fit(A, Cl2,
