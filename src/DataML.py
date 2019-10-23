@@ -40,7 +40,7 @@ class Conf():
             self.modelName = "model_regressor.hd5"
             self.summaryFileName = "summary_regressor.csv"
         else:
-            self.modelName = "model.hd5"
+            self.modelName = "model_classifier.hd5"
             self.summaryFileName = "summary_classifier.csv"
         
         self.tb_directory = "model_MLP"
@@ -401,7 +401,7 @@ def train(learnFile, testFile, normFile):
             print("  Number unique classes (total): ", np.unique(totCl).size)
         printParam()
         print('\n  ========================================================')
-        print('  \033[1m MLP - Classiefier \033[0m - Training Summary')
+        print('  \033[1m MLP - Classifier \033[0m - Training Summary')
         print('  ========================================================')
         print("\n  \033[1mAccuracy\033[0m - Average: {0:.2f}%; Max: {1:.2f}%; Last: {2:.2f}%".format(100*np.average(accuracy),
             100*np.amax(accuracy), 100*accuracy[-1]))
@@ -606,7 +606,7 @@ def getPredictions(R, model):
 
         # The function `get_tensor()` returns a copy of the tensor data.
         # Use `tensor()` in order to get a pointer to the tensor.
-        predictions = interpreter.get_tensor(output_details[0]['index'])[0][0]
+        predictions = interpreter.get_tensor(output_details[0]['index'])
         
     else:
         predictions = model.predict(R)
