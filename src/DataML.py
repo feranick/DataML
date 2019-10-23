@@ -146,14 +146,14 @@ def main():
                 sys.exit(2)
 
         if o in ("-p" , "--predict"):
-            try:
-                if len(sys.argv)<4:
-                    predict(sys.argv[2], None)
-                else:
-                    predict(sys.argv[2], sys.argv[3])
-            except:
-                usage()
-                sys.exit(2)
+            #try:
+            if len(sys.argv)<4:
+                predict(sys.argv[2], None)
+            else:
+                predict(sys.argv[2], sys.argv[3])
+            #except:
+            #    usage()
+            #    sys.exit(2)
                 
         if o in ("-b" , "--batch"):
             try:
@@ -525,7 +525,6 @@ def batchPredict(testFile, normFile):
     if dP.regressor:
         summaryFile = np.array([['DataML','Regressor','',''],['Real Value','Prediction','val_loss','val_abs_mean_error']])
         predictions = getPredictions(A_test, model)
-        predictions2 = model.predict(A_test)
         
         score = model.evaluate(A_test, Cl_test, batch_size=dP.batch_size, verbose = 0)
         print('  ==========================================================')
@@ -602,7 +601,6 @@ def getPredictions(R, model):
         # Test model on random input data.
         input_shape = input_details[0]['shape']
         input_data = np.array(R, dtype=np.float32)
-        
         interpreter.set_tensor(input_details[0]['index'], input_data)
         interpreter.invoke()
 
@@ -709,7 +707,9 @@ def makeQuantizedTFmodel(A, model):
     except:
         converter = tf.lite.TFLiteConverter.from_keras_model_file(dP.model_name)  # TensorFlow 1.x
 
-    converter.optimizations = [tf.lite.Optimize.DEFAULT]
+    #converter.optimizations = [tf.lite.Optimize.DEFAULT]
+    converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_LATENCY]
+    #converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
     converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
     converter.inference_input_type = tf.uint8
     converter.inference_output_type = tf.uint8
