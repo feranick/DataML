@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20191023a
+* 20191023b
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -36,18 +36,19 @@ class Conf():
             print(" Configuration file: \""+confFileName+"\" does not exist: Creating one.\n")
             self.createConfig()
         self.readConfig(self.configFile)
+        self.model_directory = "./"
         if self.regressor:
             self.modelName = "model_regressor.hd5"
             self.summaryFileName = "summary_regressor.csv"
+            self.model_png = self.model_directory+"/model_regressor_MLP.png"
         else:
             self.modelName = "model_classifier.hd5"
             self.summaryFileName = "summary_classifier.csv"
+            self.model_png = self.model_directory+"/model_classifier_MLP.png"
         
         self.tb_directory = "model_MLP"
-        self.model_directory = "./"
         self.model_name = self.model_directory+self.modelName
         self.model_le = self.model_directory+"model_le.pkl"
-        self.model_png = self.model_directory+"/model_MLP.png"
         if parse_version(tf.version.VERSION) < parse_version('2.0.0'):
             self.useTF2 = False
         else:
@@ -146,14 +147,14 @@ def main():
                 sys.exit(2)
 
         if o in ("-p" , "--predict"):
-            #try:
-            if len(sys.argv)<4:
-                predict(sys.argv[2], None)
-            else:
-                predict(sys.argv[2], sys.argv[3])
-            #except:
-            #    usage()
-            #    sys.exit(2)
+            try:
+                if len(sys.argv)<4:
+                    predict(sys.argv[2], None)
+                else:
+                    predict(sys.argv[2], sys.argv[3])
+            except:
+                usage()
+                sys.exit(2)
                 
         if o in ("-b" , "--batch"):
             try:
@@ -457,27 +458,30 @@ def predict(testFile, normFile):
     if dP.regressor:
         predictions = getPredictions(R, loadModel()).flatten()[0]
         #predictions = model.predict(R).flatten()[0]
-        print('\n  ========================================================')
+        print('\n  ==========================================================')
         print('  \033[1m MLP - Regressor\033[0m - Prediction')
-        print('  ========================================================')
+        print('  ==========================================================')
         if normFile != None:
             predValue = norm.transform_inverse_single(predictions)
             print('\033[1m\n  Predicted value = {0:.2f}\033[0m (normalized: {1:.2f})\n'.format(predValue, predictions))
         else:
             predValue = predictions
             print('\033[1m\n  Predicted value (normalized) = {0:.2f}\033[0m\n'.format(predValue))
-        print('  ========================================================\n')
+        print('  ==========================================================\n')
         
     else:
         le = pickle.loads(open(dP.model_le, "rb").read())
         predictions = getPredictions(R, loadModel())
         pred_class = np.argmax(predictions)
-        predProb = round(100*predictions[0][pred_class],2)
+        if dP.useTFlitePred:
+            predProb = round(100*predictions[0][pred_class]/255,2)
+        else:
+            predProb = round(100*predictions[0][pred_class],2)
         rosterPred = np.where(predictions[0]>0.1)[0]
 
-        print('\n  ========================================================')
+        print('\n  ==========================================================')
         print('  \033[1m MLP - Classifier\033[0m - Prediction')
-        print('  ========================================================')
+        print('  ==========================================================')
 
         if dP.numLabels == 1:
 
@@ -491,16 +495,16 @@ def predict(testFile, normFile):
             else:
                 predValue = 0
                 print('\033[1m\n  No predicted value (probability = {0:.2f}%)\033[0m\n'.format(predProb))
-            print('  ========================================================\n')
+            print('  ==========================================================\n')
 
         else:
-            print('\n ==========================================')
+            print('\n ============================================')
             print('\033[1m' + ' Predicted value \033[0m(probability = ' + str(predProb) + '%)')
-            print(' ==========================================\n')
+            print(' ============================================\n')
             print("  1:", str(predValue[0]),"%")
             print("  2:",str(predValue[1]),"%")
             print("  3:",str((predValue[1]/0.5)*(100-99.2-.3)),"%\n")
-            print(' ==========================================\n')
+            print(' ============================================\n')
 
 #************************************
 # Batch Prediction
