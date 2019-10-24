@@ -711,6 +711,7 @@ def makeQuantizedTFmodel(A, model):
     converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_LATENCY]
     #converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
     converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
+    #converter.inference_input_type = tf.uint8
     converter.inference_input_type = tf.float32
     converter.inference_output_type = tf.uint8
     converter.representative_dataset = representative_dataset_gen
