@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20191024a
+* 20191024b
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -13,7 +13,7 @@ print(__doc__)
 import numpy as np
 import pandas as pd
 import sys, os.path, getopt, time, configparser, pickle, h5py, csv, math
-import tensorflow as tf
+#import tensorflow as tf
 from pkg_resources import parse_version
 from libDataML import *
 
@@ -49,10 +49,6 @@ class Conf():
         self.tb_directory = "model_MLP"
         self.model_name = self.model_directory+self.modelName
         self.model_le = self.model_directory+"model_le.pkl"
-        if parse_version(tf.version.VERSION) < parse_version('2.0.0'):
-            self.useTF2 = False
-        else:
-            self.useTF2 = True
             
         self.edgeTPUSharedLib = "libedgetpu.so.1"
             
@@ -171,12 +167,6 @@ def main():
                 sys.exit(2)
 
     total_time = time.perf_counter() - start_time
-    
-    if dP.useTFlitePred:
-        print(" TensorFlow (Lite) v.",parse_version(tf.version.VERSION) )
-    else:
-        print(" TensorFlow v.",parse_version(tf.version.VERSION) )
-        
     print(" Total time: {0:.1f}s or {1:.1f}m or {2:.1f}h".format(total_time,
                             total_time/60, total_time/3600),"\n")
 
@@ -189,9 +179,15 @@ def train(learnFile, testFile, normFile):
     def_mae = 'mae'
     def_val_mae = 'val_mae'
     
+    import tensorflow as tf
     import tensorflow.keras as keras
     
-    if dP.useTF2:
+    if parse_version(tf.version.VERSION) < parse_version('2.0.0'):
+        useTF2 = False
+    else:
+        useTF2 = True
+        
+    if useTF2:
         opts = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=1)     # Tensorflow 2.0
         conf = tf.compat.v1.ConfigProto(gpu_options=opts)  # Tensorflow 2.0
         
@@ -325,7 +321,7 @@ def train(learnFile, testFile, normFile):
             callbacks = tbLogs,
             verbose=2,
 	        validation_split=dP.cv_split)
-    if dP.useTF2:
+    if useTF2:
         model.save(dP.model_name, save_format='h5')
     else:
         model.save(dP.model_name)
@@ -439,6 +435,8 @@ def train(learnFile, testFile, normFile):
 
     if dP.plotWeightsFlag == True:
         plotWeights(En, A, model)
+    
+    getTFVersion()
 
 #************************************
 # Prediction
@@ -516,7 +514,6 @@ def predict(testFile, normFile):
 def batchPredict(testFile, normFile):
     dP = Conf()
     En_test, A_test, Cl_test = readLearnFile(testFile)
-    #model = keras.models.load_model(dP.model_name)
     
     model = loadModel()
 
@@ -597,9 +594,7 @@ def batchPredict(testFile, normFile):
 #************************************
 def getPredictions(R, model):
     dP = Conf()
-    import tensorflow as tf
-    import tensorflow.keras as keras
-        
+       
     if dP.useTFlitePred:
         interpreter = model  #needed to keep consistency with documentation
         # Get input and output tensors.
@@ -711,6 +706,7 @@ def printParam():
 #************************************
 def makeQuantizedTFmodel(A, model):
     dP = Conf()
+    import tensorflow as tf
     print("\n  Creating quantized TensorFlowLite Model...\n")
     def representative_dataset_gen():
         for i in range(A.shape[0]):
@@ -759,6 +755,15 @@ def plotWeights(En, A, model):
     plt.legend(loc='upper right')
     plt.savefig('model_MLP_weights' + '.png', dpi = 160, format = 'png')  # Save plot
 
+#************************************
+# Get TensorFlow Version
+#************************************
+def getTFVersion():
+    import tensorflow as tf
+    if Conf().useTFlitePred:
+        print(" TensorFlow (Lite) v.",parse_version(tf.version.VERSION) )
+    else:
+        print(" TensorFlow v.",parse_version(tf.version.VERSION) )
 #************************************
 # Lists the program usage
 #************************************
