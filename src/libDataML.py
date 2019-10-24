@@ -2,14 +2,13 @@
 '''
 **********************************************************
 * libDataML - Library for DataML
-* 20190807a
+* 20191024b
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
 '''
 import numpy as np
 import pickle
-from bisect import bisect_left
 
 #************************************
 # Normalizer
@@ -88,6 +87,7 @@ class CustomRound:
         self.data = sorted(iterable)
 
     def __call__(self,x):
+        from bisect import bisect_left
         data = self.data
         ndata = len(data)
         idx = bisect_left(data,x)

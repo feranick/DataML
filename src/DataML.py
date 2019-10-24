@@ -11,10 +11,7 @@
 print(__doc__)
 
 import numpy as np
-import pandas as pd
 import sys, os.path, getopt, time, configparser, pickle, h5py, csv, math
-#import tensorflow as tf
-from pkg_resources import parse_version
 from libDataML import *
 
 #***************************************************
@@ -147,14 +144,14 @@ def main():
                 sys.exit(2)
 
         if o in ("-p" , "--predict"):
-            try:
-                if len(sys.argv)<4:
-                    predict(sys.argv[2], None)
-                else:
-                    predict(sys.argv[2], sys.argv[3])
-            except:
-                usage()
-                sys.exit(2)
+            #try:
+            if len(sys.argv)<4:
+                predict(sys.argv[2], None)
+            else:
+                predict(sys.argv[2], sys.argv[3])
+            #except:
+            #    usage()
+            #    sys.exit(2)
 
         if o in ("-b" , "--batch"):
             try:
@@ -585,6 +582,7 @@ def batchPredict(testFile, normFile):
     print(" PearsonR correlation: {0:0.3f}".format(pearsonr_corr))
     print(" SpearmanR correlation: {0:0.4f}".format(spearmanr_corr))
 
+    import pandas as pd
     df = pd.DataFrame(summaryFile)
     df.to_csv(dP.summaryFileName, index=False, header=False)
     print("\n Prediction summary saved in:",dP.summaryFileName,"\n")
@@ -760,6 +758,7 @@ def plotWeights(En, A, model):
 #************************************
 def getTFVersion():
     import tensorflow as tf
+    from pkg_resources import parse_version
     if Conf().useTFlitePred:
         print(" TensorFlow (Lite) v.",parse_version(tf.version.VERSION) )
     else:
