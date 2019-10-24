@@ -144,14 +144,14 @@ def main():
                 sys.exit(2)
 
         if o in ("-p" , "--predict"):
-            #try:
-            if len(sys.argv)<4:
-                predict(sys.argv[2], None)
-            else:
-                predict(sys.argv[2], sys.argv[3])
-            #except:
-            #    usage()
-            #    sys.exit(2)
+            try:
+                if len(sys.argv)<4:
+                    predict(sys.argv[2], None)
+                else:
+                    predict(sys.argv[2], sys.argv[3])
+            except:
+                usage()
+                sys.exit(2)
 
         if o in ("-b" , "--batch"):
             try:
@@ -445,14 +445,12 @@ def predict(testFile, normFile):
     if normFile != None:
         try:
             norm = pickle.loads(open(normFile, "rb").read())
-            print("\n  Opening pkl file with normalization data:",normFile)
+            print("  Opening pkl file with normalization data:",normFile)
             print("  Normalizing validation file for prediction...\n")
             R = norm.transform_valid_data(R)
         except:
             print("\033[1m pkl file not found \033[0m")
             return
-    
-    predictions = getPredictions(R, loadModel())
     
     if dP.regressor:
         predictions = getPredictions(R, loadModel()).flatten()[0]
@@ -517,7 +515,7 @@ def batchPredict(testFile, normFile):
     if normFile != None:
         try:
             norm = pickle.loads(open(normFile, "rb").read())
-            print("\n  Opening pkl file with normalization data:",normFile,"\n")
+            print("  Opening pkl file with normalization data:",normFile,"\n")
         except:
             print("\033[1m" + " pkl file not found \n" + "\033[0m")
             return
