@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20191023b
+* 20191024a
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -54,6 +54,8 @@ class Conf():
         else:
             self.useTF2 = True
             
+        self.edgeTPUSharedLib = "libedgetpu.so.1"
+            
     def datamlDef(self):
         self.conf['Parameters'] = {
             'regressor' : False,
@@ -74,6 +76,7 @@ class Conf():
             'makeQuantizedTFlite' : False,
             'useTFlitePred' : False,
             'TFliteRuntime' : False,
+            'runCoralEdge' : False,
             #'setMaxMem' : False,   # TensorFlow 2.0
             #'maxMem' : 4096,       # TensorFlow 2.0
             }
@@ -99,6 +102,7 @@ class Conf():
             self.makeQuantizedTFlite = self.conf.getboolean('System','makeQuantizedTFlite')
             self.useTFlitePred = self.conf.getboolean('System','useTFlitePred')
             self.TFliteRuntime = self.conf.getboolean('System','TFliteRuntime')
+            self.runCoralEdge = self.conf.getboolean('System','runCoralEdge')
             #self.setMaxMem = self.conf.getboolean('System','setMaxMem')     # TensorFlow 2.0
             #self.maxMem = self.conf.getint('System','maxMem')   # TensorFlow 2.0
         except:
@@ -155,7 +159,7 @@ def main():
             except:
                 usage()
                 sys.exit(2)
-                
+
         if o in ("-b" , "--batch"):
             try:
                 if len(sys.argv)<4:
@@ -624,7 +628,12 @@ def loadModel():
     if dP.TFliteRuntime:
         import tflite_runtime.interpreter as tflite
         # model here is intended as interpreter
-        model = tflite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'.tflite')
+        if dP.runCoralEdge:
+            print(" Running on Coral Edge TPU")
+            model = tflite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'_edgetpu.tflite',
+                experimental_delegates=[tflite.load_delegate(dP.edgeTPUSharedLib,{})])
+        else:
+            model = tflite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'.tflite')
         model.allocate_tensors()
     else:
         import tensorflow as tf
