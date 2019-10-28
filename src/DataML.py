@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20191024b
+* 20191028a
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -66,7 +66,7 @@ class Conf():
             }
     def sysDef(self):
         self.conf['System'] = {
-            'makeQuantizedTFlite' : False,
+            'makeQuantizedTFlite' : True,
             'useTFlitePred' : False,
             'TFliteRuntime' : False,
             'runCoralEdge' : False,
@@ -178,6 +178,7 @@ def train(learnFile, testFile, normFile):
     
     import tensorflow as tf
     import tensorflow.keras as keras
+    from pkg_resources import parse_version
     
     if parse_version(tf.version.VERSION) < parse_version('2.0.0'):
         useTF2 = False
