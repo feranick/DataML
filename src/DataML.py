@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20191028a
+* 20200130a
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -11,7 +11,8 @@
 print(__doc__)
 
 import numpy as np
-import sys, os.path, getopt, time, configparser, pickle, h5py, csv, math
+import sys, os.path, getopt, time, configparser
+import platform, pickle, h5py, csv, glob
 from libDataML import *
 
 #***************************************************
@@ -47,7 +48,12 @@ class Conf():
         self.model_name = self.model_directory+self.modelName
         self.model_le = self.model_directory+"model_le.pkl"
             
-        self.edgeTPUSharedLib = "libedgetpu.so.1"
+        if platform.system() == 'Linux':
+            self.edgeTPUSharedLib = "libedgetpu.so.1"
+        if platform.system() == 'Darwin':
+            self.edgeTPUSharedLib = "libedgetpu.1.dylib"
+        if platform.system() == 'Windows':
+            self.edgeTPUSharedLib = "edgetpu.dll"
             
     def datamlDef(self):
         self.conf['Parameters'] = {
