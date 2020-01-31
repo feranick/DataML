@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20200130a
+* 20200131a
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -12,7 +12,7 @@ print(__doc__)
 
 import numpy as np
 import sys, os.path, getopt, time, configparser
-import platform, pickle, h5py, csv, glob
+import platform, pickle, h5py, csv, glob, math
 from libDataML import *
 
 #***************************************************
@@ -126,7 +126,7 @@ def main():
     
     try:
         opts, args = getopt.getopt(sys.argv[1:],
-                                   "tpbh:", ["train", "predict", "batch", "help"])
+                                   "tpblh:", ["train", "predict", "batch", "lite", "help"])
     except:
         usage()
         sys.exit(2)
@@ -168,6 +168,13 @@ def main():
             except:
                 usage()
                 sys.exit(2)
+                
+        if o in ("-l" , "--lite"):
+            try:
+                convertTflite(sys.argv[2])
+            except:
+                usage()
+                sys.exit(2)
 
     total_time = time.perf_counter() - start_time
     print(" Total time: {0:.1f}s or {1:.1f}m or {2:.1f}h".format(total_time,
@@ -179,12 +186,8 @@ def main():
 def train(learnFile, testFile, normFile):
     dP = Conf()
     
-    def_mae = 'mae'
-    def_val_mae = 'val_mae'
-    
-    import tensorflow as tf
-    import tensorflow.keras as keras
     from pkg_resources import parse_version
+    import tensorflow as tf
     
     if parse_version(tf.version.VERSION) < parse_version('2.0.0'):
         useTF2 = False
@@ -203,21 +206,15 @@ def train(learnFile, testFile, normFile):
         #       tf.config.experimental.set_virtual_device_configuration(
         #         gpus[0],
         #         [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=dP.maxMem)])
-        
-        def_acc = 'accuracy'
-        def_val_acc = 'val_accuracy'
     
     else:
+        tf.compat.v1.enable_eager_execution()
         #conf.gpu_options.allow_growth = True
         opts = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=1)
         conf = tf.compat.v1.ConfigProto(gpu_options=opts)
-    
         tf.compat.v1.Session(config=conf)
-        def_mae = 'mean_absolute_error'
-        def_val_mae = 'val_mean_absolute_error'
         
-        def_acc = 'acc'
-        def_val_acc = 'val_acc'
+    import tensorflow.keras as keras
 
     learnFileRoot = os.path.splitext(learnFile)[0]
 
@@ -332,7 +329,7 @@ def train(learnFile, testFile, normFile):
     keras.utils.plot_model(model, to_file=dP.model_png, show_shapes=True)
     
     if dP.makeQuantizedTFlite:
-        makeQuantizedTFmodel(A, model)
+        makeQuantizedTFmodel(A, model, dP)
 
     print('\n  =============================================')
     print('  \033[1m MLP\033[0m - Model Configuration')
@@ -367,6 +364,7 @@ def train(learnFile, testFile, normFile):
             return
 
     if dP.regressor:
+        def_mae, def_val_mae = [list(log.history)[i] for i in (1,3)]
         val_mae = np.asarray(log.history[def_val_mae])
         mae = np.asarray(log.history[def_mae])
         printParam()
@@ -396,6 +394,7 @@ def train(learnFile, testFile, normFile):
                         predictions[i][0], score[0], score[1]))
             print('\n  ===========================================================\n')
     else:
+        def_acc, def_val_acc = [list(log.history)[i] for i in (1,3)]
         accuracy = np.asarray(log.history[def_acc])
         val_acc = np.asarray(log.history[def_val_acc])
         
@@ -440,7 +439,7 @@ def train(learnFile, testFile, normFile):
     if dP.plotWeightsFlag == True:
         plotWeights(En, A, model)
     
-    getTFVersion()
+    getTFVersion(dP)
 
 #************************************
 # Prediction
@@ -460,7 +459,7 @@ def predict(testFile, normFile):
             return
     
     if dP.regressor:
-        predictions = getPredictions(R, loadModel()).flatten()[0]
+        predictions = getPredictions(R, loadModel(dP), dP).flatten()[0]
         #predictions = model.predict(R).flatten()[0]
         print('\n  ==========================================================')
         print('  \033[1m MLP - Regressor\033[0m - Prediction')
@@ -475,7 +474,7 @@ def predict(testFile, normFile):
         
     else:
         le = pickle.loads(open(dP.model_le, "rb").read())
-        predictions = getPredictions(R, loadModel())
+        predictions = getPredictions(R, loadModel(dP), dP)
         pred_class = np.argmax(predictions)
         if dP.useTFlitePred:
             predProb = round(100*predictions[0][pred_class]/255,2)
@@ -517,7 +516,7 @@ def batchPredict(testFile, normFile):
     dP = Conf()
     En_test, A_test, Cl_test = readLearnFile(testFile)
     
-    model = loadModel()
+    model = loadModel(dP)
 
     if normFile != None:
         try:
@@ -592,56 +591,22 @@ def batchPredict(testFile, normFile):
     df.to_csv(dP.summaryFileName, index=False, header=False)
     print("\n Prediction summary saved in:",dP.summaryFileName,"\n")
 
-#************************************
-# Make prediction based on framework
-#************************************
-def getPredictions(R, model):
+#****************************************************
+# Convert model to quantized TFlite
+#****************************************************
+def convertTflite(learnFile):
     dP = Conf()
-       
-    if dP.useTFlitePred:
-        interpreter = model  #needed to keep consistency with documentation
-        # Get input and output tensors.
-        input_details = interpreter.get_input_details()
-        output_details = interpreter.get_output_details()
-
-        # Test model on random input data.
-        input_shape = input_details[0]['shape']
-        input_data = np.array(R, dtype=np.float32)
-        interpreter.set_tensor(input_details[0]['index'], input_data)
-        interpreter.invoke()
-
-        # The function `get_tensor()` returns a copy of the tensor data.
-        # Use `tensor()` in order to get a pointer to the tensor.
-        predictions = interpreter.get_tensor(output_details[0]['index'])
-        
-    else:
-        predictions = model.predict(R)
-    return predictions
-    
-#************************************
-# Load saved models
-#************************************
-def loadModel():
-    dP = Conf()
-    if dP.TFliteRuntime:
-        import tflite_runtime.interpreter as tflite
-        # model here is intended as interpreter
-        if dP.runCoralEdge:
-            print(" Running on Coral Edge TPU")
-            model = tflite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'_edgetpu.tflite',
-                experimental_delegates=[tflite.load_delegate(dP.edgeTPUSharedLib,{})])
-        else:
-            model = tflite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'.tflite')
-        model.allocate_tensors()
-    else:
-        import tensorflow as tf
-        if dP.useTFlitePred:
-            # model here is intended as interpreter
-            model = tf.lite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'.tflite')
-            model.allocate_tensors()
-        else:
-            model = tf.keras.models.load_model(dP.model_name)
-    return model
+    dP.useTFlitePred = False
+    dP.TFliteRuntime = False
+    dP.runCoralEdge = False
+    from pkg_resources import parse_version
+    import tensorflow as tf
+    if parse_version(tf.version.VERSION) < parse_version('2.0.0'):
+        tf.compat.v1.enable_eager_execution()
+    learnFileRoot = os.path.splitext(learnFile)[0]
+    En, A, Cl = readLearnFile(learnFile)
+    model = loadModel(dP)
+    makeQuantizedTFmodel(A, model, dP)
     
 #************************************
 # Open Learning Data
@@ -705,34 +670,6 @@ def printParam():
     #print('  ================================================\n')
 
 #************************************
-### Create Quantized tflite model
-#************************************
-def makeQuantizedTFmodel(A, model):
-    dP = Conf()
-    import tensorflow as tf
-    print("\n  Creating quantized TensorFlowLite Model...\n")
-    def representative_dataset_gen():
-        for i in range(A.shape[0]):
-            yield [A[i:i+1].astype(np.float32)]
-    try:
-        converter = tf.lite.TFLiteConverter.from_keras_model(model)    # TensorFlow 2.x
-    except:
-        converter = tf.lite.TFLiteConverter.from_keras_model_file(dP.model_name)  # TensorFlow 1.x
-
-    #converter.optimizations = [tf.lite.Optimize.DEFAULT]
-    converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_LATENCY]
-    #converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
-    converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
-    #converter.inference_input_type = tf.uint8
-    converter.inference_input_type = tf.float32
-    converter.inference_output_type = tf.uint8
-    converter.representative_dataset = representative_dataset_gen
-    tflite_quant_model = converter.convert()
-
-    with open(os.path.splitext(dP.model_name)[0]+'.tflite', 'wb') as o:
-        o.write(tflite_quant_model)
-
-#************************************
 # Open Learning Data
 #************************************
 def plotWeights(En, A, model):
@@ -758,16 +695,7 @@ def plotWeights(En, A, model):
     plt.legend(loc='upper right')
     plt.savefig('model_MLP_weights' + '.png', dpi = 160, format = 'png')  # Save plot
 
-#************************************
-# Get TensorFlow Version
-#************************************
-def getTFVersion():
-    import tensorflow as tf
-    from pkg_resources import parse_version
-    if Conf().useTFlitePred:
-        print(" TensorFlow (Lite) v.",parse_version(tf.version.VERSION) )
-    else:
-        print(" TensorFlow v.",parse_version(tf.version.VERSION) )
+
 #************************************
 # Lists the program usage
 #************************************
@@ -787,6 +715,8 @@ def usage():
     print('  python3 DataML.py -b <validationFile>\n')
     print(' Batch predict (labels normalized with pkl file):')
     print('  python3 DataML.py -b <validationFile> <pkl normalization file>\n')
+    print(' Convert model to quantized tflite:')
+    print('  python3 SpectraKeras_CNN.py -l <learningFile>\n')
     print(' Requires python 3.x. Not compatible with python 2.x\n')
 
 #************************************

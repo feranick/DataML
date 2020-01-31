@@ -2,13 +2,13 @@
 '''
 **********************************************************
 * libDataML - Library for DataML
-* 20191028a
+* 20200131a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
 '''
 import numpy as np
-import pickle
+import os.path, pickle, h5py
 
 #************************************
 # Normalizer
@@ -122,3 +122,102 @@ class MultiClassReductor():
 
     def classes_(self):
         return self.totalClass
+
+#************************************
+# Make prediction based on framework
+#************************************
+def getPredictions(R, model, dP):
+    if dP.useTFlitePred:
+        interpreter = model  #needed to keep consistency with documentation
+        # Get input and output tensors.
+        input_details = interpreter.get_input_details()
+        output_details = interpreter.get_output_details()
+
+        # Test model on random input data.
+        input_shape = input_details[0]['shape']
+        input_data = np.array(R, dtype=np.uint8)
+        interpreter.set_tensor(input_details[0]['index'], input_data)
+        interpreter.invoke()
+
+        # The function `get_tensor()` returns a copy of the tensor data.
+        # Use `tensor()` in order to get a pointer to the tensor.
+        predictions = interpreter.get_tensor(output_details[0]['index'])
+        
+    else:
+        predictions = model.predict(R)
+    return predictions
+
+#************************************
+# Load saved models
+#************************************
+def loadModel(dP):
+    if dP.TFliteRuntime:
+        import tflite_runtime.interpreter as tflite
+        # model here is intended as interpreter
+        if dP.runCoralEdge:
+            print(" Running on Coral Edge TPU")
+            model = tflite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'_edgetpu.tflite',
+                experimental_delegates=[tflite.load_delegate(dP.edgeTPUSharedLib,{})])
+        else:
+            model = tflite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'.tflite')
+        model.allocate_tensors()
+    else:
+        getTFVersion(dP)
+        import tensorflow as tf
+        if dP.useTFlitePred:
+            # model here is intended as interpreter
+            model = tf.lite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'.tflite')
+            model.allocate_tensors()
+        else:
+            model = tf.keras.models.load_model(dP.model_name)
+    return model
+
+#************************************
+### Create Quantized tflite model
+#************************************
+def makeQuantizedTFmodel(A, model, dP):
+    import tensorflow as tf
+    print("\n  Creating quantized TensorFlowLite Model...\n")
+    
+    A2 = tf.cast(A, tf.float32)
+    A = tf.data.Dataset.from_tensor_slices((A2)).batch(1)
+    
+    def representative_dataset_gen():
+        for input_value in A.take(100):
+            yield[input_value]
+    
+    ''' # Previous version
+    def representative_dataset_gen():
+        #for i in range(A.shape[0]):
+            #yield [A[i:i+1].astype(np.float32)]
+    '''
+
+    try:
+        converter = tf.lite.TFLiteConverter.from_keras_model(model)    # TensorFlow 2.x
+    except:
+        converter = tf.lite.TFLiteConverter.from_keras_model_file(dP.model_name)  # TensorFlow 1.x
+
+    print(converter.get_input_arrays())
+
+    converter.optimizations = [tf.lite.Optimize.DEFAULT]
+    #converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_LATENCY]
+    #converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
+    converter.representative_dataset = representative_dataset_gen
+    converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
+    converter.inference_input_type = tf.uint8
+    converter.inference_output_type = tf.uint8
+    tflite_quant_model = converter.convert()
+
+    with open(os.path.splitext(dP.model_name)[0]+'.tflite', 'wb') as o:
+        o.write(tflite_quant_model)
+
+#************************************
+# Get TensorFlow Version
+#************************************
+def getTFVersion(dP):
+    import tensorflow as tf
+    from pkg_resources import parse_version
+    if dP.useTFlitePred:
+        print(" TensorFlow (Lite) v.",parse_version(tf.version.VERSION),"\n")
+    else:
+        print(" TensorFlow v.",parse_version(tf.version.VERSION),"\n" )
