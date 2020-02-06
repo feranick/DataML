@@ -2,7 +2,7 @@
 '''
 **********************************************************
 * libDataML - Library for DataML
-* 20200131a
+* 20200206a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -124,30 +124,6 @@ class MultiClassReductor():
         return self.totalClass
 
 #************************************
-# Make prediction based on framework
-#************************************
-def getPredictions(R, model, dP):
-    if dP.useTFlitePred:
-        interpreter = model  #needed to keep consistency with documentation
-        # Get input and output tensors.
-        input_details = interpreter.get_input_details()
-        output_details = interpreter.get_output_details()
-
-        # Test model on random input data.
-        input_shape = input_details[0]['shape']
-        input_data = np.array(R, dtype=np.uint8)
-        interpreter.set_tensor(input_details[0]['index'], input_data)
-        interpreter.invoke()
-
-        # The function `get_tensor()` returns a copy of the tensor data.
-        # Use `tensor()` in order to get a pointer to the tensor.
-        predictions = interpreter.get_tensor(output_details[0]['index'])
-        
-    else:
-        predictions = model.predict(R)
-    return predictions
-
-#************************************
 # Load saved models
 #************************************
 def loadModel(dP):
@@ -173,6 +149,30 @@ def loadModel(dP):
     return model
 
 #************************************
+# Make prediction based on framework
+#************************************
+def getPredictions(R, model, dP):
+    if dP.useTFlitePred:
+        interpreter = model  #needed to keep consistency with documentation
+        # Get input and output tensors.
+        input_details = interpreter.get_input_details()
+        output_details = interpreter.get_output_details()
+
+        # Test model on random input data.
+        input_shape = input_details[0]['shape']
+        input_data = np.array(R*255, dtype=np.uint8)
+        interpreter.set_tensor(input_details[0]['index'], input_data)
+        interpreter.invoke()
+
+        # The function `get_tensor()` returns a copy of the tensor data.
+        # Use `tensor()` in order to get a pointer to the tensor.
+        predictions = interpreter.get_tensor(output_details[0]['index'])
+        
+    else:
+        predictions = model.predict(R)
+    return predictions
+
+#************************************
 ### Create Quantized tflite model
 #************************************
 def makeQuantizedTFmodel(A, model, dP):
@@ -185,23 +185,18 @@ def makeQuantizedTFmodel(A, model, dP):
     def representative_dataset_gen():
         for input_value in A.take(100):
             yield[input_value]
-    
-    ''' # Previous version
-    def representative_dataset_gen():
-        #for i in range(A.shape[0]):
-            #yield [A[i:i+1].astype(np.float32)]
-    '''
-
+            
     try:
-        converter = tf.lite.TFLiteConverter.from_keras_model(model)    # TensorFlow 2.x
+        converter = tf.compat.v1.lite.TFLiteConverter.from_keras_model_file(dP.model_name)    # TF2.x
+        #converter = tf.lite.TFLiteConverter.from_keras_model(model)    # TF2.x only. Does not support EdgeTPU
     except:
         converter = tf.lite.TFLiteConverter.from_keras_model_file(dP.model_name)  # TensorFlow 1.x
 
     print(converter.get_input_arrays())
 
-    converter.optimizations = [tf.lite.Optimize.DEFAULT]
+    #converter.optimizations = [tf.lite.Optimize.DEFAULT]
     #converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_LATENCY]
-    #converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
+    converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
     converter.representative_dataset = representative_dataset_gen
     converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
     converter.inference_input_type = tf.uint8
