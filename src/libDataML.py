@@ -2,7 +2,7 @@
 '''
 **********************************************************
 * libDataML - Library for DataML
-* 20200206a
+* 20200214a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -132,8 +132,11 @@ def loadModel(dP):
         # model here is intended as interpreter
         if dP.runCoralEdge:
             print(" Running on Coral Edge TPU")
-            model = tflite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'_edgetpu.tflite',
-                experimental_delegates=[tflite.load_delegate(dP.edgeTPUSharedLib,{})])
+            try:
+                model = tflite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'_edgetpu.tflite',
+                    experimental_delegates=[tflite.load_delegate(dP.edgeTPUSharedLib,{})])
+            except:
+                print(" Coral Edge TPU not found. Please make sure it's connected. ")
         else:
             model = tflite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'.tflite')
         model.allocate_tensors()
