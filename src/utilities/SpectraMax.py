@@ -6,7 +6,7 @@
 * SpectraMax
 * Finds Max for spectral data
 *
-* version: 201901007a
+* version: 20200416a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
@@ -18,7 +18,7 @@ print(__doc__)
 import numpy as np
 import pandas as pd
 from scipy import stats
-import sys, os.path, h5py, pickle
+import sys, os.path, h5py
 from random import uniform
 from bisect import bisect_left
 from scipy.stats import pearsonr, spearmanr

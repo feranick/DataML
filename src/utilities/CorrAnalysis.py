@@ -6,7 +6,7 @@
 * CorrAnalysis
 * Correlation analysis
 *
-* version: 20190910a
+* version: 20200420a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
@@ -18,7 +18,7 @@ print(__doc__)
 import numpy as np
 import pandas as pd
 from scipy import stats
-import sys, os.path, h5py, pickle
+import sys, os.path, h5py
 from random import uniform
 from bisect import bisect_left
 from scipy.stats import pearsonr, spearmanr
@@ -297,7 +297,7 @@ def plotGraphThreshold(dfP, dfC, validRows, title, pdf):
             plt.title(title+": {0:.3f}".format(dfC[col].loc[ind]))
             for k, txt, in enumerate(dfP.iloc[:,0].to_list()):
                 plt.annotate(txt,xy=(x[k],y[k]), fontsize='x-small')
-            if dP.plotLinRegression and col != ind:
+            if dP.plotLinRegression and col is not ind:
                 #z = np.polyfit(x, y, dP.polyDegree, full=True)
                 #print(z)
                 try:

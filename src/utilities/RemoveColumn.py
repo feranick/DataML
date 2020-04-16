@@ -5,7 +5,7 @@
 *
 * Remove Column
 *
-* version: 20181030a
+* version: 20200416a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 *
@@ -14,7 +14,7 @@
 print(__doc__)
 
 import numpy as np
-import sys, os.path, h5py, pickle
+import sys, os.path, h5py
 from random import uniform
 from bisect import bisect_left
 
@@ -34,7 +34,7 @@ def main():
         return
 
     M = readLearnFile(sys.argv[1])
-    if int(sys.argv[2]) != 0 and int(sys.argv[2]) <= M.shape[1]:
+    if int(sys.argv[2]) is not 0 and int(sys.argv[2]) <= M.shape[1]:
         Mdel = np.delete(M,sys.argv[2],1)
         rootFile = os.path.splitext(sys.argv[1])[0]
         saveLearnFile(Mdel, rootFile+"_exclCol"+sys.argv[2])
@@ -66,7 +66,7 @@ def readLearnFile(learnFile):
 # Save new learning Data
 #***************************************
 def saveLearnFile(M, learnFile):
-    if dP.saveAsTxt == True:
+    if dP.saveAsTxt:
         learnFile += '.txt'
         with open(learnFile, 'ab') as f:
                  np.savetxt(f, M, delimiter='\t', fmt="%10.{0}f".format(dP.precData))

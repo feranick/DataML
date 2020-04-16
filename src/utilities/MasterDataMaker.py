@@ -90,7 +90,7 @@ def processMultiFile(masterFile, enInit, enFin, enStep, threshold):
 
     # process sample data
     for ind, f in enumerate(sorted(os.listdir("."))):
-        if (f != masterFile and os.path.splitext(f)[-1] == ".txt"):
+        if (f is not masterFile and os.path.splitext(f)[-1] is ".txt"):
             dfP = makeFile(f, dfP, threshold)
 
     print('\n Energy scale: [', str(enInit),',',
@@ -128,7 +128,7 @@ def makeFile(sampleFile, dfP, threshold):
         print(' Number of points in the learning dataset: ' + str(EnT.shape[0]))
     else:
         print('\033[1m' + ' Mismatch in datapoints: ' + str(EnT.shape[0]) + '; sample = ' +  str(En.shape[0]) + '\033[0m')
-        if defParam.useMinForBoundary == True:
+        if defParam.useMinForBoundary:
             print(" Boundaries: Filling in with min values")
             defParam.leftBoundary = R[0]
             defParam.rightBoundary = R[R.shape[0]-1]

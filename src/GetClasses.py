@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * GetClasses
-* 20190315a
+* 20200416a
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
 '''
@@ -28,8 +28,15 @@ def main():
 
     print("\n Opening files:",sys.argv[1],"and",sys.argv[2])
     try:
-        norm = pickle.loads(open(sys.argv[1], "rb").read())
-        le = pickle.loads(open(sys.argv[2], "rb").read())
+        #norm = pickle.loads(open(sys.argv[1], "rb").read())
+        #le = pickle.loads(open(sys.argv[2], "rb").read())
+        norm_file = open(open(sys.argv[1], "rb")
+        norm = pickle.loads(norm_file.read())
+        norm_file.close()
+        le_file = open(sys.argv[2], "rb")
+        le = pickle.loads(le_file.read())
+        le_file.close()
+        
         print("\n Classes: ",le.classes_())
 
         normText = []
