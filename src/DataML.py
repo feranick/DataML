@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20200214a
+* 20200416a
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -219,7 +219,7 @@ def train(learnFile, testFile, normFile):
     learnFileRoot = os.path.splitext(learnFile)[0]
 
     En, A, Cl = readLearnFile(learnFile)
-    if testFile != None:
+    if testFile is not None:
         En_test, A_test, Cl_test = readLearnFile(testFile)
         totA = np.vstack((A, A_test))
         totCl = np.append(Cl, Cl_test)
@@ -232,7 +232,7 @@ def train(learnFile, testFile, normFile):
     
     if dP.regressor:
         Cl2 = np.copy(Cl)
-        if testFile != None:
+        if testFile is not None:
             Cl2_test = np.copy(Cl_test)
     else:
     
@@ -245,7 +245,7 @@ def train(learnFile, testFile, normFile):
         le = preprocessing.LabelEncoder()
         totCl2 = le.fit_transform(totCl)
         Cl2 = le.transform(Cl)
-        if testFile != None:
+        if testFile is not None:
             Cl2_test = le.transform(Cl_test)
         '''
         le = MultiClassReductor()
@@ -254,7 +254,7 @@ def train(learnFile, testFile, normFile):
     
         print("  Number unique classes (training): ", np.unique(Cl).size)
     
-        if testFile != None:
+        if testFile is not None:
             Cl2_test = le.transform(Cl_test)
             print("  Number unique classes (validation):", np.unique(Cl_test).size)
             print("  Number unique classes (total): ", np.unique(totCl).size)
@@ -265,7 +265,7 @@ def train(learnFile, testFile, normFile):
 
         #totCl2 = keras.utils.to_categorical(totCl2, num_classes=np.unique(totCl).size)
         Cl2 = keras.utils.to_categorical(Cl2, num_classes=np.unique(totCl).size+1)
-        if testFile != None:
+        if testFile is not None:
             Cl2_test = keras.utils.to_categorical(Cl2_test, num_classes=np.unique(totCl).size+1)
 
     #************************************
@@ -308,7 +308,7 @@ def train(learnFile, testFile, normFile):
     tbLog = keras.callbacks.TensorBoard(log_dir=dP.tb_directory, histogram_freq=120,
             write_graph=True, write_images=True)
     tbLogs = [tbLog]
-    if testFile != None:
+    if testFile is not None:
         log = model.fit(A, Cl2,
             epochs=dP.epochs,
             batch_size=dP.batch_size,
@@ -340,7 +340,7 @@ def train(learnFile, testFile, normFile):
     print("  Data size:", A.shape)
     print("\n  Training set file:",learnFile)
     
-    if testFile != None:
+    if testFile is not None:
         print("  Testing set file:",testFile)
         print("\n  Training set file datapoints:", A.shape[0])
         print("  Testing set file datapoints:", A_test.shape[0])
@@ -354,9 +354,11 @@ def train(learnFile, testFile, normFile):
     loss = np.asarray(log.history['loss'])
     val_loss = np.asarray(log.history['val_loss'])
     
-    if normFile != None:
+    if normFile is not None:
         try:
-            norm = pickle.loads(open(normFile, "rb").read())
+            norm_file = open(normFile, "rb")
+            norm = pickle.loads(norm_file.read())
+            norm_file.close()
             print("\n  Opening pkl file with normalization data:",normFile)
             print(" Normalizing validation file for prediction...")
         except:
@@ -386,7 +388,7 @@ def train(learnFile, testFile, normFile):
             print("  -----------------------------------------------------------")
             for i in range(0,len(predictions)):
                 score = model.evaluate(np.array([A_test[i]]), np.array([Cl_test[i]]), batch_size=dP.batch_size, verbose = 0)
-                if normFile != None:
+                if normFile is not None:
                     print("  {0:.3f} ({1:.3f})  |  {2:.3f} ({3:.3f})  | {4:.4f}  |  {5:.4f} ".format(norm.transform_inverse_single(Cl2_test[i]),
                         Cl2_test[i], norm.transform_inverse_single(predictions[i][0]), predictions[i][0], score[0], score[1]))
                 else:
@@ -399,7 +401,7 @@ def train(learnFile, testFile, normFile):
         val_acc = np.asarray(log.history[def_val_acc])
         
         print("  Number unique classes (training): ", np.unique(Cl).size)
-        if testFile != None:
+        if testFile is not None:
             Cl2_test = le.transform(Cl_test)
             print("  Number unique classes (validation):", np.unique(Cl_test).size)
             print("  Number unique classes (total): ", np.unique(totCl).size)
@@ -428,7 +430,7 @@ def train(learnFile, testFile, normFile):
                 predProb = round(100*predictions[i][predClass],2)
                 predValue = le.inverse_transform([predClass])[0]
                 realValue = Cl_test[i]
-                if normFile != None:
+                if normFile is not None:
                     print("  {0:.2f} ({1:.2f})  |  {2:.2f} ({3:.2f})  |  {4:.2f}".format(norm.transform_inverse_single(realValue),
                         realValue, norm.transform_inverse_single(predValue), predValue, predProb))
                 else:
@@ -448,9 +450,11 @@ def predict(testFile, normFile):
     dP = Conf()
     R = readTestFile(testFile)
 
-    if normFile != None:
+    if normFile is not None:
         try:
-            norm = pickle.loads(open(normFile, "rb").read())
+            norm_file = open(normFile, "rb")
+            norm = pickle.loads(norm_file.read())
+            norm_file.close()
             print("  Opening pkl file with normalization data:",normFile)
             print("  Normalizing validation file for prediction...\n")
             R = norm.transform_valid_data(R)
@@ -464,7 +468,7 @@ def predict(testFile, normFile):
         print('\n  ==========================================================')
         print('  \033[1m MLP - Regressor\033[0m - Prediction')
         print('  ==========================================================')
-        if normFile != None:
+        if normFile is not None:
             predValue = norm.transform_inverse_single(predictions)
             print('\033[1m\n  Predicted value = {0:.2f}\033[0m (normalized: {1:.2f})\n'.format(predValue, predictions))
         else:
@@ -473,7 +477,9 @@ def predict(testFile, normFile):
         print('  ==========================================================\n')
         
     else:
-        le = pickle.loads(open(dP.model_le, "rb").read())
+        le_file = open(dP.model_le, "rb")
+        le = pickle.loads(le_file.read())
+        le_file.close()
         predictions = getPredictions(R, loadModel(dP), dP)
         pred_class = np.argmax(predictions)
         if dP.useTFlitePred:
@@ -489,7 +495,7 @@ def predict(testFile, normFile):
         if dP.numLabels == 1:
 
             if pred_class.size >0:
-                if normFile != None:
+                if normFile is not None:
                     predValue = norm.transform_inverse_single(le.inverse_transform([pred_class])[0])
                     print('\033[1m\n  Predicted value = {0:.2f} (probability = {1:.2f}%)\033[0m\n'.format(predValue, predProb))
                 else:
@@ -518,9 +524,11 @@ def batchPredict(testFile, normFile):
     
     model = loadModel(dP)
 
-    if normFile != None:
+    if normFile is not None:
         try:
-            norm = pickle.loads(open(normFile, "rb").read())
+            norm_file = open(normFile, "rb")
+            norm = pickle.loads(norm_file.read())
+            norm_file.close()
             print("  Opening pkl file with normalization data:",normFile,"\n")
         except:
             print("\033[1m" + " pkl file not found \n" + "\033[0m")
@@ -542,7 +550,7 @@ def batchPredict(testFile, normFile):
         print("  -----------------------------------------------------------")
         for i in range(0,len(predictions)):
             score = model.evaluate(np.array([A_test[i]]), np.array([Cl_test[i]]), batch_size=dP.batch_size, verbose = 0)
-            if normFile != None:
+            if normFile is not None:
                 predValue = norm.transform_inverse_single(predictions[i][0])
                 realValue = norm.transform_inverse_single(Cl_test[i])
             else:
@@ -555,7 +563,9 @@ def batchPredict(testFile, normFile):
         print('  ==========================================================\n')
     else:
         summaryFile = np.array([['DataML','Classifier',''],['Real Class','Predicted Class', 'Probability']])
-        le = pickle.loads(open(dP.model_le, "rb").read())
+        le_file = open(dP.model_le, "rb")
+        le = pickle.loads(le_file.read())
+        le_file.close()
         predictions = getPredictions(A_test, model)
         #predictions = model.predict(A_test)
         print('  ========================================================')
@@ -566,7 +576,7 @@ def batchPredict(testFile, normFile):
         for i in range(predictions.shape[0]):
             predClass = np.argmax(predictions[i])
             predProb = round(100*predictions[i][predClass],2)
-            if normFile != None:
+            if normFile is not None:
                 predValue = norm.transform_inverse_single(le.inverse_transform([predClass])[0])
                 realValue = norm.transform_inverse_single(Cl_test[i])
             else:
