@@ -6,7 +6,7 @@ setup(
     install_requires=['numpy', 'h5py', 'tensorflow-gpu'],
     entry_points={'console_scripts' : ['DataML=DataML:DataML','ConvertLabel=ConvertLabel:ConvertLabel','GetClasses=GetClasses:GetClasses']},
     py_modules=['DataML','ConvertLabel','GetClasses','libDataML'],
-    version='20200416a',
+    version='20200716a',
     description='Multilabel machine learning for combined experimental data',
     long_description= """ Multilabel machine learning for combined experimental data """,
     author='Nicola Ferralis',
