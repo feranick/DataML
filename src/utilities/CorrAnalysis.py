@@ -6,7 +6,7 @@
 * CorrAnalysis
 * Correlation analysis
 *
-* version: 20200420a
+* version: 20200805a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
@@ -29,14 +29,14 @@ from matplotlib.backends.backend_pdf import PdfPages
 # Parameters definition
 #************************************
 class dP:
-    skipHeadRows = 1
+    skipHeadRows = 0
     
     #trainCol = [3,3553]   # Raw data
     #trainCol = [3,80000]   # Raw data
     #predCol = [1,3]       # Raw data
     
-    trainCol = [28,47]     # ML3
-    predCol = [5,7]        # ML-3
+    trainCol = [1,7]     # ML-3
+    predCol = [7,9]        # ML-3
     
     #trainCol = [1,35]     # ML3
     #predCol = [1,35]
@@ -48,21 +48,21 @@ class dP:
     #predCol = [61,106]
 
     valueForNan = -1
-    validRows = [40,41,42,43]
+    validRows = [5]
     
-    corrMin = .8
-    corrMax = 1
-    #corrMin = -1
-    #corrMax = -.7
+    #corrMin = .2
+    #corrMax = 1
+    corrMin = -1
+    corrMax = -.6
 
     heatMapsCorr = True            # True: use for Master data
     
-    plotGraphs = False
+    plotGraphs = True
     plotGraphsThreshold = False
-    plotValidData = True
+    plotValidData = False
     plotLinRegression = True
-    graphX = [8,10,12,13,14]
-    graphY = [62,69,78,79,80,81]
+    graphX = [1,2,3,4,5,6,7,8]
+    graphY = [1,2,3,4,5,6,7,8]
     
     plotCorr = False                # True: use for raw data (spectra, etc)
     stepXticksPlot = 1500
@@ -231,7 +231,7 @@ def heatMapsCorrelations(dfP, title, pdf):
                        ha="center", va="center", color="w")
     '''
 
-    cbar = ax.figure.colorbar(im, ax=ax, cmap="YlGn")
+    cbar = ax.figure.colorbar(im, ax=ax)
     cbar.ax.set_ylabel("correlation", rotation=-90, va="bottom")
     
     ax.set_title(title)
@@ -256,7 +256,7 @@ def heatMapsCorrelations2(dfP):
     plt.show()
 
 #************************************
-# Pllot Graphs based on manual input
+# Plot Graphs based on manual input
 #************************************
 def plotGraphs(dfP, X, Y, validRows, pdf):
     num = 0
