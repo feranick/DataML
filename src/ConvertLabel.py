@@ -6,7 +6,7 @@
 * ConvertLabel
 * Convert normalized labels into actual labels
 *
-* version: 20190813a
+* version: 20201124a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 *
