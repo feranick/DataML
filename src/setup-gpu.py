@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name='DataML',
     packages=find_packages(),
-    install_requires=['numpy', 'h5py', 'tensorflow-gpu'],
+    install_requires=['numpy', 'h5py', 'tensorflow-gpu','pydot'],
     entry_points={'console_scripts' : ['DataML=DataML:DataML','ConvertLabel=ConvertLabel:ConvertLabel','GetClasses=GetClasses:GetClasses']},
     py_modules=['DataML','ConvertLabel','GetClasses','libDataML'],
     version='20201124a',
