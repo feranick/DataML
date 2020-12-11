@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20201210a
+* 20201210b
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -330,6 +330,8 @@ def train(learnFile, testFile, normFile):
     
     if dP.makeQuantizedTFlite:
         makeQuantizedTFmodel(A, model, dP)
+
+    model.summary()
 
     print('\n  =============================================')
     print('  \033[1m MLP\033[0m - Model Configuration')
