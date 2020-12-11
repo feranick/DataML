@@ -56,8 +56,7 @@ def main():
     else:
         newTrain = M
 
-    for j in range(int(sys.argv[2])):
-        newTrain = np.vstack((newTrain, randomize(M)))
+    newTrain = randomize(newTrain, int(sys.argv[2]))
 
     if dP.Ynorm ==True:
         print(" Normalizing Learning + Noisy Spectra to:",dP.YnormTo,"\n")
@@ -106,18 +105,23 @@ def saveLearnFile(M, learnFile):
 #************************************
 # Introduce Noise in Data
 #************************************
-def randomize(M):
-    rand = randomMatrix(M[:,1:])
-    M[:,1:] = np.multiply(M[:,1:],rand)
-    return M
+def randomize(P, numRandomAdds):
+    Pr = np.copy(P)
 
-def randomMatrix(P):
-    random = np.random.uniform(1-dP.minPercVariation,1,P.shape[1])
     if not dP.fullRandomMatrix:
-        rand = np.ones(P.shape[1])
-        rand[dP.randomCols] = random[dP.randomCols]
+        cols = dP.randomCols
     else:
-        rand = random
+        cols = P[0,1:].astype(int)
+        
+    for j in range (0,numRandomAdds):
+        rand = randomMatrix(P, cols)
+        temp = np.multiply(P[1:],rand)
+        Pr = np.vstack([Pr, temp])
+    return Pr
+
+def randomMatrix(P, cols):
+    rand = np.ones(P[1:].shape)
+    rand[:,cols] = np.random.uniform(1-dP.minPercVariation,1,rand[:,cols].shape)
     return rand
 
 #************************************
