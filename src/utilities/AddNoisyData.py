@@ -6,7 +6,7 @@
 * on selected ones.
 * Noise is a random percentage multiplier
 
-* version: 20201211a
+* version: 20201211c
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -32,7 +32,7 @@ class dP:
 # Main
 #************************************
 def main():
-    if len(sys.argv) < 4:
+    if len(sys.argv) < 3:
         print(' Usage:\n  python3 AddNoisyData.py <learnData> <#additions>')
         print('  Data is by default normalized to 1\n')
         print(' Requires python 3.x. Not compatible with python 2.x\n')
