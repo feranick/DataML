@@ -2,47 +2,47 @@
 # -*- coding: utf-8 -*-
 '''
 *********************************************
-*
-* NormColumns
+* NormalizeColumns
 * Normalize columns for master data
-*
-* version: 20190506a
-*
+* version: 20201217a
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
-*
 ***********************************************
 '''
 print(__doc__)
 
 import numpy as np
 import pandas as pd
-import sys, os.path
+import sys, os.path, math
 
 #************************************
 # Parameters definition
 #************************************
 class dP:
-    skipHeadRows = 0
+    skipHeadRows = 1
     valueForNan = -1
-    skipNumRows = 2
+    skipNumRows = 0
+    saveAsLog = False
 
 #************************************
 # Main
 #************************************
 def main():
     if len(sys.argv) < 2:
-        print(' Usage:\n  python3 NormColumns <paramFile>')
+        print(' Usage:\n  python3 NormalizeColumns <paramFile>')
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
     
     TFile = os.path.splitext(sys.argv[1])[0]
-    TFile += '_Norm.csv'
+    if dP.saveAsLog:
+        TFile += '_LogNorm.csv'
+    else:
+        TFile += '_Norm.csv'
+    
     dfP = readParamFile(sys.argv[1])
-
     dfPint = normalize(dfP)
-
     dfPint.to_csv(TFile, index=True)
+    print("\n Saving normalized file in:",TFile,"\n")
 
 #************************************
 # Open Learning Data
@@ -67,8 +67,13 @@ def normalize(dfP):
     for i in range(len(dfP.columns)):
         print("Column:",i," - ",dfP.columns[i]," - Max:",dfP.iloc[sR:,i].max(),
             " - Min:",dfP.iloc[sR:,i].min())
-        dfPnorm.iloc[sR:,i] = (dfP.iloc[sR:,i]-dfP.iloc[sR:,i].min())/dfP.iloc[sR:,i].max()
-    
+        
+        data = dfP.iloc[sR:,i]
+        if dP.saveAsLog:
+            if data.min() < 0:
+                data = data-data.min()
+            data = np.log10(data)
+        dfPnorm.iloc[sR:,i] = (data-data.min())/data.max()
     print("\n",dfPnorm)
     return dfPnorm
 
