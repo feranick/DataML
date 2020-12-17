@@ -22,7 +22,10 @@ class dP:
     skipHeadRows = 1
     valueForNan = -1
     skipNumRows = 0
+    normAllCols = True
+    numColsNorm = 60
     saveAsLog = False
+    prec=0.001
 
 #************************************
 # Main
@@ -64,15 +67,24 @@ def readParamFile(paramFile):
 def normalize(dfP):
     dfPnorm = dfP.copy()
     sR = int(dP.skipNumRows)
-    for i in range(len(dfP.columns)):
-        print("Column:",i," - ",dfP.columns[i]," - Max:",dfP.iloc[sR:,i].max(),
-            " - Min:",dfP.iloc[sR:,i].min())
+    if dP.normAllCols:
+        normCols= range(len(dfP.columns))
+    else:
+        normCols = range(0,dP.numColsNorm)
+    
+    print(normCols)
         
+    for i in normCols:
         data = dfP.iloc[sR:,i]
+        
+        print("Column:",i," - ",dfP.columns[i]," - Max:",data.max(),
+            " - Min:",data.min())
+        
         if dP.saveAsLog:
             if data.min() < 0:
-                data = data-data.min()
+                data = data-data.min()+dP.prec
             data = np.log10(data)
+        
         dfPnorm.iloc[sR:,i] = (data-data.min())/data.max()
     print("\n",dfPnorm)
     return dfPnorm
@@ -82,3 +94,4 @@ def normalize(dfP):
 #************************************
 if __name__ == "__main__":
     sys.exit(main())
+
