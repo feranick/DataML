@@ -31,7 +31,6 @@ from matplotlib.backends.backend_pdf import PdfPages
 class dP:
     skipHeadRows = 1
     
-    
     #trainCol = [3,3553]    # Raw data
     #trainCol = [3,80000]   # Raw data
     #predCol = [1,3]        # Raw data
@@ -51,16 +50,16 @@ class dP:
 
     valueForNan = -1
 
-    corrMin = .8
+    corrMin = .7
     corrMax = 1
     #corrMin = -1
     #corrMax = -.6
 
     heatMapsCorr = True             # True: use for Master data
     
-    plotGraphs = True
-    plotGraphsThreshold = False
-    plotValidData = False
+    plotGraphs = False
+    plotGraphsThreshold = True
+    plotValidData = True
     plotLinRegression = True
     #graphX = [1,2,3,4,5,6,7,8]     # Pitch
     #graphY = [1,2,3,4,5,6,7,8]     # Pitch
