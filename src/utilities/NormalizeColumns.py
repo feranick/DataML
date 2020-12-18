@@ -4,7 +4,7 @@
 *********************************************
 * NormalizeColumns
 * Normalize columns for master data
-* version: 20201217a
+* version: 20201218a
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -19,9 +19,7 @@ import sys, os.path, math
 # Parameters definition
 #************************************
 class dP:
-    skipHeadRows = 1
-    valueForNan = -1
-    skipNumRows = 0
+    skipHeadRows = 2
     normAllCols = True
     numColsNorm = 60
     saveAsLog = False
@@ -44,7 +42,7 @@ def main():
     
     dfP = readParamFile(sys.argv[1])
     dfPint = normalize(dfP)
-    dfPint.to_csv(TFile, index=True)
+    dfPint.to_csv(TFile, index=True, header = False)
     print("\n Saving normalized file in:",TFile,"\n")
 
 #************************************
@@ -54,7 +52,8 @@ def readParamFile(paramFile):
     try:
         with open(paramFile, 'r') as f:
             dfP = pd.read_csv(f, delimiter = ",",
-                skiprows=dP.skipHeadRows, index_col=[0], na_values=dP.valueForNan)
+                header = None,
+                index_col=[0])
     except:
         print("\033[1m Param file:",paramFile," not found/broken \n\033[0m")
         return
@@ -66,7 +65,7 @@ def readParamFile(paramFile):
 #************************************
 def normalize(dfP):
     dfPnorm = dfP.copy()
-    sR = int(dP.skipNumRows)
+    sR = int(dP.skipHeadRows)
     if dP.normAllCols:
         normCols= range(len(dfP.columns))
     else:
@@ -75,7 +74,8 @@ def normalize(dfP):
     print(normCols)
         
     for i in normCols:
-        data = dfP.iloc[sR:,i]
+        #data = dfP.iloc[sR:,i]
+        data = pd.to_numeric(dfP.iloc[sR:,i], downcast="float")
         
         print("Column:",i," - ",dfP.columns[i]," - Max:",data.max(),
             " - Min:",data.min())
