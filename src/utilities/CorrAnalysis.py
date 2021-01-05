@@ -6,7 +6,7 @@
 * CorrAnalysis
 * Correlation analysis
 *
-* version: 20201217a
+* version: 20200805a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
@@ -29,42 +29,39 @@ from matplotlib.backends.backend_pdf import PdfPages
 # Parameters definition
 #************************************
 class dP:
-    skipHeadRows = 1
+    skipHeadRows = 0
     
-    #trainCol = [3,3553]    # Raw data
+    #trainCol = [3,3553]   # Raw data
     #trainCol = [3,80000]   # Raw data
-    #predCol = [1,3]        # Raw data
-    trainCol = [1,7]        # Pitch
-    predCol = [7,9]         # Pitch
-    #trainCol = [1,35]      # Pitch
-    #predCol = [1,35]
-    #validRows = [5]
+    #predCol = [1,3]       # Raw data
     
-    #trainCol = [7,54]      # Asphalt
+    trainCol = [1,10]     # ML-3
+    predCol = [10,13]        # ML-3
+    
+    #trainCol = [1,35]     # ML3
+    #predCol = [1,35]
+    
+    #trainCol = [7,54]
     #predCol = [1,7]
-    trainCol = [1,61]
     #trainCol = [61,106]
-    predCol = [1,61]
+    #predCol = [28,47]
     #predCol = [61,106]
-    validRows = [40,41,42,43]
 
     valueForNan = -1
-
-    corrMin = .7
+    validRows = [0]
+    
+    corrMin = .6
     corrMax = 1
-    #corrMin = -1
+    TotcorrMin = -1
     #corrMax = -.6
 
-    heatMapsCorr = True             # True: use for Master data
-    
+    heatMapsCorr = True            # True: use for Master data
     plotGraphs = False
     plotGraphsThreshold = True
-    plotValidData = True
+    plotValidData = False
     plotLinRegression = True
-    #graphX = [1,2,3,4,5,6,7,8]     # Pitch
-    #graphY = [1,2,3,4,5,6,7,8]     # Pitch
-    graphX = [8,10,12,13,14]        # Asphalt
-    graphY = [62,69,78,79,80,81]    # Asphalt
+    graphX = [1,2,3,4,5,6,7,8,9]
+    graphY = [10,11,12]
     
     plotCorr = False                # True: use for raw data (spectra, etc)
     stepXticksPlot = 1500
