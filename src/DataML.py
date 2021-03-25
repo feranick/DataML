@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20201210b
+* 20210325a
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -227,8 +227,17 @@ def train(learnFile, testFile, normFile):
         totA = A
         totCl = Cl
 
+    print("  Data size:", A.shape)
+    print("  Number of learning labels: {0:d}".format(int(dP.numLabels)))
     print("  Total number of points per data:",En.size)
-    print("  Number of learning labels: {0:d}\n".format(int(dP.numLabels)))
+    if testFile is not None:
+        print("\n  Testing set file:",testFile)
+        print("  Training set file datapoints:", A.shape[0])
+        print("  Testing set file datapoints:", A_test.shape[0])
+    else:
+        print("\n  Testing data set from training file:",dP.cv_split*100,"%")
+        print("  Training set file datapoints:", math.floor(A.shape[0]*(1-dP.cv_split)))
+        print("  Testing set datapoints:", math.ceil(A.shape[0]*dP.cv_split))
     
     if dP.regressor:
         Cl2 = np.copy(Cl)
@@ -252,7 +261,7 @@ def train(learnFile, testFile, normFile):
         le.fit(np.unique(totCl, axis=0))
         Cl2 = le.transform(Cl)
     
-        print("  Number unique classes (training): ", np.unique(Cl).size)
+        print("\n  Number unique classes (training): ", np.unique(Cl).size)
     
         if testFile is not None:
             Cl2_test = le.transform(Cl_test)
@@ -621,10 +630,10 @@ def convertTflite(learnFile):
     makeQuantizedTFmodel(A, model, dP)
     
 #************************************
-# Open Learning Data
+# Open Training Data
 #************************************
 def readLearnFile(learnFile):
-    print("\n  Opening learning file: ",learnFile)
+    print("  Opening training file:",learnFile)
     try:
         if os.path.splitext(learnFile)[1] == ".npy":
             M = np.load(learnFile)
@@ -635,7 +644,7 @@ def readLearnFile(learnFile):
             with open(learnFile, 'r') as f:
                 M = np.loadtxt(f, unpack =False)
     except:
-        print("\033[1m Learning file not found\033[0m")
+        print("\033[1m Training file not found\033[0m")
         return
 
     dP = Conf()
