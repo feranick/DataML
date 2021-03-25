@@ -47,8 +47,8 @@ def main():
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
     
-    if len(sys.argv) >= 4:
-        row = [int(sys.argv[2])]
+    if len(sys.argv) >= 3:
+        row = int(sys.argv[2])
     else:
         row = dP.row
     try:
