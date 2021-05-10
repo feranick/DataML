@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20210325a
+* 20210510a
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -36,11 +36,11 @@ class Conf():
         self.readConfig(self.configFile)
         self.model_directory = "./"
         if self.regressor:
-            self.modelName = "model_regressor.hd5"
+            self.modelName = "model_regressor.h5"
             self.summaryFileName = "summary_regressor.csv"
             self.model_png = self.model_directory+"/model_regressor_MLP.png"
         else:
-            self.modelName = "model_classifier.hd5"
+            self.modelName = "model_classifier.h5"
             self.summaryFileName = "summary_classifier.csv"
             self.model_png = self.model_directory+"/model_classifier_MLP.png"
         
@@ -69,6 +69,7 @@ class Conf():
             'batch_size' : 64,
             'numLabels' : 1,
             'plotWeightsFlag' : False,
+            'stopAtBest' : False,
             }
     def sysDef(self):
         self.conf['System'] = {
@@ -98,6 +99,7 @@ class Conf():
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.numLabels = self.conf.getint('Parameters','numLabels')
             self.plotWeightsFlag = self.conf.getboolean('Parameters','plotWeightsFlag')
+            self.stopAtBest = self.conf.getboolean('Parameters','stopAtBest')
             self.makeQuantizedTFlite = self.conf.getboolean('System','makeQuantizedTFlite')
             self.useTFlitePred = self.conf.getboolean('System','useTFlitePred')
             self.TFliteRuntime = self.conf.getboolean('System','TFliteRuntime')
@@ -316,7 +318,13 @@ def train(learnFile, testFile, normFile):
 
     tbLog = keras.callbacks.TensorBoard(log_dir=dP.tb_directory, histogram_freq=120,
             write_graph=True, write_images=True)
-    tbLogs = [tbLog]
+    if dP.stopAtBest == True:
+        es = keras.callbacks.EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=200)
+        mc = keras.callbacks.ModelCheckpoint(dP.model_name, monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)
+        tbLogs = [tbLog, es, mc]
+    else:
+        tbLogs = [tbLog]
+    
     if testFile is not None:
         log = model.fit(A, Cl2,
             epochs=dP.epochs,
