@@ -190,34 +190,20 @@ def train(learnFile, testFile, normFile):
     
     from pkg_resources import parse_version
     import tensorflow as tf
-    
-    if parse_version(tf.version.VERSION) < parse_version('2.0.0'):
-        useTF2 = False
-    else:
-        useTF2 = True
-        
-    if useTF2:
-        opts = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=1)     # Tensorflow 2.0
-        conf = tf.compat.v1.ConfigProto(gpu_options=opts)  # Tensorflow 2.0
-        
-        #gpus = tf.config.experimental.list_physical_devices('GPU')
-        #if gpus:
-        #   for gpu in gpus:
-        #       tf.config.experimental.set_memory_growth(gpu, True)
-        #   if dP.setMaxMem:
-        #       tf.config.experimental.set_virtual_device_configuration(
-        #         gpus[0],
-        #         [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=dP.maxMem)])
-    
-    else:
-        tf.compat.v1.enable_eager_execution()
-        #conf.gpu_options.allow_growth = True
-        opts = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=1)
-        conf = tf.compat.v1.ConfigProto(gpu_options=opts)
-        tf.compat.v1.Session(config=conf)
-        
     import tensorflow.keras as keras
 
+    opts = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=1)     # Tensorflow 2.0
+    conf = tf.compat.v1.ConfigProto(gpu_options=opts)  # Tensorflow 2.0
+        
+    #gpus = tf.config.experimental.list_physical_devices('GPU')
+    #if gpus:
+    #   for gpu in gpus:
+    #       tf.config.experimental.set_memory_growth(gpu, True)
+    #   if dP.setMaxMem:
+    #       tf.config.experimental.set_virtual_device_configuration(
+    #         gpus[0],
+    #         [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=dP.maxMem)])
+    
     learnFileRoot = os.path.splitext(learnFile)[0]
 
     En, A, Cl = readLearnFile(learnFile)
@@ -339,10 +325,7 @@ def train(learnFile, testFile, normFile):
             callbacks = tbLogs,
             verbose=2,
 	        validation_split=dP.cv_split)
-    if useTF2:
-        model.save(dP.model_name, save_format='h5')
-    else:
-        model.save(dP.model_name)
+    model.save(dP.model_name, save_format='h5')
     keras.utils.plot_model(model, to_file=dP.model_png, show_shapes=True)
     
     if dP.makeQuantizedTFlite:

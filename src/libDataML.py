@@ -2,7 +2,7 @@
 '''
 **********************************************************
 * libDataML - Library for DataML
-* 20201210b
+* 20210510a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -189,11 +189,8 @@ def makeQuantizedTFmodel(A, model, dP):
         for input_value in A.take(100):
             yield[input_value]
             
-    try:
-        #converter = tf.compat.v1.lite.TFLiteConverter.from_keras_model_file(dP.model_name)    # TF2.0-2.2 (will be deprecated)
-        converter = tf.lite.TFLiteConverter.from_keras_model(model)    # TF2.3 and higher only for full EdgeTPU support.
-    except:
-        converter = tf.lite.TFLiteConverter.from_keras_model_file(dP.model_name)  # TensorFlow 1.x
+    #converter = tf.compat.v1.lite.TFLiteConverter.from_keras_model_file(dP.model_name)    # TF2.0-2.2 (will be deprecated)
+    converter = tf.lite.TFLiteConverter.from_keras_model(model)    # TF2.3 and higher only for full EdgeTPU support.
 
     #converter.optimizations = [tf.lite.Optimize.DEFAULT]
     #converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_LATENCY]
