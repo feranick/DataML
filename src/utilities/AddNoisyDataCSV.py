@@ -43,7 +43,7 @@ def main():
 
     dfP_noise = addNoise(dfP, int(sys.argv[2]), int(sys.argv[3]))
     
-    dfP_noise.to_csv(noisyFile, index=True, header=True)
+    dfP_noise.to_csv(noisyFile, index=False, header=True)
     print(sys.argv[2],"iterations (offset:",sys.argv[3],") added and saved in:",noisyFile,"\n")
     
 #************************************
