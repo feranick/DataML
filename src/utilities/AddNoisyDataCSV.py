@@ -65,7 +65,7 @@ def addNoise(dfP, num, offset):
     dfP_temp = dfP.copy()
     dfP_noise = dfP.copy()
     for i in range(1, num):
-        dfP_temp.iloc[:,1:] = dfP.iloc[:,1:].add(offset*np.random.uniform(-0.01,0.01,(dfP_temp.iloc[:,1:].shape)))
+        dfP_temp.iloc[:,1:] = dfP.iloc[:,1:].mul(1+offset*np.random.uniform(-0.01,0.01,(dfP_temp.iloc[:,1:].shape)))
         dfP_noise = dfP_noise.append(dfP_temp, ignore_index=True)
     return dfP_noise
 
