@@ -6,7 +6,7 @@
 * MasterDataMaker
 * Adds data from single file to Master Doc
 * File must be in ASCII
-* version: 20191113a
+* version: 20210511a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 *
@@ -15,152 +15,231 @@
 print(__doc__)
 
 import numpy as np
-import sys, os.path, h5py
 import pandas as pd
-from datetime import datetime, date
+import sys, os.path, h5py, pickle
+from random import uniform
+from bisect import bisect_left
+from libDataML import *
 
-#**********************************************
-''' main '''
-#**********************************************
-class defParam:
+#************************************
+# Parameters definition
+#************************************
+class dP:
+    saveAsTxt = True
+
+    fullDataset = True
+    minCCol = 1
+    maxCCol = 10
+    #charCCols = [8,10,12,13]
+    charCCols = [1,2,3,4,9]
+    predRCol = [10]
     
-    skipHeadRows = 0
+    validFile = False
+    createRandomValidSet =  False
+    percentValid = 0.05
+    validRows = [1,2,3]
+    
+    numHeadRows = 0
+    
+    precData = 3
+    saveNormalized = False
+    normalizeLabel = False
+    useCustomRound = True
+    YnormTo = 1
+    stepNormLabel = 0.001
+    
+    randomize = False
+    fullRandomMatrix= True
+    numRandomAdds = 50
+    randomCols = [3]
+    minPercVariation = 0.05
+    randomizeLabel = False
+
+    useGeneralNormLabel = False
+    minGeneralLabel = 10
+    maxGeneralLabel = 60
+    
     valueForNan = -1
-
-    # set boundaries intensities for when to
-    # fill in in absence of data
-    leftBoundary = 0
-    rightBoundary = 0
     
-    # set to True to set boundaries as the min
-    # values for intensities when to
-    # fill in in absence of data
-    useMinForBoundary = False
+    # Do not change
+    numLabels = len(predRCol)
+    validRows = [x-1 for x in validRows]
 
+#************************************
+# Main
+#************************************
 def main():
-    if len(sys.argv) < 5:
-        enInit = 176
-        enFin = 194
-        enStep = 2
-    else:
-        enInit = sys.argv[2]
-        enFin =  sys.argv[3]
-        enStep = sys.argv[4]
-        if len(sys.argv) < 6:
-            threshold = 0
-        else:
-            threshold = sys.argv[5]
-
-    if len(sys.argv) == 7:
-        defParam.useMinForBoundary = True
-    
-    #try:
-    processMultiFile(sys.argv[1], enInit, enFin, enStep, threshold)
-    #except:
-    #    usage()
-    sys.exit(2)
-
-#**********************************************
-''' Open and process inividual files '''
-#**********************************************
-def processMultiFile(masterFile, enInit, enFin, enStep, threshold):
-    size = 0
-    compound=[]
-    masterFileRoot = os.path.splitext(masterFile)[0]
-    masterFileExt = os.path.splitext(masterFile)[1]
-
-    #summary_filename = masterFileRoot + str(datetime.now().strftime('_%Y-%m-%d_%H-%M-%S.csv'))
-    #summary = "file"+",enInit="+str(enInit)+",enFin="+str(enFin)+",enStep="+str(enStep)+\
-    #        ",threshold="+str(threshold)+"\n"
-    
-    # Read, if exisiting, learnFile
-    if os.path.exists(masterFile):
-        print('\n\033[1m' + ' Train data file found. Opening...' + '\033[0m')
-        dfP = readMasterFile(masterFile)
-        print(dfP)
-        
-    else:
-        print('\n\033[1m' + ' Train data file not found. Creating...' + '\033[0m')
-        dfP = pd.DataFrame(columns=np.arange(float(enInit), float(enFin), float(enStep), dtype=np.float))
-        dfP.insert(0,"file",'0')
-        #dfP.loc[0] = np.arange(float(enInit), float(enFin), float(enStep), dtype=np.float)
-        #dfP = pd.DataFrame(np.arange(float(enInit), float(enFin), float(enStep), dtype=np.float))
-        print(dfP)
-
-
-    # process sample data
-    for ind, f in enumerate(sorted(os.listdir("."))):
-        if (f is not masterFile and os.path.splitext(f)[-1] is ".txt"):
-            dfP = makeFile(f, dfP, threshold)
-
-    print('\n Energy scale: [', str(enInit),',',
-            str(enFin), ']; Step:', str(enStep),
-            '; Threshold:', str(threshold),'\n')
-            
-    print(dfP)
-
-    dfP.to_csv(os.path.splitext(masterFile)[0]+'.csv', index=False)
-
-#**********************************************
-''' Add data to Training file '''
-#**********************************************
-def makeFile(sampleFile, dfP, threshold):
-    EnT = dfP.columns.values[1:].astype(float)
-    M = dfP.values
-    print('\n Process file : ' + sampleFile)
-    try:
-        with open(sampleFile, 'r') as f:
-            En = np.loadtxt(f, unpack = True, usecols=range(0,1), delimiter = '\t', skiprows = 0)
-            if(En.size == 0):
-                print('\n Empty file \n' )
-                return dfP
-        with open(sampleFile, 'r') as f:
-            R = np.loadtxt(f, unpack = True, usecols=range(1,2), delimiter = '\t', skiprows = 0)
-    
-        R[R<float(threshold)*np.amax(R)/100] = 0
-        print(' Number of points in \"' + sampleFile + '\": ' + str(En.shape[0]))
-        print(' Setting datapoints below ', threshold, '% of max (',str(np.amax(R)),')')
-    except:
-        print('\033[1m' + sampleFile + ' file not found \n' + '\033[0m')
-        return dfP
-
-    if EnT.shape[0] == En.shape[0]:
-        print(' Number of points in the learning dataset: ' + str(EnT.shape[0]))
-    else:
-        print('\033[1m' + ' Mismatch in datapoints: ' + str(EnT.shape[0]) + '; sample = ' +  str(En.shape[0]) + '\033[0m')
-        if defParam.useMinForBoundary:
-            print(" Boundaries: Filling in with min values")
-            defParam.leftBoundary = R[0]
-            defParam.rightBoundary = R[R.shape[0]-1]
-        else:
-            print(" Boundaries: Filling in preset values")
-        print("  Left:",defParam.leftBoundary,"; Right:",defParam.leftBoundary)
-        
-        R = np.interp(EnT, En, R, left = defParam.leftBoundary, right = defParam.rightBoundary)
-        print('\033[1m' + ' Mismatch corrected: datapoints in sample: ' + str(R.shape[0]) + '\033[0m')
-    
-
-    dfP.loc[len(dfP),1:] = R
-    dfP['file'].iloc[-1] = sampleFile
-
-    return dfP
-
-#************************************
-''' Open Master File '''
-#************************************
-def readMasterFile(masterFile):
-    print(" Opening learning file: "+masterFile+"\n")
-    try:
-        with open(masterFile, 'r') as f:
-            dfP = pd.read_csv(f, delimiter = ",",
-                skiprows=defParam.skipHeadRows, na_values=defParam.valueForNan)
-
-    except:
-        print("\033[1m" + " Learning file not found \n" + "\033[0m")
+    if len(sys.argv) < 2:
+        print(' Usage:\n  python3 ORNLDataMaker.py <paramFile> <pred column>')
+        print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
+    
+    if len(sys.argv) >= 3:
+        predRCol = [int(sys.argv[2])]
+    else:
+        predRCol = dP.predRCol
+    
+    if dP.fullDataset:
+        datasetLabel = '_fullDataSet'
+    else:
+        datasetLabel = '_partialDataSet'
+    
+    rootFile = os.path.splitext(sys.argv[1])[0] + datasetLabel + '-p' + str(predRCol[0])
+    learnFile = rootFile + '_train'
+    try:
+        P,V = readParamFile(sys.argv[1], predRCol, rootFile)
+    except:
+        print("\033[1m" + " param file not found \n" + "\033[0m")
+        usage()
+        return
+    
+    #************************************
+    # Creating training set
+    #************************************
+    if dP.randomize:
+        print(" Creating randomized training set using",dP.minPercVariation*100, "% as max variation on parameters\n")
+        Pr = randomize(P)
+        
+        if dP.fullRandomMatrix:
+            randTag = '_fullrand'
+        else:
+            randTag = '_partrand'
+       
+        learnRandomFile = learnFile + randTag + str(dP.numRandomAdds) + '_pcVar' + str(int(dP.minPercVariation*100))
+        
+        if dP.randomizeLabel:
+            learnRandomFile += '_rLab'
+        if dP.saveNormalized or dP.normalizeLabel:
+            norm = Normalizer(Pr, dP)
+            norm.save(rootFile +"_norm.pkl")
+            saveLearnFile(norm.transform_matrix(Pr), learnRandomFile+'_norm', True)
+        else:
+            saveLearnFile(Pr, learnRandomFile, False)
+    else:
+        if dP.saveNormalized or dP.normalizeLabel:
+            norm = Normalizer(P, dP)
+            norm.save(rootFile+ "_norm.pkl")
+            saveLearnFile(norm.transform_matrix(P), learnFile +'_norm', True)
+        else:
+            saveLearnFile(P, learnFile, False)
 
-    return dfP
+#************************************
+# Open Learning Data
+#************************************
+def readParamFile(paramFile, predRCol, rootFile):
+    if dP.fullDataset:
+        usecols = range(dP.minCCol,dP.maxCCol)
+    else:
+        usecols = dP.charCCols
+    '''
+    #------- Old Method ----------------
+    with open(paramFile, 'r') as f:
+        P = pd.read_csv(f, delimiter = ",").iloc[:,usecols].to_numpy()
+        P[np.isnan(P)] = dP.valueForNan
+    
+    with open(paramFile, 'r') as f:
+        L = np.genfromtxt(f, unpack = False, usecols=predRCol,
+            delimiter = ',', skip_header=dP.numHeadRows)
+        L[np.isnan(L)] = dP.valueForNan
 
+    L = np.asarray([L]).T
+    M = np.append(L, P, axis = 1)
+    #----------------------------------
+    '''
+    with open(paramFile, 'r') as f:
+        P2 = pd.read_csv(f, delimiter = ",", header=dP.numHeadRows).to_numpy()
+    
+    M = np.hstack((P2[:,predRCol],P2[:,usecols]))
+    #----------------------------------
+
+    P = np.vstack([list(range(0,M.shape[1])),M])
+    V = np.array([list(range(0,M.shape[1]))])
+    
+    #***************************************
+    # Handle Validation File
+    #***************************************
+    if dP.validFile:
+        validFile = rootFile + '_test'
+        
+        if dP.createRandomValidSet:
+            P, V = formatSubset(P, dP.percentValid)
+        else:
+            if dP.validRows != 0:
+                P = np.vstack([list(range(0,M.shape[1])),np.delete(M,dP.validRows,0)])
+                V = np.vstack([list(range(0,M.shape[1])),M[dP.validRows,:]])
+                
+        if dP.saveNormalized or dP.normalizeLabel:
+            saveLearnFile(norm.transform_matrix(V), validFile +'_norm', True)
+        else:
+            saveLearnFile(V, validFile, False)
+    return P,V
+    
+#***************************************
+# Save new learning Data
+#***************************************
+def saveLearnFile(M, learnFile, saveNormFlag):
+    if dP.saveAsTxt == True:
+        learnFile += '.txt'
+        with open(learnFile, 'ab') as f:
+                 np.savetxt(f, M, delimiter='\t', fmt="%10.{0}f".format(dP.precData))
+        if saveNormFlag == False:
+            print(" Saving new training file (txt) in:", learnFile+"\n")
+        else:
+            print(" Saving new normalized training file (txt) in:", learnFile+"\n")
+    else:
+        learnFile += '.h5'
+        print(" Saving new training file (hdf5) in: "+learnFile+"\n")
+        with h5py.File(learnFile, 'w') as hf:
+            hf.create_dataset("M",  data=M)
+
+#***************************************
+# Randomize initial set
+#***************************************
+def randomize(P):
+    Pr = np.copy(P)
+
+    if not dP.fullRandomMatrix:
+        cols = dP.randomCols
+    else:
+        cols = P[0,1:].astype(int)
+        
+    for j in range (0,dP.numRandomAdds):
+        rand = randomMatrix(P, cols)
+        temp = np.multiply(P[1:],rand)
+        Pr = np.vstack([Pr, temp])
+    return Pr
+
+def randomMatrix(P, cols):
+    rand = np.ones(P[1:].shape)
+    rand[:,cols] = np.random.uniform(1-dP.minPercVariation,1,rand[:,cols].shape)
+    return rand
+    
+#************************************
+# Create validation subset
+#************************************
+def formatSubset(A, percent):
+    from sklearn.model_selection import train_test_split
+    
+    numValid = round(A[1:,:].shape[0]*percent)
+    numTrain = round(A[1:,:].shape[0] - numValid)
+    print(" Creating a training set with:", str(numTrain), "datapoints")
+    print(" Creating a validation set with:", str(numValid), "datapoints\n")
+    
+    A_train, A_cv, Cl_train, Cl_cv = \
+    train_test_split(A[1:,1:], A[1:,0], test_size=percent, random_state=42)
+    Atrain = np.vstack((A[0,:],np.hstack((Cl_train.reshape(1,-1).T, A_train))))
+    Atest = np.vstack((A[0,:],np.hstack((Cl_cv.reshape(1,-1).T, A_cv))))
+    
+    return Atrain, Atest
+'''
+def formatSubset2(A, Cl, percent):
+    list = np.random.choice(range(len(Cl)), int(np.rint(percent*len(Cl))), replace=False)
+    A_train = np.delete(A,list,0)
+    Cl_train = np.delete(Cl,list)
+    A_cv = A[list]
+    Cl_cv = Cl[list]
+    return A_train, Cl_train, A_cv, Cl_cv
+'''
 #************************************
 ''' Lists the program usage '''
 #************************************
@@ -170,7 +249,7 @@ def usage():
     print(' Requires python 3.x. Not compatible with python 2.x\n')
 
 #************************************
-''' Main initialization routine '''
+# Main initialization routine
 #************************************
 if __name__ == "__main__":
     sys.exit(main())
