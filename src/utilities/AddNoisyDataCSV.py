@@ -39,7 +39,7 @@ def main():
     dfP = readParamFile(sys.argv[1])
     
     rootFile = os.path.splitext(sys.argv[1])[0]
-    noisyFile = rootFile + '_noisy.csv'
+    noisyFile = rootFile + '_noisy-n'+sys.argv[2]+'o'+sys.argv[3]+'.csv'
 
     dfP_noise = addNoise(dfP, int(sys.argv[2]), int(sys.argv[3]))
     
