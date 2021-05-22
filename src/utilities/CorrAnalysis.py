@@ -6,7 +6,7 @@
 * CorrAnalysis
 * Correlation analysis
 *
-* version: 20210522a
+* version: 20210522b
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
@@ -41,7 +41,7 @@ class dP:
     #validRows = [5]        # Pitch
     trainCol = [1,10]       # ORNL
     predCol = [10,13]       # ORNL
-    validRows = [0]         # ORNL
+    validRows = [103,104,105,106,107]   # ORNL
     
     #trainCol = [7,54]      # Asphalt
     #predCol = [1,7]        # Asphalt
@@ -62,7 +62,7 @@ class dP:
     
     plotGraphs = False
     plotGraphsThreshold = True
-    plotValidData = False
+    plotValidData = True
     plotLinRegression = True
     #graphX = [1,2,3,4,5,6,7,8]     # Pitch
     #graphY = [1,2,3,4,5,6,7,8]     # Pitch
