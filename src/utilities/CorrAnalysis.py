@@ -6,7 +6,7 @@
 * CorrAnalysis
 * Correlation analysis
 *
-* version: 20200805a
+* version: 20210522a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
@@ -31,37 +31,45 @@ from matplotlib.backends.backend_pdf import PdfPages
 class dP:
     skipHeadRows = 0
     
-    #trainCol = [3,3553]   # Raw data
+    #trainCol = [3,3553]    # Raw data
     #trainCol = [3,80000]   # Raw data
-    #predCol = [1,3]       # Raw data
+    #predCol = [1,3]        # Raw data
+    #trainCol = [1,7]       # Pitch
+    #predCol = [7,9]        # Pitch
+    #trainCol = [1,35]      # Pitch
+    #predCol = [1,35]       # Pitch
+    #validRows = [5]        # Pitch
+    trainCol = [1,10]       # ORNL
+    predCol = [10,13]       # ORNL
+    validRows = [0]         # ORNL
     
-    trainCol = [1,10]     # ML-3
-    predCol = [10,13]        # ML-3
-    
-    #trainCol = [1,35]     # ML3
-    #predCol = [1,35]
-    
-    #trainCol = [7,54]
-    #predCol = [1,7]
+    #trainCol = [7,54]      # Asphalt
+    #predCol = [1,7]        # Asphalt
+    #validRows = [40,41,42,43] # Asphalt
+    #trainCol = [1,61]
     #trainCol = [61,106]
-    #predCol = [28,47]
+    #predCol = [1,61]
     #predCol = [61,106]
 
     valueForNan = -1
-    validRows = [0]
-    
-    corrMin = .6
+
+    #corrMin = .6
     corrMax = 1
-    TotcorrMin = -1
+    corrMin = -1
     #corrMax = -.6
 
-    heatMapsCorr = True            # True: use for Master data
+    heatMapsCorr = True             # True: use for Master data
+    
     plotGraphs = False
     plotGraphsThreshold = True
     plotValidData = False
     plotLinRegression = True
-    graphX = [1,2,3,4,5,6,7,8,9]
-    graphY = [10,11,12]
+    #graphX = [1,2,3,4,5,6,7,8]     # Pitch
+    #graphY = [1,2,3,4,5,6,7,8]     # Pitch
+    #graphX = [8,10,12,13,14]        # Asphalt
+    #graphY = [62,69,78,79,80,81]    # Asphalt
+    graphX = [1,2,3,4,5,6,7,8,9]    # ORNL
+    graphY = [10,11,12]             # ORNL
     
     plotCorr = False                # True: use for raw data (spectra, etc)
     stepXticksPlot = 1500
@@ -161,7 +169,7 @@ def readParamFile(paramFile, lims):
 
         with open(paramFile, 'r') as f:
             headP = np.genfromtxt(f, unpack = False, usecols=range(lims[0],lims[1]),
-                delimiter = ',', skip_header=dP.skipHeadRows, skip_footer=P.shape[0], dtype=np.str)
+                delimiter = ',', skip_header=dP.skipHeadRows, skip_footer=P.shape[0], dtype=np.str_)
 
     except:
         print("\033[1m Param file:",paramFile," not found/broken \n\033[0m")
