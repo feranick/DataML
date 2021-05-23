@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20210523a
+* 20210523b
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -70,6 +70,7 @@ class Conf():
             'numLabels' : 1,
             'plotWeightsFlag' : False,
             'stopAtBest' : False,
+            'saveBestModel' : False,
             }
     def sysDef(self):
         self.conf['System'] = {
@@ -100,6 +101,7 @@ class Conf():
             self.numLabels = self.conf.getint('Parameters','numLabels')
             self.plotWeightsFlag = self.conf.getboolean('Parameters','plotWeightsFlag')
             self.stopAtBest = self.conf.getboolean('Parameters','stopAtBest')
+            self.saveBestModel = self.conf.getboolean('Parameters','saveBestModel')
             self.makeQuantizedTFlite = self.conf.getboolean('System','makeQuantizedTFlite')
             self.useTFlitePred = self.conf.getboolean('System','useTFlitePred')
             self.TFliteRuntime = self.conf.getboolean('System','TFliteRuntime')
@@ -304,15 +306,20 @@ def train(learnFile, testFile, normFile):
 
     tbLog = keras.callbacks.TensorBoard(log_dir=dP.tb_directory, histogram_freq=120,
             write_graph=True, write_images=True)
+    
+    tbLogs = [tbLog]
     if dP.stopAtBest == True:
-        es = keras.callbacks.EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=1000)
+        es = keras.callbacks.EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=500)
+        tbLogs.append(es)
+    if dP.saveBestModel == True:
         if dP.regressor:
             mc = keras.callbacks.ModelCheckpoint(dP.model_name, monitor='val_mae', mode='min', verbose=1, save_best_only=True)
         else:
             mc = keras.callbacks.ModelCheckpoint(dP.model_name, monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)
-        tbLogs = [tbLog, es, mc]
-    else:
-        tbLogs = [tbLog]
+        tbLogs.append(mc)
+        
+    print(tbLogs)
+    #tbLogs = [tbLog, es, mc]
     
     if testFile is not None:
         log = model.fit(A, Cl2,
@@ -384,7 +391,9 @@ def train(learnFile, testFile, normFile):
         print('  \033[1m MLP - Regressor \033[0m - Validation Summary')
         print('  ========================================================')
         print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(val_loss), np.amin(val_loss), val_loss[-1]))
-        print("  \033[1mMean Abs Err\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}\n".format(np.average(val_mae), np.amin(val_mae), val_mae[-1]))
+        print("  \033[1mMean Abs Err\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(val_mae), np.amin(val_mae), val_mae[-1]))
+        if dP.stopAtBest:
+            print("  \033[1mSaved model at min MAE:\033[0m: {0:.4f}\n".format(np.amin(val_mae)))
         if testFile:
             predictions = model.predict(A_test)
         
@@ -422,7 +431,9 @@ def train(learnFile, testFile, normFile):
         print('  ========================================================')
         print("\n  \033[1mAccuracy\033[0m - Average: {0:.2f}%; Max: {1:.2f}%; Last: {2:.2f}%".format(100*np.average(val_acc),
         100*np.amax(val_acc), 100*val_acc[-1]))
-        print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}\n".format(np.average(val_loss), np.amin(val_loss), val_loss[-1]))
+        print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(val_loss), np.amin(val_loss), val_loss[-1]))
+        if dP.stopAtBest:
+            print("  \033[1mSaved model at max accuracy:\033[0m: {0:.4f}\n".format(100*np.amax(val_acc)))
 
         if testFile:
             predictions = model.predict(A_test)
