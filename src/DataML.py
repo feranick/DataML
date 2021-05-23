@@ -318,7 +318,6 @@ def train(learnFile, testFile, normFile):
             mc = keras.callbacks.ModelCheckpoint(dP.model_name, monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)
         tbLogs.append(mc)
         
-    print(tbLogs)
     #tbLogs = [tbLog, es, mc]
     
     if testFile is not None:
