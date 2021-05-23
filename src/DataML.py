@@ -391,7 +391,7 @@ def train(learnFile, testFile, normFile):
         print('  ========================================================')
         print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(val_loss), np.amin(val_loss), val_loss[-1]))
         print("  \033[1mMean Abs Err\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(val_mae), np.amin(val_mae), val_mae[-1]))
-        if dP.stopAtBest:
+        if dP.saveBestModel:
             print("  \033[1mSaved model at min MAE:\033[0m: {0:.4f}\n".format(np.amin(val_mae)))
         if testFile:
             predictions = model.predict(A_test)
@@ -431,7 +431,7 @@ def train(learnFile, testFile, normFile):
         print("\n  \033[1mAccuracy\033[0m - Average: {0:.2f}%; Max: {1:.2f}%; Last: {2:.2f}%".format(100*np.average(val_acc),
         100*np.amax(val_acc), 100*val_acc[-1]))
         print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(val_loss), np.amin(val_loss), val_loss[-1]))
-        if dP.stopAtBest:
+        if dP.saveBestModel:
             print("  \033[1mSaved model at max accuracy:\033[0m: {0:.4f}\n".format(100*np.amax(val_acc)))
 
         if testFile:
