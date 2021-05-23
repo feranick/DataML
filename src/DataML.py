@@ -306,7 +306,10 @@ def train(learnFile, testFile, normFile):
             write_graph=True, write_images=True)
     if dP.stopAtBest == True:
         es = keras.callbacks.EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=1000)
-        mc = keras.callbacks.ModelCheckpoint(dP.model_name, monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)
+        if dP.regressor:
+            mc = keras.callbacks.ModelCheckpoint(dP.model_name, monitor='val_mae', mode='min', verbose=1, save_best_only=True)
+        else:
+            mc = keras.callbacks.ModelCheckpoint(dP.model_name, monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)
         tbLogs = [tbLog, es, mc]
     else:
         tbLogs = [tbLog]
