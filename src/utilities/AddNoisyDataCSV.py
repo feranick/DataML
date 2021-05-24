@@ -57,9 +57,9 @@ def main():
         offs = int(sys.argv[3])
 
     dfP_noise = addNoise(dfP, int(sys.argv[2]), offs)
-    
     dfP_noise.to_csv(noisyFile, index=False, header=True)
-    print(sys.argv[2],"iterations (offset:",sys.argv[3],") added and saved in:",noisyFile,"\n")
+    
+    print(sys.argv[2],"iterations (offset:",offs,") \nSaved in:",noisyFile,"\n")
     
 #************************************
 # Open Learning Data
