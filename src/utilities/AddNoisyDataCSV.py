@@ -3,7 +3,7 @@
 '''
 *********************************************
 * Add Noisy Data to CSV
-* version: 20210511a
+* version: 20210524a
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -25,13 +25,14 @@ from matplotlib.backends.backend_pdf import PdfPages
 #************************************
 class dP:
     skipHeadRows = 0
-    addFixOffset = True
-
+    addFixOffset = False
+    customOffset = True
+    cOffset = [10,10,10,10,10,10,10,10,10,60,0.5,30,0]
 #************************************
 # Main
 #************************************
 def main():
-    if len(sys.argv) < 4:
+    if len(sys.argv) < 4 and dP.customOffset == False:
         print(' Usage:\n  python3 AddNoisyDataCSV <paramFile> <#additions> <offset>')
         print('  Offset: multiplier in units of percent (i.e. 1 is 1%)')
         print('  Requires python 3.x. Not compatible with python 2.x\n')
@@ -40,14 +41,22 @@ def main():
     dfP = readParamFile(sys.argv[1])
     
     rootFile = os.path.splitext(sys.argv[1])[0]
-    noisyFile = rootFile + '_noisy-n'+sys.argv[2]+'o'+sys.argv[3]
+    noisyFile = rootFile + '_noisy-'
     
     if dP.addFixOffset == True:
-        noisyFile += '-add.csv'
+        noisyFile += 'add'+sys.argv[2]
     else:
-        noisyFile += '-mul.csv'
+        noisyFile += 'mul'+sys.argv[2]
+    
+    
+    if dP.customOffset == True:
+        noisyFile += 'cust.csv'
+        offs = dP.cOffset
+    else:
+        noisyFile += 'opc'+sys.argv[3]+'.csv'
+        offs = int(sys.argv[3])
 
-    dfP_noise = addNoise(dfP, int(sys.argv[2]), int(sys.argv[3]))
+    dfP_noise = addNoise(dfP, int(sys.argv[2]), offs)
     
     dfP_noise.to_csv(noisyFile, index=False, header=True)
     print(sys.argv[2],"iterations (offset:",sys.argv[3],") added and saved in:",noisyFile,"\n")
