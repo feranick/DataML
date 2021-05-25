@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20210523b
+* 20210525a
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -396,18 +396,18 @@ def train(learnFile, testFile, normFile):
         if testFile:
             predictions = model.predict(A_test)
         
-            print('  ===========================================================')
-            print("  Real value | Predicted value | val_loss | val_mean_abs_err")
-            print("  -----------------------------------------------------------")
+            print('  ===========================================================================')
+            print("  Real value | Predicted value | val_loss | val_mean_abs_err | % deviation ")
+            print("  ---------------------------------------------------------------------------")
             for i in range(0,len(predictions)):
                 score = model.evaluate(np.array([A_test[i]]), np.array([Cl_test[i]]), batch_size=dP.batch_size, verbose = 0)
                 if normFile is not None:
-                    print("  {0:.3f} ({1:.3f})  |  {2:.3f} ({3:.3f})  | {4:.4f}  |  {5:.4f} ".format(norm.transform_inverse_single(Cl2_test[i]),
-                        Cl2_test[i], norm.transform_inverse_single(predictions[i][0]), predictions[i][0], score[0], score[1]))
+                    print("  {0:.3f} ({1:.3f})  |  {2:.3f} ({3:.3f})  | {4:.4f}  |  {5:.4f} | {6:.2f}".format(norm.transform_inverse_single(Cl2_test[i]),
+                        Cl2_test[i], norm.transform_inverse_single(predictions[i][0]), predictions[i][0], score[0], score[1], 100*score[1]/norm.transform_inverse_single(Cl2_test[i])))
                 else:
-                    print("  {0:.3f}\t\t| {1:.3f}\t\t| {2:.4f}\t| {3:.4f} ".format(Cl2_test[i],
-                        predictions[i][0], score[0], score[1]))
-            print('\n  ===========================================================\n')
+                    print("  {0:.3f}\t| {1:.3f}\t| {2:.4f}\t| {3:.4f}\t| {4:.1f}".format(Cl2_test[i],
+                        predictions[i][0], score[0], score[1], 100*score[1]/Cl2_test[i]))
+            print('\n  ========================================================================  \n')
     else:
         def_acc, def_val_acc = [list(log.history)[i] for i in (1,3)]
         accuracy = np.asarray(log.history[def_acc])
