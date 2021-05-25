@@ -79,7 +79,7 @@ def addNoise(dfP, num, offset):
         dfP_temp.iloc[:,1:] = dfP.iloc[:,1:].mul(1+factor)
         dfP_noise = dfP_noise.append(dfP_temp, ignore_index=True)
         
-    print(dfP_noise[dfP_noise["Specimen"] == "2194"])
+    #print(dfP_noise[dfP_noise["Specimen"] == "2194"])
     return dfP_noise
 
 #************************************
