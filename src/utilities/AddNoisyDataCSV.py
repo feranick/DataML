@@ -27,7 +27,7 @@ class dP:
     skipHeadRows = 0
     addFixOffset = True
     customOffset = True
-    cOffset = [10,10,10,10,10,10,10,10,10,30,0.5,30,0]
+    cOffset = [6,6,6,6,6,6,6,6,6,22,6,22,0]
     #cOffset = [0,0,0,0,0,0,0,0,0,50,0,0,0]
 #************************************
 # Main
