@@ -3,7 +3,7 @@
 '''
 *********************************************
 * Add Noisy Data to CSV
-* version: 20210524b
+* version: 20210525a
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -12,20 +12,14 @@ print(__doc__)
 
 import numpy as np
 import pandas as pd
-from scipy import stats
 import sys, os.path, h5py
 from random import uniform
-from bisect import bisect_left
-from scipy.stats import pearsonr, spearmanr
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
 
 #************************************
 # Parameters definition
 #************************************
 class dP:
     skipHeadRows = 0
-    addFixOffset = True
     customOffset = True
     cOffset = [6,6,6,6,6,6,6,6,6,22,6,22,0]
     #cOffset = [0,0,0,0,0,0,0,0,0,50,0,0,0]
@@ -79,7 +73,7 @@ def addNoise(dfP, num, offset):
         dfP_temp.iloc[:,1:] = dfP.iloc[:,1:].mul(1+factor)
         dfP_noise = dfP_noise.append(dfP_temp, ignore_index=True)
         
-    #print(dfP_noise[dfP_noise["Specimen"] == "2194"])
+    print(dfP_noise[dfP_noise["Specimen"] == "2194"])
     return dfP_noise
 
 #************************************
