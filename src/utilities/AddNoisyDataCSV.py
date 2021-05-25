@@ -3,7 +3,7 @@
 '''
 *********************************************
 * Add Noisy Data to CSV
-* version: 20210524a
+* version: 20210524b
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -25,9 +25,10 @@ from matplotlib.backends.backend_pdf import PdfPages
 #************************************
 class dP:
     skipHeadRows = 0
-    addFixOffset = False
+    addFixOffset = True
     customOffset = True
-    cOffset = [10,10,10,10,10,10,10,10,10,60,0.5,30,0]
+    cOffset = [10,10,10,10,10,10,10,10,10,30,0.5,30,0]
+    #cOffset = [0,0,0,0,0,0,0,0,0,50,0,0,0]
 #************************************
 # Main
 #************************************
@@ -42,12 +43,6 @@ def main():
     
     rootFile = os.path.splitext(sys.argv[1])[0]
     noisyFile = rootFile + '_noisy-'
-    
-    if dP.addFixOffset == True:
-        noisyFile += 'add'+sys.argv[2]
-    else:
-        noisyFile += 'mul'+sys.argv[2]
-    
     
     if dP.customOffset == True:
         noisyFile += 'cust.csv'
@@ -80,11 +75,11 @@ def addNoise(dfP, num, offset):
     dfP_temp = dfP.copy()
     dfP_noise = dfP.copy()
     for i in range(1, num):
-        if dP.addFixOffset == True:
-            dfP_temp.iloc[:,1:] = dfP.iloc[:,1:].mul(1+offset*np.random.uniform(-0.01,0.01,(dfP_temp.iloc[:,1:].shape)))
-        else:
-            dfP_temp.iloc[:,1:] = dfP.iloc[:,1:].add(offset*np.random.uniform(-0.01,0.01,(dfP_temp.iloc[:,1:].shape)))
+        factor = offset*np.random.uniform(-0.01,0.01,(dfP_temp.iloc[:,1:].shape))
+        dfP_temp.iloc[:,1:] = dfP.iloc[:,1:].mul(1+factor)
         dfP_noise = dfP_noise.append(dfP_temp, ignore_index=True)
+        
+    print(dfP_noise[dfP_noise["Specimen"] == "2194"])
     return dfP_noise
 
 #************************************
