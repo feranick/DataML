@@ -174,14 +174,14 @@ def main():
                 sys.exit(2)
             
         if o in ("-v" , "--validbatch"):
-            #try:
-            if len(sys.argv)<4:
-                validBatchPredict(sys.argv[2], None)
-            else:
-                validBatchPredict(sys.argv[2], sys.argv[3])
-            #except:
-            #    usage()
-            #    sys.exit(2)
+            try:
+                if len(sys.argv)<4:
+                    validBatchPredict(sys.argv[2], None)
+                else:
+                    validBatchPredict(sys.argv[2], sys.argv[3])
+            except:
+                usage()
+                sys.exit(2)
                 
         if o in ("-l" , "--lite"):
             try:

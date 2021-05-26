@@ -2,7 +2,7 @@
 '''
 **********************************************************
 * libDataML - Library for DataML
-* 20210525a
+* 20210526a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -163,7 +163,8 @@ def getPredictions(R, model, dP):
 
         # Test model on random input data.
         input_shape = input_details[0]['shape']
-        input_data = np.array(R*255, dtype=np.uint8)
+        input_data = np.array(R*255, dtype=np.uint8) # Disable this for TF1.x
+        #input_data = np.array(R, dtype=np.float32)  # Enable this for TF2.x (not compatible with on EdgeTPU)
         interpreter.set_tensor(input_details[0]['index'], input_data)
         interpreter.invoke()
 
