@@ -6,7 +6,7 @@
 * ValidFileMaker
 * Make Single Validation File
 *
-* version: 20210325a
+* version: 20210526a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 *
@@ -52,19 +52,19 @@ def main():
     else:
         row = dP.row
     try:
-        M = readParamFile(sys.argv[1])
+        M, name = readParamFile(sys.argv[1], sys.argv[2])
     except:
         print("\033[1m" + " Param file not found \n" + "\033[0m")
         return
         
     rootFile = os.path.splitext(sys.argv[1])[0]
-    validFile = rootFile + '_valid-row_' + str(row)
-    saveLearnFile(M, row, validFile)
+    validFile = rootFile + '_val-row_' + str(row) + '_name_' +str(name)
+    saveLearnFile(M, row, name, validFile)
 
 #************************************
 # Open Learning Data
 #************************************
-def readParamFile(paramFile):
+def readParamFile(paramFile, row):
     if dP.fullDataset:
         usecols = range(dP.minCCol,dP.maxCCol)
     else:
@@ -76,13 +76,14 @@ def readParamFile(paramFile):
     #M = np.hstack((P2[:,predRCol],P2[:,usecols]))
     M = P2[:,usecols]
     #----------------------------------
-    return M
+    
+    return M, P2[int(row),0]
     
 #***************************************
 # Save new learning Data
 #***************************************
-def saveLearnFile(M, row, learnFile):
-    print(" Using row:",row,"\n")
+def saveLearnFile(M, row, name, learnFile):
+    print(" Using row:",row,"- Name:",name,"\n")
     En = np.arange(0,M[row,:].size,1)
     M1 = np.array([En,M[row,:]]).T
     print(M1)
@@ -91,10 +92,10 @@ def saveLearnFile(M, row, learnFile):
         learnFile += '.txt'
         with open(learnFile, 'ab') as f:
                  np.savetxt(f, M1, delimiter='\t', fmt="%10.{0}f".format(dP.precData))
-        print("\n Saving new validation file (txt) in:", learnFile+"\n")
+        print("\n Saving new validation file (txt) in:\n ", learnFile+"\n")
     else:
         learnFile += '.h5'
-        print("n Saving new validation file (hdf5) in: "+learnFile+"\n")
+        print("n Saving new validation file (hdf5) in: \n "+learnFile+"\n")
         with h5py.File(learnFile, 'w') as hf:
             hf.create_dataset("M",  data=M1)
 
