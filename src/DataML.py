@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20210525a
+* 20210526a
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -130,7 +130,7 @@ def main():
     
     try:
         opts, args = getopt.getopt(sys.argv[1:],
-                                   "tpblh:", ["train", "predict", "batch", "lite", "help"])
+                                   "tpbvlh:", ["train", "predict", "batch", "validbatch","lite", "help"])
     except:
         usage()
         sys.exit(2)
@@ -172,6 +172,16 @@ def main():
             except:
                 usage()
                 sys.exit(2)
+            
+        if o in ("-v" , "--validbatch"):
+            #try:
+            if len(sys.argv)<4:
+                validBatchPredict(sys.argv[2], None)
+            else:
+                validBatchPredict(sys.argv[2], sys.argv[3])
+            #except:
+            #    usage()
+            #    sys.exit(2)
                 
         if o in ("-l" , "--lite"):
             try:
@@ -533,10 +543,83 @@ def predict(testFile, normFile):
 #************************************
 # Batch Prediction
 #************************************
-def batchPredict(testFile, normFile):
+def batchPredict(folder, normFile):
+    dP = Conf()
+    #En_test, A_test, Cl_test = readLearnFile(testFile)
+    
+    model = loadModel(dP)
+
+    if normFile is not None:
+        try:
+            norm_file = open(normFile, "rb")
+            norm = pickle.loads(norm_file.read())
+            norm_file.close()
+            print("  Opening pkl file with normalization data:",normFile,"\n")
+        except:
+            print("\033[1m" + " pkl file not found \n" + "\033[0m")
+            return
+            
+    fileName = []
+    for file in glob.glob(folder+'/*.txt'):
+        R, good = readTestFile(file)
+        if good:
+            try:
+                predictions = np.vstack((predictions,getPredictions(R, model, dP).flatten()))
+            except:
+                predictions = np.array([getPredictions(R, model, dP).flatten()])
+            fileName.append(file)
+    
+    if dP.regressor:
+        summaryFile = np.array([['DataML','Regressor',''],['Filename','Prediction','']])
+        print('\n  ================================================================================')
+        print('  \033[1m MLP - Regressor\033[0m - Batch Prediction')
+        print('  ================================================================================')
+        for i in range(0,len(predictions)):
+            if normFile is not None:
+                realValue = norm.transform_inverse_single(Cl_test[i])
+            else:
+                predValue = predictions[i][0]
+            
+            print("  {0:s} | {1:.2f}  ".format(fileName[i], predValue))
+            summaryFile = np.vstack((summaryFile,[fileName[i], predValue,'']))
+        print('  ================================================================================')
+    else:
+        summaryFile = np.array([['DataML','Classifier',''],['Real Class','Predicted Class', 'Probability']])
+        le_file = open(dP.model_le, "rb")
+        le = pickle.loads(le_file.read())
+        le_file.close()
+        #predictions = getPredictions(A_test, model)
+        #predictions = model.predict(A_test)
+        print('\n  ================================================================================')
+        print('  \033[1m MLP - Classifier\033[0m - Batch Prediction')
+        print('  ================================================================================')
+        print("  Real class\t| Predicted class\t| Probability")
+        print("  ---------------------------------------------------")
+        for i in range(predictions.shape[0]):
+            predClass = np.argmax(predictions[i])
+            predProb = round(100*predictions[i][predClass],2)
+            if normFile is not None:
+                predValue = norm.transform_inverse_single(le.inverse_transform([predClass])[0])
+                realValue = norm.transform_inverse_single(Cl_test[i])
+            else:
+                predValue = le.inverse_transform([predClass])[0]
+                realValue = Cl_test[i]
+            print("  {0:.2f}\t\t| {1:.2f}\t\t\t| {2:.2f}".format(realValue, predValue, predProb))
+            summaryFile = np.vstack((summaryFile,[realValue,predValue,predProb]))
+        print('  ========================================================\n')
+
+    
+    import pandas as pd
+    df = pd.DataFrame(summaryFile)
+    df.to_csv(dP.summaryFileName, index=False, header=False)
+    print("\n Prediction summary saved in:",dP.summaryFileName,"\n")
+
+#***********************************************************
+# Batch Prediction using validation data (with real values)
+#************************************************************
+def validBatchPredict(testFile, normFile):
     dP = Conf()
     En_test, A_test, Cl_test = readLearnFile(testFile)
-    
     model = loadModel(dP)
 
     if normFile is not None:
@@ -616,6 +699,7 @@ def batchPredict(testFile, normFile):
     df.to_csv(dP.summaryFileName, index=False, header=False)
     print("\n Prediction summary saved in:",dP.summaryFileName,"\n")
 
+
 #****************************************************
 # Convert model to quantized TFlite
 #****************************************************
@@ -665,12 +749,16 @@ def readLearnFile(learnFile):
 # Open Testing Data
 #************************************
 def readTestFile(testFile):
-    with open(testFile, 'r') as f:
-        print('\n  Opening sample data for prediction:\n  ',testFile)
-        Rtot = np.loadtxt(f, unpack =True)
-    R=np.array([Rtot[1,:]])
-    Rx=np.array([Rtot[0,:]])
-    return R
+    try:
+        with open(testFile, 'r') as f:
+            print('\n  Opening sample data for prediction:\n  ',testFile)
+            Rtot = np.loadtxt(f, unpack =True)
+        R=np.array([Rtot[1,:]])
+        Rx=np.array([Rtot[0,:]])
+    except:
+        print("\033[1m\n File not found or corrupt\033[0m\n")
+        return 0, False
+    return R, True
 
 #************************************
 # Print NN Info
@@ -729,7 +817,7 @@ def usage():
     print(' Train (Random cross validation):')
     print('  python3 DataML.py -t <learningFile>\n')
     print(' Train (with external validation):')
-    print('  python3 DataML.py -t <learningFile> <validationFile>\n')
+    print('  python3 DataML.py -t <learningFile> <validationFile> \n')
     print(' Train (with external validation, with labels normalized with pkl file):')
     print('  python3 DataML.py -t <learningFile> <validationFile> <pkl normalization file>\n')
     print(' Predict (no label normalization used):')
@@ -737,9 +825,13 @@ def usage():
     print(' Predict (labels normalized with pkl file):')
     print('  python3 DataML.py -p <testFile> <pkl normalization file>\n')
     print(' Batch predict (no label normalization used):')
-    print('  python3 DataML.py -b <validationFile>\n')
+    print('  python3 DataML.py -b <folder>\n')
     print(' Batch predict (labels normalized with pkl file):')
-    print('  python3 DataML.py -b <validationFile> <pkl normalization file>\n')
+    print('  python3 DataML.py -b <folder> <pkl normalization file>\n')
+    print(' Batch predict on validation data in single csv file (no label normalization used):')
+    print('  python3 DataML.py -b <validationCSVFile>\n')
+    print(' Batch predict on validation data in single csv file (labels normalized with pkl file):')
+    print('  python3 DataML.py -b <validationCSVFile> <pkl normalization file>\n')
     print(' Convert model to quantized tflite:')
     print('  python3 SpectraKeras_CNN.py -l <learningFile>\n')
     print(' Requires python 3.x. Not compatible with python 2.x\n')
