@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20210526a
+* 20210526b
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -473,7 +473,7 @@ def train(learnFile, testFile, normFile):
 #************************************
 def predict(testFile, normFile):
     dP = Conf()
-    R = readTestFile(testFile)
+    R, _ = readTestFile(testFile)
 
     if normFile is not None:
         try:
@@ -518,7 +518,6 @@ def predict(testFile, normFile):
         print('  ==========================================================')
 
         if dP.numLabels == 1:
-
             if pred_class.size >0:
                 if normFile is not None:
                     predValue = norm.transform_inverse_single(le.inverse_transform([pred_class])[0])
@@ -562,6 +561,8 @@ def batchPredict(folder, normFile):
     fileName = []
     for file in glob.glob(folder+'/*.txt'):
         R, good = readTestFile(file)
+        if  normFile is not None:
+            R = norm.transform_valid_data(R)
         if good:
             try:
                 predictions = np.vstack((predictions,getPredictions(R, model, dP).flatten()))
@@ -576,7 +577,7 @@ def batchPredict(folder, normFile):
         print('  ================================================================================')
         for i in range(0,len(predictions)):
             if normFile is not None:
-                realValue = norm.transform_inverse_single(Cl_test[i])
+                predValue = norm.transform_inverse_single(predictions[i][0])
             else:
                 predValue = predictions[i][0]
             
