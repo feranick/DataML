@@ -1,0 +1,125 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>ML - test - Asph</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
+</head>
+<body>
+  <div id="wrap">
+    <h1>ML - test - ORNL - p10</h1>
+    <form action="javascript:void(0);" id="the_form">
+      <input type="file" id="the_file" required="required" accept=".csv"/>
+      <input type="submit" value="Predict" class="btn"/>
+    </form>
+    <div id="file_info"></div>
+    <div id="list"></div>
+    <div id="list2"></div>
+  </div>
+<script type="text/javascript">
+
+  class L2 {
+    static className = 'L2';
+    constructor(config) {
+       return tf.regularizers.l1l2(config)
+   }
+   }
+   tf.serialization.registerClass(L2);
+
+  function fileInfo(e){
+    var file = e.target.files[0];
+    if (file.name.split(".")[1].toUpperCase() != "CSV"){
+      alert('Invalid csv file !');
+      e.target.parentNode.reset();
+      return;
+    }else{
+      document.getElementById('file_info').innerHTML = "<p>File Name: "+file.name + " | "+file.size+" Bytes.</p>";
+    }
+  }
+  
+ function handleFileSelect(){
+  var file = document.getElementById("the_file").files[0];
+  var reader = new FileReader();
+  var link_reg = /(http:\/\/|https:\/\/)/i;
+  reader.onload = function(file) {
+              var content = file.target.result;
+              var rows = file.target.result.split(/[\r\n|\n]+/);
+              var table = document.createElement('table');
+	      var data = JSON.parse("[[" + rows + "]]");
+	      	      
+	      //document.getElementById('list').innerText = data;
+              //predict(data, "model61");
+              predict(data, "model_regressor_p10");
+	     
+	     //setClasses();
+            /*
+              for (var i = 0; i < rows.length; i++){
+                var tr = document.createElement('tr');
+                var arr = rows[i].split(',');
+
+                for (var j = 0; j < arr.length; j++){
+                  if (i==0)
+                    var td = document.createElement('th');
+                  else
+                    var td = document.createElement('td');
+
+                  if( link_reg.test(arr[j]) ){
+                    var a = document.createElement('a');
+                    a.href = arr[j];
+                    a.target = "_blank";
+                    a.innerHTML = arr[j];
+                    td.appendChild(a);
+                  }else{
+                    td.innerHTML = arr[j];
+                  }
+                  tr.appendChild(td);
+                }
+
+                table.appendChild(tr);
+              }
+
+              document.getElementById('list').appendChild(table);
+            */
+          };
+  reader.readAsText(file);
+ }
+async function predict(data, folder){
+    
+    const model = await tf.loadLayersModel('./'+folder+'/model.json');
+    const xp = tf.tensor2d(data);
+
+    document.getElementById('list').innerText = xp;
+
+    const prediction = model.predict(xp);
+    var results = prediction.dataSync().indexOf(1);
+    //console.info(results, norm[results]);
+    
+    // USE THIS FOR CLASSIFIER
+    //norm = await getClasses(folder);
+    //document.getElementById('list').innerText = "Predicted value: "+norm[results];
+    //document.getElementById('list2').innerText = norm;
+    
+    // USE THIS FOR REGRESSOR
+    document.getElementById('list').innerText = "Predicted value: "+results;
+    }
+
+async function getClasses(folder) {
+    const response = await fetch("./"+folder+"/norm.txt");
+    const normal = await response.text();
+    var allNames = JSON.parse("[" + normal + "]");
+    //console.info(allNames);
+    return allNames[0];
+    }
+
+async function setClasses(folder) {
+     normalClasses = await getClasses(folder);
+     document.getElementById('list2').innerText = normalClasses;
+}
+
+ document.getElementById('the_form').addEventListener('submit', handleFileSelect, false);
+ document.getElementById('the_file').addEventListener('change', fileInfo, false);
+
+</script>
+</body>
+</html>
+
