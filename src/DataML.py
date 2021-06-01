@@ -203,6 +203,7 @@ def train(learnFile, testFile, normFile):
     from pkg_resources import parse_version
     import tensorflow as tf
     import tensorflow.keras as keras
+    tf.random.set_seed(42)
 
     opts = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=1)     # Tensorflow 2.0
     conf = tf.compat.v1.ConfigProto(gpu_options=opts)  # Tensorflow 2.0
@@ -468,7 +469,48 @@ def train(learnFile, testFile, normFile):
         plotWeights(En, A, model)
     
     getTFVersion(dP)
+    
+    ##################################################################
+    ######## EXPERIMENTAL PARAMETER OPTIMIZATION  ####################
+    ##################################################################
+    '''
+    from sklearn.model_selection import RandomizedSearchCV
+    from tensorflow.keras.wrappers.scikit_learn import KerasClassifier, KerasRegressor
+    model2 = KerasRegressor(build_fn=model, verbose=0)
+    # define a grid of the hyperparameter search space
 
+    learnRate = [1e-2, 1e-3, 1e-4]
+    dropout = [0.3, 0.4, 0.5]
+    batchSize = [16, 32, 64]
+    epochs = [300,400,500]
+    # create a dictionary from the hyperparameter grid
+    grid = dict(
+        learnRate=learnRate,
+        dropout=dropout,
+        batch_size=batchSize,
+        epochs=epochs
+        )
+
+    # initialize a random search with a 3-fold cross-validation and then
+    # start the hyperparameter search process
+    print("[INFO] performing random search...")
+    #https://scikit-learn.org/stable/modules/model_evaluation.html
+    searcher = RandomizedSearchCV(estimator=model2, n_jobs=1, cv=3,
+        param_distributions=grid, scoring="neg_mean_absolute_error")
+    searchResults = searcher.fit(A, Cl2)
+    # summarize grid search information
+    bestScore = searchResults.best_score_
+    bestParams = searchResults.best_params_
+    print("[INFO] best score is {:.2f} using {}".format(bestScore,
+        bestParams))
+
+    # extract the best model, make predictions on our data, and show a
+    # classification report
+    print("[INFO] evaluating the best model...")
+    bestModel = searchResults.best_estimator_
+    accuracy = bestModel.score(A_test, Cl2_test)
+    print("accuracy: {:.2f}%".format(mae))
+    '''
 #************************************
 # Prediction
 #************************************
