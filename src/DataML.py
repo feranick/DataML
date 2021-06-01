@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20210531a
+* 20210601a
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -286,34 +286,43 @@ def train(learnFile, testFile, normFile):
         dP.batch_size = A.shape[0]
 
     #************************************
-    ### Define optimizer
-    #************************************
-    #optim = keras.optimizers.SGD(lr=dP.l_rate, decay=dP.l_rdecay,
-    #        momentum=0.9, nesterov=True)
-    optim = keras.optimizers.Adam(learning_rate=dP.l_rate, beta_1=0.9,
-           beta_2=0.999, epsilon=1e-08, decay=dP.l_rdecay,
-           amsgrad=False)
-    #************************************
     ### Build model
     #************************************
-    model = keras.models.Sequential()
-    for i in range(len(dP.HL)):
-        model.add(keras.layers.Dense(dP.HL[i],
-            activation = 'relu',
-            input_dim=A.shape[1],
-            kernel_regularizer=keras.regularizers.l2(dP.l2)))
-        model.add(keras.layers.Dropout(dP.drop))
+    
+    def get_model():
+        #************************************
+        ### Define optimizer
+        #************************************
+        #optim = keras.optimizers.SGD(lr=dP.l_rate, decay=dP.l_rdecay,
+        #        momentum=0.9, nesterov=True)
+        optim = keras.optimizers.Adam(learning_rate=dP.l_rate, beta_1=0.9,
+           beta_2=0.999, epsilon=1e-08, decay=dP.l_rdecay,
+           amsgrad=False)
+        
+        #************************************
+        ### Build model
+        #************************************
+        model = keras.models.Sequential()
+        for i in range(len(dP.HL)):
+            model.add(keras.layers.Dense(dP.HL[i],
+                activation = 'relu',
+                input_dim=A.shape[1],
+                kernel_regularizer=keras.regularizers.l2(dP.l2)))
+            model.add(keras.layers.Dropout(dP.drop))
 
-    if dP.regressor:
-        model.add(keras.layers.Dense(1))
-        model.compile(loss='mse',
-        optimizer=optim,
-        metrics=['mae'])
-    else:
-        model.add(keras.layers.Dense(np.unique(totCl).size+1, activation = 'softmax'))
-        model.compile(loss='categorical_crossentropy',
+        if dP.regressor:
+            model.add(keras.layers.Dense(1))
+            model.compile(loss='mse',
             optimizer=optim,
-            metrics=['accuracy'])
+            metrics=['mae'])
+        else:
+            model.add(keras.layers.Dense(np.unique(totCl).size+1, activation = 'softmax'))
+            model.compile(loss='categorical_crossentropy',
+                optimizer=optim,
+                metrics=['accuracy'])
+        return model
+        
+    model = get_model()
 
     tbLog = keras.callbacks.TensorBoard(log_dir=dP.tb_directory, histogram_freq=120,
             write_graph=True, write_images=True)
@@ -474,30 +483,42 @@ def train(learnFile, testFile, normFile):
     ######## EXPERIMENTAL PARAMETER OPTIMIZATION  ####################
     ##################################################################
     '''
-    from sklearn.model_selection import RandomizedSearchCV
+    from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
     from tensorflow.keras.wrappers.scikit_learn import KerasClassifier, KerasRegressor
-    model2 = KerasRegressor(build_fn=model, verbose=0)
+    model2 = KerasRegressor(build_fn=get_model, verbose=0)
     # define a grid of the hyperparameter search space
-
+    
     learnRate = [1e-2, 1e-3, 1e-4]
     dropout = [0.3, 0.4, 0.5]
     batchSize = [16, 32, 64]
     epochs = [300,400,500]
     # create a dictionary from the hyperparameter grid
     grid = dict(
-        learnRate=learnRate,
-        dropout=dropout,
-        batch_size=batchSize,
-        epochs=epochs
+        batch_size = batchSize,
+        epochs = epochs,
         )
 
+    if dP.regressor:
+        model2 = KerasRegressor(build_fn=get_model, verbose=0)
+        scoring = "neg_mean_absolute_error"
+    else:
+        model2 = KerasClassifier(build_fn=get_model, verbose=0)
+        scoring = "accuracy"
+        
+    print(model2.get_params())
+        
     # initialize a random search with a 3-fold cross-validation and then
     # start the hyperparameter search process
     print("[INFO] performing random search...")
     #https://scikit-learn.org/stable/modules/model_evaluation.html
-    searcher = RandomizedSearchCV(estimator=model2, n_jobs=1, cv=3,
-        param_distributions=grid, scoring="neg_mean_absolute_error")
+    #searcher = RandomizedSearchCV(estimator=model2, n_jobs=1, cv=3,
+    #    param_distributions=grid, scoring=scoring)
+    searcher = GridSearchCV(estimator=model2, n_jobs=1, cv=3,
+        param_grid=grid, scoring=scoring)
+        
+    print(searcher.get_params())
     searchResults = searcher.fit(A, Cl2)
+    
     # summarize grid search information
     bestScore = searchResults.best_score_
     bestParams = searchResults.best_params_
@@ -509,7 +530,7 @@ def train(learnFile, testFile, normFile):
     print("[INFO] evaluating the best model...")
     bestModel = searchResults.best_estimator_
     accuracy = bestModel.score(A_test, Cl2_test)
-    print("accuracy: {:.2f}%".format(mae))
+    print("accuracy: {:.2f}%".format(accuracy))
     '''
 #************************************
 # Prediction
