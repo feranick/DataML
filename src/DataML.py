@@ -218,11 +218,11 @@ def train(learnFile, testFile, normFile):
 
     opts = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=1)     # Tensorflow 2.0
     conf = tf.compat.v1.ConfigProto(gpu_options=opts)  # Tensorflow 2.0
-        
-    #gpus = tf.config.experimental.list_physical_devices('GPU')
-    #if gpus:
-    #   for gpu in gpus:
-    #       tf.config.experimental.set_memory_growth(gpu, True)
+    
+    gpus = tf.config.list_physical_devices('GPU')
+    if gpus:
+       for gpu in gpus:
+           tf.config.experimental.set_memory_growth(gpu, True)
     #   if dP.setMaxMem:
     #       tf.config.experimental.set_virtual_device_configuration(
     #         gpus[0],
