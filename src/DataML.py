@@ -47,6 +47,8 @@ class Conf():
         self.tb_directory = "model_MLP"
         self.model_name = self.model_directory+self.modelName
         self.model_le = self.model_directory+"model_le.pkl"
+        
+        self.optParFile = "opt_parameters.json"
             
         if platform.system() == 'Linux':
             self.edgeTPUSharedLib = "libedgetpu.so.1"
@@ -69,6 +71,7 @@ class Conf():
             'batch_size' : 64,
             'numLabels' : 1,
             'plotWeightsFlag' : False,
+            'optimizeParameters' : False,
             'stopAtBest' : False,
             'saveBestModel' : False,
             }
@@ -100,6 +103,7 @@ class Conf():
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.numLabels = self.conf.getint('Parameters','numLabels')
             self.plotWeightsFlag = self.conf.getboolean('Parameters','plotWeightsFlag')
+            self.optimizeParameters = self.conf.getboolean('Parameters','optimizeParameters')
             self.stopAtBest = self.conf.getboolean('Parameters','stopAtBest')
             self.saveBestModel = self.conf.getboolean('Parameters','saveBestModel')
             self.makeQuantizedTFlite = self.conf.getboolean('System','makeQuantizedTFlite')
@@ -130,7 +134,7 @@ def main():
     
     try:
         opts, args = getopt.getopt(sys.argv[1:],
-                                   "tpbvlh:", ["train", "predict", "batch", "validbatch","lite", "help"])
+                                   "tpbvloh:", ["train", "predict", "batch", "validbatch","lite", "opt", "help"])
     except:
         usage()
         sys.exit(2)
@@ -186,6 +190,13 @@ def main():
         if o in ("-l" , "--lite"):
             try:
                 convertTflite(sys.argv[2])
+            except:
+                usage()
+                sys.exit(2)
+                
+        if o in ["-o" , "--opt"]:
+            try:
+                makeOptParameters(dP)
             except:
                 usage()
                 sys.exit(2)
@@ -245,7 +256,6 @@ def train(learnFile, testFile, normFile):
         if testFile is not None:
             Cl2_test = np.copy(Cl_test)
     else:
-    
         #************************************
         # Label Encoding
         #************************************
@@ -288,27 +298,28 @@ def train(learnFile, testFile, normFile):
     #************************************
     ### Build model
     #************************************
-    
-    def get_model():
+    def get_model(learnRate = dP.l_rate, decay = dP.l_rdecay, layers = dP.HL, l2 = dP.l2, dropout = dP.drop):
+    #def get_model(learnRate, decay, layers, l2, dropout):
         #************************************
         ### Define optimizer
         #************************************
         #optim = keras.optimizers.SGD(lr=dP.l_rate, decay=dP.l_rdecay,
         #        momentum=0.9, nesterov=True)
-        optim = keras.optimizers.Adam(learning_rate=dP.l_rate, beta_1=0.9,
-           beta_2=0.999, epsilon=1e-08, decay=dP.l_rdecay,
+        optim = keras.optimizers.Adam(learning_rate=learnRate, beta_1=0.9,
+           beta_2=0.999, epsilon=1e-08, decay=decay,
            amsgrad=False)
         
         #************************************
         ### Build model
         #************************************
         model = keras.models.Sequential()
-        for i in range(len(dP.HL)):
-            model.add(keras.layers.Dense(dP.HL[i],
+        #for i in range(len(dP.HL)):
+        for i in range(len(layers)):
+            model.add(keras.layers.Dense(layers[i],
                 activation = 'relu',
                 input_dim=A.shape[1],
-                kernel_regularizer=keras.regularizers.l2(dP.l2)))
-            model.add(keras.layers.Dropout(dP.drop))
+                kernel_regularizer=keras.regularizers.l2(l2)))
+            model.add(keras.layers.Dropout(dropout))
 
         if dP.regressor:
             model.add(keras.layers.Dense(1))
@@ -322,6 +333,7 @@ def train(learnFile, testFile, normFile):
                 metrics=['accuracy'])
         return model
         
+    #model = get_model(learnRate = dP.l_rate, decay = dP.l_rdecay, layers = dP.HL, l2 = dP.l2, dropout = dP.drop)
     model = get_model()
 
     tbLog = keras.callbacks.TensorBoard(log_dir=dP.tb_directory, histogram_freq=120,
@@ -480,58 +492,73 @@ def train(learnFile, testFile, normFile):
     getTFVersion(dP)
     
     ##################################################################
-    ######## EXPERIMENTAL PARAMETER OPTIMIZATION  ####################
+    # Hyperparameter optimization
     ##################################################################
-    '''
-    from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
-    from tensorflow.keras.wrappers.scikit_learn import KerasClassifier, KerasRegressor
-    model2 = KerasRegressor(build_fn=get_model, verbose=0)
-    # define a grid of the hyperparameter search space
     
-    learnRate = [1e-2, 1e-3, 1e-4]
-    dropout = [0.3, 0.4, 0.5]
-    batchSize = [16, 32, 64]
-    epochs = [300,400,500]
-    # create a dictionary from the hyperparameter grid
-    grid = dict(
-        batch_size = batchSize,
-        epochs = epochs,
-        )
-
-    if dP.regressor:
-        model2 = KerasRegressor(build_fn=get_model, verbose=0)
-        scoring = "neg_mean_absolute_error"
-    else:
-        model2 = KerasClassifier(build_fn=get_model, verbose=0)
-        scoring = "accuracy"
-        
-    print(model2.get_params())
-        
-    # initialize a random search with a 3-fold cross-validation and then
-    # start the hyperparameter search process
-    print("[INFO] performing random search...")
-    #https://scikit-learn.org/stable/modules/model_evaluation.html
-    #searcher = RandomizedSearchCV(estimator=model2, n_jobs=1, cv=3,
-    #    param_distributions=grid, scoring=scoring)
-    searcher = GridSearchCV(estimator=model2, n_jobs=1, cv=3,
-        param_grid=grid, scoring=scoring)
-        
-    print(searcher.get_params())
-    searchResults = searcher.fit(A, Cl2)
+    if dP.optimizeParameters:
+        print('  ========================================================')
+        print('  \033[1m HyperParameters Optimization\033[0m')
+        print('  ========================================================\n')
     
-    # summarize grid search information
-    bestScore = searchResults.best_score_
-    bestParams = searchResults.best_params_
-    print("[INFO] best score is {:.2f} using {}".format(bestScore,
-        bestParams))
-
-    # extract the best model, make predictions on our data, and show a
-    # classification report
-    print("[INFO] evaluating the best model...")
-    bestModel = searchResults.best_estimator_
-    accuracy = bestModel.score(A_test, Cl2_test)
-    print("accuracy: {:.2f}%".format(accuracy))
-    '''
+        from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
+        from tensorflow.keras.wrappers.scikit_learn import KerasClassifier, KerasRegressor
+        import json
+        
+        with open(dP.optParFile) as f:
+            grid = json.load(f)
+        '''
+        grid = {
+            "learnRate" : [1e-2, 1e-3, 1e-4],
+            "l2" : [1e-3, 1e-4, 1e-5],
+            "decay" : [1e-3, 1e-4, 1e-5],
+            #layers,
+            "dropout" : [0,0.1,0.2,0.3,0.4],
+            "batch_size" : [16, 32, 64, 128, 256],
+            #"epochs" : [300,400,500],
+            }
+        '''
+        
+        if dP.regressor:
+            model2 = KerasRegressor(build_fn=get_model, verbose=0)
+            #scoring = "neg_mean_absolute_error"
+            scoring = "r2"
+        else:
+            model2 = KerasClassifier(build_fn=get_model, verbose=0)
+            scoring = "accuracy"
+                
+        #searcher = RandomizedSearchCV(estimator=model2, n_jobs=-1, cv=3,
+        #    param_distributions=grid, scoring=scoring)
+        searcher = GridSearchCV(estimator=model2, n_jobs=1, cv=3,
+            param_grid=grid)
+        
+        searchResults = searcher.fit(A, Cl2)
+    
+        if dP.regressor:
+            #results = searchResults.cv_results_
+            print(" Optimal parameters for best model: ")
+            bestParams = searchResults.best_params_
+            print(bestParams)
+            #bestModel = searchResults.best_estimator_
+            #accuracy = bestModel.score(A_test, Cl2_test)
+            #print("Accuracy:", accuracy)
+            #best_score = searchResults.best_score_
+            #print("Best_score:", best_score)
+            #print(bestModel.predict(A_test), Cl2_test)
+            #print(bestModel.predict(A_test) - Cl2_test)
+        
+        else:
+            print(" Optimal parameters for best model: ")
+            bestScore = searchResults.best_score_
+            bestParams = searchResults.best_params_
+            print(bestParams)
+            print(" Best score is {:.2f} using {}".format(bestScore))
+            # extract the best model, make predictions on our data, and show a
+            # classification report
+            print(" Evaluating the best model...")
+            bestModel = searchResults.best_estimator_
+            accuracy = bestModel.score(A_test, Cl2_test)
+            print(" Accuracy: {:.2f}%".format(accuracy))
+    
 #************************************
 # Prediction
 #************************************
@@ -873,6 +900,15 @@ def plotWeights(En, A, model):
     plt.legend(loc='upper right')
     plt.savefig('model_MLP_weights' + '.png', dpi = 160, format = 'png')  # Save plot
 
+#************************************
+# Make Optimization Parameter File
+#************************************
+def makeOptParameters(dP):
+    import json
+    grid = {"learnRate": [0.01, 0.001, 0.0001], "l2": [0.001, 0.0001, 1e-05], "decay": [0.001, 0.0001, 1e-05], "dropout": [0, 0.1, 0.2, 0.3, 0.4], "batch_size": [16, 32, 64, 128, 256], "epochs": [300, 400, 500]}
+    with open(dP.optParFile, 'w') as json_file:
+        json.dump(grid, json_file)
+    print(" Created: ",dP.optParFile,"\n")
 
 #************************************
 # Lists the program usage
@@ -899,6 +935,8 @@ def usage():
     print('  python3 DataML.py -b <validationCSVFile> <pkl normalization file>\n')
     print(' Convert model to quantized tflite:')
     print('  python3 SpectraKeras_CNN.py -l <learningFile>\n')
+    print(' Create parameter optimization file:')
+    print('  python3 SpectraKeras_CNN.py -o\n')
     print(' Requires python 3.x. Not compatible with python 2.x\n')
 
 #************************************
