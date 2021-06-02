@@ -178,14 +178,14 @@ def main():
                 sys.exit(2)
             
         if o in ("-v" , "--validbatch"):
-            try:
-                if len(sys.argv)<4:
-                    validBatchPredict(sys.argv[2], None)
-                else:
-                    validBatchPredict(sys.argv[2], sys.argv[3])
-            except:
-                usage()
-                sys.exit(2)
+            #try:
+            if len(sys.argv)<4:
+                validBatchPredict(sys.argv[2], None)
+            else:
+                validBatchPredict(sys.argv[2], sys.argv[3])
+            #except:
+            #    usage()
+            #    sys.exit(2)
                 
         if o in ("-l" , "--lite"):
             try:
@@ -680,7 +680,7 @@ def batchPredict(folder, normFile):
         le_file = open(dP.model_le, "rb")
         le = pickle.loads(le_file.read())
         le_file.close()
-        #predictions = getPredictions(A_test, model)
+        #predictions = getPredictions(A_test, model,dP)
         #predictions = model.predict(A_test)
         print('\n  ================================================================================')
         print('  \033[1m MLP - Classifier\033[0m - Batch Prediction')
@@ -728,7 +728,7 @@ def validBatchPredict(testFile, normFile):
     
     if dP.regressor:
         summaryFile = np.array([['DataML','Regressor','',''],['Real Value','Prediction','val_loss','val_abs_mean_error']])
-        predictions = getPredictions(A_test, model)
+        predictions = getPredictions(A_test, model, dP)
         
         score = model.evaluate(A_test, Cl_test, batch_size=dP.batch_size, verbose = 0)
         print('  ==========================================================')
@@ -756,7 +756,7 @@ def validBatchPredict(testFile, normFile):
         le_file = open(dP.model_le, "rb")
         le = pickle.loads(le_file.read())
         le_file.close()
-        predictions = getPredictions(A_test, model)
+        predictions = getPredictions(A_test, model,dP)
         #predictions = model.predict(A_test)
         print('  ========================================================')
         print('  \033[1m MLP - Classifier\033[0m - Batch Prediction')
@@ -929,10 +929,10 @@ def usage():
     print('  python3 DataML.py -b <folder>\n')
     print(' Batch predict (labels normalized with pkl file):')
     print('  python3 DataML.py -b <folder> <pkl normalization file>\n')
-    print(' Batch predict on validation data in single csv file (no label normalization used):')
-    print('  python3 DataML.py -b <validationCSVFile>\n')
-    print(' Batch predict on validation data in single csv file (labels normalized with pkl file):')
-    print('  python3 DataML.py -b <validationCSVFile> <pkl normalization file>\n')
+    print(' Batch predict on validation data in single file (no label normalization used):')
+    print('  python3 DataML.py -v <singleValidationFile>\n')
+    print(' Batch predict on validation data in single file (labels normalized with pkl file):')
+    print('  python3 DataML.py -v <singleValidationFile> <pkl normalization file>\n')
     print(' Convert model to quantized tflite:')
     print('  python3 SpectraKeras_CNN.py -l <learningFile>\n')
     print(' Create parameter optimization file:')
