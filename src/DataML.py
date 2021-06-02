@@ -154,8 +154,8 @@ def main():
                     else:
                         train(sys.argv[2], sys.argv[3], sys.argv[4])
             except:
-            usage()
-            sys.exit(2)
+                usage()
+                sys.exit(2)
 
         if o in ("-p" , "--predict"):
             try:
