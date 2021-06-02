@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20210601a
+* 20210602a
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -154,8 +154,8 @@ def main():
                     else:
                         train(sys.argv[2], sys.argv[3], sys.argv[4])
             except:
-                usage()
-                sys.exit(2)
+            usage()
+            sys.exit(2)
 
         if o in ("-p" , "--predict"):
             try:
@@ -178,14 +178,14 @@ def main():
                 sys.exit(2)
             
         if o in ("-v" , "--validbatch"):
-            #try:
-            if len(sys.argv)<4:
-                validBatchPredict(sys.argv[2], None)
-            else:
-                validBatchPredict(sys.argv[2], sys.argv[3])
-            #except:
-            #    usage()
-            #    sys.exit(2)
+            try:
+                if len(sys.argv)<4:
+                    validBatchPredict(sys.argv[2], None)
+                else:
+                    validBatchPredict(sys.argv[2], sys.argv[3])
+            except:
+                usage()
+                sys.exit(2)
                 
         if o in ("-l" , "--lite"):
             try:
@@ -366,7 +366,10 @@ def train(learnFile, testFile, normFile):
             callbacks = tbLogs,
             verbose=2,
 	        validation_split=dP.cv_split)
-    model.save(dP.model_name, save_format='h5')
+    if dP.saveBestModel == False:
+        model.save(dP.model_name, save_format='h5')
+    else:
+        model = loadModel(dP)
     keras.utils.plot_model(model, to_file=dP.model_png, show_shapes=True)
     
     if dP.makeQuantizedTFlite:
@@ -727,7 +730,7 @@ def validBatchPredict(testFile, normFile):
     covMatrix = np.empty((0,2))
     
     if dP.regressor:
-        summaryFile = np.array([['DataML','Regressor','',''],['Real Value','Prediction','val_loss','val_abs_mean_error']])
+        summaryFile = np.array([['DataML','Regressor','','',''],['Real Value','Prediction','val_loss','val_abs_mean_error','deviation %']])
         predictions = getPredictions(A_test, model, dP)
         
         score = model.evaluate(A_test, Cl_test, batch_size=dP.batch_size, verbose = 0)
@@ -736,21 +739,27 @@ def validBatchPredict(testFile, normFile):
         print('  ==========================================================')
         print("  \033[1mOverall val_loss:\033[0m {0:.4f}; \033[1moverall val_abs_mean_loss:\033[0m {1:.4f}\n".format(score[0], score[1]))
         print('  ==========================================================')
-        print("  Real value | Predicted value | val_loss | val_mean_abs_err")
-        print("  -----------------------------------------------------------")
+        
+        print('  ===========================================================================')
+        print("  Real value | Predicted value | val_loss | val_mean_abs_err | % deviation ")
+        print("  ---------------------------------------------------------------------------")
         for i in range(0,len(predictions)):
             score = model.evaluate(np.array([A_test[i]]), np.array([Cl_test[i]]), batch_size=dP.batch_size, verbose = 0)
             if normFile is not None:
                 predValue = norm.transform_inverse_single(predictions[i][0])
                 realValue = norm.transform_inverse_single(Cl_test[i])
+                print("  {0:.3f} ({1:.3f})  |  {2:.3f} ({3:.3f})  | {4:.4f}  |  {5:.4f} | {6:.2f}".format(realValue,Cl_test[i],predValue,
+                        Cl_test[i], norm.transform_inverse_single(predictions[i][0]), predictions[i][0], score[0], score[1],predictions[i][0],
+                        score[0],score[1], 100*score[1]/norm.transform_inverse_single(Cl_test[i])))
             else:
                 realValue = Cl_test[i]
                 predValue = predictions[i][0]
+                print("  {0:.3f}\t| {1:.3f}\t| {2:.4f}\t| {3:.4f}\t| {4:.1f}".format(realValue, predValue, score[0], score[1], 100*score[1]/realValue))
+                
+            summaryFile = np.vstack((summaryFile,[realValue,predValue,score[0], score[1],100*score[1]/realValue]))
             
-            print("  {0:.2f}\t\t| {1:.2f}\t\t| {2:.4f}\t| {3:.4f} ".format(realValue, predValue, score[0], score[1]))
-            summaryFile = np.vstack((summaryFile,[realValue,predValue,score[0], score[1]]))
             covMatrix = np.vstack((covMatrix,[realValue,predValue]))
-        print('  ==========================================================\n')
+        print('  ===========================================================================\n')
     else:
         summaryFile = np.array([['DataML','Classifier',''],['Real Class','Predicted Class', 'Probability']])
         le_file = open(dP.model_le, "rb")
@@ -777,20 +786,19 @@ def validBatchPredict(testFile, normFile):
             covMatrix = np.vstack((covMatrix,[realValue,predValue]))
             
         print('  ========================================================\n')
-
+    
     from scipy.stats import pearsonr, spearmanr
     pearsonr_corr, _ = pearsonr(covMatrix[:,0],covMatrix[:,1])
-    summaryFile = np.vstack((summaryFile,['PearsonR',pearsonr_corr,'']))
+    summaryFile = np.vstack((summaryFile,['PearsonR',pearsonr_corr,'','','']))
     spearmanr_corr, _ = pearsonr(covMatrix[:,0],covMatrix[:,1])
-    summaryFile = np.vstack((summaryFile,['SpearmanR',spearmanr_corr,'']))
+    summaryFile = np.vstack((summaryFile,['SpearmanR',spearmanr_corr,'','','']))
     print(" PearsonR correlation: {0:0.3f}".format(pearsonr_corr))
     print(" SpearmanR correlation: {0:0.4f}".format(spearmanr_corr))
-
+    
     import pandas as pd
     df = pd.DataFrame(summaryFile)
     df.to_csv(dP.summaryFileName, index=False, header=False)
     print("\n Prediction summary saved in:",dP.summaryFileName,"\n")
-
 
 #****************************************************
 # Convert model to quantized TFlite
