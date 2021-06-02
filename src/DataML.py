@@ -48,7 +48,7 @@ class Conf():
         self.model_name = self.model_directory+self.modelName
         self.model_le = self.model_directory+"model_le.pkl"
         
-        self.optParFile = "opt_parameters.json"
+        self.optParFile = "opt_parameters.txt"
             
         if platform.system() == 'Linux':
             self.edgeTPUSharedLib = "libedgetpu.so.1"
