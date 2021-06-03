@@ -2,7 +2,7 @@
 '''
 **********************************************************
 * libDataML - Library for DataML
-* 20210602a
+* 20210603a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************

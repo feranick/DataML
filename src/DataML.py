@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20210602a
+* 20210603a
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -77,6 +77,7 @@ class Conf():
             }
     def sysDef(self):
         self.conf['System'] = {
+            'fixTFseed' : True,
             'makeQuantizedTFlite' : True,
             'useTFlitePred' : False,
             'TFliteRuntime' : False,
@@ -106,6 +107,8 @@ class Conf():
             self.optimizeParameters = self.conf.getboolean('Parameters','optimizeParameters')
             self.stopAtBest = self.conf.getboolean('Parameters','stopAtBest')
             self.saveBestModel = self.conf.getboolean('Parameters','saveBestModel')
+            
+            self.fixTFseed = self.conf.getboolean('System','fixTFseed')
             self.makeQuantizedTFlite = self.conf.getboolean('System','makeQuantizedTFlite')
             self.useTFlitePred = self.conf.getboolean('System','useTFlitePred')
             self.TFliteRuntime = self.conf.getboolean('System','TFliteRuntime')
@@ -214,7 +217,8 @@ def train(learnFile, testFile, normFile):
     from pkg_resources import parse_version
     import tensorflow as tf
     import tensorflow.keras as keras
-    tf.random.set_seed(42)
+    if dP.fixTFseed == True:
+        tf.random.set_seed(42)
 
     opts = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=1)     # Tensorflow 2.0
     conf = tf.compat.v1.ConfigProto(gpu_options=opts)  # Tensorflow 2.0
