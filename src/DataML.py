@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20210603a
+* 20210604a
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -532,10 +532,19 @@ def train(learnFile, testFile, normFile):
         else:
             model2 = KerasClassifier(build_fn=get_model, verbose=0)
             scoring = "accuracy"
+            
+        numGPUs = len(tf.config.list_physical_devices('GPU'))
+        if numGPUs == 0:
+            import multiprocessing as mp
+            n_jobs = mp.cpu_count() - 1
+            print(" Running paramter optimization using:",n_jobs,"CPUs\n")
+        else:
+            n_jobs = numGPUs
+            print(" Running paramter optimization using:",n_jobs,"GPUs\n")
                 
-        #searcher = RandomizedSearchCV(estimator=model2, n_jobs=-1, cv=3,
+        #searcher = RandomizedSearchCV(estimator=model2, n_jobs=n_jobs, cv=3,
         #    param_distributions=grid, scoring=scoring)
-        searcher = GridSearchCV(estimator=model2, n_jobs=1, cv=3,
+        searcher = GridSearchCV(estimator=model2, n_jobs=n_jobs, cv=3,
             param_grid=grid)
         
         searchResults = searcher.fit(A, Cl2)
