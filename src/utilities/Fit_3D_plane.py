@@ -28,7 +28,7 @@ def main():
     rootFile = os.path.splitext(sys.argv[1])[0]
 
     x = df["P1"].values
-    y = df["P2"].values
+    y = df["C9"].values
     z = df["P3"].values
     
     linear3Dfit(x,y,z)
@@ -69,7 +69,7 @@ def quad3Dfit(X,Y,Z):
     print(" a3 =",reg.coef_[2])
     print(" a4 =", reg.coef_[3])
     print(" a5 =",reg.coef_[4])
-    print(" c: ", reg.intercept_)
+    print(" c = ", reg.intercept_)
     print(" R2=",reg.score(X_data, Y_data))
 
 #************************************
