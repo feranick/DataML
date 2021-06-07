@@ -25,9 +25,9 @@ class dP:
     #cOffset = [0,0,0,0,0,0,0,0,0,50,0,0,0]
     cOffset = [6,6,6,6,6,6,6,6,6,22,6,22,0]
     
-    useP1P2P3 = True
+    useP1P2P3 = False
     useP1P3P2 = False
-    useP2P3P1 = False
+    useP2P3P1 = True
     useP1C9P3 = False
     
     # z = a1*x + a2*y + a3*x*y + a4*x*x + a5*y*y + c
@@ -137,10 +137,10 @@ def addAugData(dfP, num, offset):
             dfP_temp.iloc[:,12] = p1p2p3(dfP_temp.iloc[:,10], dfP_temp.iloc[:,11])
             
         if dP.useP1P3P2:
-            dfP_temp.iloc[:,11] = p1p2p3(dfP_temp.iloc[:,10], dfP_temp.iloc[:,12])
+            dfP_temp.iloc[:,11] = p1p3p2(dfP_temp.iloc[:,10], dfP_temp.iloc[:,12])
             
         if dP.useP2P3P1:
-            dfP_temp.iloc[:,10] = p1p2p3(dfP_temp.iloc[:,11], dfP_temp.iloc[:,12])
+            dfP_temp.iloc[:,10] = p2p3p1(dfP_temp.iloc[:,11], dfP_temp.iloc[:,12])
         
         if dP.useP1C9P3:
             dfP_temp.iloc[:,12] = p1c9p3(dfP_temp.iloc[:,10], dfP_temp.iloc[:,9])
