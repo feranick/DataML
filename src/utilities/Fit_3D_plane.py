@@ -27,9 +27,9 @@ def main():
     df = readParamFile(sys.argv[1])
     rootFile = os.path.splitext(sys.argv[1])[0]
 
-    x = df["P1"].values
-    y = df["C9"].values
-    z = df["P3"].values
+    x = df["P2"].values
+    y = df["P3"].values
+    z = df["P1"].values
     
     linear3Dfit(x,y,z)
     quad3Dfit(x,y,z)
