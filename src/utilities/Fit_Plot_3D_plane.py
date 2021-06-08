@@ -15,11 +15,6 @@ import pandas as pd
 import sys, os.path, h5py
 from sklearn import linear_model
 
-import matplotlib.pyplot as plt
-from matplotlib import cm
-from matplotlib.ticker import LinearLocator
-import numpy as np
-
 #************************************
 # Parameters definition
 #************************************
@@ -96,6 +91,9 @@ def quad3Dfit(X,Y,Z):
 # Plot
 #************************************
 def plot(dfx, dfy, dfz, dft, m, c, text):
+    import matplotlib.pyplot as plt
+    from matplotlib import cm
+    from matplotlib.ticker import LinearLocator
     
     fig = plt.figure(figsize=(16, 8))
     
@@ -128,8 +126,7 @@ def plot(dfx, dfy, dfz, dft, m, c, text):
     ax.set_ylabel(dP.ylab)
     ax.set_zlabel(dP.zlab)
     
-    fig.colorbar(surf, shrink=0.5, aspect=5)
-
+    fig.colorbar(surf, shrink=10.5, aspect=5)
     plt.show()
 
 #************************************
