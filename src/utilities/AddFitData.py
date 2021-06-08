@@ -3,7 +3,7 @@
 '''
 *********************************************
 * Add Fit Data
-* version: 20210607a
+* version: 20210607b
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -25,9 +25,9 @@ class dP:
     #cOffset = [0,0,0,0,0,0,0,0,0,50,0,0,0]
     cOffset = [6,6,6,6,6,6,6,6,6,22,6,22,0]
     
-    useP1P2P3 = False
+    useP1P2P3 = True
     useP1P3P2 = False
-    useP2P3P1 = True
+    useP2P3P1 = False
     useP1C9P3 = False
     
     # z = a1*x + a2*y + a3*x*y + a4*x*x + a5*y*y + c
@@ -68,39 +68,50 @@ class dP:
 #************************************
 def main():
     if len(sys.argv) < 4 and dP.customOffset == False:
-        print(' Usage:\n  python3 AddNoisyDataCSV <paramFile> <#additions> <offset>')
+        print(' Usage:\n  python3 AddFitData <paramFile> <#additions>')
         print('  Offset: multiplier in units of percent (i.e. 1 is 1%)')
         print('  Requires python 3.x. Not compatible with python 2.x\n')
         return
     
     dfP = readParamFile(sys.argv[1])
-    rootFile = os.path.splitext(sys.argv[1])[0]
-            
+    noisyFile = os.path.splitext(sys.argv[1])[0]
+    
+    if dP.customOffset == True:
+        offs = dP.cOffset
+    else:
+        offs = int(sys.argv[3])
+        
+    dfP_final = dfP.copy()
+        
     if dP.useP1P2P3:
-        noisyFile = rootFile + '_noisyFitP1P2P3-' + sys.argv[2]
+        noisyFile += '_noisyFitP1P2P3-' + sys.argv[2]
         print(" P1, P2 -> P3")
+        dfP_final = addAugData(dfP, dfP_final, int(sys.argv[2]), offs)
         
     if dP.useP1P3P2:
-        noisyFile = rootFile + '_noisyFitP1P3P2-' + sys.argv[2]
+        noisyFile += '_noisyFitP1P3P2-' + sys.argv[2]
         print(" P1, P3 -> P2")
+        dfP_final = addAugData(dfP, dfP_final, int(sys.argv[2]), offs)
         
     if dP.useP2P3P1:
-        noisyFile = rootFile + '_noisyFitP2P3P1-' + sys.argv[2]
+        noisyFile += '_noisyFitP2P3P1-' + sys.argv[2]
         print(" P2, P3 -> P1")
+        dfP_final = addAugData(dfP, dfP_final, int(sys.argv[2]), offs)
         
     if dP.useP1C9P3:
-        noisyFile = rootFile + '_noisyFitP1C9P3-' + sys.argv[2]
+        noisyFile += '_noisyFitP1C9P3-' + sys.argv[2]
         print(" P1, C9 -> P3; P1, P3 -> P2")
+        dfP_final = addAugData(dfP, dfP_final, int(sys.argv[2]), offs)
+        
+    print(dfP_final)
     
     if dP.customOffset == True:
         noisyFile += 'cust'+str(dP.cOffset[0])+'.csv'
-        offs = dP.cOffset
     else:
         noisyFile += 'opcFit'+sys.argv[3]+'.csv'
-        offs = int(sys.argv[3])
 
-    dfP_noise = addAugData(dfP, int(sys.argv[2]), offs)
-    dfP_noise.to_csv(noisyFile, index=False, header=True)
+    #dfP_noise = addAugData(dfP, int(sys.argv[2]), offs)
+    dfP_final.to_csv(noisyFile, index=False, header=True)
     
     print(sys.argv[2],"iterations (offset:",offs,") \nSaved in:",noisyFile,"\n")
     
@@ -119,11 +130,11 @@ def readParamFile(paramFile):
 #************************************
 # Augment Data
 #************************************
-def addAugData(dfP, num, offset):
-    #print(dfP)
+def addAugData(dfP, dfP_final, num, offset):
     dfP_temp = dfP.copy()
-    dfP_noise = dfP.copy()
-    for i in range(1, num):
+    dfP_noise = pd.DataFrame(columns=dfP.columns)
+    
+    for i in range(1, num+1):
         factor = (offset*np.random.uniform(-0.01,0.01,(dfP_temp.iloc[:,1:].shape)))
         dfP_temp.iloc[:,1:] = dfP.iloc[:,1:].mul(1+factor)
         
@@ -132,10 +143,9 @@ def addAugData(dfP, num, offset):
         #print("P2",dfP.iloc[:,11])
         #print("P3",dfP.iloc[:,12])
         
-        #print("Before 2",dfP_temp.iloc[:,8:13])
         if dP.useP1P2P3:
             dfP_temp.iloc[:,12] = p1p2p3(dfP_temp.iloc[:,10], dfP_temp.iloc[:,11])
-            
+        
         if dP.useP1P3P2:
             dfP_temp.iloc[:,11] = p1p3p2(dfP_temp.iloc[:,10], dfP_temp.iloc[:,12])
             
@@ -147,8 +157,9 @@ def addAugData(dfP, num, offset):
             dfP_temp.iloc[:,11] = p1p3p2(dfP_temp.iloc[:,10], dfP_temp.iloc[:,12])
         
         dfP_noise = dfP_noise.append(dfP_temp, ignore_index=True)
-        
-    return dfP_noise
+    dfP_final = dfP_final.append(dfP_noise, ignore_index=True)
+    
+    return dfP_final
 
 #************************************
 # Fitting methods
@@ -156,6 +167,7 @@ def addAugData(dfP, num, offset):
 def p1p2p3(x,y):
     z = dP.a1*x + dP.a2*y + dP.a3*x*y + dP.a4*x*x + dP.a5*y*y + dP.a
     #z = np.multiply(dP.a1, x) + np.multiply(dP.a2,y) + np.multiply(dP.a3,np.matmul(x,y)) + np.multiply(dP.a4,np.matmul(x,x)) + np.multiply(dP.a5,np.matmul(y,y)) + dP.a
+    #z = np.add(np.add(np.add(np.add(np.multiply(dP.a1, x), np.multiply(dP.a2,y)), np.multiply(dP.a3,np.matmul(x,y))), np.multiply(dP.a4,np.matmul(x,x))), np.multiply(dP.a5,np.matmul(y,y))) + dP.a
     return z
     
 def p1p3p2(x,y):
