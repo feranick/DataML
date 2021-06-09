@@ -3,7 +3,7 @@
 '''
 *********************************************
 * Add Noisy Data to CSV
-* version: 20210525a
+* version: 20210608a
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -21,8 +21,9 @@ from random import uniform
 class dP:
     skipHeadRows = 0
     customOffset = True
-    cOffset = [6,6,6,6,6,6,6,6,6,22,6,22,0]
+    #cOffset = [6,6,6,6,6,6,6,6,6,22,6,22,0]
     #cOffset = [0,0,0,0,0,0,0,0,0,50,0,0,0]
+    cOffset = [6,6,6,6,6,6,6,6,6,22,6,22,0]
 #************************************
 # Main
 #************************************
@@ -36,10 +37,10 @@ def main():
     dfP = readParamFile(sys.argv[1])
     
     rootFile = os.path.splitext(sys.argv[1])[0]
-    noisyFile = rootFile + '_noisy-'
+    noisyFile = rootFile + '_noisy-' + sys.argv[2]
     
     if dP.customOffset == True:
-        noisyFile += 'cust.csv'
+        noisyFile += 'cust'+str(dP.cOffset[0])+'.csv'
         offs = dP.cOffset
     else:
         noisyFile += 'opc'+sys.argv[3]+'.csv'
