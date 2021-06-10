@@ -3,7 +3,7 @@
 '''
 *********************************************
 * Add Noisy Data to CSV
-* version: 20210608a
+* version: 20210610a
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -24,6 +24,11 @@ class dP:
     #cOffset = [6,6,6,6,6,6,6,6,6,22,6,22,0]
     #cOffset = [0,0,0,0,0,0,0,0,0,50,0,0,0]
     cOffset = [6,6,6,6,6,6,6,6,6,22,6,22,0]
+    
+    useNormal = False
+    normStDev = 0.0025
+    unifStDev = 0.01
+    
 #************************************
 # Main
 #************************************
@@ -39,11 +44,16 @@ def main():
     rootFile = os.path.splitext(sys.argv[1])[0]
     noisyFile = rootFile + '_noisy-' + sys.argv[2]
     
-    if dP.customOffset == True:
-        noisyFile += 'cust'+str(dP.cOffset[0])+'.csv'
+    if dP.useNormal:
+        noisyFile += 'normal' + str(dP.normStDev)
+    else:
+        noisyFile += 'uniform' + str(dP.unifStDev)
+    
+    if dP.customOffset:
+        noisyFile += '_cust'+str(dP.cOffset[0])+'.csv'
         offs = dP.cOffset
     else:
-        noisyFile += 'opc'+sys.argv[3]+'.csv'
+        noisyFile += '_opc'+sys.argv[3]+'.csv'
         offs = int(sys.argv[3])
 
     dfP_noise = addNoise(dfP, int(sys.argv[2]), offs)
@@ -70,7 +80,10 @@ def addNoise(dfP, num, offset):
     dfP_temp = dfP.copy()
     dfP_noise = dfP.copy()
     for i in range(1, num):
-        factor = offset*np.random.uniform(-0.01,0.01,(dfP_temp.iloc[:,1:].shape))
+        if dP.useNormal:
+            factor = offset*np.random.normal(0,dP.normStDev,(dfP_temp.iloc[:,1:].shape))
+        else:
+            factor = offset*np.random.uniform(-dP.unifStDev,dP.unifStDev,(dfP_temp.iloc[:,1:].shape))
         dfP_temp.iloc[:,1:] = dfP.iloc[:,1:].mul(1+factor)
         dfP_noise = dfP_noise.append(dfP_temp, ignore_index=True)
         
