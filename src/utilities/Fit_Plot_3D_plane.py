@@ -3,7 +3,7 @@
 '''
 *********************************************
 * FitPlot3DPlane
-* version: 20210608a
+* version: 20210614a
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -27,6 +27,7 @@ class dP:
     tlab = "C9"
     
     showPlots = True
+    showFitDataPlots = False
     
 #************************************
 # Main
@@ -97,7 +98,8 @@ def plot(dfx, dfy, dfz, dft, m, c, text):
     
     fig = plt.figure(figsize=(16, 8))
     
-    fig.text(0,0, text)
+    if dP.showFitDataPlots:
+        fig.text(0,0, text)
     ax = fig.add_subplot(1, 2, 1, projection='3d')
     s = [s*3 for s in dft.values]
     
