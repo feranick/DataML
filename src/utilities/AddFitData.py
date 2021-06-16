@@ -3,7 +3,7 @@
 '''
 *********************************************
 * Add Fit Data
-* version: 20210610a
+* version: 20210616a
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -28,7 +28,6 @@ class dP:
     useNormal = False
     normStDev = 0.0025
     unifStDev = 0.01
-    postFitRand = True
     
     useP1P2P3 = True
     useP1P3P2 = False
@@ -112,10 +111,7 @@ def main():
         noisyFile += 'normal' + str(dP.normStDev)
     else:
         noisyFile += 'uniform' + str(dP.unifStDev)
-        
-    if dP.postFitRand:
-        noisyFile += '_postFitRand'
-
+    
     if dP.customOffset == True:
         noisyFile += '_cust'+str(dP.cOffset[0])+'.csv'
     else:
@@ -146,13 +142,12 @@ def addAugData(dfP, dfP_final, num, offset):
     dfP_noise = pd.DataFrame(columns=dfP.columns)
     
     for i in range(1, num+1):
-        #factor = (offset*np.random.uniform(-0.01,0.01,(dfP_temp.iloc[:,1:].shape)))
         if dP.useNormal:
             factor = offset*np.random.normal(0,dP.normStDev,(dfP_temp.iloc[:,1:].shape))
         else:
             factor = offset*np.random.uniform(-dP.unifStDev,dP.unifStDev,(dfP_temp.iloc[:,1:].shape))
-            
         dfP_temp.iloc[:,1:] = dfP.iloc[:,1:].mul(1+factor)
+        dfP_temp.iloc[:,1:] = dfP_temp.iloc[:,1:].add(factor)
         
         #print("C9",dfP.iloc[:,9])
         #print("P1",dfP.iloc[:,10])
@@ -161,27 +156,17 @@ def addAugData(dfP, dfP_final, num, offset):
         
         if dP.useP1P2P3:
             dfP_temp.iloc[:,12] = p1p2p3(dfP_temp.iloc[:,10], dfP_temp.iloc[:,11])
-            if dP.postFitRand:
-                dfP_temp.iloc[:,12] = dfP_temp.iloc[:,12].mul(1+factor[:,11])
-            
+        
         if dP.useP1P3P2:
             dfP_temp.iloc[:,11] = p1p3p2(dfP_temp.iloc[:,10], dfP_temp.iloc[:,12])
-            if dP.postFitRand:
-                dfP_temp.iloc[:,11] = dfP_temp.iloc[:,11].mul(1+factor[:,10])
-                
+            
         if dP.useP2P3P1:
             dfP_temp.iloc[:,10] = p2p3p1(dfP_temp.iloc[:,11], dfP_temp.iloc[:,12])
-            if dP.postFitRand:
-                dfP_temp.iloc[:,10] = dfP_temp.iloc[:,10].mul(1+factor[:,9])
         
         if dP.useP1C9P3:
             dfP_temp.iloc[:,12] = p1c9p3(dfP_temp.iloc[:,10], dfP_temp.iloc[:,9])
-            if dP.postFitRand:
-                dfP_temp.iloc[:,12] = dfP_temp.iloc[:,12].mul(1+factor[:,11])
             dfP_temp.iloc[:,11] = p1p3p2(dfP_temp.iloc[:,10], dfP_temp.iloc[:,12])
-            if dP.postFitRand:
-                dfP_temp.iloc[:,11] = dfP_temp.iloc[:,11].mul(1+factor[:,10])
-                
+        
         dfP_noise = dfP_noise.append(dfP_temp, ignore_index=True)
     dfP_final = dfP_final.append(dfP_noise, ignore_index=True)
     

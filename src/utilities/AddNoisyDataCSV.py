@@ -3,7 +3,7 @@
 '''
 *********************************************
 * Add Noisy Data to CSV
-* version: 20210616a
+* version: 20210616b
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -22,13 +22,11 @@ class dP:
     skipHeadRows = 0
     customOffset = True
     #cOffset = [6,6,6,6,6,6,6,6,6,22,6,22,0]
-    #cOffset = [0,0,0,0,0,0,0,0,0,50,0,0,0]
-    cOffset = [6,6,6,6,6,6,6,6,6,22,6,22,0]
-    
+    cOffset = [6,4,3,2,2,1,6,2,3,22,6,22,0]
+
     useNormal = True
     normStDev = 0.0025
     unifStDev = 0.01
-    multiplyFactor = False
     
 #************************************
 # Main
@@ -85,10 +83,10 @@ def addNoise(dfP, num, offset):
             factor = offset*np.random.normal(0,dP.normStDev,(dfP_temp.iloc[:,1:].shape))
         else:
             factor = offset*np.random.uniform(-dP.unifStDev,dP.unifStDev,(dfP_temp.iloc[:,1:].shape))
-        if dP.multiplyFactor:
-            dfP_temp.iloc[:,1:] = dfP.iloc[:,1:].mul(1+factor)
-        else:
-            dfP_temp.iloc[:,1:] = dfP.iloc[:,1:].add(factor)
+
+        dfP_temp.iloc[:,1:] = dfP.iloc[:,1:].mul(1+factor)
+        dfP_temp.iloc[:,1:] = dfP_temp.iloc[:,1:].add(factor)
+        
         dfP_noise = dfP_noise.append(dfP_temp, ignore_index=True)
         
     #print(dfP_noise[dfP_noise["Specimen"] == "2194"])

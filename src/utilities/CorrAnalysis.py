@@ -2,15 +2,11 @@
 # -*- coding: utf-8 -*-
 '''
 *********************************************
-*
 * CorrAnalysis
 * Correlation analysis
-*
 * version: 20210616a
-*
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
-*
 ***********************************************
 '''
 print(__doc__)
@@ -66,7 +62,7 @@ class dP:
     plotGraphsThreshold = True
     plotValidData = True
     plotLinRegression = True
-    addSampleTagPlot = True
+    addSampleTagPlot = False
     
     #graphX = [1,2,3,4,5,6,7,8]     # Pitch
     #graphY = [1,2,3,4,5,6,7,8]     # Pitch
