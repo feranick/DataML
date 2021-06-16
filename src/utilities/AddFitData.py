@@ -3,7 +3,7 @@
 '''
 *********************************************
 * Add Fit Data
-* version: 20210616a
+* version: 20210616b
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -22,12 +22,15 @@ class dP:
     skipHeadRows = 0
     customOffset = True
     #cOffset = [6,6,6,6,6,6,6,6,6,22,6,22,0]
-    #cOffset = [0,0,0,0,0,0,0,0,0,50,0,0,0]
     cOffset = [6,6,6,6,6,6,6,6,6,22,6,22,0]
+    #cOffset = [6,4,3,2,2,1,6,2,3,22,6,22,0]
     
-    useNormal = False
+    useNormal = True
     normStDev = 0.0025
     unifStDev = 0.01
+    
+    mulFactor = True
+    addFactor = False
     
     useP1P2P3 = True
     useP1P3P2 = False
@@ -111,9 +114,18 @@ def main():
         noisyFile += 'normal' + str(dP.normStDev)
     else:
         noisyFile += 'uniform' + str(dP.unifStDev)
+        
+    if dP.mulFactor:
+        noisyFile += '-M'
+    if dP.addFactor:
+        noisyFile += '-A'
     
     if dP.customOffset == True:
-        noisyFile += '_cust'+str(dP.cOffset[0])+'.csv'
+        noisyFile += '_cust'
+        for i in dP.cOffset:
+            noisyFile += '-'+str(i)
+        noisyFile +='.csv'
+        offs = dP.cOffset
     else:
         noisyFile += '_opcFit'+sys.argv[3]+'.csv'
 
@@ -146,8 +158,11 @@ def addAugData(dfP, dfP_final, num, offset):
             factor = offset*np.random.normal(0,dP.normStDev,(dfP_temp.iloc[:,1:].shape))
         else:
             factor = offset*np.random.uniform(-dP.unifStDev,dP.unifStDev,(dfP_temp.iloc[:,1:].shape))
-        dfP_temp.iloc[:,1:] = dfP.iloc[:,1:].mul(1+factor)
-        dfP_temp.iloc[:,1:] = dfP_temp.iloc[:,1:].add(factor)
+            
+        if dP.mulFactor:
+            dfP_temp.iloc[:,1:] = dfP.iloc[:,1:].mul(1+factor)
+        if dP.addFactor:
+            dfP_temp.iloc[:,1:] = dfP_temp.iloc[:,1:].add(factor)
         
         #print("C9",dfP.iloc[:,9])
         #print("P1",dfP.iloc[:,10])
