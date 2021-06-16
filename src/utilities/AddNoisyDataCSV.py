@@ -3,7 +3,7 @@
 '''
 *********************************************
 * Add Noisy Data to CSV
-* version: 20210610a
+* version: 20210616a
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -25,9 +25,10 @@ class dP:
     #cOffset = [0,0,0,0,0,0,0,0,0,50,0,0,0]
     cOffset = [6,6,6,6,6,6,6,6,6,22,6,22,0]
     
-    useNormal = False
+    useNormal = True
     normStDev = 0.0025
     unifStDev = 0.01
+    multiplyFactor = False
     
 #************************************
 # Main
@@ -84,7 +85,10 @@ def addNoise(dfP, num, offset):
             factor = offset*np.random.normal(0,dP.normStDev,(dfP_temp.iloc[:,1:].shape))
         else:
             factor = offset*np.random.uniform(-dP.unifStDev,dP.unifStDev,(dfP_temp.iloc[:,1:].shape))
-        dfP_temp.iloc[:,1:] = dfP.iloc[:,1:].mul(1+factor)
+        if dP.multiplyFactor:
+            dfP_temp.iloc[:,1:] = dfP.iloc[:,1:].mul(1+factor)
+        else:
+            dfP_temp.iloc[:,1:] = dfP.iloc[:,1:].add(factor)
         dfP_noise = dfP_noise.append(dfP_temp, ignore_index=True)
         
     #print(dfP_noise[dfP_noise["Specimen"] == "2194"])

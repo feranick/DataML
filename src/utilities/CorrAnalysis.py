@@ -66,6 +66,8 @@ class dP:
     plotGraphsThreshold = True
     plotValidData = True
     plotLinRegression = True
+    addSampleTagPlot = True
+    
     #graphX = [1,2,3,4,5,6,7,8]     # Pitch
     #graphY = [1,2,3,4,5,6,7,8]     # Pitch
     #graphX = [8,10,12,13,14]        # Asphalt
@@ -310,8 +312,9 @@ def plotGraphThreshold(dfP, dfC, validRows, title, pdf):
             plt.xlabel(col)
             plt.ylabel(ind)
             plt.title(title+": {0:.3f}".format(dfC[col].loc[ind]))
-            for k, txt, in enumerate(dfP.iloc[:,0].to_list()):
-                plt.annotate(txt,xy=(x[k],y[k]), fontsize='x-small')
+            if dP.addSampleTagPlot:
+                for k, txt, in enumerate(dfP.iloc[:,0].to_list()):
+                    plt.annotate(txt,xy=(x[k],y[k]), fontsize='x-small')
             if dP.plotLinRegression and col is not ind:
                 #z = np.polyfit(x, y, dP.polyDegree, full=True)
                 #print(z)
