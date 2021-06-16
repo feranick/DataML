@@ -6,7 +6,7 @@
 * CorrAnalysis
 * Correlation analysis
 *
-* version: 20210522b
+* version: 20210616a
 *
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
@@ -41,6 +41,8 @@ class dP:
     #validRows = [5]        # Pitch
     trainCol = [1,10]       # ORNL
     predCol = [10,13]       # ORNL
+    
+    separateValidFile = True
     validRows = [103,104,105,106,107]   # ORNL
     
     #trainCol = [7,54]      # Asphalt
@@ -83,17 +85,22 @@ class dP:
 def main():
     if len(sys.argv) < 2:
         print(' Usage:\n  python3 CorrAnalysis <paramFile>')
+        print(' Usage:\n  python3 CorrAnalysis <paramFile> <validFile>')
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
     
-    P,headP,dfP = readParamFile(sys.argv[1], dP.trainCol)
-    V,headV,_ = readParamFile(sys.argv[1], dP.predCol)
-    
+    dfP = readParamFile(sys.argv[1])
+    if dP.separateValidFile:
+        dfV = readParamFile(sys.argv[2])
+        dfP = dfP.append(dfV,ignore_index=True)
+        dP.validRows = dfP.index.tolist()[-len(dfV.index.tolist()):]
+    P,headP = processParamFile(dfP, dP.trainCol)
+    V,headV = processParamFile(dfP, dP.predCol)
+        
     rootFile = os.path.splitext(sys.argv[1])[0]
     pearsonFile = rootFile + '_pearsonR.csv'
     spearmanFile = rootFile + '_spearmanR.csv'
     plotFile = rootFile + '_plots.pdf'
-
 
     ### Old method ###
     pearsonR=np.empty((V.shape[1],P.shape[1]))
@@ -153,29 +160,30 @@ def main():
         print(" ",num1+num2,"XY plots with correlation in [",dP.corrMin,",",dP.corrMax,"] saved in:",plotFile,"\n")
     pdf.close()
 
+    
 #************************************
 # Open Learning Data
 #************************************
-def readParamFile(paramFile, lims):
+def readParamFile(paramFile):
     try:
         with open(paramFile, 'r') as f:
             dfP = pd.read_csv(f, delimiter = ",", skiprows=dP.skipHeadRows)
-            if lims[1]>len(dfP.columns):
-                lims[1] = len(dfP.columns)
-                print(" Warning: Column range is larger than actual number of columns. Using full dataset")
-            
-            P = dfP.iloc[:,range(lims[0],lims[1])].to_numpy()
-            P[np.isnan(P)] = dP.valueForNan
-
-        with open(paramFile, 'r') as f:
-            headP = np.genfromtxt(f, unpack = False, usecols=range(lims[0],lims[1]),
-                delimiter = ',', skip_header=dP.skipHeadRows, skip_footer=P.shape[0], dtype=np.str_)
-
     except:
         print("\033[1m Param file:",paramFile," not found/broken \n\033[0m")
         return
+    return dfP
+
+
+def processParamFile(dfP, lims):
+    if lims[1]>len(dfP.columns):
+        lims[1] = len(dfP.columns)
+        print(" Warning: Column range is larger than actual number of columns. Using full dataset")
+    P = dfP.iloc[:,range(lims[0],lims[1])].to_numpy()
+    P[np.isnan(P)] = dP.valueForNan
+    headP = dfP.columns[lims[0]:lims[1]].tolist()
+
     print(P.shape)
-    return P, headP, dfP
+    return P, headP
 
 #************************************
 # Plot Correlations
@@ -190,7 +198,7 @@ def plotCorrelations(dfP, P, title, filename ,pdf):
     Clabels = np.float_(dfP.columns.values)
     Clabels_plot = Clabels[::dP.stepXticksPlot]
     
-    fig, (ax1, ax2) = plt.subplots(2,1, sharex = True,figsize=(10, 10))
+    fig, (ax1, ax2) = plt.subplots(2,1, sharex = True, figsize=(10, 10))
     
     ax2.set_xticks(Clabels_plot)
     ax2.set_xticklabels(Clabels_plot)
