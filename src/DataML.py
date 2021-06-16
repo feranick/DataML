@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20210616a
+* 20210616b
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -74,6 +74,8 @@ class Conf():
             'optimizeParameters' : False,
             'stopAtBest' : False,
             'saveBestModel' : False,
+            'metricBestModelR' : 'val_mae',
+            'metricBestModelC' : 'val_accuracy',
             }
     def sysDef(self):
         self.conf['System'] = {
@@ -107,6 +109,8 @@ class Conf():
             self.optimizeParameters = self.conf.getboolean('Parameters','optimizeParameters')
             self.stopAtBest = self.conf.getboolean('Parameters','stopAtBest')
             self.saveBestModel = self.conf.getboolean('Parameters','saveBestModel')
+            self.metricBestModelR = self.conf.get('Parameters','metricBestModelR')
+            self.metricBestModelC = self.conf.get('Parameters','metricBestModelC')
             
             self.fixTFseed = self.conf.getboolean('System','fixTFseed')
             self.makeQuantizedTFlite = self.conf.getboolean('System','makeQuantizedTFlite')
@@ -115,6 +119,7 @@ class Conf():
             self.runCoralEdge = self.conf.getboolean('System','runCoralEdge')
             #self.setMaxMem = self.conf.getboolean('System','setMaxMem')     # TensorFlow 2.0
             #self.maxMem = self.conf.getint('System','maxMem')   # TensorFlow 2.0
+                        
         except:
             print(" Error in reading configuration file. Please check it\n")
 
@@ -349,9 +354,9 @@ def train(learnFile, testFile, normFile):
         tbLogs.append(es)
     if dP.saveBestModel == True:
         if dP.regressor:
-            mc = keras.callbacks.ModelCheckpoint(dP.model_name, monitor='val_mae', mode='min', verbose=1, save_best_only=True)
+            mc = keras.callbacks.ModelCheckpoint(dP.model_name, monitor=dP.metricBestModelR, mode='min', verbose=1, save_best_only=True)
         else:
-            mc = keras.callbacks.ModelCheckpoint(dP.model_name, monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)
+            mc = keras.callbacks.ModelCheckpoint(dP.model_name, monitor=dP.metricBestModelC, mode='max', verbose=1, save_best_only=True)
         tbLogs.append(mc)
         
     #tbLogs = [tbLog, es, mc]
@@ -432,7 +437,14 @@ def train(learnFile, testFile, normFile):
         print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(val_loss), np.amin(val_loss), val_loss[-1]))
         print("  \033[1mMean Abs Err\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(val_mae), np.amin(val_mae), val_mae[-1]))
         if dP.saveBestModel:
-            print("  \033[1mSaved model at min MAE:\033[0m: {0:.4f}\n".format(np.amin(val_mae)))
+            if dP.metricBestModelR == 'mae':
+                score = model.evaluate(A_test, Cl_test, batch_size=dP.batch_size, verbose = 0)
+                print("  \033[1mSaved model with min training MAE:\033[0m: {0:.4f}".format(np.amin(mae)))
+                print("  \033[1mSaved model with validation MAE:\033[0m: {0:.4f}\n".format(score[1]))
+            if dP.metricBestModelR == 'val_mae':
+                print("  \033[1mSaved model with validation MAE:\033[0m: {0:.4f}\n".format(np.amin(val_mae)))
+            else:
+                pass
         if testFile:
             predictions = model.predict(A_test)
         
@@ -472,7 +484,12 @@ def train(learnFile, testFile, normFile):
         100*np.amax(val_acc), 100*val_acc[-1]))
         print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(val_loss), np.amin(val_loss), val_loss[-1]))
         if dP.saveBestModel:
-            print("  \033[1mSaved model at max accuracy:\033[0m: {0:.4f}\n".format(100*np.amax(val_acc)))
+            if dP.metricBestModelC == 'accuracy':
+                print("  \033[1mSaved model with training accuracy:\033[0m: {0:.4f}".format(100*np.amax(accuracy)))
+            if dP.metricBestModelC == 'val_acc':
+                print("  \033[1mSaved model with validation accuracy:\033[0m: {0:.4f}\n".format(100*np.amax(val_acc)))
+            else:
+                pass
 
         if testFile:
             predictions = model.predict(A_test)
@@ -895,6 +912,10 @@ def printParam():
     print('  Number of labels:', dP.numLabels)
     print('  Stop at Best Model based on validation:', dP.stopAtBest)
     print('  Save Best Model based on validation:', dP.saveBestModel)
+    if dP.regressor:
+        print('  Metric for Best Regression Model:', dP.metricBestModelR)
+    else:
+        print('  Metric for Best Classifier Model:', dP.metricBestModelC)
     #print('  ================================================\n')
 
 #************************************
