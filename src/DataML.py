@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20210604a
+* 20210616a
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -893,6 +893,8 @@ def printParam():
     else:
         print('  Batch size:', dP.batch_size)
     print('  Number of labels:', dP.numLabels)
+    print('  Stop at Best Model based on validation:', dP.stopAtBest)
+    print('  Save Best Model based on validation:', dP.saveBestModel)
     #print('  ================================================\n')
 
 #************************************
