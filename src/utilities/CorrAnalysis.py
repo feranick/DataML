@@ -4,7 +4,7 @@
 *********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: 20210616a
+* version: 20210617a
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -27,6 +27,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 class dP:
     skipHeadRows = 0
     
+    specifyColumns = False
     #trainCol = [3,3553]    # Raw data
     #trainCol = [3,80000]   # Raw data
     #predCol = [1,3]        # Raw data
@@ -35,8 +36,12 @@ class dP:
     #trainCol = [1,35]      # Pitch
     #predCol = [1,35]       # Pitch
     #validRows = [5]        # Pitch
-    trainCol = [1,10]       # ORNL
-    predCol = [10,13]       # ORNL
+    #trainCol = [33,36,40,42,46,48]       # Pitch (specific columns)
+    #predCol = [7,8]       # Pitch (specific columns)
+    #trainCol = [1,2,3,4,5,6,7,8,9]       # ORNL (specific columns)
+    #predCol = [10,11,12]       # ORNL (specific columns)
+    trainCol = [1,9]       # ORNL (column range)
+    predCol = [10,12]       # ORNL (column range)
     
     separateValidFile = True
     validRows = [103,104,105,106,107]   # ORNL
@@ -76,6 +81,10 @@ class dP:
     corrSpectraFull = False
     corrSpectraMin = 0.8
     polyDegree = 1
+    
+    if specifyColumns == False:
+        trainCol = [item for item in range(trainCol[0], trainCol[1]+1)]
+        predCol = [item for item in range(predCol[0], predCol[1]+1)]
 
 #************************************
 # Main
@@ -176,9 +185,9 @@ def processParamFile(dfP, lims):
     if lims[1]>len(dfP.columns):
         lims[1] = len(dfP.columns)
         print(" Warning: Column range is larger than actual number of columns. Using full dataset")
-    P = dfP.iloc[:,range(lims[0],lims[1])].to_numpy()
+    P = dfP.iloc[:,lims].to_numpy()
     P[np.isnan(P)] = dP.valueForNan
-    headP = dfP.columns[lims[0]:lims[1]].tolist()
+    headP = dfP.columns[lims].tolist()
 
     print(P.shape)
     return P, headP
