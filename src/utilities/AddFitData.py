@@ -3,7 +3,7 @@
 '''
 *********************************************
 * Add Fit Data
-* version: 20210622b
+* version: 20210623a
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -26,7 +26,7 @@ class dP:
     #cOffset = [6,4,3,2,2,1,6,2,3,22,6,22,0]
     
     useNormal = True
-    normStDev = 0.0025
+    normStDev = 0.002
     unifStDev = 0.01
     
     mulFactor = True
@@ -44,7 +44,7 @@ class dP:
     a3 = -0.00016246234886597305
     a4 = -3.1489233224095414e-06
     a5 = -0.0005272490217701393
-    c = -0.008307109768821652
+    a = -0.008307109768821652
     
     #P1-P3-P2
     b1 = 0.3213952435336316
