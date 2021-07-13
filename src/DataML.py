@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20210618a
+* 20210713a
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -441,9 +441,9 @@ def train(learnFile, testFile, normFile):
                 if testFile:
                     score = model.evaluate(A_test, Cl_test, batch_size=dP.batch_size, verbose = 0)
                     print("  \033[1mSaved model with validation MAE:\033[0m: {0:.4f}".format(score[1]))
-                print("  \033[1mSaved model with min training MAE:\033[0m: {0:.4f}\n".format(np.amin(mae)))
+                print("  \033[1mSaved model with min training MAE:\033[0m {0:.4f}\n".format(np.amin(mae)))
             if dP.metricBestModelR == 'val_mae':
-                print("  \033[1mSaved model with validation MAE:\033[0m: {0:.4f}\n".format(np.amin(val_mae)))
+                print("  \033[1mSaved model with validation MAE:\033[0m {0:.4f}\n".format(np.amin(val_mae)))
             else:
                 pass
         if testFile:
@@ -486,9 +486,9 @@ def train(learnFile, testFile, normFile):
         print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(val_loss), np.amin(val_loss), val_loss[-1]))
         if dP.saveBestModel:
             if dP.metricBestModelC == 'accuracy':
-                print("  \033[1mSaved model with training accuracy:\033[0m: {0:.4f}".format(100*np.amax(accuracy)))
+                print("  \033[1mSaved model with training accuracy:\033[0m {0:.4f}".format(100*np.amax(accuracy)))
             if dP.metricBestModelC == 'val_acc':
-                print("  \033[1mSaved model with validation accuracy:\033[0m: {0:.4f}\n".format(100*np.amax(val_acc)))
+                print("  \033[1mSaved model with validation accuracy:\033[0m {0:.4f}\n".format(100*np.amax(val_acc)))
             else:
                 pass
 
