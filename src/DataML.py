@@ -512,7 +512,7 @@ def train(learnFile, testFile, normFile):
             print('\n  ==========================================================\n')
 
     if dP.plotWeightsFlag == True:
-        plotWeights(En, A, model)
+        plotWeights(dP, En, A, model)
     
     getTFVersion(dP)
     
@@ -923,10 +923,11 @@ def printParam():
 #************************************
 # Open Learning Data
 #************************************
-def plotWeights(En, A, model):
+def plotWeights(dP, En, A, model):
     import matplotlib.pyplot as plt
     plt.figure(tight_layout=True)
-    plotInd = 511
+    #plotInd = 711
+    plotInd = (len(dP.HL)+2)*100+11
     for layer in model.layers:
         try:
             w_layer = layer.get_weights()[0]
