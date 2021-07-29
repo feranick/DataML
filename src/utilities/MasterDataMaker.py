@@ -70,7 +70,7 @@ class dP:
 #************************************
 def main():
     if len(sys.argv) < 2:
-        print(' Usage:\n  python3 ORNLDataMaker.py <paramFile> <pred column>')
+        print(' Usage:\n  python3 DataMaker.py <paramFile> <pred column>')
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
     

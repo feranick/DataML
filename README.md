@@ -86,7 +86,7 @@ Essentially each line in the input file corresponds to a training file with its 
 
 Of course it is not expected that the user manually compiles the training file. For that,based on a CSV file with the raw data, [`MasterDatamaker.py`](https://github.com/feranick/DataML/tree/master/src/utilities/MasterDataMaker.py) is available in the [`Utilities`](https://github.com/feranick/DataML/tree/master/src/utilities) folder, that can be used to automatically create such files. Basically you can run from the folder where you have your spectra:
 
-`python3 ORNLDataMaker.py <paramFile> <pred column> `
+`python3 DataMaker.py <paramFile> <pred column> `
 
 Specific DataMakers for specific applications may be available depending on the project. 
 
