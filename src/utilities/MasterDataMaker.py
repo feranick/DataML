@@ -240,13 +240,6 @@ def formatSubset2(A, Cl, percent):
     Cl_cv = Cl[list]
     return A_train, Cl_train, A_cv, Cl_cv
 '''
-#************************************
-''' Lists the program usage '''
-#************************************
-def usage():
-    print('\n Usage:\n')
-    print('  python3 MasterDatamaker.py <masterfile> <enInitial> <enFinal> <enStep> <threshold> \n')
-    print(' Requires python 3.x. Not compatible with python 2.x\n')
 
 #************************************
 # Main initialization routine
