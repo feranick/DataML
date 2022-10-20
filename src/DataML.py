@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20210713a
+* 20221020a
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -613,7 +613,7 @@ def predict(testFile, normFile):
             return
     
     if dP.regressor:
-        predictions = getPredictions(R, loadModel(dP), dP).flatten()[0]
+        predictions, _ = getPredictions(R, loadModel(dP), dP).flatten()[0]
         #predictions = model.predict(R).flatten()[0]
         print('\n  ==========================================================')
         print('  \033[1m MLP - Regressor\033[0m - Prediction')
@@ -630,7 +630,7 @@ def predict(testFile, normFile):
         le_file = open(dP.model_le, "rb")
         le = pickle.loads(le_file.read())
         le_file.close()
-        predictions = getPredictions(R, loadModel(dP), dP)
+        predictions, _ = getPredictions(R, loadModel(dP), dP)
         pred_class = np.argmax(predictions)
         if dP.useTFlitePred:
             predProb = round(100*predictions[0][pred_class]/255,2)
@@ -690,9 +690,9 @@ def batchPredict(folder, normFile):
             R = norm.transform_valid_data(R)
         if good:
             try:
-                predictions = np.vstack((predictions,getPredictions(R, model, dP).flatten()))
+                predictions = np.vstack((predictions,getPredictions(R, model, dP)[0].flatten()))
             except:
-                predictions = np.array([getPredictions(R, model, dP).flatten()])
+                predictions = np.array([getPredictions(R, model, dP)[0].flatten()])
             fileName.append(file)
     
     if dP.regressor:
@@ -714,7 +714,7 @@ def batchPredict(folder, normFile):
         le_file = open(dP.model_le, "rb")
         le = pickle.loads(le_file.read())
         le_file.close()
-        #predictions = getPredictions(A_test, model,dP)
+        #predictions, _ = getPredictions(A_test, model,dP)
         #predictions = model.predict(A_test)
         print('\n  ================================================================================')
         print('  \033[1m MLP - Classifier\033[0m - Batch Prediction')
@@ -762,7 +762,7 @@ def validBatchPredict(testFile, normFile):
     
     if dP.regressor:
         summaryFile = np.array([['DataML','Regressor','','',''],['Real Value','Prediction','val_loss','val_abs_mean_error','deviation %']])
-        predictions = getPredictions(A_test, model, dP)
+        predictions, _ = getPredictions(A_test, model, dP)
         
         score = model.evaluate(A_test, Cl_test, batch_size=dP.batch_size, verbose = 0)
         print('  ==========================================================')
@@ -796,7 +796,7 @@ def validBatchPredict(testFile, normFile):
         le_file = open(dP.model_le, "rb")
         le = pickle.loads(le_file.read())
         le_file.close()
-        predictions = getPredictions(A_test, model,dP)
+        predictions, _ = getPredictions(A_test, model,dP)
         #predictions = model.predict(A_test)
         print('  ========================================================')
         print('  \033[1m MLP - Classifier\033[0m - Batch Prediction')

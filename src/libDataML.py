@@ -2,12 +2,13 @@
 '''
 **********************************************************
 * libDataML - Library for DataML
-* 20210713a
+* 20221020a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
 '''
 import numpy as np
+import scipy
 import os.path, pickle, h5py
 
 #************************************
@@ -174,7 +175,9 @@ def getPredictions(R, model, dP):
         
     else:
         predictions = model.predict(R)
-    return predictions
+        
+    probabilities = scipy.special.softmax(predictions.astype('double'))
+    return predictions, probabilities
 
 #************************************
 ### Create Quantized tflite model
