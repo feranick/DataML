@@ -613,16 +613,16 @@ def predict(testFile, normFile):
             return
     
     if dP.regressor:
-        predictions, _ = getPredictions(R, loadModel(dP), dP).flatten()[0]
+        predictions, _ = getPredictions(R, loadModel(dP), dP)
         #predictions = model.predict(R).flatten()[0]
         print('\n  ==========================================================')
         print('  \033[1m MLP - Regressor\033[0m - Prediction')
         print('  ==========================================================')
         if normFile is not None:
-            predValue = norm.transform_inverse_single(predictions)
+            predValue = norm.transform_inverse_single(predictions.flatten()[0])
             print('\033[1m\n  Predicted value = {0:.2f}\033[0m (normalized: {1:.2f})\n'.format(predValue, predictions))
         else:
-            predValue = predictions
+            predValue = predictions.flatten()[0]
             print('\033[1m\n  Predicted value (normalized) = {0:.2f}\033[0m\n'.format(predValue))
         print('  ==========================================================\n')
         
