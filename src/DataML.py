@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20221026a
+* 20221026b
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -314,7 +314,7 @@ def train(learnFile, testFile, normFile):
         #************************************
         #optim = keras.optimizers.SGD(lr=dP.l_rate, decay=dP.l_rdecay,
         #        momentum=0.9, nesterov=True)
-        optim = keras.optimizers.Adam(learning_rate=learnRate, beta_1=0.9,
+        optim = keras.optimizers.legacy.Adam(learning_rate=learnRate, beta_1=0.9,
            beta_2=0.999, epsilon=1e-08, decay=decay,
            amsgrad=False)
         
