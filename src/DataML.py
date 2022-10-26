@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20221026b
+* 20221026c
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -307,28 +307,37 @@ def train(learnFile, testFile, normFile):
     #************************************
     ### Build model
     #************************************
-    def get_model(learnRate = dP.l_rate, decay = dP.l_rdecay, layers = dP.HL, l2 = dP.l2, dropout = dP.drop):
-    #def get_model(learnRate, decay, layers, l2, dropout):
+    def get_model():
         #************************************
         ### Define optimizer
         #************************************
-        #optim = keras.optimizers.SGD(lr=dP.l_rate, decay=dP.l_rdecay,
-        #        momentum=0.9, nesterov=True)
-        optim = keras.optimizers.legacy.Adam(learning_rate=learnRate, beta_1=0.9,
-           beta_2=0.999, epsilon=1e-08, decay=decay,
-           amsgrad=False)
+        # Legacy optimizer
+        '''
+        optim = keras.optimizers.legacy.Adam(learning_rate=dP.l_rate, beta_1=0.9,
+                    beta_2=0.999, epsilon=1e-08,
+                    decay=dP.l_rdecay,
+                    amsgrad=False)
+        '''
+        # New version
+        lr_schedule = keras.optimizers.schedules.ExponentialDecay(
+            initial_learning_rate=dP.l_rate,
+            decay_steps=dP.epochs,
+            decay_rate=dP.l_rdecay)
+        optim = keras.optimizers.Adam(learning_rate=lr_schedule, beta_1=0.9,
+                    beta_2=0.999, epsilon=1e-08,
+                    amsgrad=False)
         
         #************************************
         ### Build model
         #************************************
         model = keras.models.Sequential()
         #for i in range(len(dP.HL)):
-        for i in range(len(layers)):
-            model.add(keras.layers.Dense(layers[i],
+        for i in range(len(dP.HL)):
+            model.add(keras.layers.Dense(dP.HL[i],
                 activation = 'relu',
                 input_dim=A.shape[1],
-                kernel_regularizer=keras.regularizers.l2(l2)))
-            model.add(keras.layers.Dropout(dropout))
+                kernel_regularizer=keras.regularizers.l2(dP.l2)))
+            model.add(keras.layers.Dropout(dP.drop))
 
         if dP.regressor:
             model.add(keras.layers.Dense(1))
@@ -379,6 +388,7 @@ def train(learnFile, testFile, normFile):
         model.save(dP.model_name, save_format='h5')
     else:
         model = loadModel(dP)
+    
     keras.utils.plot_model(model, to_file=dP.model_png, show_shapes=True)
     
     if dP.makeQuantizedTFlite:
