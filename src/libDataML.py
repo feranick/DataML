@@ -2,7 +2,7 @@
 '''
 **********************************************************
 * libDataML - Library for DataML
-* 20221026b
+* 20221103a
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -214,7 +214,18 @@ def makeQuantizedTFmodel(A, model, dP):
 def getTFVersion(dP):
     import tensorflow as tf
     from pkg_resources import parse_version
+    
+    version = parse_version(tf.version.VERSION)
     if dP.useTFlitePred:
-        print(" TensorFlow (Lite) v.",parse_version(tf.version.VERSION),"\n")
+        print(" TensorFlow (Lite) v.",version,"\n")
     else:
-        print(" TensorFlow v.",parse_version(tf.version.VERSION),"\n" )
+        print(" TensorFlow v.",version,"\n" )
+        
+# This will be deprecated with support for TF >= 2.11 is stable across platforms
+def checkTFVersion():
+    import tensorflow as tf
+    from pkg_resources import parse_version
+    if  parse_version(tf.version.VERSION) <  parse_version("2.11.0rc0"):
+        return False
+    else:
+        return True
