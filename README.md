@@ -3,7 +3,7 @@ DataML Regression and Classification of sparse data.
 - Currently supported ML architectures:
    - DNNClassifier (TensorFlow, TensorFlow-Lite)
 - Required libraries for prediction:
-   - tensorflow (version =< 2.11.x)
+   - tensorflow (version >= 2.12.x)
    - Optional: tensorflow-lite (v.2.3 and higher)
    - Optional: [tensorflow-lite runtime](https://www.tensorflow.org/lite/guide/python) 
    - Optional: tensorflow-lite runtime with [Coral EdgeTPU](https://coral.ai/docs/accelerator/get-started/)
@@ -21,7 +21,7 @@ This software requires Python (3.6 or higher). It has been tested with Python 3.
     pydot
     graphviz
     h5py
-    tensorflow ( =< 2.11.x)
+    tensorflow (>= 2.12.x)
     
 In addition, these packages may be needed depending on your platform (via ```apt-get``` in debian/ubuntu or ```port``` in OSX):
     
