@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20230401a
+* 20230518a
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -348,7 +348,7 @@ def train(learnFile, testFile, normFile):
     model = get_model()
 
     tbLog = keras.callbacks.TensorBoard(log_dir=dP.tb_directory, histogram_freq=120,
-            write_graph=True, write_images=True)
+            write_graph=True, write_images=False)
     
     tbLogs = [tbLog]
     if dP.stopAtBest == True:
