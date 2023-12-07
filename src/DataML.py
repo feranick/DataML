@@ -3,7 +3,7 @@
 '''
 **********************************************************
 * DataML Classifier and Regressor
-* 20230710a
+* 20231207a
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -378,7 +378,7 @@ def train(learnFile, testFile, normFile):
             verbose=2,
 	        validation_split=dP.cv_split)
     if dP.saveBestModel == False:
-        model.save(dP.model_name, save_format='h5')
+        model.save(dP.model_name)
     else:
         model = loadModel(dP)
     
