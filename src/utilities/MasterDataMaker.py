@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 '''
-*********************************************
-*
+***********************************************
 * MasterDataMaker
 * Adds data from single file to Master Doc
 * File must be in ASCII
-* version: 20210511a
-*
+* version: v2023.12.15.1
 * By: Nicola Ferralis <feranick@hotmail.com>
-*
 ***********************************************
 '''
 print(__doc__)

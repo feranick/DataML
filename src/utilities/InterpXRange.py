@@ -2,15 +2,11 @@
 # -*- coding: utf-8 -*-
 '''
 *********************************************
-*
 * InterpXRange
 * Interpolate X Range for master data
-*
 * version: 20190505b
-*
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
-*
 ***********************************************
 '''
 print(__doc__)

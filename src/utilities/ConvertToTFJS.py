@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 '''
-**********************************************************
+**********************************************
 * Convert TF models (TF, Keras) into TF.js
-* 20210604a
+* 2v2023.12.15.1
 * Uses: TensorFlow, Keras
 * By: Nicola Ferralis <feranick@hotmail.com>
-***********************************************************
+**********************************************
 '''
 print(__doc__)
 import tensorflow as tf

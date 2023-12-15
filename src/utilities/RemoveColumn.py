@@ -2,13 +2,9 @@
 # -*- coding: utf-8 -*-
 '''
 *********************************************
-*
 * Remove Column
-*
-* version: 20200416a
-*
+* version: v2023.12.15.1
 * By: Nicola Ferralis <feranick@hotmail.com>
-*
 ***********************************************
 '''
 print(__doc__)

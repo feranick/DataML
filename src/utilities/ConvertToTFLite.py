@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 '''
-**********************************************************
+***********************************************************
 * Convert TF models (TF, Keras) into TF.Lite
-* 20191015a
+* v2023.12.15.1
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************

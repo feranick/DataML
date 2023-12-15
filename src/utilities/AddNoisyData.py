@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 '''
-*********************************************
+***********************************************
 * Add data with random noise on all colums or
 * on selected ones.
 * Noise is a random percentage multiplier
-
-* version: 20201211c
+* version: v2023.12.15.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''

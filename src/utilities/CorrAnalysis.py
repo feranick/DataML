@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 '''
-*********************************************
+***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: 20210617a
+* version: v2023.12.15.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
