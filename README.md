@@ -10,8 +10,27 @@ DataML Regression and Classification of sparse data.
 
 Installation
 =============
+## Installation from available wheel package
+If available from the main site, you can install SpectraKeras by running:
 
-This software requires Python (3.6 or higher). It has been tested with Python 3.6 or higher which is the recommended platform. It is not compatible with python 2.x. Additional required packages:
+    python3 -m pip install --upgrade spectrakeras-20231215a0-py3-none-any.whl
+    
+SpectraKeras_CNN and Spectrakeras_MLP are available directly from the command line.
+NOTE: The Utilities in the `Utilities` folder are not included in the package, and can be run locally as needed.
+
+## Make your own wheel package
+Make sure you have the PyPA build package installed:
+
+    python3 -m pip install --upgrade build
+    
+To build the wheel package rom the `SpectraKeras` folder run:
+
+    python3 -m build
+    
+A wheel package is available in the subfolder `dir`. You can install it following the instructions shown above.
+
+## Compatibility and dependences
+This software requires Python (3.8 or higher). It has been tested with Python 3.6 or higher which is the recommended platform. It is not compatible with python 2.x. Additional required packages:
 
     numpy
     scikit-learn (>=0.18)
