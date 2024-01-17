@@ -3,7 +3,7 @@
 '''
 ***********************************************************
 * GetClasses
-* v2023.12.15.1
+* v2024.01.17.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
 '''
@@ -30,7 +30,7 @@ def main():
     try:
         #norm = pickle.loads(open(sys.argv[1], "rb").read())
         #le = pickle.loads(open(sys.argv[2], "rb").read())
-        norm_file = open(open(sys.argv[1], "rb")
+        norm_file = open(open(sys.argv[1], "rb"))
         norm = pickle.loads(norm_file.read())
         norm_file.close()
         le_file = open(sys.argv[2], "rb")
