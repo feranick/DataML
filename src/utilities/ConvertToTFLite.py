@@ -3,13 +3,12 @@
 '''
 ***********************************************************
 * Convert TF models (TF, Keras) into TF.Lite
-* v2023.12.15.1
+* v2024.02.16.1
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
 '''
 print(__doc__)
-import tensorflow as tf
 import sys, os.path, h5py
 
 #************************************
@@ -28,9 +27,14 @@ def main():
 # Convert TF Model to TF.Lite
 #************************************
 def convertModelToTFLite(model_file):
+    import tensorflow as tf
+    if checkTFVersion("2.16.0"):
+        import tensorflow.keras as keras
+    else:
+        import keras
     convFile = os.path.splitext(model_file)[0]+'.tflite'
     try:
-        model = tf.keras.models.load_model(model_file)
+        model = keras.models.load_model(model_file)
         converter = tf.lite.TFLiteConverter.from_keras_model(model)    # TensorFlow 2.x
     except:
         converter = tf.lite.TFLiteConverter.from_keras_model_file(model_file)  # TensorFlow 1.x
