@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.01.17.1
+* v2024.02.16.1
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -219,9 +219,12 @@ def main():
 def train(learnFile, testFile, normFile):
     dP = Conf()
     
-    from pkg_resources import parse_version
-    import tensorflow as tf
-    import tensorflow.keras as keras
+    fimport tensorflow as tf
+    if checkTFVersion("2.16.0"):
+        import tensorflow.keras as keras
+    else:
+        import keras
+        
     if dP.fixTFseed == True:
         tf.random.set_seed(42)
 
@@ -531,7 +534,7 @@ def train(learnFile, testFile, normFile):
         print('  ========================================================\n')
     
         from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
-        from tensorflow.keras.wrappers.scikit_learn import KerasClassifier, KerasRegressor
+        from keras.wrappers.scikit_learn import KerasClassifier, KerasRegressor
         import json
         
         with open(dP.optParFile) as f:

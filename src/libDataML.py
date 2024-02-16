@@ -2,7 +2,7 @@
 '''
 ***********************************************************
 * libDataML - Library for DataML
-* v2024.01.17.1
+* v2024.02.16.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -144,6 +144,10 @@ def loadModel(dP):
     else:
         getTFVersion(dP)
         import tensorflow as tf
+        if checkTFVersion("2.16.0"):
+            import tensorflow.keras as keras
+        else:
+            import keras
         if dP.useTFlitePred:
             # model here is intended as interpreter
             model = tf.lite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'.tflite')
@@ -154,8 +158,8 @@ def loadModel(dP):
             else:
                 model_name = dP.model_name
             print("  Model name:",model_name)
-            model = tf.keras.models.load_model(model_name)
-            #model = tf.keras.saving.load_model(model_name)
+            model = keras.models.load_model(model_name)
+            #model = keras.saving.load_model(model_name)
     return model
 
 #************************************
@@ -217,11 +221,15 @@ def makeQuantizedTFmodel(A, model, dP):
 #************************************
 def getTFVersion(dP):
     import tensorflow as tf
-    from pkg_resources import parse_version
-    
-    version = parse_version(tf.version.VERSION)
+    from packaging import version    
     if dP.useTFlitePred:
-        print(" TensorFlow (Lite) v.",version,"\n")
+        print(" TensorFlow (Lite) v.",tf.version.VERSION,"\n")
     else:
-        print(" TensorFlow v.",version,"\n" )
+        print(" TensorFlow v.",tf.version.VERSION,"\n" )
+        
+def checkTFVersion(vers):
+    import tensorflow as tf
+    from packaging import version
+    v = version.parse(tf.version.VERSION)
+    return v < version.parse(vers)
 
