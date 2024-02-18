@@ -3,7 +3,7 @@
 '''
 ***********************************************************
 * Convert TF models (TF, Keras) into TF.Lite
-* v2024.02.16.1
+* v2024.02.18.1
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -16,7 +16,7 @@ import sys, os.path, h5py
 #************************************
 def main():
     if len(sys.argv) < 2:
-        print(' Usage:\n  python3.py ConvertToTFLite <Model in HDF5 format>\n')
+        print(' Usage:\n  python3.py ConvertToTFLite <Model in Keras format>\n')
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
     else:
@@ -39,10 +39,19 @@ def convertModelToTFLite(model_file):
     except:
         converter = tf.lite.TFLiteConverter.from_keras_model_file(model_file)  # TensorFlow 1.x
         
-    converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
+    converter.optimizations = [tf.lite.Optimize.DEFAULT]
     tflite_model = converter.convert()
     open(convFile, "wb").write(tflite_model)
     print(' Converted model saved to:',convFile,'\n')
+
+#************************************
+# Get TensorFlow Version
+#************************************
+def checkTFVersion(vers):
+    import tensorflow as tf
+    from packaging import version
+    v = version.parse(tf.version.VERSION)
+    return v < version.parse(vers)
 
 #************************************
 # Main initialization routine
