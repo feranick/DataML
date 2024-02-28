@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.02.16.1
+* v2024.02.28.1
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -79,6 +79,7 @@ class Conf():
             }
     def sysDef(self):
         self.conf['System'] = {
+            'kerasVersion' : 2,
             'fixTFseed' : True,
             'makeQuantizedTFlite' : True,
             'useTFlitePred' : False,
@@ -112,6 +113,7 @@ class Conf():
             self.metricBestModelR = self.conf.get('Parameters','metricBestModelR')
             self.metricBestModelC = self.conf.get('Parameters','metricBestModelC')
             
+            self.kerasVersion = self.conf.getint('System','kerasVersion')
             self.fixTFseed = self.conf.getboolean('System','fixTFseed')
             self.makeQuantizedTFlite = self.conf.getboolean('System','makeQuantizedTFlite')
             self.useTFlitePred = self.conf.getboolean('System','useTFlitePred')
@@ -218,12 +220,14 @@ def main():
 #************************************
 def train(learnFile, testFile, normFile):
     dP = Conf()
-    
-    fimport tensorflow as tf
-    if checkTFVersion("2.16.0"):
+    import tensorflow as tf
+    if checkTFVersion("2.15.99"):
         import tensorflow.keras as keras
     else:
-        import keras
+        if dP.kerasVersion == 2:
+            import tf_keras as keras
+        else:
+            import keras
         
     if dP.fixTFseed == True:
         tf.random.set_seed(42)
@@ -380,15 +384,25 @@ def train(learnFile, testFile, normFile):
             callbacks = tbLogs,
             verbose=2,
 	        validation_split=dP.cv_split)
+            
+    if dP.saveBestModel == False:
+        if dP.kerasVersion == 2:
+            model.save(dP.model_name)
+        else:
+            model.export(dP.model_name)
+    else:
+        model = loadModel(dP)
+        
+
+    keras.utils.plot_model(model, to_file=dP.model_png, show_shapes=True)
+    
+    if dP.makeQuantizedTFlite:
+        makeQuantizedTFmodel(x_train, dP)
+        
     if dP.saveBestModel == False:
         model.save(dP.model_name)
     else:
         model = loadModel(dP)
-    
-    keras.utils.plot_model(model, to_file=dP.model_png, show_shapes=True)
-    
-    if dP.makeQuantizedTFlite:
-        makeQuantizedTFmodel(A, model, dP)
 
     print('\n  =============================================')
     print('  \033[1m CNN\033[0m - Model Architecture')
@@ -854,7 +868,7 @@ def convertTflite(learnFile):
     learnFileRoot = os.path.splitext(learnFile)[0]
     En, A, Cl = readLearnFile(learnFile)
     model = loadModel(dP)
-    makeQuantizedTFmodel(A, model, dP)
+    makeQuantizedTFmodel(A, dP)
     
 #************************************
 # Open Training Data

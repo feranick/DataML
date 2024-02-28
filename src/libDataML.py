@@ -2,7 +2,7 @@
 '''
 ***********************************************************
 * libDataML - Library for DataML
-* v2024.02.16.1
+* v2024.02.28.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -144,22 +144,30 @@ def loadModel(dP):
     else:
         getTFVersion(dP)
         import tensorflow as tf
-        if checkTFVersion("2.16.0"):
+        if checkTFVersion("2.15.99"):
             import tensorflow.keras as keras
         else:
-            import keras
+            if dP.kerasVersion == 2:
+                import tf_keras as keras
+            else:
+                import keras
         if dP.useTFlitePred:
             # model here is intended as interpreter
             model = tf.lite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'.tflite')
             model.allocate_tensors()
         else:
-            if os.path.isfile(dP.model_name) is False:
-                model_name = os.path.splitext(dP.model_name)[0]+".h5"
+            if dP.kerasVersion == 2:
+                if os.path.isfile(dP.model_name) is False:
+                    model_name = os.path.splitext(dP.model_name)[0]+".h5"
+                else:
+                    model_name = dP.model_name
+                model = keras.models.load_model(model_name)
+                #model = keras.saving.load_model(model_name)
             else:
                 model_name = dP.model_name
+                model = keras.models.Sequential()
+                model.add(keras.layers.TFSMLayer(model_name, call_endpoint='serve'))
             print("  Model name:",model_name)
-            model = keras.models.load_model(model_name)
-            #model = keras.saving.load_model(model_name)
     return model
 
 #************************************
@@ -192,7 +200,7 @@ def getPredictions(R, model, dP):
 #************************************
 ### Create Quantized tflite model
 #************************************
-def makeQuantizedTFmodel(A, model, dP):
+def makeQuantizedTFmodel(A, dP):
     import tensorflow as tf
     print("\n  Creating quantized TensorFlowLite Model...\n")
     
@@ -203,7 +211,13 @@ def makeQuantizedTFmodel(A, model, dP):
         for input_value in A.take(100):
             yield[input_value]
             
-    #converter = tf.compat.v1.lite.TFLiteConverter.from_keras_model_file(dP.model_name)    # TF2.0-2.2 (will be deprecated)
+    if dP.kerasVersion == 2:
+        import tf_keras as keras
+        model = keras.models.load_model(dP.model_name)
+    else:
+        import keras
+        model = keras.layers.TFSMLayer(dP.model_name, call_endpoint='serve')
+            
     converter = tf.lite.TFLiteConverter.from_keras_model(model)    # TF2.3 and higher only for full EdgeTPU support.
 
     converter.optimizations = [tf.lite.Optimize.DEFAULT]
