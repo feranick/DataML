@@ -2,7 +2,7 @@
 '''
 ***********************************************************
 * libDataML - Library for DataML
-* v2024.02.28.1
+* v2024.03.8.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -137,14 +137,14 @@ def loadModel(dP):
                 model = tflite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'_edgetpu.tflite',
                     experimental_delegates=[tflite.load_delegate(dP.edgeTPUSharedLib,{})])
             except:
-                print(" Coral Edge TPU not found. Please make sure it's connected and Tflite-runtime is v2.11.1 or lower.")
+                print(" Coral Edge TPU not found. \n Please make sure it's connected and Tflite-runtime matches the TF version that is installled.")
         else:
             model = tflite.Interpreter(model_path=os.path.splitext(dP.model_name)[0]+'.tflite')
         model.allocate_tensors()
     else:
         getTFVersion(dP)
         import tensorflow as tf
-        if checkTFVersion("2.15.99"):
+        if checkTFVersion("2.16.0"):
             import tensorflow.keras as keras
         else:
             if dP.kerasVersion == 2:

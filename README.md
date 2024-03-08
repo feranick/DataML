@@ -3,8 +3,8 @@ DataML Regression and Classification of sparse data.
 - Currently supported ML architectures:
    - DNNClassifier (TensorFlow, TensorFlow-Lite)
 - Required libraries for prediction:
-   - tensorflow (version >= 2.12.x)
-   - Optional: tensorflow-lite (v.2.3 and higher)
+   - tensorflow (version >= 2.13.x, >= 2.16.1 recommended)
+   - Optional: tensorflow-lite (v >= 2.13, >= 2.16.1 recommended)
    - Optional: [tensorflow-lite runtime](https://www.tensorflow.org/lite/guide/python) 
    - Optional: tensorflow-lite runtime with [Coral EdgeTPU](https://coral.ai/docs/accelerator/get-started/)
 
@@ -40,7 +40,7 @@ This software requires Python (3.8 or higher). It has been tested with Python 3.
     pydot
     graphviz
     h5py
-    tensorflow (>= 2.12.x)
+    tensorflow (>= 2.13.x)
     
 In addition, these packages may be needed depending on your platform (via ```apt-get``` in debian/ubuntu or ```port``` in OSX):
     
@@ -51,7 +51,7 @@ These are found in Unix based systems using common repositories (apt-get for Deb
 
 [TensorFlow](https://www.tensorflow.org) is needed only if flag is activated. Instructions for Linux and MacOS can be found in [TensorFlow installation page](https://www.tensorflow.org/install/). Pip installation is the easiest way to get going. Tested with TensorFlow v.1.15+. TensorFlow 2.x (2.3 or higher preferred) is the currently sipported release. 
 
-Prediction can be carried out using the regular tensorflow, or using [tensorflow-lite](https://www.tensorflow.org/lite/) for [quantized models](https://www.tensorflow.org/lite/performance/post_training_quantization). Loading times of tflite (direct or via [tflite-runtime](https://www.tensorflow.org/lite/guide/python)) are significantly faster than tensorflow with minimal loss in accuracy. SpectraKeras provides an option to convert tensorflow models to quantized tflite models. TFlite models have been tested in Linux x86-64, arm7 (including Raspberry Pi3) and aarm64, MacOS, Windows. For using quantized model (specifically when deployed on Coral EdgeTPU), TF 2.3 or higher is recommended. 
+Prediction can be carried out using the regular tensorflow, or using [tensorflow-lite](https://www.tensorflow.org/lite/) for [quantized models](https://www.tensorflow.org/lite/performance/post_training_quantization). Loading times of tflite (direct or via [tflite-runtime](https://www.tensorflow.org/lite/guide/python)) are significantly faster than tensorflow with minimal loss in accuracy. SpectraKeras provides an option to convert tensorflow models to quantized tflite models. TFlite models have been tested in Linux x86-64, arm7 (including Raspberry Pi3) and aarm64, MacOS, Windows. For using quantized model (specifically when deployed on Coral EdgeTPU), TF 2.13 or higher is recommended. 
 
 Usage
 ===================
