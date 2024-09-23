@@ -70,9 +70,8 @@ class dP:
     plotValidData = False
     plotLinRegression = True
     addSampleTagPlot = True
-    polyDegree = 2
+    polyDegree = 1
 
-    
     #graphX = [1,2,3,4,5,6,7,8]     # Pitch
     #graphY = [1,2,3,4,5,6,7,8]     # Pitch
     #graphX = [8,10,12,13,14]        # Asphalt
