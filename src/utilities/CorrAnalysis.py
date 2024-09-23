@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: v2023.12.15.1
+* version: v2024.9.23.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -40,10 +40,12 @@ class dP:
     #predCol = [7,8]       # Pitch (specific columns)
     #trainCol = [1,2,3,4,5,6,7,8,9]       # ORNL (specific columns)
     #predCol = [10,11,12]       # ORNL (specific columns)
-    trainCol = [1,9]       # ORNL (column range)
-    predCol = [10,12]       # ORNL (column range)
+    #trainCol = [1,9]       # ORNL (column range)
+    #predCol = [10,12]       # ORNL (column range)
+    trainCol = [1,48]       # IGC (column range)
+    predCol = [1, 48]       # IGC (column range)
     
-    separateValidFile = True
+    separateValidFile = False
     validRows = [103,104,105,106,107]   # ORNL
     
     #trainCol = [7,54]      # Asphalt
@@ -55,19 +57,21 @@ class dP:
     #predCol = [61,106]
 
     valueForNan = -1
-
-    #corrMin = .6
-    corrMax = 1
-    corrMin = -1
-    #corrMax = -.6
-
-    heatMapsCorr = True             # True: use for Master data
+    removeNaNfromCorr = True
     
-    plotGraphs = False
+    heatMapsCorr = True             # True: use for Master data
+    #corrMin = .6
+    corrMax = 0.99
+    corrMin = 0.8
+    #corrMax = -.6
+    
+    plotSelectedGraphs = False
     plotGraphsThreshold = True
-    plotValidData = True
+    plotValidData = False
     plotLinRegression = True
-    addSampleTagPlot = False
+    addSampleTagPlot = True
+    polyDegree = 2
+
     
     #graphX = [1,2,3,4,5,6,7,8]     # Pitch
     #graphY = [1,2,3,4,5,6,7,8]     # Pitch
@@ -76,11 +80,10 @@ class dP:
     graphX = [1,2,3,4,5,6,7,8,9]    # ORNL
     graphY = [10,11,12]             # ORNL
     
-    plotCorr = False                # True: use for raw data (spectra, etc)
+    plotSpectralCorr = False                # True: use for raw data (spectra, etc)
     stepXticksPlot = 1500
     corrSpectraFull = False
     corrSpectraMin = 0.8
-    polyDegree = 1
     
     if specifyColumns == False:
         trainCol = [item for item in range(trainCol[0], trainCol[1]+1)]
@@ -109,30 +112,18 @@ def main():
     spearmanFile = rootFile + '_spearmanR.csv'
     plotFile = rootFile + '_plots.pdf'
 
-    ### Old method ###
-    pearsonR=np.empty((V.shape[1],P.shape[1]))
-    spearmanR=np.empty((V.shape[1],P.shape[1]))
-    for j in range(V.shape[1]):
-        for i in range(P.shape[1]):
-            pearsonR[j,i], _ = pearsonr(P[:,i], V[:,j])
-            spearmanR[j,i], _ = spearmanr(P[:,i], V[:,j])
+    pearsonR, spearmanR = getCorrelations (V, P, dP.removeNaNfromCorr)
 
     #print(pearsonR)
     dfPearson = pd.DataFrame(pearsonR)
     dfSpearman = pd.DataFrame(spearmanR)
     dfPearson.columns = headP
     dfSpearman.columns = headP
-
+    
     for i in range(V.shape[1]):
         dfPearson.rename(index={i:headV[i]}, inplace=True)
         dfSpearman.rename(index={i:headV[i]}, inplace=True)
 
-    '''
-    ### New method ###
-    dfPearson = dfP.corr(method='pearson')
-    dfSpearman = dfP.corr(method='spearman')
-    '''
-    
     dfPearson.to_csv(pearsonFile, index=True, header=True)
     print("\n PearsonR correlation summary saved in:",pearsonFile,"\n")
     dfSpearman.to_csv(spearmanFile, index=True, header=True)
@@ -147,26 +138,25 @@ def main():
         print(" Correlation heat maps saved in:",plotFile,"\n")
         heatMapsCorrelations(dfPearson, "PearsonR_correlation", pdf)
         heatMapsCorrelations(dfSpearman, "SpearmanR_correlation", pdf)
-    if dP.plotCorr:
+    if dP.plotSpectralCorr:
         print(" Correlation plots saved in:",plotFile,"\n")
-        plotCorrelations(dfPearson, P, "PearsonR_correlation", rootFile, pdf)
-        plotCorrelations(dfSpearman, P, "SpearmanR_correlation", rootFile, pdf)
+        plotSpectralCorrelations(dfPearson, P, "PearsonR_correlation", rootFile, pdf)
+        plotSpectralCorrelations(dfSpearman, P, "SpearmanR_correlation", rootFile, pdf)
         if not dP.corrSpectraFull:
             dfPearson[dfPearson<dP.corrSpectraMin] = 0
             dfSpearman[dfSpearman<dP.corrSpectraMin] = 0
             plotCorrelations(dfPearson, P, "PearsonR_correlation (Corr > "+ str(dP.corrSpectraMin)+")", rootFile, pdf)
             plotCorrelations(dfSpearman, P, "SpearmanR_correlation", rootFile, pdf)
 
-    if dP.plotGraphs:
-        num = plotGraphs(dfP, dP.graphX, dP.graphY, dP.validRows, pdf)
+    if dP.plotSelectedGraphs:
+        num = plotSelectedGraphs(dfP, dP.graphX, dP.graphY, dP.validRows, pdf)
         print(" ",num,"Manually selected plots saved in:",plotFile,"\n")
 
     if dP.plotGraphsThreshold:
         num1 = plotGraphThreshold(dfP, dfPearson, dP.validRows, "PearsonR_correlation", pdf)
-        num2 = plotGraphThreshold(dfP, dfPearson, dP.validRows, "SpearmanR_correlation", pdf)
+        num2 = plotGraphThreshold(dfP, dfSpearman, dP.validRows, "SpearmanR_correlation", pdf)
         print(" ",num1+num2,"XY plots with correlation in [",dP.corrMin,",",dP.corrMax,"] saved in:",plotFile,"\n")
     pdf.close()
-
     
 #************************************
 # Open Learning Data
@@ -175,27 +165,72 @@ def readParamFile(paramFile):
     try:
         with open(paramFile, 'r') as f:
             dfP = pd.read_csv(f, delimiter = ",", skiprows=dP.skipHeadRows)
+        print(dfP)
     except:
         print("\033[1m Param file:",paramFile," not found/broken \n\033[0m")
         return
     return dfP
 
-
 def processParamFile(dfP, lims):
     if lims[1]>len(dfP.columns):
         lims[1] = len(dfP.columns)
         print(" Warning: Column range is larger than actual number of columns. Using full dataset")
+    #P = dfP.iloc[:,lims].astype(float).to_numpy()
     P = dfP.iloc[:,lims].to_numpy()
+    headP = dfP.columns[lims].values
     P[np.isnan(P)] = dP.valueForNan
-    headP = dfP.columns[lims].tolist()
-
-    print(P.shape)
     return P, headP
-
+    
 #************************************
-# Plot Correlations
+# Calculate Correlations
 #************************************
-def plotCorrelations(dfP, P, title, filename ,pdf):
+def getCorrelationsOld(V, P):
+    pearsonR=np.empty((V.shape[1],P.shape[1]))
+    spearmanR=np.empty((V.shape[1],P.shape[1]))
+    for j in range(V.shape[1]):
+        for i in range(P.shape[1]):
+            pearsonR[j,i], _ = pearsonr(P[:,i], V[:,j])
+            spearmanR[j,i], _ = spearmanr(P[:,i], V[:,j])
+    return pearsonR, spearmanR
+    
+def getCorrelations(V, P, sparse):
+    pearsonR=np.empty((V.shape[1],P.shape[1]))
+    spearmanR=np.empty((V.shape[1],P.shape[1]))
+    for j in range(V.shape[1]):
+        for i in range(P.shape[1]):
+            P2, V2, _ = purgeSparse(P[:,i], V[:,j], P[:,i], dP.removeNaNfromCorr)
+            pearsonR[j,i], _ = pearsonr(P2, V2)
+            spearmanR[j,i], _ = spearmanr(P2, V2)
+            
+    return pearsonR, spearmanR
+    
+def purgeSparse(P, V, label, sparse):
+    if sparse:
+        pt = []
+        vt = []
+        ann = []
+        for l in range (P.shape[0]):
+            if P[l] != dP.valueForNan and V[l] != dP.valueForNan:
+                pt.append(P[l])
+                vt.append(V[l])
+                ann.append(label[l])
+        P2=np.array(pt)
+        V2=np.array(vt)
+    else:
+        P2 = P
+        V2 = V
+        ann = label
+    return P2, V2, ann
+    
+'''
+def getCorrelationsExperimental(dfP):
+    dfPearson = dfP.corr(method='pearson')
+    dfSpearman = dfP.corr(method='spearman')
+'''
+#************************************
+# Plot Spectral Correlations
+#************************************
+def plotSpectralCorrelations(dfP, P, title, filename ,pdf):
     data = dfP.to_numpy()
     
     plt.xlabel('Wavelength')
@@ -280,20 +315,25 @@ def heatMapsCorrelations2(dfP):
 #************************************
 # Plot Graphs based on manual input
 #************************************
-def plotGraphs(dfP, X, Y, validRows, pdf):
+def plotSelectedGraphs(dfP, X, Y, validRows, pdf):
     num = 0
     for i in X:
         for j in Y:
             ylabels = dfP.columns.values[j]
             xlabels = dfP.columns.values[i]
             #plt.figure()
-            plt.plot(dfP.iloc[:,i],dfP.iloc[:,j], 'bo')
+            
+            P2, V2, ann = purgeSparse(dfP.iloc[:,i], dfP.iloc[:,j], dfP.iloc[:,0], dP.removeNaNfromCorr)
+            plt.plot(P2, V2, 'bo')
+            
             if dP.plotValidData:
-                plt.plot(dfP.iloc[validRows,i].to_list(),dfP.iloc[validRows, j].to_list(), 'ro')
+                P2V, V2V, ann = purgeSparse(dfP.iloc[validRows,i].to_list(), dfP.iloc[validRows, j].to_list(), dfP.iloc[validRows, 0].to_list(), dP.removeNaNfromCorr)
+                plt.plot(P2V, V2V, 'ro')
+                
             plt.xlabel(xlabels)
             plt.ylabel(ylabels)
-            for k, txt, in enumerate(dfP.iloc[:,0].to_list()):
-                plt.annotate(txt,xy=(dfP.iloc[:,i].to_list()[k],dfP.iloc[:,j].to_list()[k]), fontsize='x-small')
+            for k, txt, in enumerate(ann):
+                plt.annotate(txt,xy=(P2[k],V2[k]), fontsize='x-small')
             #plt.legend(loc='upper left')
             pdf.savefig()
             plt.close()
@@ -305,20 +345,20 @@ def plotGraphs(dfP, X, Y, validRows, pdf):
 #************************************
 def plotGraphThreshold(dfP, dfC, validRows, title, pdf):
     num = 0
-    #print(dfP.loc[validRows,1])
     for col in dfC.columns:
         for ind in dfC[dfC[col].between(dP.corrMin,dP.corrMax)].index:
-        
-            x = dfP[col].to_list()
-            y = dfP[ind].to_list()
+            x, y, ann = purgeSparse(dfP[col], dfP[ind], dfP.iloc[:,0], dP.removeNaNfromCorr)
             plt.plot(x,y, 'bo')
+        
             if dP.plotValidData:
-                plt.plot(dfP.loc[validRows,col].to_list(),dfP.loc[validRows, ind].to_list(), 'ro')
+                xv, yv = purgeSparse(dfP.loc[validRows,col].to_list(), dfP.loc[validRows, ind].to_list(), dP.removeNaNfromCorr)
+                plt.plot(xv, yv, 'ro')
+                
             plt.xlabel(col)
             plt.ylabel(ind)
             plt.title(title+": {0:.3f}".format(dfC[col].loc[ind]))
             if dP.addSampleTagPlot:
-                for k, txt, in enumerate(dfP.iloc[:,0].to_list()):
+                for k, txt, in enumerate(ann):
                     plt.annotate(txt,xy=(x[k],y[k]), fontsize='x-small')
             if dP.plotLinRegression and col is not ind:
                 #z = np.polyfit(x, y, dP.polyDegree, full=True)
