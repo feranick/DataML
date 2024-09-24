@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: v2024.9.24.1
+* version: v2024.9.24.3
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -18,6 +18,7 @@ import sys, os.path, h5py
 from random import uniform
 from bisect import bisect_left
 from scipy.stats import pearsonr, spearmanr
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
@@ -27,20 +28,26 @@ from matplotlib.backends.backend_pdf import PdfPages
 class dP:
     skipHeadRows = 0
     
+    ### Master Data Handling
     specifyColumns = False
-    trainCol = [1,48]       # IGC (column range)
-    predCol = [1, 48]       # IGC (column range)
+    trainCol = [1, 40]       # IGC (column range)
+    predCol = [41, 48]       # IGC (column range)
+    #trainCol = [1, 48]       # IGC (column range)
+    #predCol = [1, 48]       # IGC (column range)
     
     separateValidFile = False
     validRows = [103,104,105,106,107]   # ORNL
 
     valueForNan = -1
     removeNaNfromCorr = True
-    
+
+    ### Heat Maps
     heatMapsCorr = True             # True: use for Master data
-    corrMax = 0.99
-    corrMin = 0.8
+    heatMapCorrFull = True          #True: plot all correlation data
+    corrMax = 1
+    corrMin = 0.75
     
+    ### Plotting correlation 2D plots
     plotSelectedGraphs = False
     plotGraphsThreshold = True
     plotValidData = False
@@ -48,9 +55,10 @@ class dP:
     addSampleTagPlot = True
     polyDegree = 1
 
-    graphX = [1,2,3,4,5,6,7,8,9]    # ORNL
-    graphY = [10,11,12]             # ORNL
+    graphX = [1,2]
+    graphY = [3,4]
     
+    ### Plotting Spectral correlations
     plotSpectralCorr = False                # True: use for raw data (spectra, etc)
     stepXticksPlot = 1500
     corrSpectraFull = False
@@ -202,38 +210,6 @@ def getCorrelationsExperimental(dfP):
     dfPearson = dfP.corr(method='pearson')
     dfSpearman = dfP.corr(method='spearman')
 '''
-#************************************
-# Plot Spectral Correlations
-#************************************
-def plotSpectralCorrelations(dfP, P, title, filename ,pdf):
-    data = dfP.to_numpy()
-    
-    plt.xlabel('Wavelength')
-    plt.ylabel('Correlation')
-    
-    Rlabels = dfP.index.tolist()
-    Clabels = np.float_(dfP.columns.values)
-    Clabels_plot = Clabels[::dP.stepXticksPlot]
-    
-    fig, (ax1, ax2) = plt.subplots(2,1, sharex = True, figsize=(10, 10))
-    
-    ax2.set_xticks(Clabels_plot)
-    ax2.set_xticklabels(Clabels_plot)
-    
-    # Rotate the tick labels and set their alignment.
-    plt.setp(ax2.get_xticklabels(), rotation=45, ha="right",
-         rotation_mode="anchor")
-    
-    for p in P:
-        ax1.plot(Clabels, p)
-    ax1.set_title(filename)
-    
-    for i in range(len(data)):
-        ax2.plot(Clabels, data[i], label=Rlabels[i])
-        ax2.set_title(title)
-        ax2.legend(loc='upper left')
-        pdf.savefig()
-    plt.close
 
 #************************************
 # Plot Heat Maps Correlations
@@ -242,10 +218,21 @@ def heatMapsCorrelations(dfP, title, pdf):
     data = dfP.to_numpy()
     Rlabels = dfP.index.tolist()
     Clabels = dfP.columns.values
-
     fig, ax = plt.subplots(figsize=(20, 8))
-    im = ax.imshow(data)
+    cmap = mpl.colormaps['viridis']
 
+    if not dP.heatMapCorrFull:
+        if dP.corrMax > 0:
+            data = np.where(data < dP.corrMin, dP.corrMin, data)
+        else:
+            data = np.where(data > dP.corrMax, dP.corrMax, data)
+            cmap = cmap.reversed()
+    
+    im = ax.imshow(data, cmap = cmap)
+    
+    cbar = ax.figure.colorbar(im, ax=ax)
+    cbar.ax.set_ylabel("correlation", rotation=-90, va="bottom")
+    
     ax.set_xticks(np.arange(len(Clabels)))
     ax.set_yticks(np.arange(len(Rlabels)))
     ax.set_xticklabels(Clabels)
@@ -253,7 +240,7 @@ def heatMapsCorrelations(dfP, title, pdf):
     
     # Rotate the tick labels and set their alignment.
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-         rotation_mode="anchor")
+        rotation_mode="anchor")
 
     '''
     # Loop over data dimensions and create text annotations.
@@ -262,9 +249,6 @@ def heatMapsCorrelations(dfP, title, pdf):
             text = ax.text(j, i, data[i, j],
                        ha="center", va="center", color="w")
     '''
-
-    cbar = ax.figure.colorbar(im, ax=ax)
-    cbar.ax.set_ylabel("correlation", rotation=-90, va="bottom")
     
     ax.set_title(title)
     ax.grid(which="minor", color="w", linestyle='-', linewidth=3)
@@ -347,6 +331,39 @@ def plotGraphThreshold(dfP, dfC, validRows, title, pdf):
             plt.close()
             num+=1
     return num
+
+#************************************
+# Plot Spectral Correlations
+#************************************
+def plotSpectralCorrelations(dfP, P, title, filename ,pdf):
+    data = dfP.to_numpy()
+    
+    plt.xlabel('Wavelength')
+    plt.ylabel('Correlation')
+    
+    Rlabels = dfP.index.tolist()
+    Clabels = np.float_(dfP.columns.values)
+    Clabels_plot = Clabels[::dP.stepXticksPlot]
+    
+    fig, (ax1, ax2) = plt.subplots(2,1, sharex = True, figsize=(10, 10))
+    
+    ax2.set_xticks(Clabels_plot)
+    ax2.set_xticklabels(Clabels_plot)
+    
+    # Rotate the tick labels and set their alignment.
+    plt.setp(ax2.get_xticklabels(), rotation=45, ha="right",
+         rotation_mode="anchor")
+    
+    for p in P:
+        ax1.plot(Clabels, p)
+    ax1.set_title(filename)
+    
+    for i in range(len(data)):
+        ax2.plot(Clabels, data[i], label=Rlabels[i])
+        ax2.set_title(title)
+        ax2.legend(loc='upper left')
+        pdf.savefig()
+    plt.close
 
 #************************************
 # Main initialization routine
