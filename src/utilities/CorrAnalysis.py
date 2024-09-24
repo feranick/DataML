@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: v2024.9.23.1
+* version: v2024.9.23.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -28,42 +28,18 @@ class dP:
     skipHeadRows = 0
     
     specifyColumns = False
-    #trainCol = [3,3553]    # Raw data
-    #trainCol = [3,80000]   # Raw data
-    #predCol = [1,3]        # Raw data
-    #trainCol = [1,7]       # Pitch
-    #predCol = [7,9]        # Pitch
-    #trainCol = [1,35]      # Pitch
-    #predCol = [1,35]       # Pitch
-    #validRows = [5]        # Pitch
-    #trainCol = [33,36,40,42,46,48]       # Pitch (specific columns)
-    #predCol = [7,8]       # Pitch (specific columns)
-    #trainCol = [1,2,3,4,5,6,7,8,9]       # ORNL (specific columns)
-    #predCol = [10,11,12]       # ORNL (specific columns)
-    #trainCol = [1,9]       # ORNL (column range)
-    #predCol = [10,12]       # ORNL (column range)
     trainCol = [1,48]       # IGC (column range)
     predCol = [1, 48]       # IGC (column range)
     
     separateValidFile = False
     validRows = [103,104,105,106,107]   # ORNL
-    
-    #trainCol = [7,54]      # Asphalt
-    #predCol = [1,7]        # Asphalt
-    #validRows = [40,41,42,43] # Asphalt
-    #trainCol = [1,61]
-    #trainCol = [61,106]
-    #predCol = [1,61]
-    #predCol = [61,106]
 
     valueForNan = -1
     removeNaNfromCorr = True
     
     heatMapsCorr = True             # True: use for Master data
-    #corrMin = .6
     corrMax = 0.99
     corrMin = 0.8
-    #corrMax = -.6
     
     plotSelectedGraphs = False
     plotGraphsThreshold = True
@@ -72,10 +48,6 @@ class dP:
     addSampleTagPlot = True
     polyDegree = 1
 
-    #graphX = [1,2,3,4,5,6,7,8]     # Pitch
-    #graphY = [1,2,3,4,5,6,7,8]     # Pitch
-    #graphX = [8,10,12,13,14]        # Asphalt
-    #graphY = [62,69,78,79,80,81]    # Asphalt
     graphX = [1,2,3,4,5,6,7,8,9]    # ORNL
     graphY = [10,11,12]             # ORNL
     
@@ -183,15 +155,6 @@ def processParamFile(dfP, lims):
 #************************************
 # Calculate Correlations
 #************************************
-def getCorrelationsOld(V, P):
-    pearsonR=np.empty((V.shape[1],P.shape[1]))
-    spearmanR=np.empty((V.shape[1],P.shape[1]))
-    for j in range(V.shape[1]):
-        for i in range(P.shape[1]):
-            pearsonR[j,i], _ = pearsonr(P[:,i], V[:,j])
-            spearmanR[j,i], _ = spearmanr(P[:,i], V[:,j])
-    return pearsonR, spearmanR
-    
 def getCorrelations(V, P, sparse):
     pearsonR=np.empty((V.shape[1],P.shape[1]))
     spearmanR=np.empty((V.shape[1],P.shape[1]))
@@ -379,3 +342,32 @@ def plotGraphThreshold(dfP, dfC, validRows, title, pdf):
 #************************************
 if __name__ == "__main__":
     sys.exit(main())
+
+# Old settings
+    #trainCol = [3,3553]    # Raw data
+    #trainCol = [3,80000]   # Raw data
+    #predCol = [1,3]        # Raw data
+    #trainCol = [1,7]       # Pitch
+    #predCol = [7,9]        # Pitch
+    #trainCol = [1,35]      # Pitch
+    #predCol = [1,35]       # Pitch
+    #validRows = [5]        # Pitch
+    #trainCol = [33,36,40,42,46,48]       # Pitch (specific columns)
+    #predCol = [7,8]       # Pitch (specific columns)
+    #trainCol = [1,2,3,4,5,6,7,8,9]       # ORNL (specific columns)
+    #predCol = [10,11,12]       # ORNL (specific columns)
+    #trainCol = [1,9]       # ORNL (column range)
+    #predCol = [10,12]       # ORNL (column range)
+    
+    #trainCol = [7,54]      # Asphalt
+    #predCol = [1,7]        # Asphalt
+    #validRows = [40,41,42,43] # Asphalt
+    #trainCol = [1,61]
+    #trainCol = [61,106]
+    #predCol = [1,61]
+    #predCol = [61,106]
+    
+    #graphX = [1,2,3,4,5,6,7,8]     # Pitch
+    #graphY = [1,2,3,4,5,6,7,8]     # Pitch
+    #graphX = [8,10,12,13,14]        # Asphalt
+    #graphY = [62,69,78,79,80,81]    # Asphalt
