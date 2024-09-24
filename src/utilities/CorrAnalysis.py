@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: v2024.9.23.2
+* version: v2024.9.24.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -168,6 +168,19 @@ def getCorrelations(V, P, sparse):
     
 def purgeSparse(P, V, label, sparse):
     if sparse:
+        x = list(range(P.shape[0]))
+        P2 = P[(P[x] != dP.valueForNan) & (V[x] != dP.valueForNan)]
+        V2 = V[(P[x] != dP.valueForNan) & (V[x] != dP.valueForNan)]
+        ann = label[(P[x] != dP.valueForNan) & (V[x] != dP.valueForNan)].tolist()
+        P = P2
+        V = V2
+    else:
+        ann = label
+    return P, V, ann
+
+'''
+def purgeSparseOld(P, V, label, sparse):
+    if sparse:
         pt = []
         vt = []
         ann = []
@@ -184,7 +197,7 @@ def purgeSparse(P, V, label, sparse):
         ann = label
     return P2, V2, ann
     
-'''
+
 def getCorrelationsExperimental(dfP):
     dfPearson = dfP.corr(method='pearson')
     dfSpearman = dfP.corr(method='spearman')
@@ -285,17 +298,17 @@ def plotSelectedGraphs(dfP, X, Y, validRows, pdf):
             xlabels = dfP.columns.values[i]
             #plt.figure()
             
-            P2, V2, ann = purgeSparse(dfP.iloc[:,i], dfP.iloc[:,j], dfP.iloc[:,0], dP.removeNaNfromCorr)
-            plt.plot(P2, V2, 'bo')
+            P, V, ann = purgeSparse(dfP.iloc[:,i].to_numpy(), dfP.iloc[:,j].to_numpy(), dfP.iloc[:,0], dP.removeNaNfromCorr)
+            plt.plot(P, V, 'bo')
             
             if dP.plotValidData:
-                P2V, V2V, ann = purgeSparse(dfP.iloc[validRows,i].to_list(), dfP.iloc[validRows, j].to_list(), dfP.iloc[validRows, 0].to_list(), dP.removeNaNfromCorr)
-                plt.plot(P2V, V2V, 'ro')
+                PV, VV, ann = purgeSparse(dfP.iloc[validRows,i].to_numpy(), dfP.iloc[validRows, j].to_numpy(), dfP.iloc[validRows, 0], dP.removeNaNfromCorr)
+                plt.plot(PV, VV, 'ro')
                 
             plt.xlabel(xlabels)
             plt.ylabel(ylabels)
             for k, txt, in enumerate(ann):
-                plt.annotate(txt,xy=(P2[k],V2[k]), fontsize='x-small')
+                plt.annotate(txt,xy=(P[k],V[k]), fontsize='x-small')
             #plt.legend(loc='upper left')
             pdf.savefig()
             plt.close()
@@ -309,11 +322,11 @@ def plotGraphThreshold(dfP, dfC, validRows, title, pdf):
     num = 0
     for col in dfC.columns:
         for ind in dfC[dfC[col].between(dP.corrMin,dP.corrMax)].index:
-            x, y, ann = purgeSparse(dfP[col], dfP[ind], dfP.iloc[:,0], dP.removeNaNfromCorr)
+            x, y, ann = purgeSparse(dfP[col].to_numpy(), dfP[ind].to_numpy(), dfP.iloc[:,0], dP.removeNaNfromCorr)
             plt.plot(x,y, 'bo')
         
             if dP.plotValidData:
-                xv, yv = purgeSparse(dfP.loc[validRows,col].to_list(), dfP.loc[validRows, ind].to_list(), dP.removeNaNfromCorr)
+                xv, yv, ann = purgeSparse(dfP.loc[validRows,col].to_numpy(), dfP.loc[validRows, ind].to_numpy(), dfP.iloc[:,0], dP.removeNaNfromCorr)
                 plt.plot(xv, yv, 'ro')
                 
             plt.xlabel(col)
@@ -323,8 +336,6 @@ def plotGraphThreshold(dfP, dfC, validRows, title, pdf):
                 for k, txt, in enumerate(ann):
                     plt.annotate(txt,xy=(x[k],y[k]), fontsize='x-small')
             if dP.plotLinRegression and col is not ind:
-                #z = np.polyfit(x, y, dP.polyDegree, full=True)
-                #print(z)
                 try:
                     slope, intercept, r_value, p_value, std_err = stats.linregress(x,y)
                     plt.text(min(x), max(y),"{0:s} = {2:.3f}*{1:s} + {3:.3f}".format(ind, col, slope, intercept))
