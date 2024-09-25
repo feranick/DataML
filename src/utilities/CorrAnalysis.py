@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: v2024.9.24.3
+* version: v2024.9.25.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -27,13 +27,20 @@ from matplotlib.backends.backend_pdf import PdfPages
 #************************************
 class dP:
     skipHeadRows = 0
-    
+        
     ### Master Data Handling
-    specifyColumns = False
-    trainCol = [1, 40]       # IGC (column range)
-    predCol = [41, 48]       # IGC (column range)
+    specifyColumns = True
+    #trainCol = [1, 40]       # IGC (column range)
+    #predCol = [41, 48]       # IGC (column range)
     #trainCol = [1, 48]       # IGC (column range)
-    #predCol = [1, 48]       # IGC (column range)
+    predCol = [1, 48]       # IGC (column range)
+    predCol = [41,48]       # IGC (column range)
+    #trainCol = [14,21,23,29,34,35,36,37,38,39,40]       # IGC (column range)
+    #predCol = [41,48]       # IGC (column range)
+    
+    includeAdditionalCol = False
+    initialAdditionalCol = 41
+    finalAdditionalCol = 95
     
     separateValidFile = False
     validRows = [103,104,105,106,107]   # ORNL
@@ -43,9 +50,9 @@ class dP:
 
     ### Heat Maps
     heatMapsCorr = True             # True: use for Master data
-    heatMapCorrFull = True          #True: plot all correlation data
-    corrMax = 1
-    corrMin = 0.75
+    heatMapCorrFull = False          #True: plot all correlation data
+    corrMax = -0.75
+    corrMin = -1
     
     ### Plotting correlation 2D plots
     plotSelectedGraphs = False
@@ -67,6 +74,11 @@ class dP:
     if specifyColumns == False:
         trainCol = [item for item in range(trainCol[0], trainCol[1]+1)]
         predCol = [item for item in range(predCol[0], predCol[1]+1)]
+    
+    if includeAdditionalCol == True:
+        inTrainCol=trainCol[-1]
+        trainCol.extend(list(item for item in range(initialAdditionalCol, finalAdditionalCol+1)))
+        predCol = [item for item in range(predCol[0]+trainCol[-1]-inTrainCol, predCol[1]+trainCol[-1]-inTrainCol+1)]
 
 #************************************
 # Main

@@ -30,15 +30,17 @@ class dP:
     skipHeadRows = 0
     
     ### Master Data Handling
-    specifyColumns = False
-    trainCol = [1, 40]       # IGC (column range)
-    predCol = [41, 48]       # IGC (column range)
+    specifyColumns = True
+    #trainCol = [1, 40]       # IGC (column range)
+    #predCol = [41, 48]       # IGC (column range)
     #trainCol = [1, 48]       # IGC (column range)
     #predCol = [1, 48]       # IGC (column range)
     #trainCol = [1,2,3]       # IGC (column range)
     #predCol = [4,5,6]       # IGC (column range)
+    trainCol = [14,21,23,29,34,35,36,37,38,39,40]       # IGC (column range)
+    predCol = [41,48]       # IGC (column range)
     
-    numLastPredCol = 9
+    numLastPredCol = 8
     
     separateValidFile = False
     validRows = [103,104,105,106,107]   # ORNL
