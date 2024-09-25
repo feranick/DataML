@@ -4,7 +4,7 @@
 **************************************************
 * CreateMix4CorrAnalysis
 * Create mixture of data for Correlation analysis
-* version: v2024.9.25.2
+* version: v2024.9.25.3
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 **************************************************
@@ -79,8 +79,8 @@ def main():
     
     dfP = addSumColumn(dfP, permList)
     
-    dfP.to_csv(newFile, index=True, header=True)
-    print("\n New parameter file saved in:",newFile,"\n")
+    dfP.to_csv(newFile, index=False, header=True)
+    print(" New parameter file saved in:",newFile,"\n")
     
 #************************************
 # Open Learning Data
@@ -119,7 +119,8 @@ def addSumColumn(dfP, perm):
     pos = len(dfP.columns)-dP.numLastPredCol
     df = pd.concat([dfP.iloc[:,:pos],df_temp, dfP.iloc[:, pos:]], axis=1)
     print(df)
-    print(" Added", df_temp.shape[1],"columns to the original", pos, "(total:",df.shape[1]-dP.numLastPredCol,")\n")
+    print("\n Added", df_temp.shape[1],"columns to the original", pos)
+    print(" Total number of training columns:",df.shape[1]-dP.numLastPredCol,"\n Prediction columns:",dP.numLastPredCol,"\n")
     return df
 
 def getPermutations(l):
