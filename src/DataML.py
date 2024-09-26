@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.09.26.1
+* v2024.09.26.2
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -388,7 +388,7 @@ def train(learnFile, testFile, normFile):
         if dP.kerasVersion == 2:
             model.save(dP.model_name)
         else:
-            model.export(dP.model_name)
+            model.export(os.path.splitext(dP.model_name)[0])
     else:
         model = loadModel(dP)
         

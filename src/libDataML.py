@@ -2,7 +2,7 @@
 '''
 ***********************************************************
 * libDataML - Library for DataML
-* v2024.03.8.1
+* v2024.09.26.2
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -219,7 +219,7 @@ def makeQuantizedTFmodel(A, dP):
             model = keras.models.load_model(dP.model_name)
         else:
             import keras
-            model = keras.layers.TFSMLayer(dP.model_name, call_endpoint='serve')
+            model = keras.layers.TFSMLayer(os.path.splitext(dP.model_name)[0], call_endpoint='serve')
             
     converter = tf.lite.TFLiteConverter.from_keras_model(model)    # TF2.3 and higher only for full EdgeTPU support.
 
