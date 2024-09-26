@@ -210,13 +210,16 @@ def makeQuantizedTFmodel(A, dP):
     def representative_dataset_gen():
         for input_value in A.take(100):
             yield[input_value]
-            
-    if dP.kerasVersion == 2:
-        import tf_keras as keras
+    if checkTFVersion("2.16.0"):
+        import tensorflow.keras as keras
         model = keras.models.load_model(dP.model_name)
     else:
-        import keras
-        model = keras.layers.TFSMLayer(dP.model_name, call_endpoint='serve')
+        if dP.kerasVersion == 2:
+            import tf_keras as keras
+            model = keras.models.load_model(dP.model_name)
+        else:
+            import keras
+            model = keras.layers.TFSMLayer(dP.model_name, call_endpoint='serve')
             
     converter = tf.lite.TFLiteConverter.from_keras_model(model)    # TF2.3 and higher only for full EdgeTPU support.
 
