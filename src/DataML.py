@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.03.08.1
+* v2024.09.26.1
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -331,7 +331,6 @@ def train(learnFile, testFile, normFile):
         ### Build model
         #************************************
         model = keras.models.Sequential()
-        #for i in range(len(dP.HL)):
         for i in range(len(dP.HL)):
             model.add(keras.layers.Dense(dP.HL[i],
                 activation = 'relu',
@@ -393,16 +392,10 @@ def train(learnFile, testFile, normFile):
     else:
         model = loadModel(dP)
         
-
     keras.utils.plot_model(model, to_file=dP.model_png, show_shapes=True)
     
     if dP.makeQuantizedTFlite:
-        makeQuantizedTFmodel(x_train, dP)
-        
-    if dP.saveBestModel == False:
-        model.save(dP.model_name)
-    else:
-        model = loadModel(dP)
+        makeQuantizedTFmodel(A, dP)
 
     print('\n  =============================================')
     print('  \033[1m CNN\033[0m - Model Architecture')
