@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.09.26.2
+* v2024.09.27.1
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -437,9 +437,9 @@ def train(learnFile, testFile, normFile):
             return
 
     if dP.regressor:
-        def_mae, def_val_mae = [list(log.history)[i] for i in (1,3)]
-        val_mae = np.asarray(log.history[def_val_mae])
-        mae = np.asarray(log.history[def_mae])
+        mae = np.asarray(log.history['mae'])
+        val_mae = np.asarray(log.history['val_mae'])
+            
         printParam()
         print('\n  ==========================================================')
         print('  \033[1m MLP - Regressor\033[0m - Training Summary')
@@ -477,9 +477,8 @@ def train(learnFile, testFile, normFile):
                         predictions[i][0], score[0], score[1], 100*score[1]/Cl2_test[i]))
             print('\n  ========================================================================  \n')
     else:
-        def_acc, def_val_acc = [list(log.history)[i] for i in (1,3)]
-        accuracy = np.asarray(log.history[def_acc])
-        val_acc = np.asarray(log.history[def_val_acc])
+        accuracy = np.asarray(log.history['accuracy'])
+        val_acc = np.asarray(log.history['val_accuracy'])
         
         print("  Number unique classes (training): ", np.unique(Cl).size)
         if testFile is not None:
