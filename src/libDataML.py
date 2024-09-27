@@ -240,9 +240,9 @@ def getTFVersion(dP):
     import tensorflow as tf
     from packaging import version    
     if dP.useTFlitePred:
-        print(" TensorFlow (Lite) v.",tf.version.VERSION,"\n")
+        print("\n TensorFlow (Lite) v.",tf.version.VERSION,"\n")
     else:
-        print(" TensorFlow v.",tf.version.VERSION,"\n" )
+        print("\n TensorFlow v.",tf.version.VERSION,"\n" )
         
 def checkTFVersion(vers):
     import tensorflow as tf
