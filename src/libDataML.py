@@ -238,15 +238,25 @@ def makeQuantizedTFmodel(A, dP):
 #************************************
 def getTFVersion(dP):
     import tensorflow as tf
-    from packaging import version    
-    if dP.useTFlitePred:
-        print("\n TensorFlow (Lite) v.",tf.version.VERSION,"\n")
+    if checkTFVersion("2.16.0"):
+        import tensorflow.keras as keras
+        kv = "- Keras v. " + keras.__version__
     else:
-        print("\n TensorFlow v.",tf.version.VERSION,"\n" )
+        if dP.kerasVersion == 2:
+            import tf_keras as keras
+            kv = "- tf_keras v. " + keras.__version__
+        else:
+            import keras
+            kv = "- Keras v. " + keras.__version__
+    from packaging import version
+    if dP.useTFlitePred:
+        print("\n TensorFlow (Lite) v.",tf.version.VERSION,kv, "\n")
+    else:
+        print("\n TensorFlow v.",tf.version.VERSION,kv, "\n" )
         
 def checkTFVersion(vers):
     import tensorflow as tf
     from packaging import version
-    v = version.parse(tf.version.VERSION)
+    v = version.parse(tf.__version__)
     return v < version.parse(vers)
 
