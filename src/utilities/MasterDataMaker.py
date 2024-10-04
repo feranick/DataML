@@ -26,9 +26,9 @@ class dP:
 
     fullDataset = True
     minCCol = 1
-    maxCCol = 10
+    maxCCol = 41
     #charCCols = [8,10,12,13]
-    charCCols = [1,2,3,4,9]
+    charCCols = [14,21,23,29,32,34,35,36,37,38,39,40]
     predRCol = [10]
     
     validFile = False
