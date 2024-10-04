@@ -4,18 +4,14 @@
 **********************************************************
 * ValidFileMaker
 * Make Single Validation File
-* version: v2023.12.15.1
+* version: v2024.10.04.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 **********************************************************
 '''
 print(__doc__)
 
 import numpy as np
-import pandas as pd
 import sys, os.path, h5py
-from random import uniform
-from bisect import bisect_left
-from libDataML import *
 
 #************************************
 # Parameters definition
@@ -25,11 +21,10 @@ class dP:
     numHeadRows = 0
     row = 1
     
-    fullDataset = True
+    fullDataset = False
     minCCol = 1
     maxCCol = 10
-    #charCCols = [8,10,12,13]
-    charCCols = [6,8,13]
+    charCCols = [14,21,23,29,32,34,35,36,37,38,39,40]
     
     precData = 3
     valueForNan = -1
@@ -65,14 +60,15 @@ def readParamFile(paramFile, row):
         usecols = range(dP.minCCol,dP.maxCCol)
     else:
         usecols = dP.charCCols
-    
+
     with open(paramFile, 'r') as f:
-        P2 = pd.read_csv(f, delimiter = ",", header=dP.numHeadRows).to_numpy()
-    
-    #M = np.hstack((P2[:,predRCol],P2[:,usecols]))
+       if os.path.splitext(paramFile)[1] == ".csv":
+            import pandas as pd
+            P2 = pd.read_csv(f, delimiter = ",", header=dP.numHeadRows).to_numpy()
+       if os.path.splitext(paramFile)[1] == ".txt":
+            P2 = np.loadtxt(f, unpack =True)
+            
     M = P2[:,usecols]
-    #----------------------------------
-    
     return M, P2[int(row),0]
     
 #***************************************
