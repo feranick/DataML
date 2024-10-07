@@ -2,7 +2,7 @@
 '''
 ***********************************************************
 * libDataML - Library for DataML
-* v2024.10.07.2
+* v2024.10.07.3
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -160,7 +160,7 @@ def loadModel(dP):
                 model = keras.models.load_model(dP.model_name)
             else:
                 model = keras.saving.load_model(dP.model_name)
-            print("  Model name:",dP.model_name)
+    print("  Model name:",dP.model_name)
     return model
 
 #************************************
