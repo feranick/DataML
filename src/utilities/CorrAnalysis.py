@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: v2024.9.25.1
+* version: v2024.10.07.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -29,11 +29,10 @@ class dP:
     skipHeadRows = 0
         
     ### Master Data Handling
-    specifyColumns = True
+    specifyColumns = False
     #trainCol = [1, 40]       # IGC (column range)
     #predCol = [41, 48]       # IGC (column range)
-    #trainCol = [1, 48]       # IGC (column range)
-    predCol = [1, 48]       # IGC (column range)
+    trainCol = [1, 48]       # IGC (column range)
     predCol = [41,48]       # IGC (column range)
     #trainCol = [14,21,23,29,34,35,36,37,38,39,40]       # IGC (column range)
     #predCol = [41,48]       # IGC (column range)
@@ -93,7 +92,8 @@ def main():
     dfP = readParamFile(sys.argv[1])
     if dP.separateValidFile:
         dfV = readParamFile(sys.argv[2])
-        dfP = dfP.append(dfV,ignore_index=True)
+        #dfP = dfP.append(dfV,ignore_index=True) # deprecated in Pandas v>2
+        dfP = dfP.concat([dfP, dfV], ignore_index=True)
         dP.validRows = dfP.index.tolist()[-len(dfV.index.tolist()):]
     P,headP = processParamFile(dfP, dP.trainCol)
     V,headV = processParamFile(dfP, dP.predCol)
@@ -102,6 +102,8 @@ def main():
     pearsonFile = rootFile + '_pearsonR.csv'
     spearmanFile = rootFile + '_spearmanR.csv'
     plotFile = rootFile + '_plots.pdf'
+    spearmanSummary = rootFile + '_spearmanR_summary.csv'
+    pearsonSummary = rootFile + '_pearsonR_summary.csv'
 
     pearsonR, spearmanR = getCorrelations (V, P, dP.removeNaNfromCorr)
 
@@ -144,8 +146,8 @@ def main():
         print(" ",num,"Manually selected plots saved in:",plotFile,"\n")
 
     if dP.plotGraphsThreshold:
-        num1 = plotGraphThreshold(dfP, dfPearson, dP.validRows, "PearsonR_correlation", pdf)
-        num2 = plotGraphThreshold(dfP, dfSpearman, dP.validRows, "SpearmanR_correlation", pdf)
+        num1 = plotGraphThreshold(dfP, dfPearson, dP.validRows, "PearsonR_correlation", pdf, pearsonSummary)
+        num2 = plotGraphThreshold(dfP, dfSpearman, dP.validRows, "SpearmanR_correlation", pdf, spearmanSummary)
         print(" ",num1+num2,"XY plots with correlation in [",dP.corrMin,",",dP.corrMax,"] saved in:",plotFile,"\n")
     pdf.close()
     
@@ -314,12 +316,15 @@ def plotSelectedGraphs(dfP, X, Y, validRows, pdf):
 #************************************
 # Plot Graphs based on threshold
 #************************************
-def plotGraphThreshold(dfP, dfC, validRows, title, pdf):
+def plotGraphThreshold(dfP, dfC, validRows, title, pdf, sumFile):
     num = 0
+    dfSummary = pd.DataFrame()
     for col in dfC.columns:
         for ind in dfC[dfC[col].between(dP.corrMin,dP.corrMax)].index:
             x, y, ann = purgeSparse(dfP[col].to_numpy(), dfP[ind].to_numpy(), dfP.iloc[:,0], dP.removeNaNfromCorr)
             plt.plot(x,y, 'bo')
+            
+            dfSummary = pd.concat([dfSummary, pd.DataFrame([{'PAR': col, 'PERF': ind, 'Corr': dfC[col].loc[ind], 'Num_points': len(x)}])], ignore_index=True)
         
             if dP.plotValidData:
                 xv, yv, ann = purgeSparse(dfP.loc[validRows,col].to_numpy(), dfP.loc[validRows, ind].to_numpy(), dfP.iloc[:,0], dP.removeNaNfromCorr)
@@ -328,6 +333,7 @@ def plotGraphThreshold(dfP, dfC, validRows, title, pdf):
             plt.xlabel(col)
             plt.ylabel(ind)
             plt.title(title+": {0:.3f}".format(dfC[col].loc[ind]))
+            
             if dP.addSampleTagPlot:
                 for k, txt, in enumerate(ann):
                     plt.annotate(txt,xy=(x[k],y[k]), fontsize='x-small')
@@ -342,6 +348,8 @@ def plotGraphThreshold(dfP, dfC, validRows, title, pdf):
             pdf.savefig()
             plt.close()
             num+=1
+    print(title, "\n", dfSummary, "\n")
+    dfSummary.to_csv(sumFile, index=True, header=True)
     return num
 
 #************************************
