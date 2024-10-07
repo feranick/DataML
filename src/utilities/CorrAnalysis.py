@@ -17,6 +17,7 @@ from scipy import stats
 import sys, os.path, h5py
 from random import uniform
 from bisect import bisect_left
+from datetime import datetime, date
 from scipy.stats import pearsonr, spearmanr
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -50,10 +51,10 @@ class dP:
     ### Heat Maps
     heatMapsCorr = True             # True: use for Master data
     heatMapCorrFull = False          #True: plot all correlation data
-    corrMax = 1
-    corrMin = 0.75
-    #corrMax = -0.75
-    #corrMin = -1
+    #corrMax = 1
+    #corrMin = 0.75
+    corrMax = -0.75
+    corrMin = -1
     
     ### Plotting correlation 2D plots
     plotSelectedGraphs = False
@@ -104,8 +105,8 @@ def main():
     pearsonFile = rootFile + '_pearsonR.csv'
     spearmanFile = rootFile + '_spearmanR.csv'
     plotFile = rootFile + '_plots.pdf'
-    spearmanSummary = rootFile + '_spearmanR_summary.csv'
-    pearsonSummary = rootFile + '_pearsonR_summary.csv'
+    spearmanSummary = rootFile + '_spearmanR_summary' + str(datetime.now().strftime('_%Y-%m-%d_%H-%M-%S.csv'))
+    pearsonSummary = rootFile + '_pearsonR_summary' + str(datetime.now().strftime('_%Y-%m-%d_%H-%M-%S.csv'))
 
     pearsonR, spearmanR = getCorrelations (V, P, dP.removeNaNfromCorr)
 
