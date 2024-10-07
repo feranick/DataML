@@ -50,8 +50,10 @@ class dP:
     ### Heat Maps
     heatMapsCorr = True             # True: use for Master data
     heatMapCorrFull = False          #True: plot all correlation data
-    corrMax = -0.75
-    corrMin = -1
+    corrMax = 1
+    corrMin = 0.75
+    #corrMax = -0.75
+    #corrMin = -1
     
     ### Plotting correlation 2D plots
     plotSelectedGraphs = False
@@ -349,7 +351,6 @@ def plotGraphThreshold(dfP, dfC, validRows, title, pdf, sumFile):
             plt.close()
             num+=1
     
-    print(title, "\n", dfSummary, "\n")
     dfSummary = dfSummary.sort_values(by=['PERF'])
     print(title, "\n", dfSummary, "\n")
     dfSummary.to_csv(sumFile, index=True, header=True)
