@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: v2024.10.07.1
+* version: v2024.10.07.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -32,7 +32,7 @@ class dP:
     specifyColumns = False
     #trainCol = [1, 40]       # IGC (column range)
     #predCol = [41, 48]       # IGC (column range)
-    trainCol = [1, 48]       # IGC (column range)
+    trainCol = [1, 40]       # IGC (column range)
     predCol = [41,48]       # IGC (column range)
     #trainCol = [14,21,23,29,34,35,36,37,38,39,40]       # IGC (column range)
     #predCol = [41,48]       # IGC (column range)
@@ -348,6 +348,9 @@ def plotGraphThreshold(dfP, dfC, validRows, title, pdf, sumFile):
             pdf.savefig()
             plt.close()
             num+=1
+    
+    print(title, "\n", dfSummary, "\n")
+    dfSummary = dfSummary.sort_values(by=['PERF'])
     print(title, "\n", dfSummary, "\n")
     dfSummary.to_csv(sumFile, index=True, header=True)
     return num
