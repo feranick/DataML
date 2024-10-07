@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.10.07.1
+* v2024.10.07.2
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -46,6 +46,10 @@ class Conf():
         
         self.tb_directory = "model_MLP"
         self.model_name = self.model_directory+self.modelName
+        
+        if self.kerasVersion == 3:
+            self.model_name = os.path.splitext(self.model_name)[0]+".keras"
+                    
         self.model_le = self.model_directory+"model_le.pkl"
         
         self.optParFile = "opt_parameters.txt"
@@ -385,10 +389,7 @@ def train(learnFile, testFile, normFile):
 	        validation_split=dP.cv_split)
             
     if dP.saveBestModel == False:
-        if dP.kerasVersion == 2:
-            model.save(dP.model_name)
-        else:
-            model.export(os.path.splitext(dP.model_name)[0])
+        model.save(dP.model_name)
     else:
         model = loadModel(dP)
         
