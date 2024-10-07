@@ -5,7 +5,7 @@
 * MasterDataMaker
 * Adds data from single file to Master Doc
 * File must be in ASCII
-* version: v2023.12.15.1
+* version: v2024.10.07.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -24,12 +24,12 @@ from libDataML import *
 class dP:
     saveAsTxt = True
 
-    fullDataset = True
+    fullDataset = False
     minCCol = 1
     maxCCol = 41
     #charCCols = [8,10,12,13]
-    charCCols = [14,21,23,29,32,34,35,36,37,38,39,40]
-    predRCol = [10]
+    charCCols = [15,21,23,29]
+    predRCol = [41]
     
     validFile = False
     createRandomValidSet =  False
@@ -187,7 +187,7 @@ def saveLearnFile(M, learnFile, saveNormFlag):
         learnFile += '.h5'
         print(" Saving new training file (hdf5) in: "+learnFile+"\n")
         with h5py.File(learnFile, 'w') as hf:
-            hf.create_dataset("M",  data=M)
+            hf.create_dataset("M",  data=M.astype(np.float64))
 
 #***************************************
 # Randomize initial set
