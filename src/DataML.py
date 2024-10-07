@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.10.04.1
+* v2024.10.07.1
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -538,9 +538,9 @@ def train(learnFile, testFile, normFile):
         print('  ========================================================')
         print('  \033[1m HyperParameters Optimization\033[0m')
         print('  ========================================================\n')
-    
+                
         from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
-        from keras.wrappers.scikit_learn import KerasClassifier, KerasRegressor
+        from scikeras.wrappers import KerasClassifier, KerasRegressor
         import json
         
         with open(dP.optParFile) as f:
