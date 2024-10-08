@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.10.07.3
+* v2024.10.08.1
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -269,7 +269,7 @@ def train(learnFile, testFile, normFile):
     else:
         print("\n  Testing data set from training file:",dP.cv_split*100,"%")
         print("  Training set file datapoints:", math.floor(A.shape[0]*(1-dP.cv_split)))
-        print("  Testing set datapoints:", math.ceil(A.shape[0]*dP.cv_split))
+        print("  Testing set datapoints:", math.ceil(A.shape[0]*dP.cv_split),"\n")
     
     if dP.regressor:
         Cl2 = np.copy(Cl)
@@ -335,10 +335,11 @@ def train(learnFile, testFile, normFile):
         ### Build model
         #************************************
         model = keras.models.Sequential()
+        model.add(keras.Input(shape=(A.shape[1],)))
         for i in range(len(dP.HL)):
             model.add(keras.layers.Dense(dP.HL[i],
                 activation = 'relu',
-                input_dim=A.shape[1],
+                #input_dim=A.shape[1],
                 kernel_regularizer=keras.regularizers.l2(dP.l2)))
             model.add(keras.layers.Dropout(dP.drop))
 
@@ -354,7 +355,6 @@ def train(learnFile, testFile, normFile):
                 metrics=['accuracy'])
         return model
         
-    #model = get_model(learnRate = dP.l_rate, decay = dP.l_rdecay, layers = dP.HL, l2 = dP.l2, dropout = dP.drop)
     model = get_model()
 
     tbLog = keras.callbacks.TensorBoard(log_dir=dP.tb_directory, histogram_freq=120,
@@ -370,9 +370,7 @@ def train(learnFile, testFile, normFile):
         else:
             mc = keras.callbacks.ModelCheckpoint(dP.model_name, monitor=dP.metricBestModelC, mode='max', verbose=1, save_best_only=True)
         tbLogs.append(mc)
-        
-    #tbLogs = [tbLog, es, mc]
-    
+            
     if testFile is not None:
         log = model.fit(A, Cl2,
             epochs=dP.epochs,
