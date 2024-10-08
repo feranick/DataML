@@ -83,7 +83,7 @@ class Conf():
             }
     def sysDef(self):
         self.conf['System'] = {
-            'kerasVersion' : 2,
+            'kerasVersion' : 3,
             'fixTFseed' : True,
             'makeQuantizedTFlite' : True,
             'useTFlitePred' : False,
