@@ -5,7 +5,7 @@
 * MasterDataMaker
 * Adds data from single file to Master Doc
 * File must be in ASCII
-* version: v2024.10.07.1
+* version: v2024.10.09.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -30,6 +30,8 @@ class dP:
     #charCCols = [8,10,12,13]
     charCCols = [15,21,23,29]
     predRCol = [41]
+    
+    purgeUndefRows = False
     
     validFile = False
     createRandomValidSet =  False
@@ -81,8 +83,14 @@ def main():
     else:
         datasetLabel = '_partialDataSet'
     
-    rootFile = os.path.splitext(sys.argv[1])[0] + datasetLabel + '-p' + str(predRCol[0])
+    rootFile = os.path.splitext(sys.argv[1])[0] + datasetLabel
+    
+    if dP.purgeUndefRows:
+        rootFile += '_purged'
+        
+    rootFile += '_p' + str(predRCol[0])
     learnFile = rootFile + '_train'
+    
     try:
         P,V = readParamFile(sys.argv[1], predRCol, rootFile)
     except:
@@ -128,30 +136,18 @@ def readParamFile(paramFile, predRCol, rootFile):
         usecols = range(dP.minCCol,dP.maxCCol)
     else:
         usecols = dP.charCCols
-    '''
-    #------- Old Method ----------------
-    with open(paramFile, 'r') as f:
-        P = pd.read_csv(f, delimiter = ",").iloc[:,usecols].to_numpy()
-        P[np.isnan(P)] = dP.valueForNan
     
-    with open(paramFile, 'r') as f:
-        L = np.genfromtxt(f, unpack = False, usecols=predRCol,
-            delimiter = ',', skip_header=dP.numHeadRows)
-        L[np.isnan(L)] = dP.valueForNan
-
-    L = np.asarray([L]).T
-    M = np.append(L, P, axis = 1)
-    #----------------------------------
-    '''
     with open(paramFile, 'r') as f:
         P2 = pd.read_csv(f, delimiter = ",", header=dP.numHeadRows).to_numpy()
     
     M = np.hstack((P2[:,predRCol],P2[:,usecols]))
-    #----------------------------------
 
+    if dP.purgeUndefRows:
+        M = purgeRows(M)
+    
     P = np.vstack([list(range(0,M.shape[1])),M])
     V = np.array([list(range(0,M.shape[1]))])
-    
+
     #***************************************
     # Handle Validation File
     #***************************************
@@ -237,6 +233,16 @@ def formatSubset2(A, Cl, percent):
     Cl_cv = Cl[list]
     return A_train, Cl_train, A_cv, Cl_cv
 '''
+
+#************************************
+# Purge rows with undefined Cl value
+#************************************
+def purgeRows(M):
+    condition = M[:,0] == 0
+    M2 = M[~condition]
+    print(" Shape original dataset:", M.shape)
+    print(" Purged from undefined values. \n Shape new dataset:",M2.shape,"\n")
+    return M2
 
 #************************************
 # Main initialization routine
