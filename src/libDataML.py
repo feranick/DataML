@@ -454,13 +454,35 @@ def runAutoencoder(learnFile, testFile, dP):
 #********************************************************************************
 def runPCA(En, Cl, A, numPCAcomponents):
     import numpy as np
-    from sklearn.decomposition import PCA
+    from sklearn import preprocessing, decomposition
+    from scipy.sparse import csr_matrix
     import matplotlib.pyplot as plt
     from matplotlib import cm
 
     customNumPCAComp = True
     showPCAPlots = True
     
+    #M = np.column_stack((Cl, A))
+    
+    #************************************
+    # Sklearn SparsePCA
+    #************************************
+    scaler = preprocessing.StandardScaler(with_mean=False)
+    A_scaled = scaler.fit_transform(M)
+    
+    spca = decomposition.SparsePCA(n_components=3)
+    #pca = decomposition.PCA(n_components=3)
+    
+    A_dense = spca.fit_transform(A_scaled)
+    
+    A_inverse = spca.inverse_transform(A_dense)
+    A_orig = scaler.inverse_transform(A_inverse)
+    
+    print("A_dense:\n",A_dense)
+    print("A_inverse:\n",A_inverse)
+    print("A_orig:\n",A_orig)
+    
+    '''
     print('==========================================================================\n')
     print(' Running PCA...\n')
     print(' Number of unique target classes in training data: ' + str(np.unique(Cl).shape[0]))
@@ -535,5 +557,5 @@ def runPCA(En, Cl, A, numPCAcomponents):
             plt.figure()
         
         plt.show()
-        
+        '''
 

@@ -906,6 +906,8 @@ def usage():
     print('  python3 DataML.py -o\n')
     print(' Run principal component analysis (PCA) - EXPERIMENTAL:')
     print('  python3 DataML.py -c <learningFile>\n')
+    print(' Create Autoencoder - Experimental - EXPERIMENTAL:')
+    print('  python3 DataML.py -a <learningFile> <validFile-optional>\n')
     print(' Requires python 3.x. Not compatible with python 2.x\n')
 
 #************************************
