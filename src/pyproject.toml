@@ -9,8 +9,17 @@ include = [
 
 [project]
 name = "DataML"
-version = "v2024.10.08.1"
-dependencies = ["numpy", "h5py", "tensorflow", "pydot", "graphviz","scipy","tf-keras","scikeras"]
+version = "v2024.10.09.1"
+dependencies = [
+    "numpy",
+    "h5py",
+    "tensorflow",
+    "pydot",
+    "graphviz",
+    "scipy",
+    "tf-keras",
+    "scikeras",
+    "scikit-learn"]
 authors = [{ name="Nicola Ferralis", email="ferralis@mit.edu" },]
 description = "Multilabel machine learning for combined experimental data"
 readme = "../README.md"

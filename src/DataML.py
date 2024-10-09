@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.10.08.1
+* v2024.10.09.1
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -148,7 +148,7 @@ def main():
     
     try:
         opts, args = getopt.getopt(sys.argv[1:],
-                                   "tpbvloh:", ["train", "predict", "batch", "validbatch","lite", "opt", "help"])
+                                   "tpbvloch:", ["train", "predict", "batch", "validbatch","lite", "opt", "comp", "help"])
     except:
         usage()
         sys.exit(2)
@@ -211,6 +211,13 @@ def main():
         if o in ["-o" , "--opt"]:
             try:
                 makeOptParameters(dP)
+            except:
+                usage()
+                sys.exit(2)
+                
+        if o in ["-c" , "--comp"]:
+            try:
+                prePCA(sys.argv[2])
             except:
                 usage()
                 sys.exit(2)
@@ -969,6 +976,19 @@ def makeOptParameters(dP):
     with open(dP.optParFile, 'w') as json_file:
         json.dump(grid, json_file)
     print(" Created: ",dP.optParFile,"\n")
+    
+    
+#************************************
+# Principal Component Analysis
+#************************************
+def prePCA(learnFile):
+    numPCA = 2
+    En, A, Cl = readLearnFile(learnFile)
+        
+    if numPCA > min(En.shape[0],Cl.shape[0]):
+        numPCA = min(En.shape[0],Cl.shape[0])
+    
+    runPCA(En, Cl, A, numPCA)
 
 #************************************
 # Lists the program usage
@@ -997,6 +1017,8 @@ def usage():
     print('  python3 DataML.py -l <learningFile>\n')
     print(' Create parameter optimization file:')
     print('  python3 DataML.py -o\n')
+    print(' Run principal component analysis (PCA) - EXPERIMENTAL:')
+    print('  python3 DataML.py -c <learningFile>\n')
     print(' Requires python 3.x. Not compatible with python 2.x\n')
 
 #************************************
