@@ -2,7 +2,7 @@
 '''
 ***********************************************************
 * libDataML - Library for DataML
-* v2024.10.09.1
+* v2024.10.09.2
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -260,6 +260,187 @@ def checkTFVersion(vers):
     from packaging import version
     v = version.parse(tf.__version__)
     return v < version.parse(vers)
+    
+
+#****************************************************
+# Convert model to quantized TFlite
+#****************************************************
+def convertTflite(learnFile, dP):
+    dP = Conf()
+    dP.useTFlitePred = False
+    dP.TFliteRuntime = False
+    dP.runCoralEdge = False
+    from pkg_resources import parse_version
+    import tensorflow as tf
+    if parse_version(tf.version.VERSION) < parse_version('2.0.0'):
+        tf.compat.v1.enable_eager_execution()
+    learnFileRoot = os.path.splitext(learnFile)[0]
+    En, A, Cl = readLearnFile(learnFile, dP)
+    model = loadModel(dP)
+    makeQuantizedTFmodel(A, dP)
+    
+#************************************
+# Open Training Data
+#************************************
+def readLearnFile(learnFile, dP):
+    print("  Opening training file:",learnFile)
+    try:
+        if os.path.splitext(learnFile)[1] == ".npy":
+            M = np.load(learnFile)
+        elif os.path.splitext(learnFile)[1] == ".h5":
+            with h5py.File(learnFile, 'r') as hf:
+                M = hf["M"][:]
+        else:
+            with open(learnFile, 'r') as f:
+                M = np.loadtxt(f, unpack =False)
+    except:
+        print("\033[1m Training file not found\033[0m")
+        return
+        
+    En = M[0,dP.numLabels:]
+    A = M[1:,dP.numLabels:]
+    if dP.numLabels == 1:
+        Cl = M[1:,0]
+    else:
+        Cl = M[1:,[0,dP.numLabels-1]]
+
+    return En, A, Cl
+
+#************************************
+# Open Testing Data
+#************************************
+def readTestFile(testFile, dP):
+    try:
+        with open(testFile, 'r') as f:
+            print('\n  Opening sample data for prediction:\n  ',testFile)
+            Rtot = np.loadtxt(f, unpack =True)
+        R=np.array([Rtot[1,:]])
+        Rx=np.array([Rtot[0,:]])
+    except:
+        print("\033[1m\n File not found or corrupt\033[0m\n")
+        return 0, False
+    return R, True
+
+#************************************
+# Print NN Info
+#************************************
+def printParam(dP):
+    print('\n  ================================================')
+    print('  \033[1m MLP\033[0m - Parameters')
+    print('  ================================================')
+    print('  Optimizer:','Adam',
+                '\n  Hidden layers:', dP.HL,
+                '\n  Activation function:','relu',
+                '\n  L2:',dP.l2,
+                '\n  Dropout:', dP.drop,
+                '\n  Learning rate:', dP.l_rate,
+                '\n  Learning decay rate:', dP.l_rdecay)
+    if dP.fullSizeBatch == True:
+        print('  Batch size: full')
+    else:
+        print('  Batch size:', dP.batch_size)
+    print('  Epochs:',dP.epochs)
+    print('  Number of labels:', dP.numLabels)
+    print('  Stop at Best Model based on validation:', dP.stopAtBest)
+    print('  Save Best Model based on validation:', dP.saveBestModel)
+    if dP.regressor:
+        print('  Metric for Best Regression Model:', dP.metricBestModelR)
+    else:
+        print('  Metric for Best Classifier Model:', dP.metricBestModelC)
+    #print('  ================================================\n')
+
+#************************************
+# Plot Weigths
+#************************************
+def plotWeights(En, A, model, dP):
+    import matplotlib.pyplot as plt
+    plt.figure(tight_layout=True)
+    #plotInd = 711
+    plotInd = (len(dP.HL)+2)*100+11
+    for layer in model.layers:
+        try:
+            w_layer = layer.get_weights()[0]
+            ax = plt.subplot(plotInd)
+            newX = np.arange(En[0], En[-1], (En[-1]-En[0])/w_layer.shape[0])
+            plt.plot(En, np.interp(En, newX, w_layer[:,0]), label=layer.get_config()['name'])
+            plt.legend(loc='upper right')
+            plt.setp(ax.get_xticklabels(), visible=False)
+            plotInd +=1
+        except:
+            pass
+
+    ax1 = plt.subplot(plotInd)
+    ax1.plot(En, A[0], label='Sample data')
+
+    plt.xlabel('Raman shift [1/cm]')
+    plt.legend(loc='upper right')
+    plt.savefig('model_MLP_weights' + '.png', dpi = 160, format = 'png')  # Save plot
+
+#************************************
+# Make Optimization Parameter File
+#************************************
+def makeOptParameters(dP):
+    import json
+    grid = {"learnRate": [0.01, 0.001, 0.0001], "l2": [0.001, 0.0001, 1e-05], "decay": [0.001, 0.0001, 1e-05], "dropout": [0, 0.1, 0.2, 0.3, 0.4], "batch_size": [16, 32, 64, 128, 256], "epochs": [300, 400, 500]}
+    with open(dP.optParFile, 'w') as json_file:
+        json.dump(grid, json_file)
+    print(" Created: ",dP.optParFile,"\n")
+
+#************************************
+# Autoencoder
+#************************************
+def runAutoencoder(learnFile, testFile, dP):
+    import keras
+    import tensorflow as tf
+    
+    class Autoencoder(keras.Model):
+        def __init__(self, latent_dim, shape):
+            super(Autoencoder, self).__init__()
+            self.latent_dim = latent_dim
+            self.shape = shape
+            self.encoder = keras.Sequential([
+                keras.layers.Flatten(),
+                keras.layers.Dense(latent_dim, activation='relu'),
+                ])
+            self.decoder = keras.Sequential([
+                keras.layers.Dense(tf.math.reduce_prod(shape).numpy(), activation='sigmoid'),
+                keras.layers.Reshape(shape)
+                ])
+
+        def call(self, x):
+            encoded = self.encoder(x)
+            decoded = self.decoder(encoded)
+            return decoded
+    
+    En, A, Cl = readLearnFile(learnFile, dP)
+            
+    shape = A.shape[1:]
+    latent_dim = 4
+    autoencoder = Autoencoder(latent_dim, shape)
+    autoencoder.compile(optimizer=keras.optimizers.Adam(), loss=keras.losses.MeanSquaredError())
+    
+    if testFile is None:
+        autoencoder.fit(A, A,
+                epochs=10,
+                shuffle=True,
+                #validation_data=(x_test, x_test),
+                validation_split=dP.cv_split
+                )
+    else:
+        En_test, A_test, Cl_test = readLearnFile(testFile, dP)
+        autoencoder.fit(A, A,
+                epochs=10,
+                shuffle=True,
+                validation_data=(A_test, A_test),
+                validation_split=dP.cv_split
+                )
+                
+        A_test_encoded = autoencoder.encoder(A_test).numpy()
+        A_test_decoded = autoencoder.decoder(A_test_encoded).numpy()
+        
+        print(A_test)
+        print(A_test_encoded)
+        print(A_test_decoded)
 
 #********************************************************************************
 # Run PCA - EXPERIMENTAL

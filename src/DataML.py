@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.10.09.1
+* v2024.10.09.2
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -148,7 +148,7 @@ def main():
     
     try:
         opts, args = getopt.getopt(sys.argv[1:],
-                                   "tpbvloch:", ["train", "predict", "batch", "validbatch","lite", "opt", "comp", "help"])
+            "tpbvlocah:", ["train", "predict", "batch", "validbatch","lite", "opt", "comp", "autoencoder", "help"])
     except:
         usage()
         sys.exit(2)
@@ -159,17 +159,17 @@ def main():
 
     for o, a in opts:
         if o in ("-t" , "--train"):
-            try:
-                if len(sys.argv)<4:
-                    train(sys.argv[2], None, None)
+            #try:
+            if len(sys.argv)<4:
+                train(sys.argv[2], None, None)
+            else:
+                if len(sys.argv)<5:
+                    train(sys.argv[2], sys.argv[3], None)
                 else:
-                    if len(sys.argv)<5:
-                        train(sys.argv[2], sys.argv[3], None)
-                    else:
-                        train(sys.argv[2], sys.argv[3], sys.argv[4])
-            except:
-                usage()
-                sys.exit(2)
+                    train(sys.argv[2], sys.argv[3], sys.argv[4])
+            #except:
+            #    usage()
+            #    sys.exit(2)
 
         if o in ("-p" , "--predict"):
             try:
@@ -216,11 +216,24 @@ def main():
                 sys.exit(2)
                 
         if o in ["-c" , "--comp"]:
-            try:
-                prePCA(sys.argv[2])
-            except:
-                usage()
-                sys.exit(2)
+            #try:
+            if len(sys.argv)<4:
+                prePCA(sys.argv[2], None)
+            else:
+                prePCA(sys.argv[2], sys.argv[3])
+            #except:
+            #    usage()
+            #    sys.exit(2)
+            
+        if o in ["-a" , "--autoencoder"]:
+            #try:
+            if len(sys.argv)<4:
+                runAutoencoder(sys.argv[2], None, dP)
+            else:
+                runAutoencoder(sys.argv[2], sys.argv[3], dP)
+            #except:
+            #    usage()
+            #    sys.exit(2)
 
     total_time = time.perf_counter() - start_time
     print(" Total time: {0:.1f}s or {1:.1f}m or {2:.1f}h".format(total_time,
@@ -257,9 +270,9 @@ def train(learnFile, testFile, normFile):
     
     learnFileRoot = os.path.splitext(learnFile)[0]
 
-    En, A, Cl = readLearnFile(learnFile)
+    En, A, Cl = readLearnFile(learnFile, dP)
     if testFile is not None:
-        En_test, A_test, Cl_test = readLearnFile(testFile)
+        En_test, A_test, Cl_test = readLearnFile(testFile, dP)
         totA = np.vstack((A, A_test))
         totCl = np.append(Cl, Cl_test)
     else:
@@ -295,12 +308,13 @@ def train(learnFile, testFile, normFile):
         if testFile is not None:
             Cl2_test = le.transform(Cl_test)
         '''
+        
         le = MultiClassReductor()
         le.fit(np.unique(totCl, axis=0))
         Cl2 = le.transform(Cl)
-    
+        
         print("\n  Number unique classes (training): ", np.unique(Cl).size)
-    
+        
         if testFile is not None:
             Cl2_test = le.transform(Cl_test)
             print("  Number unique classes (validation):", np.unique(Cl_test).size)
@@ -309,16 +323,11 @@ def train(learnFile, testFile, normFile):
         print("\n  Label Encoder saved in:", dP.model_le,"\n")
         with open(dP.model_le, 'ab') as f:
             f.write(pickle.dumps(le))
-
+        
         #totCl2 = keras.utils.to_categorical(totCl2, num_classes=np.unique(totCl).size)
         Cl2 = keras.utils.to_categorical(Cl2, num_classes=np.unique(totCl).size+1)
         if testFile is not None:
             Cl2_test = keras.utils.to_categorical(Cl2_test, num_classes=np.unique(totCl).size+1)
-        
-        #Experimental new methods of one-hot encoding.
-        #Cl2 = tf.keras.layers.CategoryEncoding(num_tokens=np.unique(totCl).size+1, output_mode="one_hot")(Cl)
-        #with open('one_hot.pkl', 'wb') as f:
-        #    pickle.dump(Cl2, f)
 
     #************************************
     # Training
@@ -451,7 +460,7 @@ def train(learnFile, testFile, normFile):
         mae = np.asarray(log.history['mae'])
         val_mae = np.asarray(log.history['val_mae'])
             
-        printParam()
+        printParam(dP)
         print('\n  ==========================================================')
         print('  \033[1m MLP - Regressor\033[0m - Training Summary')
         print('  ==========================================================')
@@ -496,7 +505,7 @@ def train(learnFile, testFile, normFile):
             Cl2_test = le.transform(Cl_test)
             print("  Number unique classes (validation):", np.unique(Cl_test).size)
             print("  Number unique classes (total): ", np.unique(totCl).size)
-        printParam()
+        printParam(dP)
         print('\n  ========================================================')
         print('  \033[1m MLP - Classifier \033[0m - Training Summary')
         print('  ========================================================')
@@ -537,7 +546,7 @@ def train(learnFile, testFile, normFile):
             print('\n  ==========================================================\n')
 
     if dP.plotWeightsFlag == True:
-        plotWeights(dP, En, A, model)
+        plotWeights(En, A, model, dP)
     
     getTFVersion(dP)
     
@@ -623,7 +632,7 @@ def train(learnFile, testFile, normFile):
 #************************************
 def predict(testFile, normFile):
     dP = Conf()
-    R, _ = readTestFile(testFile)
+    R, _ = readTestFile(testFile, dP)
 
     if normFile is not None:
         try:
@@ -694,7 +703,7 @@ def predict(testFile, normFile):
 #************************************
 def batchPredict(folder, normFile):
     dP = Conf()
-    #En_test, A_test, Cl_test = readLearnFile(testFile)
+    #En_test, A_test, Cl_test = readLearnFile(testFile, dP)
     
     model = loadModel(dP)
 
@@ -710,7 +719,7 @@ def batchPredict(folder, normFile):
             
     fileName = []
     for file in glob.glob(folder+'/*.txt'):
-        R, good = readTestFile(file)
+        R, good = readTestFile(file, dP)
         if  normFile is not None:
             R = norm.transform_valid_data(R)
         if good:
@@ -770,7 +779,7 @@ def batchPredict(folder, normFile):
 #************************************************************
 def validBatchPredict(testFile, normFile):
     dP = Conf()
-    En_test, A_test, Cl_test = readLearnFile(testFile)
+    En_test, A_test, Cl_test = readLearnFile(testFile, dP)
     model = loadModel(dP)
 
     if normFile is not None:
@@ -856,139 +865,12 @@ def validBatchPredict(testFile, normFile):
     df.to_csv(dP.summaryFileName, index=False, header=False)
     print("\n Prediction summary saved in:",dP.summaryFileName,"\n")
 
-#****************************************************
-# Convert model to quantized TFlite
-#****************************************************
-def convertTflite(learnFile):
-    dP = Conf()
-    dP.useTFlitePred = False
-    dP.TFliteRuntime = False
-    dP.runCoralEdge = False
-    from pkg_resources import parse_version
-    import tensorflow as tf
-    if parse_version(tf.version.VERSION) < parse_version('2.0.0'):
-        tf.compat.v1.enable_eager_execution()
-    learnFileRoot = os.path.splitext(learnFile)[0]
-    En, A, Cl = readLearnFile(learnFile)
-    model = loadModel(dP)
-    makeQuantizedTFmodel(A, dP)
-    
-#************************************
-# Open Training Data
-#************************************
-def readLearnFile(learnFile):
-    print("  Opening training file:",learnFile)
-    try:
-        if os.path.splitext(learnFile)[1] == ".npy":
-            M = np.load(learnFile)
-        elif os.path.splitext(learnFile)[1] == ".h5":
-            with h5py.File(learnFile, 'r') as hf:
-                M = hf["M"][:]
-        else:
-            with open(learnFile, 'r') as f:
-                M = np.loadtxt(f, unpack =False)
-    except:
-        print("\033[1m Training file not found\033[0m")
-        return
-
-    dP = Conf()
-    En = M[0,dP.numLabels:]
-    A = M[1:,dP.numLabels:]
-    if dP.numLabels == 1:
-        Cl = M[1:,0]
-    else:
-        Cl = M[1:,[0,dP.numLabels-1]]
-
-    return En, A, Cl
-
-#************************************
-# Open Testing Data
-#************************************
-def readTestFile(testFile):
-    try:
-        with open(testFile, 'r') as f:
-            print('\n  Opening sample data for prediction:\n  ',testFile)
-            Rtot = np.loadtxt(f, unpack =True)
-        R=np.array([Rtot[1,:]])
-        Rx=np.array([Rtot[0,:]])
-    except:
-        print("\033[1m\n File not found or corrupt\033[0m\n")
-        return 0, False
-    return R, True
-
-#************************************
-# Print NN Info
-#************************************
-def printParam():
-    dP = Conf()
-    print('\n  ================================================')
-    print('  \033[1m MLP\033[0m - Parameters')
-    print('  ================================================')
-    print('  Optimizer:','Adam',
-                '\n  Hidden layers:', dP.HL,
-                '\n  Activation function:','relu',
-                '\n  L2:',dP.l2,
-                '\n  Dropout:', dP.drop,
-                '\n  Learning rate:', dP.l_rate,
-                '\n  Learning decay rate:', dP.l_rdecay)
-    if dP.fullSizeBatch == True:
-        print('  Batch size: full')
-    else:
-        print('  Batch size:', dP.batch_size)
-    print('  Epochs:',dP.epochs)
-    print('  Number of labels:', dP.numLabels)
-    print('  Stop at Best Model based on validation:', dP.stopAtBest)
-    print('  Save Best Model based on validation:', dP.saveBestModel)
-    if dP.regressor:
-        print('  Metric for Best Regression Model:', dP.metricBestModelR)
-    else:
-        print('  Metric for Best Classifier Model:', dP.metricBestModelC)
-    #print('  ================================================\n')
-
-#************************************
-# Open Learning Data
-#************************************
-def plotWeights(dP, En, A, model):
-    import matplotlib.pyplot as plt
-    plt.figure(tight_layout=True)
-    #plotInd = 711
-    plotInd = (len(dP.HL)+2)*100+11
-    for layer in model.layers:
-        try:
-            w_layer = layer.get_weights()[0]
-            ax = plt.subplot(plotInd)
-            newX = np.arange(En[0], En[-1], (En[-1]-En[0])/w_layer.shape[0])
-            plt.plot(En, np.interp(En, newX, w_layer[:,0]), label=layer.get_config()['name'])
-            plt.legend(loc='upper right')
-            plt.setp(ax.get_xticklabels(), visible=False)
-            plotInd +=1
-        except:
-            pass
-
-    ax1 = plt.subplot(plotInd)
-    ax1.plot(En, A[0], label='Sample data')
-
-    plt.xlabel('Raman shift [1/cm]')
-    plt.legend(loc='upper right')
-    plt.savefig('model_MLP_weights' + '.png', dpi = 160, format = 'png')  # Save plot
-
-#************************************
-# Make Optimization Parameter File
-#************************************
-def makeOptParameters(dP):
-    import json
-    grid = {"learnRate": [0.01, 0.001, 0.0001], "l2": [0.001, 0.0001, 1e-05], "decay": [0.001, 0.0001, 1e-05], "dropout": [0, 0.1, 0.2, 0.3, 0.4], "batch_size": [16, 32, 64, 128, 256], "epochs": [300, 400, 500]}
-    with open(dP.optParFile, 'w') as json_file:
-        json.dump(grid, json_file)
-    print(" Created: ",dP.optParFile,"\n")
-    
-    
 #************************************
 # Principal Component Analysis
 #************************************
-def prePCA(learnFile):
-    numPCA = 2
-    En, A, Cl = readLearnFile(learnFile)
+def prePCA(learnFile, validFile):
+    numPCA = 4
+    En, A, Cl = readLearnFile(learnFile, Conf())
         
     if numPCA > min(En.shape[0],Cl.shape[0]):
         numPCA = min(En.shape[0],Cl.shape[0])
