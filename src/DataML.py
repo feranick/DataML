@@ -314,6 +314,11 @@ def train(learnFile, testFile, normFile):
         Cl2 = keras.utils.to_categorical(Cl2, num_classes=np.unique(totCl).size+1)
         if testFile is not None:
             Cl2_test = keras.utils.to_categorical(Cl2_test, num_classes=np.unique(totCl).size+1)
+        
+        #Experimental new methods of one-hot encoding.
+        #Cl2 = tf.keras.layers.CategoryEncoding(num_tokens=np.unique(totCl).size+1, output_mode="one_hot")(Cl)
+        #with open('one_hot.pkl', 'wb') as f:
+        #    pickle.dump(Cl2, f)
 
     #************************************
     # Training
