@@ -994,9 +994,9 @@ def usage():
     print(' Batch predict on validation data in single file (labels normalized with pkl file):')
     print('  python3 DataML.py -v <singleValidationFile> <pkl normalization file>\n')
     print(' Convert model to quantized tflite:')
-    print('  python3 SpectraKeras_CNN.py -l <learningFile>\n')
+    print('  python3 DataML.py -l <learningFile>\n')
     print(' Create parameter optimization file:')
-    print('  python3 SpectraKeras_CNN.py -o\n')
+    print('  python3 DataML.py -o\n')
     print(' Requires python 3.x. Not compatible with python 2.x\n')
 
 #************************************

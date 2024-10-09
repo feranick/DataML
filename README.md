@@ -81,6 +81,12 @@ Train (Random cross validation):
 
  Batch predict on validation data in single file (labels normalized with pkl file):
   `python3 DataML.py -v <singleValidationFile> <pkl normalization file>`
+  
+ Convert model to quantized tflite:
+  `python3 DataML.py -l <learningFile>`
+  
+ Create parameter optimization file:
+  `python3 DataML.py -o`
 
 
 Formatting input file for training
