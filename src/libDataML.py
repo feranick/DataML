@@ -78,7 +78,7 @@ class Normalizer(object):
 
     def save(self, name):
         with open(name, 'ab') as f:
-            f.write(pickle.dumps(self))
+            pickle.dump(self, f)
 
 #************************************
 # CustomRound
