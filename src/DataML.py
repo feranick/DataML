@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.10.10.1
+* v2024.10.10.2
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -82,6 +82,8 @@ class Conf():
             'saveBestModel' : False,
             'metricBestModelR' : 'val_mae',
             'metricBestModelC' : 'val_accuracy',
+            'runPCAflag' : False,
+            'numPCAcomp' : 3,
             }
     def sysDef(self):
         self.conf['System'] = {
@@ -118,6 +120,8 @@ class Conf():
             self.saveBestModel = self.conf.getboolean('Parameters','saveBestModel')
             self.metricBestModelR = self.conf.get('Parameters','metricBestModelR')
             self.metricBestModelC = self.conf.get('Parameters','metricBestModelC')
+            self.runPCAflag = self.conf.getboolean('Parameters','runPCAflag')
+            self.numPCAcomp = self.conf.getint('Parameters','numPCAcomp')
             
             self.kerasVersion = self.conf.getint('System','kerasVersion')
             self.fixTFseed = self.conf.getboolean('System','fixTFseed')
@@ -315,16 +319,16 @@ def train(learnFile, testFile, normFile):
         le.fit(np.unique(totCl, axis=0))
         Cl2 = le.transform(Cl)
         
-        print("\n  Number unique classes (training): ", np.unique(Cl).size)
+        print("  Number unique classes (training): ", np.unique(Cl).size)
         
         if testFile is not None:
             Cl2_test = le.transform(Cl_test)
             print("  Number unique classes (validation):", np.unique(Cl_test).size)
             print("  Number unique classes (total): ", np.unique(totCl).size)
             
-        print("\n  Label Encoder saved in:", dP.model_le,"\n")
+        print("\n  Label encoder saved in:", dP.model_le,"\n")
         with open(dP.model_le, 'ab') as f:
-            f.write(pickle.dumps(le))
+            pickle.dump(le, f)
         
         #totCl2 = keras.utils.to_categorical(totCl2, num_classes=np.unique(totCl).size)
         Cl2 = keras.utils.to_categorical(Cl2, num_classes=np.unique(totCl).size+1)
@@ -335,7 +339,11 @@ def train(learnFile, testFile, normFile):
     # Training
     #************************************
 
-    if dP.fullSizeBatch == True:
+    if dP.runPCAflag:
+        A = runPCA(A, dP.numPCAcomp, dP)
+        print(A)
+
+    if dP.fullSizeBatch:
         dP.batch_size = A.shape[0]
 
     #************************************
@@ -449,9 +457,8 @@ def train(learnFile, testFile, normFile):
     
     if normFile is not None:
         try:
-            norm_file = open(normFile, "rb")
-            norm = pickle.loads(norm_file.read())
-            norm_file.close()
+            with open(normFile, "rb") as f:
+                norm = pickle.load(f)
             print("\n  Opening pkl file with normalization data:",normFile)
             print(" Normalizing validation file for prediction...")
         except:
@@ -638,9 +645,8 @@ def predict(testFile, normFile):
 
     if normFile is not None:
         try:
-            norm_file = open(normFile, "rb")
-            norm = pickle.loads(norm_file.read())
-            norm_file.close()
+            with open(normFile, "rb") as f:
+                norm = pickle.load(f)
             print("  Opening pkl file with normalization data:",normFile)
             print("  Normalizing validation file for prediction...\n")
             R = norm.transform_valid_data(R)
@@ -663,9 +669,8 @@ def predict(testFile, normFile):
         print('  ==========================================================\n')
         
     else:
-        le_file = open(dP.model_le, "rb")
-        le = pickle.loads(le_file.read())
-        le_file.close()
+        with open(dP.model_le, "rb") as f:
+            le = pickle.load(f)
         predictions, _ = getPredictions(R, loadModel(dP), dP)
         pred_class = np.argmax(predictions)
         if dP.useTFlitePred:
@@ -711,9 +716,8 @@ def batchPredict(folder, normFile):
 
     if normFile is not None:
         try:
-            norm_file = open(normFile, "rb")
-            norm = pickle.loads(norm_file.read())
-            norm_file.close()
+            with open(normFile, "rb") as f:
+                norm = pickle.load(f)
             print("  Opening pkl file with normalization data:",normFile,"\n")
         except:
             print("\033[1m" + " pkl file not found \n" + "\033[0m")
@@ -747,9 +751,8 @@ def batchPredict(folder, normFile):
         print('  ================================================================================')
     else:
         summaryFile = np.array([['DataML','Classifier',''],['Real Class','Predicted Class', 'Probability']])
-        le_file = open(dP.model_le, "rb")
-        le = pickle.loads(le_file.read())
-        le_file.close()
+        with open(dP.model_le, "rb") as f:
+            le = pickle.load(f)
         #predictions, _ = getPredictions(A_test, model,dP)
         #predictions = model.predict(A_test)
         print('\n  ================================================================================')
@@ -786,9 +789,8 @@ def validBatchPredict(testFile, normFile):
 
     if normFile is not None:
         try:
-            norm_file = open(normFile, "rb")
-            norm = pickle.loads(norm_file.read())
-            norm_file.close()
+            with open(normFile, "rb") as f:
+                norm = pickle.load(f)
             print("  Opening pkl file with normalization data:",normFile,"\n")
         except:
             print("\033[1m" + " pkl file not found \n" + "\033[0m")
@@ -829,9 +831,9 @@ def validBatchPredict(testFile, normFile):
         print('  ===========================================================================\n')
     else:
         summaryFile = np.array([['DataML','Classifier',''],['Real Class','Predicted Class', 'Probability']])
-        le_file = open(dP.model_le, "rb")
-        le = pickle.loads(le_file.read())
-        le_file.close()
+        
+        with open(dP.model_le, "rb") as f:
+            le = pickle.load(f)
         predictions, _ = getPredictions(A_test, model,dP)
         #predictions = model.predict(A_test)
         print('  ========================================================')
@@ -872,14 +874,12 @@ def validBatchPredict(testFile, normFile):
 #************************************
 def prePCA(learnFile, validFile, dP):
     
-    numPCA = 4
-    
     En, A, Cl = readLearnFile(learnFile, dP)
         
     if numPCA > min(En.shape[0],Cl.shape[0]):
         numPCA = min(En.shape[0],Cl.shape[0])
     
-    runPCA(En, Cl, A, numPCA, dP)
+    A_encoded = runPCA(A, dP.numPCAcomp, dP)
 
 #************************************
 # Lists the program usage

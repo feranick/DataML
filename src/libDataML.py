@@ -2,7 +2,7 @@
 '''
 ***********************************************************
 * libDataML - Library for DataML
-* v2024.10.10.1
+* v2024.10.10.2
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -452,7 +452,7 @@ def runAutoencoder(learnFile, testFile, dP):
 #    pca.explained_variance_ratio
 #
 #********************************************************************************
-def runPCA(En, Cl, A, numPCAcomp, dP):
+def runPCA(A, numPCAcomp, dP):
     import numpy as np
     from sklearn import preprocessing, decomposition
     from scipy.sparse import csr_matrix
@@ -460,12 +460,12 @@ def runPCA(En, Cl, A, numPCAcomp, dP):
     from matplotlib import cm
 
     rescaleForPCA = True
-    showPCAPlots = True
+    #showPCAPlots = True
         
     #************************************
     # Sklearn SparsePCA
     #************************************
-    print('\n  Running PCA...')
+    print('  Running PCA...')
     print('  Number of Principal components: ' + str(numPCAcomp) + '\n')
     
     spca = decomposition.SparsePCA(n_components=numPCAcomp)
@@ -486,11 +486,8 @@ def runPCA(En, Cl, A, numPCAcomp, dP):
     print("  PCA encoder saved in:", dP.model_pca,"\n")
     with open(dP.model_pca,'wb') as f:
         pickle.dump(spca, f)
-    
-    print("A_orig:\n",A)
-    print("A_encoded:\n",A_encoded)
-    print("A_decoded:\n",A_decoded)
-    print("DIFF\n",A-A_decoded)
+        
+    return A_encoded
     
     '''
     print('==========================================================================\n')
