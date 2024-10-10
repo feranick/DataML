@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.10.10.4
+* v2024.10.10.5
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -281,6 +281,11 @@ def train(learnFile, testFile, normFile):
     En, A, Cl = readLearnFile(learnFile, dP)
     if testFile is not None:
         En_test, A_test, Cl_test = readLearnFile(testFile, dP)
+        totA = np.vstack((A, A_test))
+        totCl = np.append(Cl, Cl_test)
+    else:
+        totA = A
+        totCl = Cl
 
     print("  Data size:", A.shape)
     print("  Number of learning labels: {0:d}".format(int(dP.numLabels)))
@@ -338,7 +343,8 @@ def train(learnFile, testFile, normFile):
 
     if dP.runPCAflag:
         A = runPCA(A, dP.numPCAcomp, dP)
-        A_test = runPCAValid(A_test, dP)
+        if testFile is not None:
+            A_test = runPCAValid(A_test, dP)
             
     #************************************
     # Training
@@ -429,12 +435,12 @@ def train(learnFile, testFile, normFile):
         makeQuantizedTFmodel(A, dP)
 
     print('\n  =============================================')
-    print('  \033[1m CNN\033[0m - Model Architecture')
+    print('  \033[1m ML\033[0m - Model Architecture')
     print('  =============================================\n')
     model.summary()
 
     print('\n  ========================================================')
-    print('  \033[1m MLP\033[0m - Training/Validation set Configuration')
+    print('  \033[1m ML\033[0m - Training/Validation set Configuration')
     print('  ========================================================')
     #for conf in model.get_config():
     #    print(conf,"\n")
@@ -472,12 +478,12 @@ def train(learnFile, testFile, normFile):
             
         printParam(dP)
         print('\n  ==========================================================')
-        print('  \033[1m MLP - Regressor\033[0m - Training Summary')
+        print('  \033[1m ML - Regressor\033[0m - Training Summary')
         print('  ==========================================================')
         print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(loss), np.amin(loss), loss[-1]))
         print("  \033[1mMean Abs Err\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(mae), np.amin(mae), mae[-1]))
         print('\n  ==========================================================')
-        print('  \033[1m MLP - Regressor \033[0m - Validation Summary')
+        print('  \033[1m ML - Regressor \033[0m - Validation Summary')
         print('  ========================================================')
         print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(val_loss), np.amin(val_loss), val_loss[-1]))
         print("  \033[1mMean Abs Err\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(val_mae), np.amin(val_mae), val_mae[-1]))
@@ -494,7 +500,7 @@ def train(learnFile, testFile, normFile):
         if testFile:
             predictions = model.predict(A_test)
         
-            print('  ===========================================================================')
+            print('\n  ===========================================================================')
             print("  Real value | Predicted value | val_loss | val_mean_abs_err | % deviation ")
             print("  ---------------------------------------------------------------------------")
             for i in range(0,len(predictions)):
@@ -505,7 +511,7 @@ def train(learnFile, testFile, normFile):
                 else:
                     print("  {0:.3f}\t| {1:.3f}\t| {2:.4f}\t| {3:.4f}\t| {4:.1f}".format(Cl2_test[i],
                         predictions[i][0], score[0], score[1], 100*score[1]/Cl2_test[i]))
-            print('\n  ========================================================================  \n')
+            print('  ===========================================================================  ')
     else:
         accuracy = np.asarray(log.history['accuracy'])
         val_acc = np.asarray(log.history['val_accuracy'])
@@ -517,13 +523,13 @@ def train(learnFile, testFile, normFile):
             print("  Number unique classes (total): ", np.unique(totCl).size)
         printParam(dP)
         print('\n  ========================================================')
-        print('  \033[1m MLP - Classifier \033[0m - Training Summary')
+        print('  \033[1m ML - Classifier \033[0m - Training Summary')
         print('  ========================================================')
         print("\n  \033[1mAccuracy\033[0m - Average: {0:.2f}%; Max: {1:.2f}%; Last: {2:.2f}%".format(100*np.average(accuracy),
             100*np.amax(accuracy), 100*accuracy[-1]))
         print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(loss), np.amin(loss), loss[-1]))
         print('\n\n  ========================================================')
-        print('  \033[1m MLP - Classifier \033[0m - Validation Summary')
+        print('  \033[1m ML - Classifier \033[0m - Validation Summary')
         print('  ========================================================')
         print("\n  \033[1mAccuracy\033[0m - Average: {0:.2f}%; Max: {1:.2f}%; Last: {2:.2f}%".format(100*np.average(val_acc),
         100*np.amax(val_acc), 100*val_acc[-1]))
@@ -538,9 +544,9 @@ def train(learnFile, testFile, normFile):
 
         if testFile:
             predictions = model.predict(A_test)
-            print('  ===========================================================')
+            print('\n  ============================================================')
             print("  Real class\t| Predicted class\t| Probability")
-            print("  ---------------------------------------------------")
+            print("  ------------------------------------------------------------")
 
             for i in range(predictions.shape[0]):
                 predClass = np.argmax(predictions[i])
@@ -553,7 +559,7 @@ def train(learnFile, testFile, normFile):
                 else:
                     print("  {0:.2f}\t\t| {1:.2f}\t\t\t| {2:.2f}".format(realValue, predValue, predProb))
             #print("\n  Validation - Loss: {0:.2f}; accuracy: {1:.2f}%".format(score[0], 100*score[1]))
-            print('\n  ==========================================================\n')
+            print('  ============================================================')
 
     if dP.plotWeightsFlag == True:
         plotWeights(En, A, model, dP)
@@ -878,50 +884,200 @@ def validBatchPredict(testFile, normFile):
     df.to_csv(dP.summaryFileName, index=False, header=False)
     print("\n Prediction summary saved in:",dP.summaryFileName,"\n")
 
-#************************************
-# Principal Component Analysis
-#************************************
+#********************************************************************************
+# Perform PCA for feature dimensionality reduction - EXPERIMENTAL
+#********************************************************************************
+# Define correct value of numPCA
 def prePCA(learnFile, validFile, dP):
+    En, A, Cl = readLearnFile(learnFile, dP)
+    if dP.numPCAcomp > min(En.shape[0],Cl.shape[0]):
+        numPCA = min(En.shape[0],Cl.shape[0])
+    else:
+        numPCA = dP.numPCAcomp
+    A_encoded = runPCA(A, dP.numPCAcomp, dP)
+    #statsPCA(En, A_encoded, Cl, dP)
+
+def runPCA(A, numPCAcomp, dP):
+    import numpy as np
+    from sklearn import preprocessing, decomposition
+        
+    #************************************
+    # Sklearn SparsePCA
+    #************************************
+    print('  Running PCA...')
+    print('  Number of Principal components: ' + str(numPCAcomp) + '\n')
+    
+    spca = decomposition.SparsePCA(n_components=numPCAcomp)
+    #spca = decomposition.PCA(n_components=numPCAcomp)
+    #spca = decomposition.TruncatedSVD(n_components=numPCAcomp)
+    
+    if dP.rescaleForPCA:
+        scaler = preprocessing.StandardScaler(with_mean=False)
+        A_prep = scaler.fit_transform(A)
+        print("  Scaling encoder saved in:", dP.model_scaling)
+        with open(dP.model_scaling,'wb') as f:
+            pickle.dump(scaler, f)
+            
+        A_encoded = spca.fit_transform(A_prep)
+        A_decoded = scaler.inverse_transform(spca.inverse_transform(A_encoded))
+    else:
+        A_encoded = spca.fit_transform(A)
+        A_decoded = spca.inverse_transform(A_encoded)
+    
+    print("  PCA encoder saved in:", dP.model_pca,"\n")
+    with open(dP.model_pca,'wb') as f:
+        pickle.dump(spca, f)
+        
+    return A_encoded
+        
+#********************************************************************************
+# Convert matrix data to saved scaled/PCA - EXPERIMENTAL
+#********************************************************************************
+def runPCAValid(A, dP):
+    import numpy as np
+    from sklearn import preprocessing, decomposition
+    
+    with open(dP.model_scaling,'rb') as f:
+        scaler = pickle.load(f)
+    
+    with open(dP.model_pca,'rb') as f:
+        spca = pickle.load(f)
+    
+    if dP.rescaleForPCA:
+        A_enc = spca.transform(scaler.transform(A))
+    else:
+        A_enc = spca.transform(A)
+        
+    return A_enc
+
+#********************************************************************************
+# Carry out statistics/plots for PCA analysis - EXPERIMENTAL
+#********************************************************************************
+def statsPCA(En, A_r, Cl, dP):
+    showPCAplots = True
+    
+    with open(dP.model_pca,'rb') as f:
+        pca = pickle.load(f)
+    
+    for i in range(0,pca.components_.shape[0]):
+        print(' Score PC ' + str(i) + ': ' + '{0:.0f}%'.format(pca.explained_variance_ratio_[i] * 100))
+
+    if showPCAplots:
+        import matplotlib.pyplot as plt
+        from matplotlib import cm
+        print(' Plotting Loadings and score plots... \n')
+
+        #***************************
+        # Plotting Loadings
+        #***************************
+        for i in range(0,pca.components_.shape[0]):
+            plt.plot(En, pca.components_[i,:], label='PC' + str(i) + ' ({0:.0f}%)'.format(pca.explained_variance_ratio_[i] * 100))
+        plt.plot((En[0], En[En.shape[0]-1]), (0.0, 0.0), 'k--')
+        plt.title('Loadings plot')
+        plt.xlabel('Parameter')
+        plt.ylabel('Principal component')
+        plt.legend()
+        plt.figure()
+        
+        #***************************
+        # Plotting Scores
+        #***************************
+        if len(Cl):
+            Cl_ind = np.zeros(len(Cl))
+            Cl_labels = np.zeros(0)
+            ind = np.zeros(np.unique(Cl).shape[0])
+            for i in range(len(Cl)):
+                if (np.in1d(Cl[i], Cl_labels, invert=True)):
+                    Cl_labels = np.append(Cl_labels, Cl[i])
+
+            for i in range(len(Cl)):
+                Cl_ind[i] = np.where(Cl_labels == Cl[i])[0][0]
+                colors = [ cm.jet(x) for x in np.linspace(0, 1, ind.shape[0]) ]
+
+            for color, i, target_name in zip(colors, range(ind.shape[0]), Cl_labels):
+                plt.scatter(A_r[Cl_ind==i,0], A_r[Cl_ind==i,1], color=color, alpha=.8, lw=2, label=target_name)
+
+            plt.title('Score plot')
+            plt.xlabel('PC 0 ({0:.0f}%)'.format(pca.explained_variance_ratio_[0] * 100))
+            plt.ylabel('PC 1 ({0:.0f}%)'.format(pca.explained_variance_ratio_[1] * 100))
+            plt.figure()
+
+            plt.title('Score box plot')
+            plt.xlabel('Principal Component')
+            plt.ylabel('Score')
+            for j in range(pca.components_.shape[0]):
+                for color, i, target_name in zip(colors, range(ind.shape[0]), Cl_labels):
+                    plt.scatter([j+1]*len(A_r[Cl_ind==i,j]), A_r[Cl_ind==i,j], color=color, alpha=.8, lw=2, label=target_name)
+            plt.boxplot(A_r)
+            plt.figure()
+
+        #******************************
+        # Plotting Scores vs Parameters
+        #******************************
+        for j in range(pca.components_.shape[0]):
+            for color, i, target_name in zip(colors, range(ind.shape[0]), Cl_labels):
+                plt.scatter(np.asarray(Cl)[Cl_ind==i], A_r[Cl_ind==i,j], color=color, alpha=.8, lw=2, label=target_name)
+            plt.xlabel('Parameter')
+            plt.ylabel('PC ' + str(j) + ' ({0:.0f}%)'.format(pca.explained_variance_ratio_[j] * 100))
+            plt.figure()
+        
+        plt.show()
+        
+#************************************
+# Autoencoder
+#************************************
+def runAutoencoder(learnFile, testFile, dP):
+    import keras
+    import tensorflow as tf
+    
+    class Autoencoder(keras.Model):
+        def __init__(self, latent_dim, shape):
+            super(Autoencoder, self).__init__()
+            self.latent_dim = latent_dim
+            self.shape = shape
+            self.encoder = keras.Sequential([
+                keras.layers.Flatten(),
+                keras.layers.Dense(latent_dim, activation='relu'),
+                ])
+            self.decoder = keras.Sequential([
+                keras.layers.Dense(tf.math.reduce_prod(shape).numpy(), activation='sigmoid'),
+                keras.layers.Reshape(shape)
+                ])
+
+        def call(self, x):
+            encoded = self.encoder(x)
+            decoded = self.decoder(encoded)
+            return decoded
     
     En, A, Cl = readLearnFile(learnFile, dP)
-        
-    if numPCA > min(En.shape[0],Cl.shape[0]):
-        numPCA = min(En.shape[0],Cl.shape[0])
+            
+    shape = A.shape[1:]
+    latent_dim = 4
+    autoencoder = Autoencoder(latent_dim, shape)
+    autoencoder.compile(optimizer=keras.optimizers.Adam(), loss=keras.losses.MeanSquaredError())
     
-    A_encoded = runPCA(A, dP.numPCAcomp, dP)
-
-#************************************
-# Lists the program usage
-#************************************
-def usage():
-    print('\n Usage:\n')
-    print(' Train (Random cross validation):')
-    print('  python3 DataML.py -t <learningFile>\n')
-    print(' Train (with external validation):')
-    print('  python3 DataML.py -t <learningFile> <validationFile> \n')
-    print(' Train (with external validation, with labels normalized with pkl file):')
-    print('  python3 DataML.py -t <learningFile> <validationFile> <pkl normalization file>\n')
-    print(' Predict (no label normalization used):')
-    print('  python3 DataML.py -p <testFile>\n')
-    print(' Predict (labels normalized with pkl file):')
-    print('  python3 DataML.py -p <testFile> <pkl normalization file>\n')
-    print(' Batch predict (no label normalization used):')
-    print('  python3 DataML.py -b <folder>\n')
-    print(' Batch predict (labels normalized with pkl file):')
-    print('  python3 DataML.py -b <folder> <pkl normalization file>\n')
-    print(' Batch predict on validation data in single file (no label normalization used):')
-    print('  python3 DataML.py -v <singleValidationFile>\n')
-    print(' Batch predict on validation data in single file (labels normalized with pkl file):')
-    print('  python3 DataML.py -v <singleValidationFile> <pkl normalization file>\n')
-    print(' Convert model to quantized tflite:')
-    print('  python3 DataML.py -l <learningFile>\n')
-    print(' Create parameter optimization file:')
-    print('  python3 DataML.py -o\n')
-    print(' Run principal component analysis (PCA) - EXPERIMENTAL:')
-    print('  python3 DataML.py -c <learningFile>\n')
-    print(' Create Autoencoder - Experimental - EXPERIMENTAL:')
-    print('  python3 DataML.py -a <learningFile> <validFile-optional>\n')
-    print(' Requires python 3.x. Not compatible with python 2.x\n')
+    if testFile is None:
+        autoencoder.fit(A, A,
+                epochs=10,
+                shuffle=True,
+                #validation_data=(x_test, x_test),
+                validation_split=dP.cv_split
+                )
+    else:
+        En_test, A_test, Cl_test = readLearnFile(testFile, dP)
+        autoencoder.fit(A, A,
+                epochs=10,
+                shuffle=True,
+                validation_data=(A_test, A_test),
+                validation_split=dP.cv_split
+                )
+                
+        A_test_encoded = autoencoder.encoder(A_test).numpy()
+        A_test_decoded = autoencoder.decoder(A_test_encoded).numpy()
+        
+        print(A_test)
+        print(A_test_encoded)
+        print(A_test_decoded)
 
 #************************************
 # Main initialization routine
