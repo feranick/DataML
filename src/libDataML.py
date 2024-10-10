@@ -2,7 +2,7 @@
 '''
 ***********************************************************
 * libDataML - Library for DataML
-* v2024.10.10.3
+* v2024.10.10.4
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -312,7 +312,7 @@ def readLearnFile(learnFile, dP):
 def readTestFile(testFile, dP):
     try:
         with open(testFile, 'r') as f:
-            print('\n  Opening sample data for prediction:\n  ',testFile)
+            print("\n  Opening sample data for prediction:",testFile,"\n")
             Rtot = np.loadtxt(f, unpack =True)
         R=np.array([Rtot[1,:]])
         Rx=np.array([Rtot[0,:]])
@@ -443,24 +443,11 @@ def runAutoencoder(learnFile, testFile, dP):
         print(A_test_decoded)
 
 #********************************************************************************
-# Run PCA - EXPERIMENTAL
-# Transform data:
-#    pca.fit(data).transform(data)
-#    Loading Vectors (eigenvectors):
-#    pca.components_
-#    Eigenvalues:
-#    pca.explained_variance_ratio
-#
+# Perform PCA for feature dimensionality reduction - EXPERIMENTAL
 #********************************************************************************
 def runPCA(A, numPCAcomp, dP):
     import numpy as np
     from sklearn import preprocessing, decomposition
-    from scipy.sparse import csr_matrix
-    import matplotlib.pyplot as plt
-    from matplotlib import cm
-
-    rescaleForPCA = True
-    #showPCAPlots = True
         
     #************************************
     # Sklearn SparsePCA
@@ -470,7 +457,7 @@ def runPCA(A, numPCAcomp, dP):
     
     spca = decomposition.SparsePCA(n_components=numPCAcomp)
     
-    if rescaleForPCA:
+    if dP.rescaleForPCA:
         scaler = preprocessing.StandardScaler(with_mean=False)
         A_prep = scaler.fit_transform(A)
         print("  Scaling encoder saved in:", dP.model_scaling)
@@ -488,24 +475,40 @@ def runPCA(A, numPCAcomp, dP):
         pickle.dump(spca, f)
         
     return A_encoded
+        
+#********************************************************************************
+# Convert matrix data to saved scaled/PCA - EXPERIMENTAL
+#********************************************************************************
+def runPCAValid(A, dP):
+    import numpy as np
+    from sklearn import preprocessing, decomposition
     
-    '''
-    print('==========================================================================\n')
-    print(' Running PCA...\n')
-    print(' Number of unique target classes in training data: ' + str(np.unique(Cl).shape[0]))
-    if customNumPCAComp == False:
-        numPCAcomp = np.unique(Cl).shape[0]
+    with open(dP.model_scaling,'rb') as f:
+        scaler = pickle.load(f)
+    
+    with open(dP.model_pca,'rb') as f:
+        spca = pickle.load(f)
+    
+    if dP.rescaleForPCA:
+        A_enc = spca.transform(scaler.transform(A))
     else:
-        numPCAcomp = numPCAcomponents
-    print(' Number of Principal components: ' + str(numPCAcomp) + '\n')
-    pca = PCA(n_components=numPCAcomp)
-    A_r = pca.fit(A).transform(A)
+        A_enc = spca.transform(A)
+        
+    return A_enc
+
+#********************************************************************************
+# Carry out statistics/plots for PCA analysis - EXPERIMENTAL
+#********************************************************************************
+def statsPCA(En, A_r, Cl, dP):
+    showPCAplots = True
     
     for i in range(0,pca.components_.shape[0]):
         print(' Score PC ' + str(i) + ': ' + '{0:.0f}%'.format(pca.explained_variance_ratio_[i] * 100))
     print('')
 
-    if showPCAPlots:
+    if showPCAplots:
+        import matplotlib.pyplot as plt
+        from matplotlib import cm
         print(' Plotting Loadings and score plots... \n')
 
         #***************************
@@ -564,5 +567,3 @@ def runPCA(A, numPCAcomp, dP):
             plt.figure()
         
         plt.show()
-        '''
-

@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.10.10.3
+* v2024.10.10.4
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -62,6 +62,8 @@ class Conf():
             self.edgeTPUSharedLib = "libedgetpu.1.dylib"
         if platform.system() == 'Windows':
             self.edgeTPUSharedLib = "edgetpu.dll"
+            
+        self.rescaleForPCA = True
             
     def datamlDef(self):
         self.conf['Parameters'] = {
@@ -279,11 +281,6 @@ def train(learnFile, testFile, normFile):
     En, A, Cl = readLearnFile(learnFile, dP)
     if testFile is not None:
         En_test, A_test, Cl_test = readLearnFile(testFile, dP)
-        totA = np.vstack((A, A_test))
-        totCl = np.append(Cl, Cl_test)
-    else:
-        totA = A
-        totCl = Cl
 
     print("  Data size:", A.shape)
     print("  Number of learning labels: {0:d}".format(int(dP.numLabels)))
@@ -341,7 +338,8 @@ def train(learnFile, testFile, normFile):
 
     if dP.runPCAflag:
         A = runPCA(A, dP.numPCAcomp, dP)
-        
+        A_test = runPCAValid(A_test, dP)
+            
     #************************************
     # Training
     #************************************
@@ -657,11 +655,8 @@ def predict(testFile, normFile):
             print("\033[1m pkl file not found \033[0m")
             return
      
-     # If Scaler was applied for PCA, apply to test as well.
     if dP.runPCAflag:
-        with open(dP.model_scaling,'wb') as f:
-            pickle.dump(scaler, f)
-        R = scaler.transform(R)
+        R = runPCAValid(R, dP)
         
     if dP.regressor:
         predictions, _ = getPredictions(R, loadModel(dP), dP)
@@ -719,8 +714,6 @@ def predict(testFile, normFile):
 #************************************
 def batchPredict(folder, normFile):
     dP = Conf()
-    #En_test, A_test, Cl_test = readLearnFile(testFile, dP)
-    
     model = loadModel(dP)
 
     if normFile is not None:
@@ -732,11 +725,6 @@ def batchPredict(folder, normFile):
             print("\033[1m" + " pkl file not found \n" + "\033[0m")
             return
             
-    # If Scaler was applied for PCA, apply to test as well.
-    if dP.runPCAflag:
-        with open(dP.model_scaling,'wb') as f:
-            pickle.dump(scaler, f)
-            
     fileName = []
     for file in glob.glob(folder+'/*.txt'):
         R, good = readTestFile(file, dP)
@@ -744,7 +732,7 @@ def batchPredict(folder, normFile):
             R = norm.transform_valid_data(R)
             
         if dP.runPCAflag:
-            R = scaler.transform(R)
+            R = runPCAValid(R, dP)
         
         if good:
             try:
@@ -814,11 +802,8 @@ def validBatchPredict(testFile, normFile):
             print("\033[1m" + " pkl file not found \n" + "\033[0m")
             return
     
-    # If Scaler was applied for PCA, apply to test as well.
     if dP.runPCAflag:
-        with open(dP.model_scaling,'wb') as f:
-            pickle.dump(scaler, f)
-        A_test = scaler.transform(A_test)
+        A_test = runPCAValid(A_test, dP)
 
     covMatrix = np.empty((0,2))
     
