@@ -341,7 +341,6 @@ def train(learnFile, testFile, normFile):
 
     if dP.runPCAflag:
         A = runPCA(A, dP.numPCAcomp, dP)
-        print(A)
         
     #************************************
     # Training
@@ -819,7 +818,7 @@ def validBatchPredict(testFile, normFile):
     if dP.runPCAflag:
         with open(dP.model_scaling,'wb') as f:
             pickle.dump(scaler, f)
-         A_test = scaler.transform(A_test)
+        A_test = scaler.transform(A_test)
 
     covMatrix = np.empty((0,2))
     
