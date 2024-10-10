@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.10.09.2
+* v2024.10.10.1
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -51,6 +51,8 @@ class Conf():
             self.model_name = os.path.splitext(self.model_name)[0]+".keras"
                     
         self.model_le = self.model_directory+"model_le.pkl"
+        self.model_scaling = self.model_directory+"model_scaling.pkl"
+        self.model_pca = self.model_directory+"model_pca.pkl"
         
         self.optParFile = "opt_parameters.txt"
             
@@ -218,9 +220,9 @@ def main():
         if o in ["-c" , "--comp"]:
             #try:
             if len(sys.argv)<4:
-                prePCA(sys.argv[2], None)
+                prePCA(sys.argv[2], None, dP)
             else:
-                prePCA(sys.argv[2], sys.argv[3])
+                prePCA(sys.argv[2], sys.argv[3], dP)
             #except:
             #    usage()
             #    sys.exit(2)
@@ -868,14 +870,16 @@ def validBatchPredict(testFile, normFile):
 #************************************
 # Principal Component Analysis
 #************************************
-def prePCA(learnFile, validFile):
+def prePCA(learnFile, validFile, dP):
+    
     numPCA = 4
-    En, A, Cl = readLearnFile(learnFile, Conf())
+    
+    En, A, Cl = readLearnFile(learnFile, dP)
         
     if numPCA > min(En.shape[0],Cl.shape[0]):
         numPCA = min(En.shape[0],Cl.shape[0])
     
-    runPCA(En, Cl, A, numPCA)
+    runPCA(En, Cl, A, numPCA, dP)
 
 #************************************
 # Lists the program usage

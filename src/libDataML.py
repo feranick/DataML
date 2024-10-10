@@ -2,7 +2,7 @@
 '''
 ***********************************************************
 * libDataML - Library for DataML
-* v2024.10.09.2
+* v2024.10.10.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -452,35 +452,45 @@ def runAutoencoder(learnFile, testFile, dP):
 #    pca.explained_variance_ratio
 #
 #********************************************************************************
-def runPCA(En, Cl, A, numPCAcomponents):
+def runPCA(En, Cl, A, numPCAcomp, dP):
     import numpy as np
     from sklearn import preprocessing, decomposition
     from scipy.sparse import csr_matrix
     import matplotlib.pyplot as plt
     from matplotlib import cm
 
-    customNumPCAComp = True
+    rescaleForPCA = True
     showPCAPlots = True
-    
-    #M = np.column_stack((Cl, A))
-    
+        
     #************************************
     # Sklearn SparsePCA
     #************************************
-    scaler = preprocessing.StandardScaler(with_mean=False)
-    A_scaled = scaler.fit_transform(M)
+    print('\n  Running PCA...')
+    print('  Number of Principal components: ' + str(numPCAcomp) + '\n')
     
-    spca = decomposition.SparsePCA(n_components=3)
-    #pca = decomposition.PCA(n_components=3)
+    spca = decomposition.SparsePCA(n_components=numPCAcomp)
     
-    A_dense = spca.fit_transform(A_scaled)
+    if rescaleForPCA:
+        scaler = preprocessing.StandardScaler(with_mean=False)
+        A_prep = scaler.fit_transform(A)
+        print("  Scaling encoder saved in:", dP.model_scaling)
+        with open(dP.model_scaling,'wb') as f:
+            pickle.dump(scaler, f)
+            
+        A_encoded = spca.fit_transform(A_prep)
+        A_decoded = scaler.inverse_transform(spca.inverse_transform(A_encoded))
+    else:
+        A_encoded = spca.fit_transform(A)
+        A_decoded = spca.inverse_transform(A_encoded)
     
-    A_inverse = spca.inverse_transform(A_dense)
-    A_orig = scaler.inverse_transform(A_inverse)
+    print("  PCA encoder saved in:", dP.model_pca,"\n")
+    with open(dP.model_pca,'wb') as f:
+        pickle.dump(spca, f)
     
-    print("A_dense:\n",A_dense)
-    print("A_inverse:\n",A_inverse)
-    print("A_orig:\n",A_orig)
+    print("A_orig:\n",A)
+    print("A_encoded:\n",A_encoded)
+    print("A_decoded:\n",A_decoded)
+    print("DIFF\n",A-A_decoded)
     
     '''
     print('==========================================================================\n')
