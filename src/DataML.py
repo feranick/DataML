@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.10.10.2
+* v2024.10.10.3
 * Uses: TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -336,12 +336,16 @@ def train(learnFile, testFile, normFile):
             Cl2_test = keras.utils.to_categorical(Cl2_test, num_classes=np.unique(totCl).size+1)
 
     #************************************
-    # Training
+    # Run PCA if needed.
     #************************************
 
     if dP.runPCAflag:
         A = runPCA(A, dP.numPCAcomp, dP)
         print(A)
+        
+    #************************************
+    # Training
+    #************************************
 
     if dP.fullSizeBatch:
         dP.batch_size = A.shape[0]
@@ -653,7 +657,13 @@ def predict(testFile, normFile):
         except:
             print("\033[1m pkl file not found \033[0m")
             return
-    
+     
+     # If Scaler was applied for PCA, apply to test as well.
+    if dP.runPCAflag:
+        with open(dP.model_scaling,'wb') as f:
+            pickle.dump(scaler, f)
+        R = scaler.transform(R)
+        
     if dP.regressor:
         predictions, _ = getPredictions(R, loadModel(dP), dP)
         #predictions = model.predict(R).flatten()[0]
@@ -723,11 +733,20 @@ def batchPredict(folder, normFile):
             print("\033[1m" + " pkl file not found \n" + "\033[0m")
             return
             
+    # If Scaler was applied for PCA, apply to test as well.
+    if dP.runPCAflag:
+        with open(dP.model_scaling,'wb') as f:
+            pickle.dump(scaler, f)
+            
     fileName = []
     for file in glob.glob(folder+'/*.txt'):
         R, good = readTestFile(file, dP)
         if  normFile is not None:
             R = norm.transform_valid_data(R)
+            
+        if dP.runPCAflag:
+            R = scaler.transform(R)
+        
         if good:
             try:
                 predictions = np.vstack((predictions,getPredictions(R, model, dP)[0].flatten()))
@@ -795,6 +814,12 @@ def validBatchPredict(testFile, normFile):
         except:
             print("\033[1m" + " pkl file not found \n" + "\033[0m")
             return
+    
+    # If Scaler was applied for PCA, apply to test as well.
+    if dP.runPCAflag:
+        with open(dP.model_scaling,'wb') as f:
+            pickle.dump(scaler, f)
+         A_test = scaler.transform(A_test)
 
     covMatrix = np.empty((0,2))
     
