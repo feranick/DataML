@@ -3,8 +3,8 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.10.10.5
-* Uses: TensorFlow
+* v2024.10.11.1
+* Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -901,15 +901,20 @@ def runPCA(A, numPCAcomp, dP):
     import numpy as np
     from sklearn import preprocessing, decomposition
         
-    #************************************
-    # Sklearn SparsePCA
-    #************************************
-    print('  Running PCA...')
-    print('  Number of Principal components: ' + str(numPCAcomp) + '\n')
+    #**************************************
+    # Sklearn SparsePCA, PCA, TruncatedSVD
+    #**************************************
+    typePCA = "SparsePCA"
     
-    spca = decomposition.SparsePCA(n_components=numPCAcomp)
-    #spca = decomposition.PCA(n_components=numPCAcomp)
-    #spca = decomposition.TruncatedSVD(n_components=numPCAcomp)
+    if typePCA == "SparsePCA":
+        spca = decomposition.SparsePCA(n_components=numPCAcomp)
+    if typePCA == "PCA":
+        spca = decomposition.PCA(n_components=numPCAcomp)
+    if typePCA == "TruncatedSVD":
+        spca = decomposition.TruncatedSVD(n_components=numPCAcomp)
+    
+    print("  Running PCA (using: "+typePCA+")")
+    print("  Number of Principal components:",str(numPCAcomp),"\n")
     
     if dP.rescaleForPCA:
         scaler = preprocessing.StandardScaler(with_mean=False)
