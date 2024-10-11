@@ -53,6 +53,7 @@ class Conf():
         self.model_le = self.model_directory+"model_le.pkl"
         self.model_scaling = self.model_directory+"model_scaling.pkl"
         self.model_pca = self.model_directory+"model_pca.pkl"
+        self.norm_file = self.model_directory+"norm_file.pkl"
         
         self.optParFile = "opt_parameters.txt"
             
@@ -78,14 +79,15 @@ class Conf():
             'fullSizeBatch' : True,
             'batch_size' : 64,
             'numLabels' : 1,
+            'normalize' : False,
+            'runPCAflag' : False,
+            'numPCAcomp' : 3,
             'plotWeightsFlag' : False,
             'optimizeParameters' : False,
             'stopAtBest' : False,
             'saveBestModel' : False,
             'metricBestModelR' : 'val_mae',
             'metricBestModelC' : 'val_accuracy',
-            'runPCAflag' : False,
-            'numPCAcomp' : 3,
             }
     def sysDef(self):
         self.conf['System'] = {
@@ -116,14 +118,15 @@ class Conf():
             self.fullSizeBatch = self.conf.getboolean('Parameters','fullSizeBatch')
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.numLabels = self.conf.getint('Parameters','numLabels')
+            self.runPCAflag = self.conf.getboolean('Parameters','runPCAflag')
+            self.numPCAcomp = self.conf.getint('Parameters','numPCAcomp')
+            self.normalize = self.conf.getboolean('Parameters','normalize')
             self.plotWeightsFlag = self.conf.getboolean('Parameters','plotWeightsFlag')
             self.optimizeParameters = self.conf.getboolean('Parameters','optimizeParameters')
             self.stopAtBest = self.conf.getboolean('Parameters','stopAtBest')
             self.saveBestModel = self.conf.getboolean('Parameters','saveBestModel')
             self.metricBestModelR = self.conf.get('Parameters','metricBestModelR')
             self.metricBestModelC = self.conf.get('Parameters','metricBestModelC')
-            self.runPCAflag = self.conf.getboolean('Parameters','runPCAflag')
-            self.numPCAcomp = self.conf.getint('Parameters','numPCAcomp')
             
             self.kerasVersion = self.conf.getint('System','kerasVersion')
             self.fixTFseed = self.conf.getboolean('System','fixTFseed')
@@ -340,7 +343,6 @@ def train(learnFile, testFile, normFile):
     #************************************
     # Run PCA if needed.
     #************************************
-
     if dP.runPCAflag:
         A = runPCA(A, dP.numPCAcomp, dP)
         if testFile is not None:

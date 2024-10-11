@@ -17,32 +17,28 @@ import os.path, pickle, h5py
 class Normalizer(object):
     def __init__(self, M, dP):
         self.M = M
-        self.normalizeLabel = dP.normalizeLabel
-        self.useGeneralNormLabel = dP.useGeneralNormLabel
-        self.useCustomRound = dP.useCustomRound
-        self.minGeneralLabel = dP.minGeneralLabel
-        self.maxGeneralLabel = dP.maxGeneralLabel
-        self.YnormTo = dP.YnormTo
-        self.stepNormLabel = dP.stepNormLabel
-        self.saveNormalized = dP.saveNormalized
+        self.normalizeLabel = False
+        self.useCustomRound = False
+        self.minGeneralLabel = 0
+        self.maxGeneralLabel = 1
+        self.YnormTo = 1
+        self.stepNormLabel = 0.01
+        self.saveNormalized = True
+        self.norm_file = dP.norm_file
         
         self.data = np.arange(0,1,self.stepNormLabel)
         self.min = np.zeros([self.M.shape[1]])
         self.max = np.zeros([self.M.shape[1]])
     
         if self.normalizeLabel:
-            if self.useGeneralNormLabel:
-                self.min[0] = dP.minGeneralLabel
-                self.max[0] = dP.maxGeneralLabel
-            else:
-                self.min[0] = np.nanmin(self.M[1:,0])
-                self.max[0] = np.nanmax(self.M[1:,0])
+            self.min[0] = np.nanmin(self.M[1:,0])
+            self.max[0] = np.nanmax(self.M[1:,0])
         
         for i in range(1,M.shape[1]):
             self.min[i] = np.amin(self.M[1:,i])
             self.max[i] = np.amax(self.M[1:,i])
     
-    def transform_matrix(self,y):
+    def transform(self,y):
         Mn = np.copy(y)
         if self.normalizeLabel:
             Mn[1:,0] = np.multiply(y[1:,0] - self.min[0],
@@ -76,8 +72,8 @@ class Normalizer(object):
         vn = self.min[0] + v*(self.max[0] - self.min[0])/self.YnormTo
         return vn
 
-    def save(self, name):
-        with open(name, 'ab') as f:
+    def save(self):
+        with open(self.norm_file, 'ab') as f:
             pickle.dump(self, f)
 
 #************************************
@@ -296,6 +292,13 @@ def readLearnFile(learnFile, dP):
     except:
         print("\033[1m Training file not found\033[0m")
         return
+    
+    if dP.normalize:
+        print("\n  Normalization of feature matrix to 1")
+        print("  Normalization parameters saved in:", dP.norm_file,"\n")
+        norm = Normalizer(M, dP)
+        M = norm.transform(M)
+        norm.save()
         
     En = M[0,dP.numLabels:]
     A = M[1:,dP.numLabels:]
