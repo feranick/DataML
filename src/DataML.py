@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.10.11.1
+* v2024.10.12.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -81,6 +81,7 @@ class Conf():
             'numLabels' : 1,
             'normalize' : False,
             'runPCAflag' : False,
+            'typeDimRed' : 'SparsePCA',
             'numPCAcomp' : 3,
             'plotWeightsFlag' : False,
             'optimizeParameters' : False,
@@ -119,6 +120,7 @@ class Conf():
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.numLabels = self.conf.getint('Parameters','numLabels')
             self.runPCAflag = self.conf.getboolean('Parameters','runPCAflag')
+            self.typeDimRed = self.conf.get('Parameters','typeDimRed')
             self.numPCAcomp = self.conf.getint('Parameters','numPCAcomp')
             self.normalize = self.conf.getboolean('Parameters','normalize')
             self.plotWeightsFlag = self.conf.getboolean('Parameters','plotWeightsFlag')
@@ -897,7 +899,8 @@ def prePCA(learnFile, validFile, dP):
     else:
         numPCA = dP.numPCAcomp
     A_encoded = runPCA(A, dP.numPCAcomp, dP)
-    #statsPCA(En, A_encoded, Cl, dP)
+    if dP.typeDimRed == "PCA":
+        statsPCA(En, A_encoded, Cl, dP)
 
 def runPCA(A, numPCAcomp, dP):
     import numpy as np
@@ -906,16 +909,15 @@ def runPCA(A, numPCAcomp, dP):
     #**************************************
     # Sklearn SparsePCA, PCA, TruncatedSVD
     #**************************************
-    typePCA = "SparsePCA"
     
-    if typePCA == "SparsePCA":
+    if dP.typeDimRed == "SparsePCA":
         spca = decomposition.SparsePCA(n_components=numPCAcomp)
-    if typePCA == "PCA":
+    if dP.typeDimRed == "PCA":
         spca = decomposition.PCA(n_components=numPCAcomp)
-    if typePCA == "TruncatedSVD":
+    if dP.typeDimRed == "TruncatedSVD":
         spca = decomposition.TruncatedSVD(n_components=numPCAcomp)
     
-    print("  Running PCA (using: "+typePCA+")")
+    print("  Running PCA (using: "+dP.typeDimRed+")")
     print("  Number of Principal components:",str(numPCAcomp),"\n")
     
     if dP.rescaleForPCA:
