@@ -52,7 +52,7 @@ class Conf():
                     
         self.model_le = self.model_directory+"model_le.pkl"
         self.model_scaling = self.model_directory+"model_scaling.pkl"
-        self.model_pca = self.model_directory+"model_pca.pkl"
+        self.model_pca = self.model_directory+"model_encoder.pkl"
         self.norm_file = self.model_directory+"norm_file.pkl"
         
         self.optParFile = "opt_parameters.txt"
@@ -1057,6 +1057,7 @@ def runAutoencoder(learnFile, testFile, dP):
             encoded = self.encoder(x)
             decoded = self.decoder(encoded)
             return decoded
+            
     
     En, A, Cl = readLearnFile(learnFile, dP)
             
@@ -1078,15 +1079,21 @@ def runAutoencoder(learnFile, testFile, dP):
                 epochs=10,
                 shuffle=True,
                 validation_data=(A_test, A_test),
-                validation_split=dP.cv_split
                 )
                 
         A_test_encoded = autoencoder.encoder(A_test).numpy()
         A_test_decoded = autoencoder.decoder(A_test_encoded).numpy()
         
-        print(A_test)
-        print(A_test_encoded)
-        print(A_test_decoded)
+        #print(A_test)
+        #print(A_test_encoded)
+        #print(A_test_decoded)
+        
+    saved_model_autoenc = os.path.splitext(dP.model_pca)[0]+".keras"
+    print("\n  Autoencoder saved in:", saved_model_autoenc,"\n")
+    autoencoder.save(saved_model_autoenc)
+    
+    #print(autoencoder.encoder(A).numpy())
+    return autoencoder.encoder(A).numpy()
 
 #************************************
 # Main initialization routine
