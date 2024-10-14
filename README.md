@@ -13,7 +13,7 @@ Installation
 ## Installation from available wheel package
 If available from the main site, you can install SpectraKeras by running:
 
-    python3 -m pip install --upgrade dataml-2024.10.12.1-py3-none-any.whl
+    python3 -m pip install --upgrade dataml-2024.10.14.1-py3-none-any.whl
     
 SpectraKeras_CNN and Spectrakeras_MLP are available directly from the command line.
 NOTE: The Utilities in the `Utilities` folder are not included in the package, and can be run locally as needed.
@@ -88,14 +88,20 @@ Train (Random cross validation):
  Create parameter optimization file:
   `python3 DataML.py -o`
   
- Run principal component analysis (PCA) - EXPERIMENTAL:
+ Evaluate principal component analysis (PCA) - EXPERIMENTAL:
   `python3 DataML.py -c <learningFile>`
+  `python3 DataML.py -c <learningFile> <validFile-optional>`
+  
+ Evaluate Autoencoder - EXPERIMENTAL:
+  `python3 DataML.py -a <learningFile>`
+  `python3 DataML.py -a <learningFile> <validFile-optional>`
   
 ###Note: 
 Three different dimention reduction methods are supported and can be selected using the `typeDimRed` flag:
 - `SparsePCA`
 - `PCA`
 - `TruncatedSVD`
+- `Autoencoder`
 
 Formatting input file for training
 ========================

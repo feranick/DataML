@@ -241,9 +241,9 @@ def main():
         if o in ["-a" , "--autoencoder"]:
             #try:
             if len(sys.argv)<4:
-                runAutoencoder(sys.argv[2], None, dP)
+                preAutoencoder(sys.argv[2], None, dP)
             else:
-                runAutoencoder(sys.argv[2], sys.argv[3], dP)
+                preAutoencoder(sys.argv[2], sys.argv[3], dP)
             #except:
             #    usage()
             #    sys.exit(2)
@@ -346,9 +346,13 @@ def train(learnFile, testFile, normFile):
     # Run PCA if needed.
     #************************************
     if dP.runDimRedFlag:
-        A = runPCA(A, dP.numDimRedComp, dP)
-        if testFile is not None:
-            A_test = runPCAValid(A_test, dP)
+        print("  Dimensionality Reduction via:",dP.typeDimRed,"\n")
+        if dP.typeDimRed == 'Autoencoder':
+            A = runAutoencoder(A, dP)
+        else:
+            A = runPCA(A, dP.numDimRedComp, dP)
+            if testFile is not None:
+                A_test = runPCAValid(A_test, dP)
             
     #************************************
     # Training
@@ -917,7 +921,7 @@ def runPCA(A, numDimRedComp, dP):
     if dP.typeDimRed == "TruncatedSVD":
         spca = decomposition.TruncatedSVD(n_components=numDimRedComp)
     
-    print("  Running PCA (using: "+dP.typeDimRed+")")
+    #print("  Running PCA (using: "+dP.typeDimRed+")")
     print("  Number of Principal components:",str(numDimRedComp),"\n")
     
     if dP.rescaleForPCA:
@@ -1035,7 +1039,11 @@ def statsPCA(En, A_r, Cl, dP):
 #************************************
 # Autoencoder
 #************************************
-def runAutoencoder(learnFile, testFile, dP):
+def preAutoencoder(learnFile, validFile, dP):
+    En, A, Cl = readLearnFile(learnFile, dP)
+    A_encoded = runAutoencoder(A, dP)
+    
+def runAutoencoder(A, dP):
     if checkTFVersion("2.16.0"):
         import tensorflow.keras as keras
     else:
@@ -1046,7 +1054,7 @@ def runAutoencoder(learnFile, testFile, dP):
     
     showDimRedplots = False
     
-    En, A, Cl = readLearnFile(learnFile, dP)
+    #En, A, Cl = readLearnFile(learnFile, dP)
     
     m = keras.Sequential()
     m.add(keras.Input((A.shape[1],),sparse=True))
