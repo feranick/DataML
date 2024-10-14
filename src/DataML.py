@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.10.12.1
+* v2024.10.14.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -80,9 +80,9 @@ class Conf():
             'batch_size' : 64,
             'numLabels' : 1,
             'normalize' : False,
-            'runPCAflag' : False,
+            'runDimRedFlag' : False,
             'typeDimRed' : 'SparsePCA',
-            'numPCAcomp' : 3,
+            'numDimRedComp' : 3,
             'plotWeightsFlag' : False,
             'optimizeParameters' : False,
             'stopAtBest' : False,
@@ -119,9 +119,9 @@ class Conf():
             self.fullSizeBatch = self.conf.getboolean('Parameters','fullSizeBatch')
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.numLabels = self.conf.getint('Parameters','numLabels')
-            self.runPCAflag = self.conf.getboolean('Parameters','runPCAflag')
+            self.runDimRedFlag = self.conf.getboolean('Parameters','runDimRedFlag')
             self.typeDimRed = self.conf.get('Parameters','typeDimRed')
-            self.numPCAcomp = self.conf.getint('Parameters','numPCAcomp')
+            self.numDimRedComp = self.conf.getint('Parameters','numDimRedComp')
             self.normalize = self.conf.getboolean('Parameters','normalize')
             self.plotWeightsFlag = self.conf.getboolean('Parameters','plotWeightsFlag')
             self.optimizeParameters = self.conf.getboolean('Parameters','optimizeParameters')
@@ -241,9 +241,9 @@ def main():
         if o in ["-a" , "--autoencoder"]:
             #try:
             if len(sys.argv)<4:
-                runAutoencoder(sys.argv[2], None, dP)
+                runAutoencoder2(sys.argv[2], None, dP)
             else:
-                runAutoencoder(sys.argv[2], sys.argv[3], dP)
+                runAutoencoder2(sys.argv[2], sys.argv[3], dP)
             #except:
             #    usage()
             #    sys.exit(2)
@@ -345,8 +345,8 @@ def train(learnFile, testFile, normFile):
     #************************************
     # Run PCA if needed.
     #************************************
-    if dP.runPCAflag:
-        A = runPCA(A, dP.numPCAcomp, dP)
+    if dP.runDimRedFlag:
+        A = runPCA(A, dP.numDimRedComp, dP)
         if testFile is not None:
             A_test = runPCAValid(A_test, dP)
             
@@ -665,7 +665,7 @@ def predict(testFile, normFile):
             print("\033[1m pkl file not found \033[0m")
             return
      
-    if dP.runPCAflag:
+    if dP.runDimRedFlag:
         R = runPCAValid(R, dP)
         
     if dP.regressor:
@@ -741,7 +741,7 @@ def batchPredict(folder, normFile):
         if  normFile is not None:
             R = norm.transform_valid_data(R)
             
-        if dP.runPCAflag:
+        if dP.runDimRedFlag:
             R = runPCAValid(R, dP)
         
         if good:
@@ -812,7 +812,7 @@ def validBatchPredict(testFile, normFile):
             print("\033[1m" + " pkl file not found \n" + "\033[0m")
             return
     
-    if dP.runPCAflag:
+    if dP.runDimRedFlag:
         A_test = runPCAValid(A_test, dP)
 
     covMatrix = np.empty((0,2))
@@ -894,15 +894,15 @@ def validBatchPredict(testFile, normFile):
 # Define correct value of numPCA
 def prePCA(learnFile, validFile, dP):
     En, A, Cl = readLearnFile(learnFile, dP)
-    if dP.numPCAcomp > min(En.shape[0],Cl.shape[0]):
+    if dP.numDimRedComp > min(En.shape[0],Cl.shape[0]):
         numPCA = min(En.shape[0],Cl.shape[0])
     else:
-        numPCA = dP.numPCAcomp
-    A_encoded = runPCA(A, dP.numPCAcomp, dP)
+        numPCA = dP.numDimRedComp
+    A_encoded = runPCA(A, dP.numDimRedComp, dP)
     if dP.typeDimRed == "PCA":
         statsPCA(En, A_encoded, Cl, dP)
 
-def runPCA(A, numPCAcomp, dP):
+def runPCA(A, numDimRedComp, dP):
     import numpy as np
     from sklearn import preprocessing, decomposition
         
@@ -911,14 +911,14 @@ def runPCA(A, numPCAcomp, dP):
     #**************************************
     
     if dP.typeDimRed == "SparsePCA":
-        spca = decomposition.SparsePCA(n_components=numPCAcomp)
+        spca = decomposition.SparsePCA(n_components=numDimRedComp)
     if dP.typeDimRed == "PCA":
-        spca = decomposition.PCA(n_components=numPCAcomp)
+        spca = decomposition.PCA(n_components=numDimRedComp)
     if dP.typeDimRed == "TruncatedSVD":
-        spca = decomposition.TruncatedSVD(n_components=numPCAcomp)
+        spca = decomposition.TruncatedSVD(n_components=numDimRedComp)
     
     print("  Running PCA (using: "+dP.typeDimRed+")")
-    print("  Number of Principal components:",str(numPCAcomp),"\n")
+    print("  Number of Principal components:",str(numDimRedComp),"\n")
     
     if dP.rescaleForPCA:
         scaler = preprocessing.StandardScaler(with_mean=False)
@@ -963,7 +963,7 @@ def runPCAValid(A, dP):
 # Carry out statistics/plots for PCA analysis - EXPERIMENTAL
 #********************************************************************************
 def statsPCA(En, A_r, Cl, dP):
-    showPCAplots = True
+    showDimRedplots = True
     
     with open(dP.model_pca,'rb') as f:
         pca = pickle.load(f)
@@ -971,7 +971,7 @@ def statsPCA(En, A_r, Cl, dP):
     for i in range(0,pca.components_.shape[0]):
         print(' Score PC ' + str(i) + ': ' + '{0:.0f}%'.format(pca.explained_variance_ratio_[i] * 100))
 
-    if showPCAplots:
+    if showDimRedplots:
         import matplotlib.pyplot as plt
         from matplotlib import cm
         print(' Plotting Loadings and score plots... \n')
@@ -1039,6 +1039,9 @@ def runAutoencoder(learnFile, testFile, dP):
     import keras
     import tensorflow as tf
     
+    batch_size = 8
+    epochs = 20
+    
     class Autoencoder(keras.Model):
         def __init__(self, latent_dim, shape):
             super(Autoencoder, self).__init__()
@@ -1068,7 +1071,8 @@ def runAutoencoder(learnFile, testFile, dP):
     
     if testFile is None:
         autoencoder.fit(A, A,
-                epochs=10,
+                epochs=epochs,
+                batch_size = batch_size,
                 shuffle=True,
                 #validation_data=(x_test, x_test),
                 validation_split=dP.cv_split
@@ -1076,7 +1080,8 @@ def runAutoencoder(learnFile, testFile, dP):
     else:
         En_test, A_test, Cl_test = readLearnFile(testFile, dP)
         autoencoder.fit(A, A,
-                epochs=10,
+                epochs=epochs,
+                batch_size = batch_size,
                 shuffle=True,
                 validation_data=(A_test, A_test),
                 )
@@ -1084,16 +1089,70 @@ def runAutoencoder(learnFile, testFile, dP):
         A_test_encoded = autoencoder.encoder(A_test).numpy()
         A_test_decoded = autoencoder.decoder(A_test_encoded).numpy()
         
-        #print(A_test)
-        #print(A_test_encoded)
-        #print(A_test_decoded)
-        
     saved_model_autoenc = os.path.splitext(dP.model_pca)[0]+".keras"
     print("\n  Autoencoder saved in:", saved_model_autoenc,"\n")
     autoencoder.save(saved_model_autoenc)
     
     #print(autoencoder.encoder(A).numpy())
     return autoencoder.encoder(A).numpy()
+    
+
+#************************************
+# Experimental Autoencoder
+#************************************
+def runAutoencoder2(learnFile, testFile, dP):
+    import keras
+    import matplotlib.pyplot as plt
+    
+    showDimRedplots = False
+    batch_size = 8
+    epochs = 20
+    En, A, Cl = readLearnFile(learnFile, dP)
+    
+    m = keras.Sequential() # keras 2
+    m.add(keras.layers.Dense(A.shape[1]-1, activation='elu', input_shape=(A.shape[1],)))
+    for i in range(A.shape[1]-1,2,-1):
+        m.add(keras.layers.Dense(i-1,  activation='elu'))
+    
+    m.add(keras.layers.Dense(1,    activation='linear', name="bottleneck"))
+    
+    for i in range(2,A.shape[1],1):
+        m.add(keras.layers.Dense(i,  activation='elu'))
+    
+    m.add(keras.layers.Dense(A.shape[1], activation='sigmoid'))
+
+    m.compile(loss='mean_squared_error', optimizer = keras.optimizers.Adam())
+    history = m.fit(A, A, batch_size=batch_size, epochs=epochs, verbose=1)
+
+    print("\n",m.inputs,"\n")
+    
+    encoder = keras.Model(m.inputs, m.get_layer('bottleneck').output)
+
+    Zenc = encoder.predict(A)  # bottleneck representation
+    Renc = m.predict(A)        # reconstruction
+    
+    saved_model_autoenc = os.path.splitext(dP.model_pca)[0]+".keras"
+    print("\n  Autoencoder saved in:", saved_model_autoenc,"\n")
+    encoder.save(saved_model_autoenc)
+    
+    if showDimRedplots:
+        plt.figure(figsize=(8,4))
+        plt.subplot(121)
+        plt.title('Autoencoder')
+        plt.scatter(Zpca[:,0], Zpca[:,1], c=Cl[:], s=8, cmap='tab10')
+        plt.gca().get_xaxis().set_ticklabels([])
+        plt.gca().get_yaxis().set_ticklabels([])
+
+        plt.subplot(122)
+        plt.title('Autoencoder')
+        plt.scatter(Zenc, Zenc, c=Cl[:], s=8, cmap='tab10')
+        plt.gca().get_xaxis().set_ticklabels([])
+        plt.gca().get_yaxis().set_ticklabels([])
+
+        plt.tight_layout()
+        plt.show()
+    
+    return Zenc
 
 #************************************
 # Main initialization routine
