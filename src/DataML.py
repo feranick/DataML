@@ -241,9 +241,9 @@ def main():
         if o in ["-a" , "--autoencoder"]:
             #try:
             if len(sys.argv)<4:
-                runAutoencoder2(sys.argv[2], None, dP)
+                runAutoencoder(sys.argv[2], None, dP)
             else:
-                runAutoencoder2(sys.argv[2], sys.argv[3], dP)
+                runAutoencoder(sys.argv[2], sys.argv[3], dP)
             #except:
             #    usage()
             #    sys.exit(2)
@@ -1036,11 +1036,79 @@ def statsPCA(En, A_r, Cl, dP):
 # Autoencoder
 #************************************
 def runAutoencoder(learnFile, testFile, dP):
-    import keras
-    import tensorflow as tf
+    if checkTFVersion("2.16.0"):
+        import tensorflow.keras as keras
+    else:
+        if dP.kerasVersion == 2:
+            import tf_keras as keras
+        else:
+            import keras
     
-    batch_size = 8
-    epochs = 20
+    showDimRedplots = False
+    
+    En, A, Cl = readLearnFile(learnFile, dP)
+    
+    m = keras.Sequential()
+    m.add(keras.Input((A.shape[1],),sparse=True))
+    m.add(keras.layers.Dense(A.shape[1]-1, activation='elu'))
+    
+    for i in range(A.shape[1]-1,2,-1):
+        m.add(keras.layers.Dense(i-1,  activation='elu'))
+    
+    m.add(keras.layers.Dense(1,    activation='linear', name="bottleneck"))
+    
+    for i in range(2,A.shape[1],1):
+        m.add(keras.layers.Dense(i,  activation='elu'))
+    
+    m.add(keras.layers.Dense(A.shape[1], activation='sigmoid'))
+
+    print("  Training Autoencoder... \n")
+    m.compile(loss='mean_squared_error', optimizer = keras.optimizers.Adam())
+    history = m.fit(A, A, batch_size=dP.batch_size, epochs=dP.epochs, verbose=1)
+    
+    print("\n  Setting up Autoencoder input tensor... \n")
+    
+    encoder = keras.Model(inputs = m.inputs[0], outputs=m.get_layer('bottleneck').output)
+    keras.Input((A.shape[1],))
+    Zenc = encoder.predict(A)  # bottleneck representation
+    Renc = m.predict(A)        # reconstruction
+    
+    saved_model_autoenc = os.path.splitext(dP.model_pca)[0]+".keras"
+    print("\n  Autoencoder saved in:", saved_model_autoenc,"\n")
+    encoder.save(saved_model_autoenc)
+    
+    if showDimRedplots:
+        import matplotlib.pyplot as plt
+        plt.figure(figsize=(8,4))
+        plt.subplot(121)
+        plt.title('Autoencoder')
+        plt.scatter(Zpca[:,0], Zpca[:,1], c=Cl[:], s=8, cmap='tab10')
+        plt.gca().get_xaxis().set_ticklabels([])
+        plt.gca().get_yaxis().set_ticklabels([])
+
+        plt.subplot(122)
+        plt.title('Autoencoder')
+        plt.scatter(Zenc, Zenc, c=Cl[:], s=8, cmap='tab10')
+        plt.gca().get_xaxis().set_ticklabels([])
+        plt.gca().get_yaxis().set_ticklabels([])
+
+        plt.tight_layout()
+        plt.show()
+    
+    return Zenc
+    
+#************************************
+# Autoencoder - Alternative
+#************************************
+def runAutoencoder2(learnFile, testFile, dP):
+    import tensorflow as tf
+    if checkTFVersion("2.16.0"):
+        import tensorflow.keras as keras
+    else:
+        if dP.kerasVersion == 2:
+            import tf_keras as keras
+        else:
+            import keras
     
     class Autoencoder(keras.Model):
         def __init__(self, latent_dim, shape):
@@ -1071,8 +1139,8 @@ def runAutoencoder(learnFile, testFile, dP):
     
     if testFile is None:
         autoencoder.fit(A, A,
-                epochs=epochs,
-                batch_size = batch_size,
+                epochs = dP.epochs,
+                batch_size = dP.batch_size,
                 shuffle=True,
                 #validation_data=(x_test, x_test),
                 validation_split=dP.cv_split
@@ -1080,8 +1148,8 @@ def runAutoencoder(learnFile, testFile, dP):
     else:
         En_test, A_test, Cl_test = readLearnFile(testFile, dP)
         autoencoder.fit(A, A,
-                epochs=epochs,
-                batch_size = batch_size,
+                epochs = dP.epochs,
+                batch_size = dP.batch_size,
                 shuffle=True,
                 validation_data=(A_test, A_test),
                 )
@@ -1095,64 +1163,6 @@ def runAutoencoder(learnFile, testFile, dP):
     
     #print(autoencoder.encoder(A).numpy())
     return autoencoder.encoder(A).numpy()
-    
-
-#************************************
-# Experimental Autoencoder
-#************************************
-def runAutoencoder2(learnFile, testFile, dP):
-    import keras
-    import matplotlib.pyplot as plt
-    
-    showDimRedplots = False
-    batch_size = 8
-    epochs = 20
-    En, A, Cl = readLearnFile(learnFile, dP)
-    
-    m = keras.Sequential() # keras 2
-    m.add(keras.layers.Dense(A.shape[1]-1, activation='elu', input_shape=(A.shape[1],)))
-    for i in range(A.shape[1]-1,2,-1):
-        m.add(keras.layers.Dense(i-1,  activation='elu'))
-    
-    m.add(keras.layers.Dense(1,    activation='linear', name="bottleneck"))
-    
-    for i in range(2,A.shape[1],1):
-        m.add(keras.layers.Dense(i,  activation='elu'))
-    
-    m.add(keras.layers.Dense(A.shape[1], activation='sigmoid'))
-
-    m.compile(loss='mean_squared_error', optimizer = keras.optimizers.Adam())
-    history = m.fit(A, A, batch_size=batch_size, epochs=epochs, verbose=1)
-
-    print("\n",m.inputs,"\n")
-    
-    encoder = keras.Model(m.inputs, m.get_layer('bottleneck').output)
-
-    Zenc = encoder.predict(A)  # bottleneck representation
-    Renc = m.predict(A)        # reconstruction
-    
-    saved_model_autoenc = os.path.splitext(dP.model_pca)[0]+".keras"
-    print("\n  Autoencoder saved in:", saved_model_autoenc,"\n")
-    encoder.save(saved_model_autoenc)
-    
-    if showDimRedplots:
-        plt.figure(figsize=(8,4))
-        plt.subplot(121)
-        plt.title('Autoencoder')
-        plt.scatter(Zpca[:,0], Zpca[:,1], c=Cl[:], s=8, cmap='tab10')
-        plt.gca().get_xaxis().set_ticklabels([])
-        plt.gca().get_yaxis().set_ticklabels([])
-
-        plt.subplot(122)
-        plt.title('Autoencoder')
-        plt.scatter(Zenc, Zenc, c=Cl[:], s=8, cmap='tab10')
-        plt.gca().get_xaxis().set_ticklabels([])
-        plt.gca().get_yaxis().set_ticklabels([])
-
-        plt.tight_layout()
-        plt.show()
-    
-    return Zenc
 
 #************************************
 # Main initialization routine

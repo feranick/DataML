@@ -279,7 +279,7 @@ def convertTflite(learnFile, dP):
 # Open Training Data
 #************************************
 def readLearnFile(learnFile, dP):
-    print("  Opening training file:",learnFile)
+    print("  Opening training file:",learnFile,"\n")
     try:
         if os.path.splitext(learnFile)[1] == ".npy":
             M = np.load(learnFile)
