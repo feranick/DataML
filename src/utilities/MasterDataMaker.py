@@ -5,7 +5,7 @@
 * MasterDataMaker
 * Adds data from single file to Master Doc
 * File must be in ASCII
-* version: v2024.10.09.1
+* version: v2024.10.14.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -16,7 +16,6 @@ import pandas as pd
 import sys, os.path, h5py, pickle
 from random import uniform
 from bisect import bisect_left
-from libDataML import *
 
 #************************************
 # Parameters definition
@@ -69,7 +68,7 @@ class dP:
 #************************************
 def main():
     if len(sys.argv) < 2:
-        print(' Usage:\n  python3 DataMaker.py <paramFile> <pred column>')
+        print(' Usage:\n  python3 MasterDataMaker.py <paramFile> <pred column>')
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
     
@@ -95,7 +94,6 @@ def main():
         P,V = readParamFile(sys.argv[1], predRCol, rootFile)
     except:
         print("\033[1m" + " param file not found \n" + "\033[0m")
-        usage()
         return
     
     #************************************
@@ -238,11 +236,18 @@ def formatSubset2(A, Cl, percent):
 # Purge rows with undefined Cl value
 #************************************
 def purgeRows(M):
-    condition = M[:,0] == 0
-    M2 = M[~condition]
     print(" Shape original dataset:", M.shape)
-    print(" Purged from undefined values. \n Shape new dataset:",M2.shape,"\n")
-    return M2
+    condition = M[:,0] == 0
+    M = M[~condition]
+    
+    #for i in range(5):
+    #    print(i)
+    #    condition = M[:,i] == 0
+    #    M = M[~condition]
+    #    print(M.shape)
+    
+    print(" Purged from undefined values. \n Shape new dataset:",M.shape,"\n")
+    return M
 
 #************************************
 # Main initialization routine
