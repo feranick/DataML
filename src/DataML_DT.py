@@ -119,7 +119,7 @@ def main():
     
     try:
         opts, args = getopt.getopt(sys.argv[1:],
-            "tpbvcarh:", ["train", "predict", "batch", "validbatch", "comp", "autoencoder", "rforest", "help"])
+            "tpbvcah:", ["train", "predict", "batch", "validbatch", "comp", "autoencoder", "help"])
     except:
         usage(dP.appName)
         sys.exit(2)
@@ -153,24 +153,24 @@ def main():
             #    sys.exit(2)
 
         if o in ("-b" , "--batch"):
-            try:
-                if len(sys.argv)<4:
-                    batchPredict(sys.argv[2], None)
-                else:
-                    batchPredict(sys.argv[2], sys.argv[3])
-            except:
-                usage(dP.appName)
-                sys.exit(2)
+            #try:
+            if len(sys.argv)<4:
+                batchPredict(sys.argv[2], None)
+            else:
+                batchPredict(sys.argv[2], sys.argv[3])
+            #except:
+            #    usage(dP.appName)
+            #    sys.exit(2)
             
         if o in ("-v" , "--validbatch"):
-            try:
-                if len(sys.argv)<4:
-                    validBatchPredict(sys.argv[2], None)
-                else:
-                    validBatchPredict(sys.argv[2], sys.argv[3])
-            except:
-                usage(dP.appName)
-                sys.exit(2)
+            #try:
+            if len(sys.argv)<4:
+                validBatchPredict(sys.argv[2], None)
+            else:
+                validBatchPredict(sys.argv[2], sys.argv[3])
+            #except:
+            #    usage(dP.appName)
+            #    sys.exit(2)
                 
         if o in ["-c" , "--comp"]:
             try:
@@ -188,16 +188,6 @@ def main():
                     preAutoencoder(sys.argv[2], None, dP)
                 else:
                     preAutoencoder(sys.argv[2], sys.argv[3], dP)
-            except:
-                usage(dP.appName)
-                sys.exit(2)
-            
-        if o in ["-r" , "--rforest"]:
-            try:
-                if len(sys.argv)<4:
-                    preDT(sys.argv[2], None, dP)
-                else:
-                    preDT(sys.argv[2], sys.argv[3], dP)
             except:
                 usage(dP.appName)
                 sys.exit(2)
@@ -301,23 +291,23 @@ def train(learnFile, testFile, normFile):
     n_jobs = 1
 
     if dP.regressor:
-        rf = RandomForestRegressor(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs)
+        dt = RandomForestRegressor(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs)
         tag = "Regressor"
     else:
-        rf = RandomForestClassifier(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs)
+        dt = RandomForestClassifier(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs)
         tag = "Classifier"
     
     
-    rf.fit(A, Cl2)
+    dt.fit(A, Cl2)
         
     print("\n  Random Forest", tag,"model saved in:", dP.modelName)
     with open(dP.modelName,'wb') as f:
-        pickle.dump(rf, f)
+        pickle.dump(dt, f)
 
     if dP.regressor:
-        pred = rf.predict(A_test)
+        pred = dt.predict(A_test)
     else:
-        pred = le.inverse_transform_bulk(rf.predict(A_test))
+        pred = le.inverse_transform_bulk(dt.predict(A_test))
     delta = pred - Cl_test
         
     print('\n  ================================================================================')
@@ -329,7 +319,7 @@ def train(learnFile, testFile, normFile):
         print("   {0:.2f}\t| {1:.2f}\t\t| {2:.2f}".format(Cl_test[i], pred[i], delta[i]))
     print('  --------------------------------------------------------------------------------')
     print('   Average Delta: {0:.2f}, StDev = {1:.2f}'.format(mean(delta), stdev(delta)))
-    print('   R^2: {0:.4f}'.format(rf.score(A_test, Cl2_test)))
+    print('   R^2: {0:.4f}'.format(dt.score(A_test, Cl2_test)))
     print('  --------------------------------------------------------------------------------\n')
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
     
@@ -338,6 +328,9 @@ def train(learnFile, testFile, normFile):
 #************************************
 def predict(testFile, normFile):
     dP = Conf()
+    import sklearn
+    from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+    
     R, _ = readTestFile(testFile, dP)
 
     if normFile is not None:
@@ -353,75 +346,59 @@ def predict(testFile, normFile):
      
     if dP.runDimRedFlag:
         R = runPCAValid(R, dP)
-        
+            
+    with open(dP.modelName, "rb") as f:
+        dt = pickle.load(f)
+    
     if dP.regressor:
-        predictions, _ = getPredictions(R, loadModel(dP), dP)
-        #predictions = model.predict(R).flatten()[0]
-        print('\n  ==========================================================')
-        print('  \033[1m MLP - Regressor\033[0m - Prediction')
-        print('  ==========================================================')
-        if normFile is not None:
-            predValue = norm.transform_inverse_single(predictions.flatten()[0])
-            print('\033[1m\n  Predicted value = {0:.2f}\033[0m (normalized: {1:.2f})\n'.format(predValue, predictions))
-        else:
-            predValue = predictions.flatten()[0]
-            print('\033[1m\n  Predicted value (normalized) = {0:.2f}\033[0m\n'.format(predValue))
-        print('  ==========================================================\n')
-        
+        tag = "Regressor"
+        pred = dt.predict(R)
     else:
         with open(dP.model_le, "rb") as f:
             le = pickle.load(f)
-        predictions, _ = getPredictions(R, loadModel(dP), dP)
-        pred_class = np.argmax(predictions)
-        if dP.useTFlitePred:
-            predProb = round(100*predictions[0][pred_class]/255,2)
-        else:
-            predProb = round(100*predictions[0][pred_class],2)
-        rosterPred = np.where(predictions[0]>0.1)[0]
-
-        print('\n  ==========================================================')
-        print('  \033[1m MLP - Classifier\033[0m - Prediction')
-        print('  ==========================================================')
-
-        if dP.numLabels == 1:
-            if pred_class.size >0:
-                if normFile is not None:
-                    predValue = norm.transform_inverse_single(le.inverse_transform([pred_class])[0])
-                    print('\033[1m\n  Predicted value = {0:.2f} (probability = {1:.2f}%)\033[0m\n'.format(predValue, predProb))
-                else:
-                    predValue = le.inverse_transform([pred_class])[0]
-                    print('\033[1m\n  Predicted value (normalized) = {0:.2f} (probability = {1:.2f}%)\033[0m\n'.format(predValue, predProb))
-            else:
-                predValue = 0
-                print('\033[1m\n  No predicted value (probability = {0:.2f}%)\033[0m\n'.format(predProb))
-            print('  ==========================================================\n')
-
-        else:
-            print('\n ============================================')
-            print('\033[1m' + ' Predicted value \033[0m(probability = ' + str(predProb) + '%)')
-            print(' ============================================\n')
-            print("  1:", str(predValue[0]),"%")
-            print("  2:",str(predValue[1]),"%")
-            print("  3:",str((predValue[1]/0.5)*(100-99.2-.3)),"%\n")
-            print(' ============================================\n')
+        tag = "Classfier"
+        pred = le.inverse_transform_bulk(dt.predict(R))
+        
+    print('\n  ================================================================================')
+    print('  \033[1m Random Forest \033[0m -',tag)
+    print('  ================================================================================')
+    print('   Filename\t| Prediction')
+    print('  --------------------------------------------------------------------------------')
+    print("   {0:s}\t| {1:.2f}  ".format(testFile, pred[0]))
+    print('  --------------------------------------------------------------------------------\n')
+    print('  Scikit-learn v.',str(sklearn.__version__),'\n')
 
 #************************************
 # Batch Prediction
 #************************************
 def batchPredict(folder, normFile):
     dP = Conf()
-    model = loadModel(dP)
-
+    
+    import sklearn
+    from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+    
     if normFile is not None:
         try:
             with open(normFile, "rb") as f:
                 norm = pickle.load(f)
-            print("  Opening pkl file with normalization data:",normFile,"\n")
+            print("  Opening pkl file with normalization data:",normFile)
+            print("  Normalizing validation file for prediction...\n")
         except:
-            print("\033[1m" + " pkl file not found \n" + "\033[0m")
+            print("\033[1m pkl file not found \033[0m")
             return
             
+    with open(dP.modelName, "rb") as f:
+        dt = pickle.load(f)
+    
+    if not dP.regressor:
+        with open(dP.model_le, "rb") as f:
+            le = pickle.load(f)
+        summaryFile = np.array([['DataML_DT','Classifier'],['File Name','Predicted Value']])
+    else:
+        summaryFile = np.array([['DataML_DT','Regressor'],['File Name','Predicted Class']])
+     
     fileName = []
+    pred = []
     for file in glob.glob(folder+'/*.txt'):
         R, good = readTestFile(file, dP)
         if  normFile is not None:
@@ -431,54 +408,27 @@ def batchPredict(folder, normFile):
             R = runPCAValid(R, dP)
         
         if good:
-            try:
-                predictions = np.vstack((predictions,getPredictions(R, model, dP)[0].flatten()))
-            except:
-                predictions = np.array([getPredictions(R, model, dP)[0].flatten()])
+            if dP.regressor:
+                tag = "Regressor"
+                pred.append(dt.predict(R))
+            else:
+                tag = "Classfier"
+                pred.append(le.inverse_transform_bulk(dt.predict(R)))
             fileName.append(file)
     
-    if dP.regressor:
-        summaryFile = np.array([['DataML','Regressor',''],['Filename','Prediction','']])
-        print('\n  ================================================================================')
-        print('  \033[1m MLP - Regressor\033[0m - Batch Prediction')
-        print('  ================================================================================')
-        for i in range(0,len(predictions)):
-            if normFile is not None:
-                predValue = norm.transform_inverse_single(predictions[i][0])
-            else:
-                predValue = predictions[i][0]
-            
-            print("  {0:s} | {1:.2f}  ".format(fileName[i], predValue))
-            summaryFile = np.vstack((summaryFile,[fileName[i], predValue,'']))
-        print('  ================================================================================')
-    else:
-        summaryFile = np.array([['DataML','Classifier',''],['Real Class','Predicted Class', 'Probability']])
-        with open(dP.model_le, "rb") as f:
-            le = pickle.load(f)
-        #predictions, _ = getPredictions(A_test, model,dP)
-        #predictions = model.predict(A_test)
-        print('\n  ================================================================================')
-        print('  \033[1m MLP - Classifier\033[0m - Batch Prediction')
-        print('  ================================================================================')
-        print("  Real class\t| Predicted class\t| Probability")
-        print("  ---------------------------------------------------")
-        for i in range(predictions.shape[0]):
-            predClass = np.argmax(predictions[i])
-            predProb = round(100*predictions[i][predClass],2)
-            if normFile is not None:
-                predValue = norm.transform_inverse_single(le.inverse_transform([predClass])[0])
-                realValue = norm.transform_inverse_single(Cl_test[i])
-            else:
-                predValue = le.inverse_transform([predClass])[0]
-                realValue = Cl_test[i]
-            print("  {0:.2f}\t\t| {1:.2f}\t\t\t| {2:.2f}".format(realValue, predValue, predProb))
-            summaryFile = np.vstack((summaryFile,[realValue,predValue,predProb]))
-        print('  ========================================================\n')
-
-    import pandas as pd
-    df = pd.DataFrame(summaryFile)
-    df.to_csv(dP.summaryFileName, index=False, header=False)
-    print("\n Prediction summary saved in:",dP.summaryFileName,"\n")
+    print('\n  ================================================================================')
+    print('  \033[1m Random Forest \033[0m -',tag)
+    print('  ================================================================================')
+    print('   Filename\t| Prediction')
+    print('  --------------------------------------------------------------------------------')
+    for i in range(0,len(pred)):
+        print("   {0:s}\t| {1:.2f}  ".format(fileName[i], pred[i][0]))
+        summaryFile = np.vstack((summaryFile,[fileName[i],pred[i][0]]))
+    print('  --------------------------------------------------------------------------------\n')
+    
+    saveSummaryFile(summaryFile, dP)
+    
+    print('  Scikit-learn v.',str(sklearn.__version__),'\n')
 
 #***********************************************************
 # Batch Prediction using validation data (with real values)
@@ -486,151 +436,50 @@ def batchPredict(folder, normFile):
 def validBatchPredict(testFile, normFile):
     dP = Conf()
     En_test, A_test, Cl_test = readLearnFile(testFile, dP)
-    model = loadModel(dP)
-
+    
+    import sklearn
+    from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+    
     if normFile is not None:
         try:
             with open(normFile, "rb") as f:
                 norm = pickle.load(f)
-            print("  Opening pkl file with normalization data:",normFile,"\n")
+            print("  Opening pkl file with normalization data:",normFile)
+            print("  Normalizing validation file for prediction...\n")
         except:
-            print("\033[1m" + " pkl file not found \n" + "\033[0m")
+            print("\033[1m pkl file not found \033[0m")
             return
-    
+            
+    with open(dP.modelName, "rb") as f:
+        dt = pickle.load(f)
+        
     if dP.runDimRedFlag:
         A_test = runPCAValid(A_test, dP)
-
-    covMatrix = np.empty((0,2))
     
     if dP.regressor:
-        summaryFile = np.array([['DataML','Regressor','','',''],['Real Value','Prediction','val_loss','val_abs_mean_error','deviation %']])
-        predictions, _ = getPredictions(A_test, model, dP)
-        
-        score = model.evaluate(A_test, Cl_test, batch_size=dP.batch_size, verbose = 0)
-        print('  ==========================================================')
-        print('  \033[1m MLP - Regressor\033[0m - Batch Prediction')
-        print('  ==========================================================')
-        print("  \033[1mOverall val_loss:\033[0m {0:.4f}; \033[1moverall val_abs_mean_loss:\033[0m {1:.4f}\n".format(score[0], score[1]))
-        print('  ==========================================================')
-        
-        print('  ===========================================================================')
-        print("  Real value | Predicted value | val_loss | val_mean_abs_err | % deviation ")
-        print("  ---------------------------------------------------------------------------")
-        for i in range(0,len(predictions)):
-            score = model.evaluate(np.array([A_test[i]]), np.array([Cl_test[i]]), batch_size=dP.batch_size, verbose = 0)
-            if normFile is not None:
-                predValue = norm.transform_inverse_single(predictions[i][0])
-                realValue = norm.transform_inverse_single(Cl_test[i])
-                print("  {0:.3f} ({1:.3f})  |  {2:.3f} ({3:.3f})  | {4:.4f}  |  {5:.4f} | {6:.2f}".format(realValue,Cl_test[i],predValue,
-                        Cl_test[i], norm.transform_inverse_single(predictions[i][0]), predictions[i][0], score[0], score[1],predictions[i][0],
-                        score[0],score[1], 100*score[1]/norm.transform_inverse_single(Cl_test[i])))
-            else:
-                realValue = Cl_test[i]
-                predValue = predictions[i][0]
-                print("  {0:.3f}\t| {1:.3f}\t| {2:.4f}\t| {3:.4f}\t| {4:.1f}".format(realValue, predValue, score[0], score[1], 100*score[1]/realValue))
-                
-            summaryFile = np.vstack((summaryFile,[realValue,predValue,score[0], score[1],100*score[1]/realValue]))
-            
-            covMatrix = np.vstack((covMatrix,[realValue,predValue]))
-        print('  ===========================================================================\n')
+        tag = "Regressor"
+        pred = dt.predict(A_test)
+        summaryFile = np.array([['DataML_DT','Regressor'],['Predicted Class','']])
     else:
-        summaryFile = np.array([['DataML','Classifier',''],['Real Class','Predicted Class', 'Probability']])
-        
+        tag = "Classifier"
         with open(dP.model_le, "rb") as f:
             le = pickle.load(f)
-        predictions, _ = getPredictions(A_test, model,dP)
-        #predictions = model.predict(A_test)
-        print('  ========================================================')
-        print('  \033[1m MLP - Classifier\033[0m - Batch Prediction')
-        print('  ========================================================')
-        print('  Real class\t| Predicted class\t| Probability')
-        print('  ---------------------------------------------------')
-        for i in range(predictions.shape[0]):
-            predClass = np.argmax(predictions[i])
-            predProb = round(100*predictions[i][predClass],2)
-            if normFile is not None:
-                predValue = norm.transform_inverse_single(le.inverse_transform([predClass])[0])
-                realValue = norm.transform_inverse_single(Cl_test[i])
-            else:
-                predValue = le.inverse_transform([predClass])[0]
-                realValue = Cl_test[i]
-            print("  {0:.2f}\t\t| {1:.2f}\t\t\t| {2:.2f}".format(realValue, predValue, predProb))
-            summaryFile = np.vstack((summaryFile,[realValue,predValue,predProb]))
-            covMatrix = np.vstack((covMatrix,[realValue,predValue]))
-            
-        print('  ========================================================\n')
-    
-    from scipy.stats import pearsonr, spearmanr
-    pearsonr_corr, _ = pearsonr(covMatrix[:,0],covMatrix[:,1])
-    summaryFile = np.vstack((summaryFile,['PearsonR',pearsonr_corr,'','','']))
-    spearmanr_corr, _ = pearsonr(covMatrix[:,0],covMatrix[:,1])
-    summaryFile = np.vstack((summaryFile,['SpearmanR',spearmanr_corr,'','','']))
-    print(" PearsonR correlation: {0:0.3f}".format(pearsonr_corr))
-    print(" SpearmanR correlation: {0:0.4f}".format(spearmanr_corr))
-    
-    import pandas as pd
-    df = pd.DataFrame(summaryFile)
-    df.to_csv(dP.summaryFileName, index=False, header=False)
-    print("\n Prediction summary saved in:",dP.summaryFileName,"\n")
-    
-#********************************************************************************
-# Perform Random Forest - Preview
-#********************************************************************************
-def preDT(learnFile, validFile, dP):
-    En, A, Cl = readLearnFile(learnFile, dP)
-    if validFile is not None:
-        En_test, A_test, Cl_test = readLearnFile(validFile, dP)
-    else:
-        En_test, A_test, Cl_test = None, None, None
-    
-    if dP.runDimRedFlag:
-        print("  Dimensionality Reduction via:",dP.typeDimRed,"\n")
-        if dP.typeDimRed == 'Autoencoder':
-            A = runAutoencoder(A, dP)
-        else:
-            A = runPCA(A, dP.numDimRedComp, dP)
-            if validFile is not None:
-                A_test = runPCAValid(A_test, dP)
-    
-    runDT(A, Cl, A_test, Cl_test,dP)
-
-def runDT(A, Cl, A_test, Cl_test, dP):
-    import sklearn
-    from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
-    from statistics import mean, stdev
-
-    max_depth = 5
-    n_estimators = 10
-    n_jobs = 1
-
-    if dP.regressor:
-        rf = RandomForestRegressor(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs)
-        tag = "Regressor"
-    else:
-        rf = RandomForestClassifier(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs)
-        tag = "Classifier"
+        pred = le.inverse_transform_bulk(dt.predict(A_test))
+        summaryFile = np.array([['DataML_DT','Classifier'],['Predicted Value','']])
         
-    rf.fit(A, Cl)
-    print("\n  Random Forest", tag,"model saved in:", dP.modelName)
-    with open(dP.modelname,'wb') as f:
-        pickle.dump(rf, f)
-
-    if A_test is not None:
-        pred = rf.predict(A_test)
-        delta = pred - Cl_test
+    covMatrix = np.empty((0,2))
     
-        print('\n  ================================================================================')
-        print('  \033[1m Random Forest \033[0m - Prediction')
-        print('  ================================================================================')
-        print('   Real class\t| Predicted class\t| Delta')
-        print('  --------------------------------------------------------------------------------')
-        for i in range(len(pred)):
-            print("   {0:.2f}\t| {1:.2f}\t\t| {2:.2f}".format(Cl_test[i], pred[i], delta[i]))
-        print('  --------------------------------------------------------------------------------')
-        print('   Average Delta: {0:.2f}, StDev = {1:.2f}'.format(mean(delta), stdev(delta)))
-        print('   R^2: {0:.4f}'.format(rf.score(A_test, Cl_test)))
-        print('  --------------------------------------------------------------------------------\n')
-        print('  Scikit-learn v.',str(sklearn.__version__),'\n')
+    print('  ================================================================================')
+    print('  \033[1m Random Forest \033[0m -',tag)
+    print('  ================================================================================')
+    print('   Prediction')
+    print('  --------------------------------------------------------------------------------')
+    for i in range(0,len(pred)):
+        print("   {0:.2f}  ".format(pred[i]))
+        summaryFile = np.vstack((summaryFile,[pred[i],'']))
+    print('  --------------------------------------------------------------------------------\n')
+    
+    saveSummaryFile(summaryFile, dP)
 
 #************************************
 # Main initialization routine

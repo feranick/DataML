@@ -321,7 +321,7 @@ def readLearnFile(learnFile, dP):
 def readTestFile(testFile, dP):
     try:
         with open(testFile, 'r') as f:
-            print("\n  Opening sample data for prediction:",testFile,"\n")
+            print("\n  Opening sample data for prediction:",testFile)
             Rtot = np.loadtxt(f, unpack =True)
         R=np.array([Rtot[1,:]])
         Rx=np.array([Rtot[0,:]])
@@ -698,6 +698,15 @@ def formatSubset(A, Cl, percent):
             print("  ",np.unique(Cl_cv).astype(int),"\n")
         flag = False
     return A_train, Cl_train, A_cv, Cl_cv, flag
+    
+#************************************
+# Save Summary of predictions as CSV
+#************************************
+def saveSummaryFile(summaryFile, dP):
+    import pandas as pd
+    df = pd.DataFrame(summaryFile)
+    df.to_csv(dP.summaryFileName, index=False, header=False)
+    print("  Prediction summary saved in:",dP.summaryFileName,"\n")
 
 #************************************
 # Lists the program usage
@@ -727,10 +736,10 @@ def usage(name):
         print('  ',name,'-l <learningFile>\n')
         print(' Create parameter optimization file:')
         print('  ',name,'-o\n')
+        print(' Preview: Run Random Forest Regressor/Classifier - EXPERIMENTAL:')
+        print('  ',name,'-r <learningFile> <validFile-optional>\n')
     print(' Run principal component analysis (PCA) - EXPERIMENTAL:')
     print('  ',name,'-c <learningFile>\n')
     print(' Run Autoencoder - EXPERIMENTAL:')
     print('  ',name,'-a <learningFile> <validFile-optional>\n')
-    print(' Preview: Run Random Forest Regressor/Classifier - EXPERIMENTAL:')
-    print('  ',name,'-r <learningFile> <validFile-optional>\n')
     print(' Requires python 3.x. Not compatible with python 2.x\n')

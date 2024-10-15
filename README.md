@@ -140,9 +140,6 @@ Train (Random cross validation):
  Evaluate Autoencoder - EXPERIMENTAL:
   `DataML_DT -a <learningFile>`
   `DataML_DT -a <learningFile> <validFile-optional>`
-
- Preview: Run Random Forest Regressor/Classifier with validation- EXPERIMENTAL:
-  `DataML_DT -r <learningFile> <validFile-optional>`
   
 ###Note: 
 Three different dimention reduction methods are supported and can be selected using the `typeDimRed` flag:

@@ -790,10 +790,7 @@ def batchPredict(folder, normFile):
             summaryFile = np.vstack((summaryFile,[realValue,predValue,predProb]))
         print('  ========================================================\n')
 
-    import pandas as pd
-    df = pd.DataFrame(summaryFile)
-    df.to_csv(dP.summaryFileName, index=False, header=False)
-    print("\n Prediction summary saved in:",dP.summaryFileName,"\n")
+    saveSummaryFile(summaryFile, dP)
 
 #***********************************************************
 # Batch Prediction using validation data (with real values)
@@ -883,10 +880,7 @@ def validBatchPredict(testFile, normFile):
     print(" PearsonR correlation: {0:0.3f}".format(pearsonr_corr))
     print(" SpearmanR correlation: {0:0.4f}".format(spearmanr_corr))
     
-    import pandas as pd
-    df = pd.DataFrame(summaryFile)
-    df.to_csv(dP.summaryFileName, index=False, header=False)
-    print("\n Prediction summary saved in:",dP.summaryFileName,"\n")
+    saveSummaryFile(summaryFile, dP)
     
 #********************************************************************************
 # Perform Random Forest - Preview
