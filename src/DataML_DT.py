@@ -3,7 +3,7 @@
 '''
 ***************************************************
 * DataML Decision Trees - Classifier and Regressor
-* v2024.10.15.3
+* v2024.10.15.5
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***************************************************
@@ -27,7 +27,7 @@ def DataML_DT():
 class Conf():
     def __init__(self):
         self.appName = "DataML_DT"
-        confFileName = "DataML-DT.ini"
+        confFileName = "DataML_DT.ini"
         self.configFile = os.getcwd()+"/"+confFileName
         self.conf = configparser.ConfigParser()
         self.conf.optionxform = str
@@ -37,17 +37,18 @@ class Conf():
         self.readConfig(self.configFile)
         self.model_directory = "./"
         if self.regressor:
-            self.summaryFileName = "summary_DT_regressor.csv"
-            self.modelName = "model_DT_regressor.pkl"
+            self.mode = "Regressor"
+            self.metric = "MAE"
         else:
-            self.summaryFileName = "summary_DT_classifier.csv"
-            self.modelName = "model_DT_classifier.pkl"
+            self.mode = "Classifier"
+            self.metric = "Accuracy"
+        
+        self.modelNameRoot = "model_DT_"
+        self.modelName = self.modelNameRoot + self.typeDT + self.mode + ".pkl"
+        self.summaryFileName = self.modelNameRoot + self.typeDT + self.mode + ".csv"
         
         self.tb_directory = "model_DT"
-        self.model_name = self.model_directory+self.modelName
-        
-        if self.kerasVersion == 3:
-            self.model_name = os.path.splitext(self.model_name)[0]+".keras"
+        self.model_name = self.model_directory+self.modelNameRoot
         
         self.model_le = self.model_directory+"model_le.pkl"
         self.model_scaling = self.model_directory+"model_scaling.pkl"
@@ -58,6 +59,7 @@ class Conf():
             
     def datamlDef(self):
         self.conf['Parameters'] = {
+            'typeDT' : 'RandomForest',
             'regressor' : False,
             'trainFullData' : True,
             'epochs' : 200,
@@ -81,6 +83,7 @@ class Conf():
             self.datamlDef = self.conf['Parameters']
             self.sysDef = self.conf['System']
         
+            self.typeDT = self.conf.get('Parameters','typeDT')
             self.regressor = self.conf.getboolean('Parameters','regressor')
             self.trainFullData = self.conf.getboolean('Parameters','trainFullData')
             self.epochs = self.conf.getint('Parameters','epochs')
@@ -94,7 +97,7 @@ class Conf():
             self.normalize = self.conf.getboolean('Parameters','normalize')
             
             self.kerasVersion = self.conf.getint('System','kerasVersion')
-                        
+            
         except:
             print(" Error in reading configuration file. Please check it\n")
 
@@ -201,7 +204,8 @@ def train(learnFile, testFile, normFile):
     dP = Conf()
    
     import sklearn
-    from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+    from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier, HistGradientBoostingRegressor, HistGradientBoostingClassifier
+    from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
     from statistics import mean, stdev
     from sklearn.metrics import accuracy_score, mean_absolute_error
     
@@ -288,20 +292,30 @@ def train(learnFile, testFile, normFile):
     max_depth = 5
     n_estimators = 10
     n_jobs = 1
+    max_iter = 100
 
     if dP.regressor:
-        dt = RandomForestRegressor(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs, oob_score=False)
-        tag = "Regressor"
-        metric = "MAE"
+        if dP.typeDT == 'RandomForest':
+            dt = RandomForestRegressor(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs)
+        if dP.typeDT == 'HistGradientBoosting':
+            dt = HistGradientBoostingRegressor(max_depth=max_depth, max_iter=max_iter, verbose = 2)
+        if dP.typeDT == 'GradientBoosting':
+            dt = GradientBoostingRegressor(max_depth=max_depth, max_iter=max_iter, verbose = 2)
+        if dP.typeDT == 'DecisionTree':
+            dt = DecisionTreeRegressor(max_depth=max_depth)
     else:
-        dt = RandomForestClassifier(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs, oob_score=False)
-        tag = "Classifier"
-        metric = "Accuracy"
+        if dP.typeDT == 'RandomForest':
+            dt = RandomForestClassifier(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs, oob_score=False)
+        if dP.typeDT == 'HistGradientBoosting':
+            dt = HistGradientBoostingClassifier(max_depth=max_depth, max_iter=max_iter, verbose=2)
+        if dP.typeDT == 'GradientBoosting':
+            dt = GradientBoostingClassifier(max_depth=max_depth, max_iter=max_iter, verbose = 2)
+        if dP.typeDT == 'DecisionTree':
+            dt = DecisionTreeClassifier(max_depth=max_depth)
     
     dt.fit(A, Cl2)
-    #print(dt.oob_score_)
         
-    print("\n  Random Forest", tag,"model saved in:", dP.modelName)
+    print("\n  ",dP.typeDT+dP.mode,"model saved in:", dP.modelName)
     with open(dP.modelName,'wb') as f:
         pickle.dump(dt, f)
 
@@ -315,14 +329,14 @@ def train(learnFile, testFile, normFile):
     delta = pred - Cl_test
     
     print('\n  ================================================================================')
-    print('  \033[1m Random Forest \033[0m -',tag,'Prediction')
+    print('  \033[1m',dP.typeDT,dP.mode,'\033[0m')
     print('  ================================================================================')
     print('   Real class\t| Predicted class\t| Delta')
     print('  --------------------------------------------------------------------------------')
     for i in range(len(pred)):
         print("   {0:.2f}\t| {1:.2f}\t\t| {2:.2f}".format(Cl_test[i], pred[i], delta[i]))
     print('  --------------------------------------------------------------------------------')
-    print('  ',metric,'= {0:.4f}'.format(score))
+    print('  ',dP.metric,'= {0:.4f}'.format(score))
     print('   R^2 = {0:.4f}'.format(dt.score(A_test, Cl2_test)))
     print('   Average Delta: {0:.2f}, StDev = {1:.2f}'.format(mean(delta), stdev(delta)))
     print('  --------------------------------------------------------------------------------\n')
@@ -356,16 +370,14 @@ def predict(testFile, normFile):
         dt = pickle.load(f)
     
     if dP.regressor:
-        tag = "Regressor"
         pred = dt.predict(R)
     else:
         with open(dP.model_le, "rb") as f:
             le = pickle.load(f)
-        tag = "Classfier"
         pred = le.inverse_transform_bulk(dt.predict(R))
         
     print('\n  ================================================================================')
-    print('  \033[1m Random Forest \033[0m -',tag)
+    print('  \033[1m',dP.typeDT,dP.mode,'\033[0m')
     print('  ================================================================================')
     print('   Filename\t| Prediction')
     print('  --------------------------------------------------------------------------------')
@@ -398,9 +410,8 @@ def batchPredict(folder, normFile):
     if not dP.regressor:
         with open(dP.model_le, "rb") as f:
             le = pickle.load(f)
-        summaryFile = np.array([['DataML_DT','Classifier'],['File Name','Predicted Value']])
-    else:
-        summaryFile = np.array([['DataML_DT','Regressor'],['File Name','Predicted Class']])
+            
+    summaryFile = np.array([['DataML_DT',dP.typeDT,dP.mode],['File Name','Predicted Value','']])
      
     fileName = []
     pred = []
@@ -414,21 +425,19 @@ def batchPredict(folder, normFile):
         
         if good:
             if dP.regressor:
-                tag = "Regressor"
                 pred.append(dt.predict(R))
             else:
-                tag = "Classfier"
                 pred.append(le.inverse_transform_bulk(dt.predict(R)))
             fileName.append(file)
     
     print('\n  ================================================================================')
-    print('  \033[1m Random Forest \033[0m -',tag)
+    print('  \033[1m',dP.typeDT,dP.mode,'\033[0m')
     print('  ================================================================================')
     print('   Filename\t| Prediction')
     print('  --------------------------------------------------------------------------------')
     for i in range(0,len(pred)):
         print("   {0:s}\t| {1:.2f}  ".format(fileName[i], pred[i][0]))
-        summaryFile = np.vstack((summaryFile,[fileName[i],pred[i][0]]))
+        summaryFile = np.vstack((summaryFile,[fileName[i],pred[i][0],'']))
     print('  --------------------------------------------------------------------------------\n')
     
     saveSummaryFile(summaryFile, dP)
@@ -462,30 +471,27 @@ def validBatchPredict(testFile, normFile):
         A_test = runPCAValid(A_test, dP)
     
     if dP.regressor:
-        tag = "Regressor"
         pred = dt.predict(A_test)
-        summaryFile = np.array([['DataML_DT','Regressor'],['Predicted Class','']])
     else:
-        tag = "Classifier"
         with open(dP.model_le, "rb") as f:
             le = pickle.load(f)
         pred = le.inverse_transform_bulk(dt.predict(A_test))
-        summaryFile = np.array([['DataML_DT','Classifier'],['Predicted Value','']])
         
+    summaryFile = np.array([['DataML_DT',dP.typeDT,dP.mode],['Predicted Value','','']])
     covMatrix = np.empty((0,2))
     
     print('  ================================================================================')
-    print('  \033[1m Random Forest \033[0m -',tag)
+    print('  \033[1m',dP.typeDT,dP.mode,'\033[0m')
     print('  ================================================================================')
     print('   Prediction')
     print('  --------------------------------------------------------------------------------')
     for i in range(0,len(pred)):
         print("   {0:.2f}  ".format(pred[i]))
-        summaryFile = np.vstack((summaryFile,[pred[i],'']))
+        summaryFile = np.vstack((summaryFile,[pred[i],'','']))
     print('  --------------------------------------------------------------------------------\n')
     
     saveSummaryFile(summaryFile, dP)
-
+    
 #************************************
 # Main initialization routine
 #************************************
