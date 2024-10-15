@@ -100,8 +100,6 @@ class Conf():
             'useTFlitePred' : False,
             'TFliteRuntime' : False,
             'runCoralEdge' : False,
-            #'setMaxMem' : False,   # TensorFlow 2.0
-            #'maxMem' : 4096,       # TensorFlow 2.0
             }
 
     def readConfig(self,configFile):
@@ -174,17 +172,17 @@ def main():
 
     for o, a in opts:
         if o in ("-t" , "--train"):
-            #try:
-            if len(sys.argv)<4:
-                train(sys.argv[2], None, None)
-            else:
-                if len(sys.argv)<5:
-                    train(sys.argv[2], sys.argv[3], None)
+            try:
+                if len(sys.argv)<4:
+                    train(sys.argv[2], None, None)
                 else:
-                    train(sys.argv[2], sys.argv[3], sys.argv[4])
-            #except:
-            #    usage()
-            #    sys.exit(2)
+                    if len(sys.argv)<5:
+                        train(sys.argv[2], sys.argv[3], None)
+                    else:
+                        train(sys.argv[2], sys.argv[3], sys.argv[4])
+            except:
+                usage()
+                sys.exit(2)
 
         if o in ("-p" , "--predict"):
             try:
@@ -231,34 +229,34 @@ def main():
                 sys.exit(2)
                 
         if o in ["-c" , "--comp"]:
-            #try:
-            if len(sys.argv)<4:
-                prePCA(sys.argv[2], None, dP)
-            else:
-                prePCA(sys.argv[2], sys.argv[3], dP)
-            #except:
-            #    usage()
-            #    sys.exit(2)
+            try:
+                if len(sys.argv)<4:
+                    prePCA(sys.argv[2], None, dP)
+                else:
+                    prePCA(sys.argv[2], sys.argv[3], dP)
+            except:
+                usage()
+                sys.exit(2)
             
         if o in ["-a" , "--autoencoder"]:
-            #try:
-            if len(sys.argv)<4:
-                preAutoencoder(sys.argv[2], None, dP)
-            else:
-                preAutoencoder(sys.argv[2], sys.argv[3], dP)
-            #except:
-            #    usage()
-            #    sys.exit(2)
+            try:
+                if len(sys.argv)<4:
+                    preAutoencoder(sys.argv[2], None, dP)
+                else:
+                    preAutoencoder(sys.argv[2], sys.argv[3], dP)
+            except:
+                usage()
+                sys.exit(2)
             
         if o in ["-r" , "--rforest"]:
-            #try:
-            if len(sys.argv)<4:
-                preRF(sys.argv[2], None, dP)
-            else:
-                preRF(sys.argv[2], sys.argv[3], dP)
-            #except:
-            #    usage()
-            #    sys.exit(2)
+            try:
+                if len(sys.argv)<4:
+                    preDT(sys.argv[2], None, dP)
+                else:
+                    preDT(sys.argv[2], sys.argv[3], dP)
+            except:
+                usage()
+                sys.exit(2)
 
     total_time = time.perf_counter() - start_time
     print(" Total time: {0:.1f}s or {1:.1f}m or {2:.1f}h".format(total_time,
@@ -288,10 +286,6 @@ def train(learnFile, testFile, normFile):
     if gpus:
        for gpu in gpus:
            tf.config.experimental.set_memory_growth(gpu, True)
-    #   if dP.setMaxMem:
-    #       tf.config.experimental.set_virtual_device_configuration(
-    #         gpus[0],
-    #         [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=dP.maxMem)])
     
     learnFileRoot = os.path.splitext(learnFile)[0]
 
@@ -369,7 +363,6 @@ def train(learnFile, testFile, normFile):
     #************************************
     # Training
     #************************************
-
     if dP.fullSizeBatch:
         dP.batch_size = A.shape[0]
 
@@ -589,7 +582,6 @@ def train(learnFile, testFile, normFile):
     ##################################################################
     # Hyperparameter optimization
     ##################################################################
-    
     if dP.optimizeParameters:
         print('  ========================================================')
         print('  \033[1m HyperParameters Optimization\033[0m')
@@ -642,14 +634,6 @@ def train(learnFile, testFile, normFile):
             print(" Optimal parameters for best model: ")
             bestParams = searchResults.best_params_
             print(bestParams)
-            #bestModel = searchResults.best_estimator_
-            #accuracy = bestModel.score(A_test, Cl2_test)
-            #print("Accuracy:", accuracy)
-            #best_score = searchResults.best_score_
-            #print("Best_score:", best_score)
-            #print(bestModel.predict(A_test), Cl2_test)
-            #print(bestModel.predict(A_test) - Cl2_test)
-        
         else:
             print(" Optimal parameters for best model: ")
             bestScore = searchResults.best_score_
@@ -805,7 +789,6 @@ def batchPredict(folder, normFile):
             summaryFile = np.vstack((summaryFile,[realValue,predValue,predProb]))
         print('  ========================================================\n')
 
-    
     import pandas as pd
     df = pd.DataFrame(summaryFile)
     df.to_csv(dP.summaryFileName, index=False, header=False)
@@ -1064,9 +1047,7 @@ def runAutoencoder(A, dP):
             import keras
     
     showDimRedplots = False
-    
-    #En, A, Cl = readLearnFile(learnFile, dP)
-    
+
     m = keras.Sequential()
     m.add(keras.Input((A.shape[1],),sparse=True))
     m.add(keras.layers.Dense(A.shape[1]-1, activation='elu'))
@@ -1184,10 +1165,9 @@ def runAutoencoder2(learnFile, testFile, dP):
     return autoencoder.encoder(A).numpy()
     
 #********************************************************************************
-# Perform Random Forest - EXPERIMENTAL
+# Perform Random Forest - Preview
 #********************************************************************************
-# Define correct value of numPCA
-def preRF(learnFile, validFile, dP):
+def preDT(learnFile, validFile, dP):
     En, A, Cl = readLearnFile(learnFile, dP)
     if validFile is not None:
         En_test, A_test, Cl_test = readLearnFile(validFile, dP)
@@ -1203,9 +1183,9 @@ def preRF(learnFile, validFile, dP):
             if validFile is not None:
                 A_test = runPCAValid(A_test, dP)
     
-    runRF(A, Cl, A_test, Cl_test,dP)
+    runDT(A, Cl, A_test, Cl_test,dP)
 
-def runRF(A, Cl, A_test, Cl_test, dP):
+def runDT(A, Cl, A_test, Cl_test, dP):
     from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
     from statistics import mean, stdev
 
@@ -1231,7 +1211,7 @@ def runRF(A, Cl, A_test, Cl_test, dP):
         delta = pred - Cl_test
     
         print('\n  ================================================================================')
-        print('  \033[1m RF \033[0m - Prediction')
+        print('  \033[1m Random Forest \033[0m - Prediction')
         print('  ================================================================================')
         print('  Real class\t| Predicted class\t| Delta')
         print('  --------------------------------------------------------------------------------')
