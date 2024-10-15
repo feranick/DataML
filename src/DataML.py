@@ -256,7 +256,7 @@ def main():
                     preDT(sys.argv[2], sys.argv[3], dP)
             except:
                 usage()
-               sys.exit(2)
+                sys.exit(2)
 
     total_time = time.perf_counter() - start_time
     print(" Total time: {0:.1f}s or {1:.1f}m or {2:.1f}h".format(total_time,
