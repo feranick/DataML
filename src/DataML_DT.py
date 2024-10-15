@@ -143,14 +143,14 @@ def main():
             #    sys.exit(2)
 
         if o in ("-p" , "--predict"):
-            try:
-                if len(sys.argv)<4:
-                    predict(sys.argv[2], None)
-                else:
-                    predict(sys.argv[2], sys.argv[3])
-            except:
-                usage(dP.appName)
-                sys.exit(2)
+            #try:
+            if len(sys.argv)<4:
+                predict(sys.argv[2], None)
+            else:
+                predict(sys.argv[2], sys.argv[3])
+            #except:
+            #    usage(dP.appName)
+            #    sys.exit(2)
 
         if o in ("-b" , "--batch"):
             try:
@@ -314,7 +314,10 @@ def train(learnFile, testFile, normFile):
     with open(dP.modelName,'wb') as f:
         pickle.dump(rf, f)
 
-    pred = le.inverse_transform_bulk(rf.predict(A_test))
+    if dP.regressor:
+        pred = rf.predict(A_test)
+    else:
+        pred = le.inverse_transform_bulk(rf.predict(A_test))
     delta = pred - Cl_test
         
     print('\n  ================================================================================')
