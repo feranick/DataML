@@ -3,7 +3,7 @@
 '''
 ***************************************************
 * DataML Decision Trees - Classifier and Regressor
-* v2024.10.15.2
+* v2024.10.15.3
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***************************************************
@@ -73,7 +73,6 @@ class Conf():
     def sysDef(self):
         self.conf['System'] = {
             'kerasVersion' : 3,
-            'fixTFseed' : True,
             }
 
     def readConfig(self,configFile):
@@ -95,7 +94,6 @@ class Conf():
             self.normalize = self.conf.getboolean('Parameters','normalize')
             
             self.kerasVersion = self.conf.getint('System','kerasVersion')
-            self.fixTFseed = self.conf.getboolean('System','fixTFseed')
                         
         except:
             print(" Error in reading configuration file. Please check it\n")
@@ -205,6 +203,7 @@ def train(learnFile, testFile, normFile):
     import sklearn
     from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
     from statistics import mean, stdev
+    from sklearn.metrics import accuracy_score, mean_absolute_error
     
     learnFileRoot = os.path.splitext(learnFile)[0]
 
@@ -291,14 +290,16 @@ def train(learnFile, testFile, normFile):
     n_jobs = 1
 
     if dP.regressor:
-        dt = RandomForestRegressor(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs)
+        dt = RandomForestRegressor(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs, oob_score=False)
         tag = "Regressor"
+        metric = "MAE"
     else:
-        dt = RandomForestClassifier(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs)
+        dt = RandomForestClassifier(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs, oob_score=False)
         tag = "Classifier"
-    
+        metric = "Accuracy"
     
     dt.fit(A, Cl2)
+    #print(dt.oob_score_)
         
     print("\n  Random Forest", tag,"model saved in:", dP.modelName)
     with open(dP.modelName,'wb') as f:
@@ -306,10 +307,13 @@ def train(learnFile, testFile, normFile):
 
     if dP.regressor:
         pred = dt.predict(A_test)
+        score = mean_absolute_error(pred, Cl_test)
     else:
         pred = le.inverse_transform_bulk(dt.predict(A_test))
+        score = accuracy_score(pred, Cl_test)
+                
     delta = pred - Cl_test
-        
+    
     print('\n  ================================================================================')
     print('  \033[1m Random Forest \033[0m -',tag,'Prediction')
     print('  ================================================================================')
@@ -318,8 +322,9 @@ def train(learnFile, testFile, normFile):
     for i in range(len(pred)):
         print("   {0:.2f}\t| {1:.2f}\t\t| {2:.2f}".format(Cl_test[i], pred[i], delta[i]))
     print('  --------------------------------------------------------------------------------')
+    print('  ',metric,'= {0:.4f}'.format(score))
+    print('   R^2 = {0:.4f}'.format(dt.score(A_test, Cl2_test)))
     print('   Average Delta: {0:.2f}, StDev = {1:.2f}'.format(mean(delta), stdev(delta)))
-    print('   R^2: {0:.4f}'.format(dt.score(A_test, Cl2_test)))
     print('  --------------------------------------------------------------------------------\n')
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
     
