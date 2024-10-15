@@ -13,7 +13,7 @@ Installation
 ## Installation from available wheel package
 If available from the main site, you can install SpectraKeras by running:
 
-    python3 -m pip install --upgrade dataml-2024.10.15.1-py3-none-any.whl
+    python3 -m pip install --upgrade dataml-2024.10.15.2-py3-none-any.whl
     
 SpectraKeras_CNN and Spectrakeras_MLP are available directly from the command line.
 NOTE: The Utilities in the `Utilities` folder are not included in the package, and can be run locally as needed.
@@ -63,85 +63,86 @@ Train (Random cross validation):
   `python3 DataML.py -t <learningFile>`
 
  Train (with external validation):
-  `python3 DataML.py -t <learningFile> <validationFile> `
+  `DataML -t <learningFile> <validationFile> `
 
  Train (with external validation, with labels normalized with pkl file):
-  `python3 DataML.py -t <learningFile> <validationFile> <pkl normalization file>`
+  `DataML -t <learningFile> <validationFile> <pkl normalization file>`
 
  Predict (no label normalization used):
-  `python3 DataML.py -p <testFile>`
+  `DataML -p <testFile>`
 
  Predict (labels normalized with pkl file):
-  `python3 DataML.py -p <testFile> <pkl normalization file>`
+  `DataML -p <testFile> <pkl normalization file>`
 
  Batch predict (no label normalization used):
-  `python3 DataML.py -b <folder>`
+  `DataML -b <folder>`
 
  Batch predict (labels normalized with pkl file):
-  `python3 DataML.py -b <folder> <pkl normalization file>`
+  `DataML -b <folder> <pkl normalization file>`
 
  Batch predict on validation data in single file (no label normalization used):
-  `python3 DataML.py -v <singleValidationFile>`
+  `DataML -v <singleValidationFile>`
 
  Batch predict on validation data in single file (labels normalized with pkl file):
-  `python3 DataML.py -v <singleValidationFile> <pkl normalization file>`
+  `DataML -v <singleValidationFile> <pkl normalization file>`
   
  Convert model to quantized tflite:
-  `python3 DataML.py -l <learningFile>`
+  `DataML -l <learningFile>`
   
  Create parameter optimization file:
-  `python3 DataML.py -o`
+  `DataML -o`
   
  Evaluate principal component analysis (PCA) - EXPERIMENTAL:
-  `python3 DataML.py -c <learningFile>`
-  `python3 DataML.py -c <learningFile> <validFile-optional>`
+  `DataML -c <learningFile>`
+  `DataML -c <learningFile> <validFile-optional>`
   
  Evaluate Autoencoder - EXPERIMENTAL:
-  `python3 DataML.py -a <learningFile>`
-  `python3 DataML.py -a <learningFile> <validFile-optional>`
+  `DataML -a <learningFile>`
+  `DataML -a <learningFile> <validFile-optional>`
 
  Preview: Run Random Forest Regressor/Classifier with validation- EXPERIMENTAL:
-  `python3 DataML.py -r <learningFile> <validFile-optional>`
+  `DataML-r <learningFile>`
+  `DataML-r <learningFile> <validFile-optional>`
 
 ## Decision Trees / Random Forests: DataML_DT
 
 Train (Random cross validation):
-  `python3 DataML_DT.py -t <learningFile>`
+  `DataML_DT -r <learningFile> <validFile-optional>` -t <learningFile>`
 
  Train (with external validation):
-  `python3 DataML_DT.py -t <learningFile> <validationFile> `
+  `DataML_DT -t <learningFile> <validationFile> `
 
  Train (with external validation, with labels normalized with pkl file):
-  `python3 DataML_DT.py -t <learningFile> <validationFile> <pkl normalization file>`
+  `DataML_DT -t <learningFile> <validationFile> <pkl normalization file>`
 
  Predict (no label normalization used):
-  `python3 DataML_DT.py -p <testFile>`
+  `DataML_DT -p <testFile>`
 
  Predict (labels normalized with pkl file):
-  `python3 DataML_DT.py -p <testFile> <pkl normalization file>`
+  `DataML_DT -p <testFile> <pkl normalization file>`
 
  Batch predict (no label normalization used):
-  `python3 DataML_DT.py -b <folder>`
+  `DataML_DT -b <folder>`
 
  Batch predict (labels normalized with pkl file):
-  `python3 DataML_DT.py -b <folder> <pkl normalization file>`
+  `DataML_DT -b <folder> <pkl normalization file>`
 
  Batch predict on validation data in single file (no label normalization used):
-  `python3 DataML_DT.py -v <singleValidationFile>`
+  `DataML_DT -v <singleValidationFile>`
 
  Batch predict on validation data in single file (labels normalized with pkl file):
-  `python3 DataML_DT.py -v <singleValidationFile> <pkl normalization file>`
+  `DataML_DT -v <singleValidationFile> <pkl normalization file>`
   
  Evaluate principal component analysis (PCA) - EXPERIMENTAL:
-  `python3 DataML_DT.py -c <learningFile>`
-  `python3 DataML_DT.py -c <learningFile> <validFile-optional>`
+  `DataML_DT -c <learningFile>`
+  `DataML_DT -c <learningFile> <validFile-optional>`
   
  Evaluate Autoencoder - EXPERIMENTAL:
-  `python3 DataML_DT.py -a <learningFile>`
-  `python3 DataML_DT.py -a <learningFile> <validFile-optional>`
+  `DataML_DT -a <learningFile>`
+  `DataML_DT -a <learningFile> <validFile-optional>`
 
  Preview: Run Random Forest Regressor/Classifier with validation- EXPERIMENTAL:
-  `python3 DataML_DT.py -r <learningFile> <validFile-optional>`
+  `DataML_DT -r <learningFile> <validFile-optional>`
   
 ###Note: 
 Three different dimention reduction methods are supported and can be selected using the `typeDimRed` flag:

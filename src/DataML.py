@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.10.14.2
+* v2024.10.15.2
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -26,6 +26,7 @@ def DataML():
 #************************************
 class Conf():
     def __init__(self):
+        self.appName = "DataML"
         confFileName = "DataML.ini"
         self.configFile = os.getcwd()+"/"+confFileName
         self.conf = configparser.ConfigParser()
@@ -163,11 +164,11 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:],
             "tpbvlocarh:", ["train", "predict", "batch", "validbatch","lite", "opt", "comp", "autoencoder", "rforest", "help"])
     except:
-        usage()
+        usage(dP.appName)
         sys.exit(2)
 
     if opts == []:
-        usage()
+        usage(dP.appName)
         sys.exit(2)
 
     for o, a in opts:
@@ -181,7 +182,7 @@ def main():
                     else:
                         train(sys.argv[2], sys.argv[3], sys.argv[4])
             except:
-                usage()
+                usage(dP.appName)
                 sys.exit(2)
 
         if o in ("-p" , "--predict"):
@@ -191,7 +192,7 @@ def main():
             else:
                 predict(sys.argv[2], sys.argv[3])
             #except:
-            #    usage()
+            #    usage(dP.appName)
             #    sys.exit(2)
 
         if o in ("-b" , "--batch"):
@@ -201,7 +202,7 @@ def main():
                 else:
                     batchPredict(sys.argv[2], sys.argv[3])
             except:
-                usage()
+                usage(dP.appName)
                 sys.exit(2)
             
         if o in ("-v" , "--validbatch"):
@@ -211,21 +212,21 @@ def main():
                 else:
                     validBatchPredict(sys.argv[2], sys.argv[3])
             except:
-                usage()
+                usage(dP.appName)
                 sys.exit(2)
                 
         if o in ("-l" , "--lite"):
             try:
                 convertTflite(sys.argv[2])
             except:
-                usage()
+                usage(dP.appName)
                 sys.exit(2)
                 
         if o in ["-o" , "--opt"]:
             try:
                 makeOptParameters(dP)
             except:
-                usage()
+                usage(dP.appName)
                 sys.exit(2)
                 
         if o in ["-c" , "--comp"]:
@@ -235,7 +236,7 @@ def main():
                 else:
                     prePCA(sys.argv[2], sys.argv[3], dP)
             except:
-                usage()
+                usage(dP.appName)
                 sys.exit(2)
             
         if o in ["-a" , "--autoencoder"]:
@@ -245,7 +246,7 @@ def main():
                 else:
                     preAutoencoder(sys.argv[2], sys.argv[3], dP)
             except:
-                usage()
+                usage(dP.appName)
                 sys.exit(2)
             
         if o in ["-r" , "--rforest"]:
@@ -255,7 +256,7 @@ def main():
                 else:
                     preDT(sys.argv[2], sys.argv[3], dP)
             except:
-                usage()
+                usage(dP.appName)
                 sys.exit(2)
 
     total_time = time.perf_counter() - start_time

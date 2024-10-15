@@ -2,7 +2,7 @@
 '''
 ***********************************************************
 * libDataML - Library for DataML
-* v2024.10.15.1
+* v2024.10.15.2
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -702,34 +702,35 @@ def formatSubset(A, Cl, percent):
 #************************************
 # Lists the program usage
 #************************************
-def usage():
+def usage(name):
     print('\n Usage:\n')
     print(' Train (Random cross validation):')
-    print('  python3 DataML.py -t <learningFile>\n')
+    print('  ',name,'-t <learningFile>\n')
     print(' Train (with external validation):')
-    print('  python3 DataML.py -t <learningFile> <validationFile> \n')
+    print('  ',name,'-t <learningFile> <validationFile> \n')
     print(' Train (with external validation, with labels normalized with pkl file):')
-    print('  python3 DataML.py -t <learningFile> <validationFile> <pkl normalization file>\n')
+    print('  ',name,'-t <learningFile> <validationFile> <pkl normalization file>\n')
     print(' Predict (no label normalization used):')
-    print('  python3 DataML.py -p <testFile>\n')
+    print('  ',name,'-p <testFile>\n')
     print(' Predict (labels normalized with pkl file):')
-    print('  python3 DataML.py -p <testFile> <pkl normalization file>\n')
+    print('  ',name,'-p <testFile> <pkl normalization file>\n')
     print(' Batch predict (no label normalization used):')
-    print('  python3 DataML.py -b <folder>\n')
+    print('  ',name,'-b <folder>\n')
     print(' Batch predict (labels normalized with pkl file):')
-    print('  python3 DataML.py -b <folder> <pkl normalization file>\n')
+    print('  ',name,'-b <folder> <pkl normalization file>\n')
     print(' Batch predict on validation data in single file (no label normalization used):')
-    print('  python3 DataML.py -v <singleValidationFile>\n')
+    print('  ',name,'-v <singleValidationFile>\n')
     print(' Batch predict on validation data in single file (labels normalized with pkl file):')
-    print('  python3 DataML.py -v <singleValidationFile> <pkl normalization file>\n')
-    print(' Convert model to quantized tflite:')
-    print('  python3 DataML.py -l <learningFile>\n')
-    print(' Create parameter optimization file:')
-    print('  python3 DataML.py -o\n')
+    print('  ',name,'-v <singleValidationFile> <pkl normalization file>\n')
+    if name == 'DataML':
+        print(' Convert model to quantized tflite:')
+        print('  ',name,'-l <learningFile>\n')
+        print(' Create parameter optimization file:')
+        print('  ',name,'-o\n')
     print(' Run principal component analysis (PCA) - EXPERIMENTAL:')
-    print('  python3 DataML.py -c <learningFile>\n')
+    print('  ',name,'-c <learningFile>\n')
     print(' Run Autoencoder - EXPERIMENTAL:')
-    print('  python3 DataML.py -a <learningFile> <validFile-optional>\n')
+    print('  ',name,'-a <learningFile> <validFile-optional>\n')
     print(' Preview: Run Random Forest Regressor/Classifier - EXPERIMENTAL:')
-    print('  python3 DataML.py -r <learningFile> <validFile-optional>\n')
+    print('  ',name,'-r <learningFile> <validFile-optional>\n')
     print(' Requires python 3.x. Not compatible with python 2.x\n')
