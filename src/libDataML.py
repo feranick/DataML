@@ -2,7 +2,7 @@
 '''
 ***********************************************************
 * libDataML - Library for DataML
-* v2024.10.14.2
+* v2024.10.15.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -116,6 +116,12 @@ class MultiClassReductor():
     
     def inverse_transform(self,a):
         return [self.totalClass[int(a[0])]]
+        
+    def inverse_transform_bulk(self,a):
+        inv=[]
+        for i in range(len(a)):
+            inv.append(int(self.totalClass[int(a[i])]))
+        return inv
 
     def classes_(self):
         return self.totalClass
@@ -665,6 +671,33 @@ def runAutoencoder2(learnFile, testFile, dP):
     
     #print(autoencoder.encoder(A).numpy())
     return autoencoder.encoder(A).numpy()
+    
+#************************************
+# Format subset
+#************************************
+def formatSubset(A, Cl, percent):
+    import numpy as np
+    from sklearn.model_selection import train_test_split
+    A_train, A_cv, Cl_train, Cl_cv = \
+    train_test_split(A, Cl, test_size=percent, random_state=None)
+    uniCl = np.unique(Cl_cv).astype(int)
+    if Cl_cv.shape[0] - uniCl.shape[0] > 0:
+        print("  Classes with multiple data present.")
+        print("\n  Unique classes in learning/validation set and corresponding number of members:\n")
+        uni = np.ones(np.unique(Cl_cv).shape)
+        for x in enumerate(uniCl):
+            uni[x[0]] = np.count_nonzero(Cl_cv==uniCl[x[0]])
+            if uni[x[0]] == 1:
+                print(" {0:.0f}: {1:.0f} ".format(x[0],uni[x[0]]))
+            else:
+                print(" \033[1m {0:.0f}: {1:.0f} \033[0m".format(x[0],uni[x[0]]))
+        flag = True
+    else:
+        print("\n  Unique classes in learning/validation set:")
+        with np.printoptions(threshold=np.inf):
+            print("  ",np.unique(Cl_cv).astype(int),"\n")
+        flag = False
+    return A_train, Cl_train, A_cv, Cl_cv, flag
 
 #************************************
 # Lists the program usage

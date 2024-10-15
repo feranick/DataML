@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 '''
-***********************************************
-* DataML Classifier and Regressor
-* v2024.10.14.2
-* Uses: Keras, TensorFlow
+***************************************************
+* DataML Decision Trees - Classifier and Regressor
+* v2024.10.15.1
+* Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
-***********************************************
+***************************************************
 '''
 print(__doc__)
 
@@ -18,7 +18,7 @@ from libDataML import *
 #***************************************************
 # This is needed for installation through pip
 #***************************************************
-def DataML():
+def DataML_DT():
     main()
 
 #************************************
@@ -26,7 +26,7 @@ def DataML():
 #************************************
 class Conf():
     def __init__(self):
-        confFileName = "DataML.ini"
+        confFileName = "DataML-DT.ini"
         self.configFile = os.getcwd()+"/"+confFileName
         self.conf = configparser.ConfigParser()
         self.conf.optionxform = str
@@ -36,17 +36,13 @@ class Conf():
         self.readConfig(self.configFile)
         self.model_directory = "./"
         if self.regressor:
-            self.modelName = "model_regressor.h5"
-            self.summaryFileName = "summary_regressor.csv"
-            self.model_png = self.model_directory+"/model_regressor_MLP.png"
-            self.model_rf = "model_rf_regressor.pkl"
+            self.summaryFileName = "summary_DT_regressor.csv"
+            self.modelName = "model_DT_regressor.pkl"
         else:
-            self.modelName = "model_classifier.h5"
-            self.summaryFileName = "summary_classifier.csv"
-            self.model_png = self.model_directory+"/model_classifier_MLP.png"
-            self.model_rf = "model_rf_classifier.pkl"
+            self.summaryFileName = "summary_DT_classifier.csv"
+            self.modelName = "model_DT_classifier.pkl"
         
-        self.tb_directory = "model_MLP"
+        self.tb_directory = "model_DT"
         self.model_name = self.model_directory+self.modelName
         
         if self.kerasVersion == 3:
@@ -56,26 +52,13 @@ class Conf():
         self.model_scaling = self.model_directory+"model_scaling.pkl"
         self.model_pca = self.model_directory+"model_encoder.pkl"
         self.norm_file = self.model_directory+"norm_file.pkl"
-        
-        self.optParFile = "opt_parameters.txt"
-            
-        if platform.system() == 'Linux':
-            self.edgeTPUSharedLib = "libedgetpu.so.1"
-        if platform.system() == 'Darwin':
-            self.edgeTPUSharedLib = "libedgetpu.1.dylib"
-        if platform.system() == 'Windows':
-            self.edgeTPUSharedLib = "edgetpu.dll"
-            
+                    
         self.rescaleForPCA = False
             
     def datamlDef(self):
         self.conf['Parameters'] = {
             'regressor' : False,
-            'l_rate' : 0.01,
-            'l_rdecay' : 0.001,
-            'HL' : [10, 5, 2],
-            'drop' : 0,
-            'l2' : 1e-4,
+            'trainFullData' : True,
             'epochs' : 200,
             'cv_split' : 0.05,
             'fullSizeBatch' : False,
@@ -85,21 +68,11 @@ class Conf():
             'runDimRedFlag' : False,
             'typeDimRed' : 'SparsePCA',
             'numDimRedComp' : 3,
-            'plotWeightsFlag' : False,
-            'optimizeParameters' : False,
-            'stopAtBest' : False,
-            'saveBestModel' : False,
-            'metricBestModelR' : 'val_mae',
-            'metricBestModelC' : 'val_accuracy',
             }
     def sysDef(self):
         self.conf['System'] = {
             'kerasVersion' : 3,
             'fixTFseed' : True,
-            'makeQuantizedTFlite' : True,
-            'useTFlitePred' : False,
-            'TFliteRuntime' : False,
-            'runCoralEdge' : False,
             }
 
     def readConfig(self,configFile):
@@ -109,11 +82,7 @@ class Conf():
             self.sysDef = self.conf['System']
         
             self.regressor = self.conf.getboolean('Parameters','regressor')
-            self.l_rate = self.conf.getfloat('Parameters','l_rate')
-            self.l_rdecay = self.conf.getfloat('Parameters','l_rdecay')
-            self.HL = eval(self.datamlDef['HL'])
-            self.drop = self.conf.getfloat('Parameters','drop')
-            self.l2 = self.conf.getfloat('Parameters','l2')
+            self.trainFullData = self.conf.getboolean('Parameters','trainFullData')
             self.epochs = self.conf.getint('Parameters','epochs')
             self.cv_split = self.conf.getfloat('Parameters','cv_split')
             self.fullSizeBatch = self.conf.getboolean('Parameters','fullSizeBatch')
@@ -123,21 +92,9 @@ class Conf():
             self.typeDimRed = self.conf.get('Parameters','typeDimRed')
             self.numDimRedComp = self.conf.getint('Parameters','numDimRedComp')
             self.normalize = self.conf.getboolean('Parameters','normalize')
-            self.plotWeightsFlag = self.conf.getboolean('Parameters','plotWeightsFlag')
-            self.optimizeParameters = self.conf.getboolean('Parameters','optimizeParameters')
-            self.stopAtBest = self.conf.getboolean('Parameters','stopAtBest')
-            self.saveBestModel = self.conf.getboolean('Parameters','saveBestModel')
-            self.metricBestModelR = self.conf.get('Parameters','metricBestModelR')
-            self.metricBestModelC = self.conf.get('Parameters','metricBestModelC')
             
             self.kerasVersion = self.conf.getint('System','kerasVersion')
             self.fixTFseed = self.conf.getboolean('System','fixTFseed')
-            self.makeQuantizedTFlite = self.conf.getboolean('System','makeQuantizedTFlite')
-            self.useTFlitePred = self.conf.getboolean('System','useTFlitePred')
-            self.TFliteRuntime = self.conf.getboolean('System','TFliteRuntime')
-            self.runCoralEdge = self.conf.getboolean('System','runCoralEdge')
-            #self.setMaxMem = self.conf.getboolean('System','setMaxMem')     # TensorFlow 2.0
-            #self.maxMem = self.conf.getint('System','maxMem')   # TensorFlow 2.0
                         
         except:
             print(" Error in reading configuration file. Please check it\n")
@@ -161,7 +118,7 @@ def main():
     
     try:
         opts, args = getopt.getopt(sys.argv[1:],
-            "tpbvlocarh:", ["train", "predict", "batch", "validbatch","lite", "opt", "comp", "autoencoder", "rforest", "help"])
+            "tpbvcarh:", ["train", "predict", "batch", "validbatch", "comp", "autoencoder", "rforest", "help"])
     except:
         usage()
         sys.exit(2)
@@ -172,27 +129,27 @@ def main():
 
     for o, a in opts:
         if o in ("-t" , "--train"):
-            try:
-                if len(sys.argv)<4:
-                    train(sys.argv[2], None, None)
-                else:
-                    if len(sys.argv)<5:
-                        train(sys.argv[2], sys.argv[3], None)
-                    else:
-                        train(sys.argv[2], sys.argv[3], sys.argv[4])
-            except:
-                usage()
-                sys.exit(2)
-
-        if o in ("-p" , "--predict"):
             #try:
             if len(sys.argv)<4:
-                predict(sys.argv[2], None)
+                train(sys.argv[2], None, None)
             else:
-                predict(sys.argv[2], sys.argv[3])
+                if len(sys.argv)<5:
+                    train(sys.argv[2], sys.argv[3], None)
+                else:
+                    train(sys.argv[2], sys.argv[3], sys.argv[4])
             #except:
             #    usage()
             #    sys.exit(2)
+
+        if o in ("-p" , "--predict"):
+            try:
+                if len(sys.argv)<4:
+                    predict(sys.argv[2], None)
+                else:
+                    predict(sys.argv[2], sys.argv[3])
+            except:
+                usage()
+                sys.exit(2)
 
         if o in ("-b" , "--batch"):
             try:
@@ -210,20 +167,6 @@ def main():
                     validBatchPredict(sys.argv[2], None)
                 else:
                     validBatchPredict(sys.argv[2], sys.argv[3])
-            except:
-                usage()
-                sys.exit(2)
-                
-        if o in ("-l" , "--lite"):
-            try:
-                convertTflite(sys.argv[2])
-            except:
-                usage()
-                sys.exit(2)
-                
-        if o in ["-o" , "--opt"]:
-            try:
-                makeOptParameters(dP)
             except:
                 usage()
                 sys.exit(2)
@@ -267,25 +210,10 @@ def main():
 #************************************
 def train(learnFile, testFile, normFile):
     dP = Conf()
-    import tensorflow as tf
-    if checkTFVersion("2.16.0"):
-        import tensorflow.keras as keras
-    else:
-        if dP.kerasVersion == 2:
-            import tf_keras as keras
-        else:
-            import keras
-        
-    if dP.fixTFseed == True:
-        tf.random.set_seed(42)
-
-    opts = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=1)     # Tensorflow 2.0
-    conf = tf.compat.v1.ConfigProto(gpu_options=opts)  # Tensorflow 2.0
-    
-    gpus = tf.config.list_physical_devices('GPU')
-    if gpus:
-       for gpu in gpus:
-           tf.config.experimental.set_memory_growth(gpu, True)
+   
+    import sklearn
+    from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+    from statistics import mean, stdev
     
     learnFileRoot = os.path.splitext(learnFile)[0]
 
@@ -295,13 +223,19 @@ def train(learnFile, testFile, normFile):
         totA = np.vstack((A, A_test))
         totCl = np.append(Cl, Cl_test)
     else:
+        A_train, Cl_train, A_test, Cl_test, _ = formatSubset(A, Cl, dP.cv_split)
         totA = A
         totCl = Cl
-
+        
+    if dP.trainFullData:
+        A = totA
+        Cl = totCl
+        
     print("  Data size:", A.shape)
     print("  Number of learning labels: {0:d}".format(int(dP.numLabels)))
     print("  Total number of points per data:",En.size)
-    if testFile is not None:
+    
+    if testFile is not None or dP.trainFullData:
         print("\n  Testing set file:",testFile)
         print("  Training set file datapoints:", A.shape[0])
         print("  Testing set file datapoints:", A_test.shape[0])
@@ -312,8 +246,8 @@ def train(learnFile, testFile, normFile):
     
     if dP.regressor:
         Cl2 = np.copy(Cl)
-        if testFile is not None:
-            Cl2_test = np.copy(Cl_test)
+        #if testFile is not None:
+        Cl2_test = np.copy(Cl_test)
     else:
         #************************************
         # Label Encoding
@@ -334,19 +268,14 @@ def train(learnFile, testFile, normFile):
         
         print("  Number unique classes (training): ", np.unique(Cl).size)
         
-        if testFile is not None:
-            Cl2_test = le.transform(Cl_test)
-            print("  Number unique classes (validation):", np.unique(Cl_test).size)
-            print("  Number unique classes (total): ", np.unique(totCl).size)
+        #if testFile is not None:
+        Cl2_test = le.transform(Cl_test)
+        print("  Number unique classes (validation):", np.unique(Cl_test).size)
+        print("  Number unique classes (total): ", np.unique(totCl).size)
             
         print("\n  Label encoder saved in:", dP.model_le,"\n")
         with open(dP.model_le, 'ab') as f:
             pickle.dump(le, f)
-        
-        #totCl2 = keras.utils.to_categorical(totCl2, num_classes=np.unique(totCl).size)
-        Cl2 = keras.utils.to_categorical(Cl2, num_classes=np.unique(totCl).size+1)
-        if testFile is not None:
-            Cl2_test = keras.utils.to_categorical(Cl2_test, num_classes=np.unique(totCl).size+1)
 
     #************************************
     # Run PCA if needed.
@@ -357,295 +286,48 @@ def train(learnFile, testFile, normFile):
             A = runAutoencoder(A, dP)
         else:
             A = runPCA(A, dP.numDimRedComp, dP)
-            if testFile is not None:
-                A_test = runPCAValid(A_test, dP)
-            
+            #if testFile is not None:
+            A_test = runPCAValid(A_test, dP)
+    
     #************************************
     # Training
     #************************************
     if dP.fullSizeBatch:
         dP.batch_size = A.shape[0]
-
-    #************************************
-    ### Build model
-    #************************************
-    def get_model():
-        #************************************
-        ### Define optimizer
-        #************************************
         
-        lr_schedule = keras.optimizers.schedules.ExponentialDecay(
-            initial_learning_rate=dP.l_rate,
-            decay_steps=dP.epochs,
-            decay_rate=dP.l_rdecay)
-        optim = keras.optimizers.Adam(learning_rate=lr_schedule, beta_1=0.9,
-                beta_2=0.999, epsilon=1e-08,
-                amsgrad=False)
-        
-        #************************************
-        ### Build model
-        #************************************
-        model = keras.models.Sequential()
-        model.add(keras.Input(shape=(A.shape[1],)))
-        for i in range(len(dP.HL)):
-            model.add(keras.layers.Dense(dP.HL[i],
-                activation = 'relu',
-                #input_dim=A.shape[1],
-                kernel_regularizer=keras.regularizers.l2(dP.l2)))
-            model.add(keras.layers.Dropout(dP.drop))
-
-        if dP.regressor:
-            model.add(keras.layers.Dense(1))
-            model.compile(loss='mse',
-            optimizer=optim,
-            metrics=['mae'])
-        else:
-            model.add(keras.layers.Dense(np.unique(totCl).size+1, activation = 'softmax'))
-            model.compile(loss='categorical_crossentropy',
-                optimizer=optim,
-                metrics=['accuracy'])
-        return model
-        
-    model = get_model()
-
-    tbLog = keras.callbacks.TensorBoard(log_dir=dP.tb_directory, histogram_freq=120,
-            write_graph=True, write_images=False)
-    
-    tbLogs = [tbLog]
-    if dP.stopAtBest == True:
-        es = keras.callbacks.EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=500)
-        tbLogs.append(es)
-    if dP.saveBestModel == True:
-        if dP.regressor:
-            mc = keras.callbacks.ModelCheckpoint(dP.model_name, monitor=dP.metricBestModelR, mode='min', verbose=1, save_best_only=True)
-        else:
-            mc = keras.callbacks.ModelCheckpoint(dP.model_name, monitor=dP.metricBestModelC, mode='max', verbose=1, save_best_only=True)
-        tbLogs.append(mc)
-            
-    if testFile is not None:
-        log = model.fit(A, Cl2,
-            epochs=dP.epochs,
-            batch_size=dP.batch_size,
-            callbacks = tbLogs,
-            verbose=2,
-            validation_data=(A_test, Cl2_test))
-    else:
-        log = model.fit(A, Cl2,
-            epochs=dP.epochs,
-            batch_size=dP.batch_size,
-            callbacks = tbLogs,
-            verbose=2,
-	        validation_split=dP.cv_split)
-            
-    if dP.saveBestModel == False:
-        model.save(dP.model_name)
-    else:
-        model = loadModel(dP)
-        
-    keras.utils.plot_model(model, to_file=dP.model_png, show_shapes=True)
-    
-    if dP.makeQuantizedTFlite:
-        makeQuantizedTFmodel(A, dP)
-
-    print('\n  =============================================')
-    print('  \033[1m ML\033[0m - Model Architecture')
-    print('  =============================================\n')
-    model.summary()
-
-    print('\n  ========================================================')
-    print('  \033[1m ML\033[0m - Training/Validation set Configuration')
-    print('  ========================================================')
-    #for conf in model.get_config():
-    #    print(conf,"\n")
-    
-    print("  Data size:", A.shape)
-    print("\n  Training set file:",learnFile)
-    
-    if testFile is not None:
-        print("  Testing set file:",testFile)
-        print("\n  Training set file datapoints:", A.shape[0])
-        print("  Testing set file datapoints:", A_test.shape[0])
-    else:
-        print("  Testing data set from training file:",dP.cv_split*100,"%")
-        print("\n  Training set file datapoints:", math.floor(A.shape[0]*(1-dP.cv_split)))
-        print("  Testing set datapoints:", math.ceil(A.shape[0]*dP.cv_split))
-    print("\n  Number of learning labels:",dP.numLabels)
-    print("  Total number of points per data:",En.size)
-
-    loss = np.asarray(log.history['loss'])
-    val_loss = np.asarray(log.history['val_loss'])
-    
-    if normFile is not None:
-        try:
-            with open(normFile, "rb") as f:
-                norm = pickle.load(f)
-            print("\n  Opening pkl file with normalization data:",normFile)
-            print(" Normalizing validation file for prediction...")
-        except:
-            print("\033[1m pkl file not found \033[0m")
-            return
+    max_depth = 5
+    n_estimators = 10
+    n_jobs = 1
 
     if dP.regressor:
-        mae = np.asarray(log.history['mae'])
-        val_mae = np.asarray(log.history['val_mae'])
-            
-        printParam(dP)
-        print('\n  ==========================================================')
-        print('  \033[1m ML - Regressor\033[0m - Training Summary')
-        print('  ==========================================================')
-        print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(loss), np.amin(loss), loss[-1]))
-        print("  \033[1mMean Abs Err\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(mae), np.amin(mae), mae[-1]))
-        print('\n  ==========================================================')
-        print('  \033[1m ML - Regressor \033[0m - Validation Summary')
-        print('  ========================================================')
-        print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(val_loss), np.amin(val_loss), val_loss[-1]))
-        print("  \033[1mMean Abs Err\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(val_mae), np.amin(val_mae), val_mae[-1]))
-        if dP.saveBestModel:
-            if dP.metricBestModelR == 'mae':
-                if testFile:
-                    score = model.evaluate(A_test, Cl_test, batch_size=dP.batch_size, verbose = 0)
-                    print("  \033[1mSaved model with validation MAE:\033[0m: {0:.4f}".format(score[1]))
-                print("  \033[1mSaved model with min training MAE:\033[0m {0:.4f}\n".format(np.amin(mae)))
-            if dP.metricBestModelR == 'val_mae':
-                print("  \033[1mSaved model with validation MAE:\033[0m {0:.4f}\n".format(np.amin(val_mae)))
-            else:
-                pass
-        if testFile:
-            predictions = model.predict(A_test)
-        
-            print('\n  ===========================================================================')
-            print("  Real value | Predicted value | val_loss | val_mean_abs_err | % deviation ")
-            print("  ---------------------------------------------------------------------------")
-            for i in range(0,len(predictions)):
-                score = model.evaluate(np.array([A_test[i]]), np.array([Cl_test[i]]), batch_size=dP.batch_size, verbose = 0)
-                if normFile is not None:
-                    print("  {0:.3f} ({1:.3f})  |  {2:.3f} ({3:.3f})  | {4:.4f}  |  {5:.4f} | {6:.2f}".format(norm.transform_inverse_single(Cl2_test[i]),
-                        Cl2_test[i], norm.transform_inverse_single(predictions[i][0]), predictions[i][0], score[0], score[1], 100*score[1]/norm.transform_inverse_single(Cl2_test[i])))
-                else:
-                    print("  {0:.3f}\t| {1:.3f}\t| {2:.4f}\t| {3:.4f}\t| {4:.1f}".format(Cl2_test[i],
-                        predictions[i][0], score[0], score[1], 100*score[1]/Cl2_test[i]))
-            print('  ===========================================================================  ')
+        rf = RandomForestRegressor(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs)
+        tag = "Regressor"
     else:
-        accuracy = np.asarray(log.history['accuracy'])
-        val_acc = np.asarray(log.history['val_accuracy'])
-        
-        print("  Number unique classes (training): ", np.unique(Cl).size)
-        if testFile is not None:
-            Cl2_test = le.transform(Cl_test)
-            print("  Number unique classes (validation):", np.unique(Cl_test).size)
-            print("  Number unique classes (total): ", np.unique(totCl).size)
-        printParam(dP)
-        print('\n  ========================================================')
-        print('  \033[1m ML - Classifier \033[0m - Training Summary')
-        print('  ========================================================')
-        print("\n  \033[1mAccuracy\033[0m - Average: {0:.2f}%; Max: {1:.2f}%; Last: {2:.2f}%".format(100*np.average(accuracy),
-            100*np.amax(accuracy), 100*accuracy[-1]))
-        print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(loss), np.amin(loss), loss[-1]))
-        print('\n\n  ========================================================')
-        print('  \033[1m ML - Classifier \033[0m - Validation Summary')
-        print('  ========================================================')
-        print("\n  \033[1mAccuracy\033[0m - Average: {0:.2f}%; Max: {1:.2f}%; Last: {2:.2f}%".format(100*np.average(val_acc),
-        100*np.amax(val_acc), 100*val_acc[-1]))
-        print("  \033[1mLoss\033[0m - Average: {0:.4f}; Min: {1:.4f}; Last: {2:.4f}".format(np.average(val_loss), np.amin(val_loss), val_loss[-1]))
-        if dP.saveBestModel:
-            if dP.metricBestModelC == 'accuracy':
-                print("  \033[1mSaved model with training accuracy:\033[0m {0:.4f}".format(100*np.amax(accuracy)))
-            if dP.metricBestModelC == 'val_acc':
-                print("  \033[1mSaved model with validation accuracy:\033[0m {0:.4f}\n".format(100*np.amax(val_acc)))
-            else:
-                pass
-
-        if testFile:
-            predictions = model.predict(A_test)
-            print('\n  ============================================================')
-            print("  Real class\t| Predicted class\t| Probability")
-            print("  ------------------------------------------------------------")
-
-            for i in range(predictions.shape[0]):
-                predClass = np.argmax(predictions[i])
-                predProb = round(100*predictions[i][predClass],2)
-                predValue = le.inverse_transform([predClass])[0]
-                realValue = Cl_test[i]
-                if normFile is not None:
-                    print("  {0:.2f} ({1:.2f})  |  {2:.2f} ({3:.2f})  |  {4:.2f}".format(norm.transform_inverse_single(realValue),
-                        realValue, norm.transform_inverse_single(predValue), predValue, predProb))
-                else:
-                    print("  {0:.2f}\t\t| {1:.2f}\t\t\t| {2:.2f}".format(realValue, predValue, predProb))
-            #print("\n  Validation - Loss: {0:.2f}; accuracy: {1:.2f}%".format(score[0], 100*score[1]))
-            print('  ============================================================')
-
-    if dP.plotWeightsFlag == True:
-        plotWeights(En, A, model, dP)
+        rf = RandomForestClassifier(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs)
+        tag = "Classifier"
     
-    getTFVersion(dP)
     
-    ##################################################################
-    # Hyperparameter optimization
-    ##################################################################
-    if dP.optimizeParameters:
-        print('  ========================================================')
-        print('  \033[1m HyperParameters Optimization\033[0m')
-        print('  ========================================================\n')
-                
-        from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
-        from scikeras.wrappers import KerasClassifier, KerasRegressor
-        import json
+    rf.fit(A, Cl2)
         
-        with open(dP.optParFile) as f:
-            grid = json.load(f)
-        '''
-        grid = {
-            "learnRate" : [1e-2, 1e-3, 1e-4],
-            "l2" : [1e-3, 1e-4, 1e-5],
-            "decay" : [1e-3, 1e-4, 1e-5],
-            #layers,
-            "dropout" : [0,0.1,0.2,0.3,0.4],
-            "batch_size" : [16, 32, 64, 128, 256],
-            #"epochs" : [300,400,500],
-            }
-        '''
+    print("\n  Random Forest", tag,"model saved in:", dP.modelName)
+    with open(dP.modelName,'wb') as f:
+        pickle.dump(rf, f)
+
+    pred = le.inverse_transform_bulk(rf.predict(A_test))
+    delta = pred - Cl_test
         
-        if dP.regressor:
-            model2 = KerasRegressor(build_fn=get_model, verbose=0)
-            #scoring = "neg_mean_absolute_error"
-            scoring = "r2"
-        else:
-            model2 = KerasClassifier(build_fn=get_model, verbose=0)
-            scoring = "accuracy"
-            
-        numGPUs = len(tf.config.list_physical_devices('GPU'))
-        if numGPUs == 0:
-            import multiprocessing as mp
-            n_jobs = mp.cpu_count() - 1
-            print(" Running paramter optimization using:",n_jobs,"CPUs\n")
-        else:
-            n_jobs = numGPUs
-            print(" Running paramter optimization using:",n_jobs,"GPUs\n")
-                
-        #searcher = RandomizedSearchCV(estimator=model2, n_jobs=n_jobs, cv=3,
-        #    param_distributions=grid, scoring=scoring)
-        searcher = GridSearchCV(estimator=model2, n_jobs=n_jobs, cv=3,
-            param_grid=grid)
-        
-        searchResults = searcher.fit(A, Cl2)
-    
-        if dP.regressor:
-            #results = searchResults.cv_results_
-            print(" Optimal parameters for best model: ")
-            bestParams = searchResults.best_params_
-            print(bestParams)
-        else:
-            print(" Optimal parameters for best model: ")
-            bestScore = searchResults.best_score_
-            bestParams = searchResults.best_params_
-            print(bestParams)
-            print(" Best score is {:.2f} using {}".format(bestScore))
-            # extract the best model, make predictions on our data, and show a
-            # classification report
-            print(" Evaluating the best model...")
-            bestModel = searchResults.best_estimator_
-            accuracy = bestModel.score(A_test, Cl2_test)
-            print(" Accuracy: {:.2f}%".format(accuracy))
+    print('\n  ================================================================================')
+    print('  \033[1m Random Forest \033[0m -',tag,'Prediction')
+    print('  ================================================================================')
+    print('   Real class\t| Predicted class\t| Delta')
+    print('  --------------------------------------------------------------------------------')
+    for i in range(len(pred)):
+        print("   {0:.2f}\t| {1:.2f}\t\t| {2:.2f}".format(Cl_test[i], pred[i], delta[i]))
+    print('  --------------------------------------------------------------------------------')
+    print('   Average Delta: {0:.2f}, StDev = {1:.2f}'.format(mean(delta), stdev(delta)))
+    print('   R^2: {0:.4f}'.format(rf.score(A_test, Cl2_test)))
+    print('  --------------------------------------------------------------------------------\n')
+    print('  Scikit-learn v.',str(sklearn.__version__),'\n')
     
 #************************************
 # Prediction
@@ -925,8 +607,8 @@ def runDT(A, Cl, A_test, Cl_test, dP):
         tag = "Classifier"
         
     rf.fit(A, Cl)
-    print("\n  Random Forest", tag,"model saved in:", dP.model_rf)
-    with open(dP.model_rf,'wb') as f:
+    print("\n  Random Forest", tag,"model saved in:", dP.modelName)
+    with open(dP.modelname,'wb') as f:
         pickle.dump(rf, f)
 
     if A_test is not None:
