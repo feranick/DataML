@@ -2,7 +2,7 @@
 '''
 ***********************************************************
 * libDataML - Library for DataML
-* v2024.10.14.1
+* v2024.10.14.2
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -418,6 +418,8 @@ def usage():
     print('  python3 DataML.py -o\n')
     print(' Run principal component analysis (PCA) - EXPERIMENTAL:')
     print('  python3 DataML.py -c <learningFile>\n')
-    print(' Create Autoencoder - EXPERIMENTAL:')
+    print(' Run Autoencoder - EXPERIMENTAL:')
     print('  python3 DataML.py -a <learningFile> <validFile-optional>\n')
+    print(' Run Random Forest Regressor/Classifier - EXPERIMENTAL:')
+    print('  python3 DataML.py -r <learningFile> <validFile-optional>\n')
     print(' Requires python 3.x. Not compatible with python 2.x\n')

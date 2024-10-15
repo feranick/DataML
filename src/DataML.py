@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.10.14.1
+* v2024.10.14.2
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -39,17 +39,19 @@ class Conf():
             self.modelName = "model_regressor.h5"
             self.summaryFileName = "summary_regressor.csv"
             self.model_png = self.model_directory+"/model_regressor_MLP.png"
+            self.model_rf = "model_rf_regressor.pkl"
         else:
             self.modelName = "model_classifier.h5"
             self.summaryFileName = "summary_classifier.csv"
             self.model_png = self.model_directory+"/model_classifier_MLP.png"
+            self.model_rf = "model_rf_classifier.pkl"
         
         self.tb_directory = "model_MLP"
         self.model_name = self.model_directory+self.modelName
         
         if self.kerasVersion == 3:
             self.model_name = os.path.splitext(self.model_name)[0]+".keras"
-                    
+        
         self.model_le = self.model_directory+"model_le.pkl"
         self.model_scaling = self.model_directory+"model_scaling.pkl"
         self.model_pca = self.model_directory+"model_encoder.pkl"
@@ -161,7 +163,7 @@ def main():
     
     try:
         opts, args = getopt.getopt(sys.argv[1:],
-            "tpbvlocah:", ["train", "predict", "batch", "validbatch","lite", "opt", "comp", "autoencoder", "help"])
+            "tpbvlocarh:", ["train", "predict", "batch", "validbatch","lite", "opt", "comp", "autoencoder", "rforest", "help"])
     except:
         usage()
         sys.exit(2)
@@ -244,6 +246,16 @@ def main():
                 preAutoencoder(sys.argv[2], None, dP)
             else:
                 preAutoencoder(sys.argv[2], sys.argv[3], dP)
+            #except:
+            #    usage()
+            #    sys.exit(2)
+            
+        if o in ["-r" , "--rforest"]:
+            #try:
+            if len(sys.argv)<4:
+                preRF(sys.argv[2], None, dP)
+            else:
+                preRF(sys.argv[2], sys.argv[3], dP)
             #except:
             #    usage()
             #    sys.exit(2)
@@ -862,8 +874,8 @@ def validBatchPredict(testFile, normFile):
         print('  ========================================================')
         print('  \033[1m MLP - Classifier\033[0m - Batch Prediction')
         print('  ========================================================')
-        print("  Real class\t| Predicted class\t| Probability")
-        print("  ---------------------------------------------------")
+        print('  Real class\t| Predicted class\t| Probability')
+        print('  ---------------------------------------------------')
         for i in range(predictions.shape[0]):
             predClass = np.argmax(predictions[i])
             predProb = round(100*predictions[i][predClass],2)
@@ -950,13 +962,12 @@ def runPCAValid(A, dP):
     import numpy as np
     from sklearn import preprocessing, decomposition
     
-    with open(dP.model_scaling,'rb') as f:
-        scaler = pickle.load(f)
-    
     with open(dP.model_pca,'rb') as f:
         spca = pickle.load(f)
     
     if dP.rescaleForPCA:
+        with open(dP.model_scaling,'rb') as f:
+            scaler = pickle.load(f)
         A_enc = spca.transform(scaler.transform(A))
     else:
         A_enc = spca.transform(A)
@@ -1171,7 +1182,64 @@ def runAutoencoder2(learnFile, testFile, dP):
     
     #print(autoencoder.encoder(A).numpy())
     return autoencoder.encoder(A).numpy()
+    
+#********************************************************************************
+# Perform Random Forest - EXPERIMENTAL
+#********************************************************************************
+# Define correct value of numPCA
+def preRF(learnFile, validFile, dP):
+    En, A, Cl = readLearnFile(learnFile, dP)
+    if validFile is not None:
+        En_test, A_test, Cl_test = readLearnFile(validFile, dP)
+    else:
+        En_test, A_test, Cl_test = None, None, None
+    
+    if dP.runDimRedFlag:
+        print("  Dimensionality Reduction via:",dP.typeDimRed,"\n")
+        if dP.typeDimRed == 'Autoencoder':
+            A = runAutoencoder(A, dP)
+        else:
+            A = runPCA(A, dP.numDimRedComp, dP)
+            if validFile is not None:
+                A_test = runPCAValid(A_test, dP)
+    
+    runRF(A, Cl, A_test, Cl_test,dP)
 
+def runRF(A, Cl, A_test, Cl_test, dP):
+    from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+    from statistics import mean, stdev
+
+    max_depth = 5
+    n_estimators = 10
+    n_jobs = 1
+
+    if dP.regressor:
+        rf = RandomForestRegressor(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs)
+        tag = "Regressor"
+    else:
+        rf = RandomForestClassifier(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs)
+        tag = "Classifier"
+        
+    rf.fit(A, Cl)
+    print("\n  Random Forest", tag,"model saved in:", dP.model_rf,"\n")
+    with open(dP.model_rf,'wb') as f:
+        pickle.dump(rf, f)
+
+    if A_test is not None:
+        pred = rf.predict(A_test)
+        print(pred)
+        delta = pred - Cl_test
+    
+        print('\n  ================================================================================')
+        print('  \033[1m RF \033[0m - Prediction')
+        print('  ================================================================================')
+        print('  Real class\t| Predicted class\t| Delta')
+        print('  --------------------------------------------------------------------------------')
+        for i in range(len(pred)):
+            print("  {0:.2f}\t| {1:.2f}\t| {2:.2f}".format(Cl_test[i], pred[i], delta[i]))
+        print('  --------------------------------------------------------------------------------\n')
+        print('  Average Delta: {0:.2f}, StDev = {1:.2f}'.format(mean(delta), stdev(delta)))
+        print('  R^2: {0:.4f}\n'.format(rf.score(A_test, Cl_test)))
 #************************************
 # Main initialization routine
 #************************************
