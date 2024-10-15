@@ -64,7 +64,7 @@ class Conf():
         if platform.system() == 'Windows':
             self.edgeTPUSharedLib = "edgetpu.dll"
             
-        self.rescaleForPCA = True
+        self.rescaleForPCA = False
             
     def datamlDef(self):
         self.conf['Parameters'] = {
@@ -915,7 +915,7 @@ def runPCA(A, numDimRedComp, dP):
     #**************************************
     
     if dP.typeDimRed == "SparsePCA":
-        spca = decomposition.SparsePCA(n_components=numDimRedComp)
+        spca = decomposition.SparsePCA(n_components=numDimRedComp, alpha = 10)
     if dP.typeDimRed == "PCA":
         spca = decomposition.PCA(n_components=numDimRedComp)
     if dP.typeDimRed == "TruncatedSVD":
@@ -937,7 +937,7 @@ def runPCA(A, numDimRedComp, dP):
         A_encoded = spca.fit_transform(A)
         A_decoded = spca.inverse_transform(A_encoded)
     
-    print("  PCA encoder saved in:", dP.model_pca,"\n")
+    print("  ",dP.typeDimRed,"encoder saved in:", dP.model_pca,"\n")
     with open(dP.model_pca,'wb') as f:
         pickle.dump(spca, f)
         
