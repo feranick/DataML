@@ -69,15 +69,15 @@ class Conf():
     def datamlDef(self):
         self.conf['Parameters'] = {
             'regressor' : False,
-            'l_rate' : 0.001,
-            'l_rdecay' : 1e-4,
-            'HL' : [20,30,40,50,60,70],
+            'l_rate' : 0.01,
+            'l_rdecay' : 0.001,
+            'HL' : [10, 5, 2],
             'drop' : 0,
             'l2' : 1e-4,
-            'epochs' : 100,
-            'cv_split' : 0.01,
-            'fullSizeBatch' : True,
-            'batch_size' : 64,
+            'epochs' : 200,
+            'cv_split' : 0.05,
+            'fullSizeBatch' : False,
+            'batch_size' : 8,
             'numLabels' : 1,
             'normalize' : False,
             'runDimRedFlag' : False,
@@ -915,7 +915,7 @@ def runPCA(A, numDimRedComp, dP):
     #**************************************
     
     if dP.typeDimRed == "SparsePCA":
-        spca = decomposition.SparsePCA(n_components=numDimRedComp, alpha = 10)
+        spca = decomposition.SparsePCA(n_components=numDimRedComp, alpha = 0.1, verbose=2)
     if dP.typeDimRed == "PCA":
         spca = decomposition.PCA(n_components=numDimRedComp)
     if dP.typeDimRed == "TruncatedSVD":
@@ -937,7 +937,7 @@ def runPCA(A, numDimRedComp, dP):
         A_encoded = spca.fit_transform(A)
         A_decoded = spca.inverse_transform(A_encoded)
     
-    print("  ",dP.typeDimRed,"encoder saved in:", dP.model_pca,"\n")
+    print(" ",dP.typeDimRed,"encoder saved in:", dP.model_pca,"\n")
     with open(dP.model_pca,'wb') as f:
         pickle.dump(spca, f)
         
