@@ -1,10 +1,10 @@
 # DataML
 DataML Regression and Classification of sparse data.
 - Currently supported ML architectures:
-   - DNNClassifier (TensorFlow, TensorFlow-Lite)
+   - Classifier/Regressor (TensorFlow, TensorFlow-Lite)
 - Required libraries for prediction:
    - tensorflow (version >= 2.13.x, >= 2.16.2 recommended)
-   - Optional: tensorflow-lite (v >= 2.13, >= 2.16.2 recommended)
+   - Optional: `tensorflow-lite` (v >= 2.13, >= 2.16.2 recommended)
    - Optional: [tensorflow-lite runtime](https://www.tensorflow.org/lite/guide/python) 
    - Optional: tensorflow-lite runtime with [Coral EdgeTPU](https://coral.ai/docs/accelerator/get-started/)
 
@@ -33,7 +33,7 @@ A wheel package is available in the subfolder `dir`. You can install it followin
 This software requires Python (3.9 or higher). It has been tested with Python 3.10 or higher which is the recommended platform. It is not compatible with python 2.x. Additional required packages:
 
     numpy
-    scikit-learn (>=0.18)
+    scikit-learn (>=1.5.0)
     scipy
     matplotlib
     pandas
@@ -96,7 +96,7 @@ Train (Random cross validation):
   `python3 DataML.py -a <learningFile>`
   `python3 DataML.py -a <learningFile> <validFile-optional>`
 
- Run Random Forest Regressor/Classifier with validation- EXPERIMENTAL:
+ Preview: Run Random Forest Regressor/Classifier with validation- EXPERIMENTAL:
   `python3 DataML.py -r <learningFile> <validFile-optional>`
   
 ###Note: 
