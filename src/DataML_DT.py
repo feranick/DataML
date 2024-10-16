@@ -390,8 +390,6 @@ def train(learnFile, testFile, normFile):
 def predict(testFile, normFile):
     dP = Conf()
     import sklearn
-    from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
-    
     R, _ = readTestFile(testFile)
 
     if normFile is not None:
@@ -442,9 +440,7 @@ def predict(testFile, normFile):
 #************************************
 def batchPredict(folder, normFile):
     dP = Conf()
-    
     import sklearn
-    from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
     
     if normFile is not None:
         try:
@@ -517,9 +513,7 @@ def batchPredict(folder, normFile):
 def validBatchPredict(testFile, normFile):
     dP = Conf()
     En_test, A_test, Cl_test = readLearnFile(testFile, dP)
-    
     import sklearn
-    from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
     
     if normFile is not None:
         try:
