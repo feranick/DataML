@@ -67,7 +67,7 @@ class Conf():
             
     def datamlDef(self):
         self.conf['Parameters'] = {
-            'typeDT' : 'RandomForest',
+            'typeDT' : 'GradientBoosting',
             'regressor' : False,
             'n_estimators' : 4,
             'max_depth' : 7,
