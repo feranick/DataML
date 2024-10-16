@@ -400,14 +400,24 @@ def predict(testFile, normFile):
         with open(dP.model_le, "rb") as f:
             le = pickle.load(f)
         pred = le.inverse_transform_bulk(dt.predict(R))
+        pred_classes = le.inverse_transform_bulk(dt.classes_)
+        proba = dt.predict_proba(R)
         
     print('\n  ================================================================================')
     print('  \033[1m',dP.typeDT,dP.mode,'\033[0m')
     print('  ================================================================================')
-    print('   Filename\t| Prediction')
-    print('  --------------------------------------------------------------------------------')
-    print("   {0:s}\t| {1:.2f}  ".format(testFile, pred[0]))
-    print('  --------------------------------------------------------------------------------\n')
+    if dP.regressor:
+        print('   Filename\t\t| Prediction')
+        print('  --------------------------------------------------------------------------------')
+        print("   {0:s}\t| {1:.2f}  ".format(testFile, pred[0]))
+    else:
+        print('   Filename\t\t| Prediction\t| Probability')
+        print('  --------------------------------------------------------------------------------')
+        ind = np.where(proba[0]==np.max(proba[0]))[0]
+        for j in range(len(ind)):
+            print("   {0:s}\t| {1:.2f}\t| {2:.2f} ".format(testFile, pred_classes[ind[j]], 100*proba[0][ind[j]]))
+        print("")
+    print('  ================================================================================\n')
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
 
 #************************************
@@ -432,14 +442,18 @@ def batchPredict(folder, normFile):
     with open(dP.modelName, "rb") as f:
         dt = pickle.load(f)
     
-    if not dP.regressor:
+    summaryFile = np.array([['Folder:',folder,''],['DataML_DT',dP.typeDT,dP.mode]])
+    
+    if dP.regressor:
+        summaryFile = np.vstack((summaryFile,['File Name','Predicted Value','']))
+    else:
         with open(dP.model_le, "rb") as f:
             le = pickle.load(f)
-            
-    summaryFile = np.array([['DataML_DT',dP.typeDT,dP.mode],['File Name','Predicted Value','']])
+        summaryFile = np.vstack((summaryFile,['File Name','Predicted Value','Probability %']))
      
     fileName = []
     pred = []
+    proba = []
     for file in glob.glob(folder+'/*.txt'):
         R, good = readTestFile(file, dP)
         if  normFile is not None:
@@ -453,20 +467,31 @@ def batchPredict(folder, normFile):
                 pred.append(dt.predict(R))
             else:
                 pred.append(le.inverse_transform_bulk(dt.predict(R)))
+                pred_classes = le.inverse_transform_bulk(dt.classes_)
+                proba.append(dt.predict_proba(R))
             fileName.append(file)
     
     print('\n  ================================================================================')
     print('  \033[1m',dP.typeDT,dP.mode,'\033[0m')
     print('  ================================================================================')
-    print('   Filename\t| Prediction')
-    print('  --------------------------------------------------------------------------------')
-    for i in range(0,len(pred)):
-        print("   {0:s}\t| {1:.2f}  ".format(fileName[i], pred[i][0]))
-        summaryFile = np.vstack((summaryFile,[fileName[i],pred[i][0],'']))
-    print('  --------------------------------------------------------------------------------\n')
+    if dP.regressor:
+        print('   Filename\t| Prediction')
+        print('  --------------------------------------------------------------------------------')
+        for i in range(0,len(pred)):
+            print("   {0:s}\t| {1:.2f}  ".format(fileName[i], pred[i][0]))
+            summaryFile = np.vstack((summaryFile,[fileName[i],pred[i][0],'']))
+    else:
+        print('   Filename\t\t| Prediction\t| Probability')
+        print('  --------------------------------------------------------------------------------')
+        for i in range(0,len(pred)):
+            ind = np.where(proba[i][0]==np.max(proba[i][0]))[0]
+            for j in range(len(ind)):
+                print("   {0:s}\t| {1:.2f}\t| {2:.2f} ".format(fileName[i], pred_classes[ind[j]], 100*proba[i][0][ind[j]]))
+                summaryFile = np.vstack((summaryFile,[fileName[i],pred_classes[ind[j]],100*proba[i][0][ind[j]]]))
+        print("")
+    print('  ================================================================================\n')
     
     saveSummaryFile(summaryFile, dP)
-    
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
 
 #***********************************************************
@@ -495,27 +520,42 @@ def validBatchPredict(testFile, normFile):
     if dP.runDimRedFlag:
         A_test = runPCAValid(A_test, dP)
     
+    summaryFile = np.array([['File:',testFile,''],['DataML_DT',dP.typeDT,dP.mode]])
+    
     if dP.regressor:
         pred = dt.predict(A_test)
+        summaryFile = np.vstack((summaryFile,['Index','Predicted Value','']))
     else:
         with open(dP.model_le, "rb") as f:
             le = pickle.load(f)
         pred = le.inverse_transform_bulk(dt.predict(A_test))
-        
-    summaryFile = np.array([['DataML_DT',dP.typeDT,dP.mode],['Predicted Value','','']])
-    covMatrix = np.empty((0,2))
+        pred_classes = le.inverse_transform_bulk(dt.classes_)
+        proba = dt.predict_proba(A_test)
+        summaryFile = np.vstack((summaryFile,['Index','Predicted Value','Probability %']))
     
     print('  ================================================================================')
     print('  \033[1m',dP.typeDT,dP.mode,'\033[0m')
     print('  ================================================================================')
-    print('   Prediction')
-    print('  --------------------------------------------------------------------------------')
-    for i in range(0,len(pred)):
-        print("   {0:.2f}  ".format(pred[i]))
-        summaryFile = np.vstack((summaryFile,[pred[i],'','']))
-    print('  --------------------------------------------------------------------------------\n')
+    if dP.regressor:
+        print('   Prediction')
+        print('  --------------------------------------------------------------------------------')
+        for i in range(0,len(pred)):
+            print("   {0:.2f}  ".format(pred[i]))
+            summaryFile = np.vstack((summaryFile,[pred[i],'','']))
+    else:
+        print('   Prediction\t| Probability')
+        print('  --------------------------------------------------------------------------------')
+        for i in range(0,len(pred)):
+            ind = np.where(proba[i]==np.max(proba[i]))[0]
+            for j in range(len(ind)):
+                print("   {0:.2f}\t| {1:.2f} ".format(pred_classes[ind[j]], 100*proba[i][ind[j]]))
+                summaryFile = np.vstack((summaryFile,[i, pred_classes[ind[j]],100*proba[i][ind[j]]]))
+            print("")
+        
+    print('  ================================================================================\n')
     
     saveSummaryFile(summaryFile, dP)
+    print('  Scikit-learn v.',str(sklearn.__version__),'\n')
     
 #************************************
 # Main initialization routine
