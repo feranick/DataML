@@ -2,7 +2,7 @@
 '''
 ***********************************************************
 * libDataML - Library for DataML
-* v2024.10.15.5
+* v2024.10.16.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -344,7 +344,7 @@ def printParam(dP):
                 '\n  Dropout:', dP.drop,
                 '\n  Learning rate:', dP.l_rate,
                 '\n  Learning decay rate:', dP.l_rdecay)
-    if dP.fullSizeBatch == True:
+    if dP.fullSizeBatch:
         print('  Batch size: full')
     else:
         print('  Batch size:', dP.batch_size)
@@ -356,6 +356,30 @@ def printParam(dP):
         print('  Metric for Best Regression Model:', dP.metricBestModelR)
     else:
         print('  Metric for Best Classifier Model:', dP.metricBestModelC)
+    #print('  ================================================\n')
+    
+#************************************
+# Print NN Info
+#************************************
+def printParamDT(dP):
+    print('\n  ================================================')
+    print('  \033[1m',dP.typeDT,dP.mode,' \033[0m- Parameters')
+    print('  ================================================')
+    print('   Number of estimators:',dP.n_estimators,
+                '\n   Max depth:', dP.max_depth,
+                '\n   Max features:',dP.max_features,
+                '\n   Epochs/Max number of iterations:',dP.epochs,
+                '\n   Cross validation split:', str(dP.cv_split*100)+'%')
+    if dP.fullSizeBatch:
+        print('   Batch size: full')
+    else:
+        print('   Batch size:', dP.batch_size)
+    print('   Number of labels:', dP.numLabels)
+    print('   Normalize:', dP.normalize)
+    if dP.runDimRedFlag:
+        print('   Dimensionality reduction algorithm:', dP.typeDimRed)
+        print('   Number of dimensionality reduction components:', dP.numDimRedComp)
+    
     #print('  ================================================\n')
 
 #************************************

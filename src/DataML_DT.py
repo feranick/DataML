@@ -3,7 +3,7 @@
 '''
 ***************************************************
 * DataML Decision Trees - Classifier and Regressor
-* v2024.10.15.5
+* v2024.10.16.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***************************************************
@@ -61,9 +61,12 @@ class Conf():
         self.conf['Parameters'] = {
             'typeDT' : 'RandomForest',
             'regressor' : False,
-            'trainFullData' : True,
-            'epochs' : 200,
+            'n_estimators' : 4,
+            'max_depth' : 7,
+            'max_features' : 0.5,
+            'epochs' : 100,
             'cv_split' : 0.05,
+            'trainFullData' : True,
             'fullSizeBatch' : False,
             'batch_size' : 8,
             'numLabels' : 1,
@@ -75,6 +78,7 @@ class Conf():
     def sysDef(self):
         self.conf['System'] = {
             'kerasVersion' : 3,
+            'n_jobs' : 1
             }
 
     def readConfig(self,configFile):
@@ -85,9 +89,12 @@ class Conf():
         
             self.typeDT = self.conf.get('Parameters','typeDT')
             self.regressor = self.conf.getboolean('Parameters','regressor')
-            self.trainFullData = self.conf.getboolean('Parameters','trainFullData')
+            self.n_estimators = self.conf.getint('Parameters','n_estimators')
+            self.max_depth = self.conf.getint('Parameters','max_depth')
+            self.max_features = self.conf.getfloat('Parameters','max_features')
             self.epochs = self.conf.getint('Parameters','epochs')
             self.cv_split = self.conf.getfloat('Parameters','cv_split')
+            self.trainFullData = self.conf.getboolean('Parameters','trainFullData')
             self.fullSizeBatch = self.conf.getboolean('Parameters','fullSizeBatch')
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.numLabels = self.conf.getint('Parameters','numLabels')
@@ -97,6 +104,7 @@ class Conf():
             self.normalize = self.conf.getboolean('Parameters','normalize')
             
             self.kerasVersion = self.conf.getint('System','kerasVersion')
+            self.n_jobs = self.conf.getint('System','n_jobs')
             
         except:
             print(" Error in reading configuration file. Please check it\n")
@@ -204,7 +212,7 @@ def train(learnFile, testFile, normFile):
     dP = Conf()
    
     import sklearn
-    from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier, HistGradientBoostingRegressor, HistGradientBoostingClassifier
+    from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier, HistGradientBoostingRegressor, HistGradientBoostingClassifier, GradientBoostingRegressor, GradientBoostingClassifier
     from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
     from statistics import mean, stdev
     from sklearn.metrics import accuracy_score, mean_absolute_error
@@ -289,29 +297,30 @@ def train(learnFile, testFile, normFile):
     if dP.fullSizeBatch:
         dP.batch_size = A.shape[0]
         
-    max_depth = 5
-    n_estimators = 10
-    n_jobs = 1
-    max_iter = 100
-
     if dP.regressor:
         if dP.typeDT == 'RandomForest':
-            dt = RandomForestRegressor(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs)
+            dt = RandomForestRegressor(max_depth=dP.max_depth, n_estimators = dP.n_estimators, random_state=0, max_features = dP.max_features, verbose=2, n_jobs=dP.n_jobs)
         if dP.typeDT == 'HistGradientBoosting':
-            dt = HistGradientBoostingRegressor(max_depth=max_depth, max_iter=max_iter, verbose = 2)
+            dt = HistGradientBoostingRegressor(max_depth=dP.max_depth, max_iter=dP.epochs, max_features = dP.max_features, verbose = 2, learning_rate=0.1, l2_regularization=0.0,)
         if dP.typeDT == 'GradientBoosting':
-            dt = GradientBoostingRegressor(max_depth=max_depth, max_iter=max_iter, verbose = 2)
+            if dP.max_features == 0:
+                dP.max_features = None
+            dt = GradientBoostingRegressor(max_depth=dP.max_depth, max_features = dP.max_features, verbose = 2, learning_rate=0.1)
         if dP.typeDT == 'DecisionTree':
-            dt = DecisionTreeRegressor(max_depth=max_depth)
+            if dP.max_features == 0:
+                dP.max_features = None
+            dt = DecisionTreeRegressor(max_depth=dP.max_depth, max_features = dP.max_features)
     else:
         if dP.typeDT == 'RandomForest':
-            dt = RandomForestClassifier(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs, oob_score=False)
+            dt = RandomForestClassifier(max_depth=dP.max_depth, n_estimators = dP.n_estimators, random_state=0, max_features = dP.max_features, verbose=2, n_jobs=dP.n_jobs, oob_score=False)
         if dP.typeDT == 'HistGradientBoosting':
-            dt = HistGradientBoostingClassifier(max_depth=max_depth, max_iter=max_iter, verbose=2)
+            dt = HistGradientBoostingClassifier(max_depth=dP.max_depth, max_iter=dP.epochs, max_features = dP.max_features, verbose = 2,learning_rate=0.1, l2_regularization=0.0)
         if dP.typeDT == 'GradientBoosting':
-            dt = GradientBoostingClassifier(max_depth=max_depth, max_iter=max_iter, verbose = 2)
+            dt = GradientBoostingClassifier(max_depth=dP.max_depth, max_features = dP.max_features, verbose = 2, learning_rate=0.1)
         if dP.typeDT == 'DecisionTree':
-            dt = DecisionTreeClassifier(max_depth=max_depth)
+            if dP.max_features == 0:
+                dP.max_features = None
+            dt = DecisionTreeClassifier(max_depth=dP.max_depth, max_features = dP.max_features)
     
     dt.fit(A, Cl2)
         
@@ -328,8 +337,10 @@ def train(learnFile, testFile, normFile):
                 
     delta = pred - Cl_test
     
+    printParamDT(dP)
+    
     print('\n  ================================================================================')
-    print('  \033[1m',dP.typeDT,dP.mode,'\033[0m')
+    print('  \033[1m',dP.typeDT,dP.mode,'\033[0m- Results')
     print('  ================================================================================')
     print('   Real class\t| Predicted class\t| Delta')
     print('  --------------------------------------------------------------------------------')
