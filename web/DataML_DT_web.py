@@ -40,8 +40,7 @@ class Conf():
         self.conf = configparser.ConfigParser()
         self.conf.optionxform = str
         if os.path.isfile(self.configFile) is False:
-            print(" Configuration file: \""+confFileName+"\" does not exist: Creating one.\n")
-            self.createConfig()
+            print(" Configuration file: \""+confFileName+"\" does not exist. Please create one with DataML_DT.py\n")
         self.readConfig(self.configFile)
         self.model_directory = "./"
         if self.regressor:
@@ -120,16 +119,6 @@ class Conf():
             
         except:
             print(" Error in reading configuration file. Please check it\n")
-
-    # Create configuration file
-    def createConfig(self):
-        try:
-            self.datamlDef()
-            self.sysDef()
-            with open(self.configFile, 'w') as configfile:
-                self.conf.write(configfile)
-        except:
-            print("Error in creating configuration file")
 
 #************************************
 # Main
