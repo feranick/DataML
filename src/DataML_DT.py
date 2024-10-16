@@ -74,6 +74,7 @@ class Conf():
             'runDimRedFlag' : False,
             'typeDimRed' : 'SparsePCA',
             'numDimRedComp' : 3,
+            'plotFeatImportance' : False,
             }
     def sysDef(self):
         self.conf['System'] = {
@@ -98,10 +99,11 @@ class Conf():
             self.fullSizeBatch = self.conf.getboolean('Parameters','fullSizeBatch')
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.numLabels = self.conf.getint('Parameters','numLabels')
+            self.normalize = self.conf.getboolean('Parameters','normalize')
             self.runDimRedFlag = self.conf.getboolean('Parameters','runDimRedFlag')
             self.typeDimRed = self.conf.get('Parameters','typeDimRed')
             self.numDimRedComp = self.conf.getint('Parameters','numDimRedComp')
-            self.normalize = self.conf.getboolean('Parameters','normalize')
+            self.plotFeatImportance = self.conf.getboolean('Parameters','plotFeatImportance')
             
             self.kerasVersion = self.conf.getint('System','kerasVersion')
             self.n_jobs = self.conf.getint('System','n_jobs')
@@ -365,6 +367,10 @@ def train(learnFile, testFile, normFile):
             print("")
     
     print('  ================================================================================\n')
+    
+    if dP.plotFeatImportance:
+        plotImportances(dt, A_test, Cl_test, dP)
+    
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
     
 #************************************
@@ -557,6 +563,43 @@ def validBatchPredict(testFile, normFile):
     saveSummaryFile(summaryFile, dP)
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
     
+    
+def plotImportances(dt, A_test, Cl_test, dP):
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    from sklearn.inspection import permutation_importance
+
+    feature_names = [f"feature {i}" for i in range(A_test.shape[1])]
+    
+    importances = dt.feature_importances_
+    std = np.std([tree.feature_importances_ for tree in dt.estimators_], axis=0)
+
+    forest_importances = pd.Series(importances, index=feature_names)
+    
+    fig, ax = plt.subplots()
+    forest_importances.plot.bar(yerr=std, ax=ax)
+    ax.set_title("Feature importances using mean decrease in impurity")
+    ax.set_ylabel("Mean decrease in impurity")
+    fig.tight_layout()
+    fig.savefig('model_'+dP.typeDT+dP.mode+'_importances_MDI' + '.png', dpi = 160, format = 'png')  # Save plot
+    
+    
+    result = permutation_importance(
+        dt, A_test, Cl_test, n_repeats=100, random_state=42, n_jobs=2)
+            
+    forest_importances = pd.Series(result.importances_mean, index=feature_names)
+                
+    fig, ax = plt.subplots()
+    forest_importances.plot.bar(yerr=result.importances_std, ax=ax)
+    ax.set_title("Feature importances using permutation on full model")
+    ax.set_ylabel("Mean accuracy decrease")
+    fig.tight_layout()
+    
+    fig.savefig('model_'+dP.typeDT+dP.mode+'_importances_Perm' + '.png', dpi = 160, format = 'png')  # Save plot
+    
+    print("  Feature Importance plots saved\n")
+
+
 #************************************
 # Main initialization routine
 #************************************
