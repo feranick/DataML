@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.10.16.3
+* v2024.10.16.4
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -653,7 +653,7 @@ def train(learnFile, testFile, normFile):
 #************************************
 def predict(testFile, normFile):
     dP = Conf()
-    R, _ = readTestFile(testFile, dP)
+    R, _ = readTestFile(testFile)
 
     if normFile is not None:
         try:
@@ -738,7 +738,7 @@ def batchPredict(folder, normFile):
             
     fileName = []
     for file in glob.glob(folder+'/*.txt'):
-        R, good = readTestFile(file, dP)
+        R, good = readTestFile(file)
         if  normFile is not None:
             R = norm.transform_valid_data(R)
             

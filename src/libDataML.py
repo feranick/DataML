@@ -2,7 +2,7 @@
 '''
 ***********************************************************
 * libDataML - Library for DataML/DataML_DT
-* v2024.10.16.3
+* v2024.10.16.4
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -318,7 +318,7 @@ def readLearnFile(learnFile, dP):
 #************************************
 # Open Testing Data
 #************************************
-def readTestFile(testFile, dP):
+def readTestFile(testFile):
     try:
         with open(testFile, 'r') as f:
             print("\n  Opening sample data for prediction:",testFile)

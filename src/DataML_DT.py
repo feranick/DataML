@@ -3,7 +3,7 @@
 '''
 ***************************************************
 * DataML Decision Trees - Classifier and Regressor
-* v2024.10.16.3
+* v2024.10.16.4
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***************************************************
@@ -392,7 +392,7 @@ def predict(testFile, normFile):
     import sklearn
     from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
     
-    R, _ = readTestFile(testFile, dP)
+    R, _ = readTestFile(testFile)
 
     if normFile is not None:
         try:
@@ -472,7 +472,7 @@ def batchPredict(folder, normFile):
     pred = []
     proba = []
     for file in glob.glob(folder+'/*.txt'):
-        R, good = readTestFile(file, dP)
+        R, good = readTestFile(file)
         if  normFile is not None:
             R = norm.transform_valid_data(R)
             
