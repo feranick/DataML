@@ -3,7 +3,7 @@
 '''
 ***************************************************
 * DataML Decision Trees - Classifier and Regressor
-* v2024.10.16.2
+* v2024.10.16.3
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***************************************************
@@ -26,6 +26,15 @@ def DataML_DT():
 #************************************
 class Conf():
     def __init__(self):
+    
+        #############################
+        ### Types of estimators:
+        ### - RandomForest
+        ### - HistGradientBoosting
+        ### - GradientBoosting
+        ### - DecisionTree
+        #############################
+        
         self.appName = "DataML_DT"
         confFileName = "DataML_DT.ini"
         self.configFile = os.getcwd()+"/"+confFileName
@@ -65,6 +74,7 @@ class Conf():
             'max_depth' : 7,
             'max_features' : 0.5,
             'epochs' : 100,
+            'l_rate' : 0.1,
             'cv_split' : 0.05,
             'trainFullData' : True,
             'fullSizeBatch' : False,
@@ -93,6 +103,7 @@ class Conf():
             self.n_estimators = self.conf.getint('Parameters','n_estimators')
             self.max_depth = self.conf.getint('Parameters','max_depth')
             self.max_features = self.conf.getfloat('Parameters','max_features')
+            self.l_rate = self.conf.getfloat('Parameters','l_rate')
             self.epochs = self.conf.getint('Parameters','epochs')
             self.cv_split = self.conf.getfloat('Parameters','cv_split')
             self.trainFullData = self.conf.getboolean('Parameters','trainFullData')
@@ -303,11 +314,11 @@ def train(learnFile, testFile, normFile):
         if dP.typeDT == 'RandomForest':
             dt = RandomForestRegressor(max_depth=dP.max_depth, n_estimators = dP.n_estimators, random_state=0, max_features = dP.max_features, verbose=2, n_jobs=dP.n_jobs)
         if dP.typeDT == 'HistGradientBoosting':
-            dt = HistGradientBoostingRegressor(max_depth=dP.max_depth, max_iter=dP.epochs, max_features = dP.max_features, verbose = 2, learning_rate=0.1, l2_regularization=0.0,)
+            dt = HistGradientBoostingRegressor(max_depth=dP.max_depth, max_iter=dP.epochs, max_features = dP.max_features, verbose = 2, learning_rate=dP.l_rate, l2_regularization=0.0,)
         if dP.typeDT == 'GradientBoosting':
             if dP.max_features == 0:
                 dP.max_features = None
-            dt = GradientBoostingRegressor(max_depth=dP.max_depth, max_features = dP.max_features, verbose = 2, learning_rate=0.1)
+            dt = GradientBoostingRegressor(n_estimators = dP.epochs, max_depth=dP.max_depth, max_features = dP.max_features, verbose = 2, learning_rate=dP.l_rate)
         if dP.typeDT == 'DecisionTree':
             if dP.max_features == 0:
                 dP.max_features = None
@@ -316,9 +327,9 @@ def train(learnFile, testFile, normFile):
         if dP.typeDT == 'RandomForest':
             dt = RandomForestClassifier(max_depth=dP.max_depth, n_estimators = dP.n_estimators, random_state=0, max_features = dP.max_features, verbose=2, n_jobs=dP.n_jobs, oob_score=False)
         if dP.typeDT == 'HistGradientBoosting':
-            dt = HistGradientBoostingClassifier(max_depth=dP.max_depth, max_iter=dP.epochs, max_features = dP.max_features, verbose = 2,learning_rate=0.1, l2_regularization=0.0)
+            dt = HistGradientBoostingClassifier(max_depth=dP.max_depth, max_iter=dP.epochs, max_features = dP.max_features, verbose = 2, learning_rate=dP.l_rate, l2_regularization=0.0)
         if dP.typeDT == 'GradientBoosting':
-            dt = GradientBoostingClassifier(max_depth=dP.max_depth, max_features = dP.max_features, verbose = 2, learning_rate=0.1)
+            dt = GradientBoostingClassifier(n_estimators = dP.epochs, max_depth=dP.max_depth, max_features = dP.max_features, verbose = 2, learning_rate=dP.l_rate)
         if dP.typeDT == 'DecisionTree':
             if dP.max_features == 0:
                 dP.max_features = None
@@ -368,8 +379,8 @@ def train(learnFile, testFile, normFile):
     
     print('  ================================================================================\n')
     
-    if dP.plotFeatImportance:
-        plotImportances(dt, A_test, Cl_test, dP)
+    if dP.plotFeatImportance and dP.typeDT == 'RandomForest':
+        plotImportances(dt, A_test, Cl2_test, dP)
     
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
     
@@ -500,7 +511,7 @@ def batchPredict(folder, normFile):
     saveSummaryFile(summaryFile, dP)
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
 
-#***********************************************************
+#************************************************************
 # Batch Prediction using validation data (with real values)
 #************************************************************
 def validBatchPredict(testFile, normFile):
@@ -563,7 +574,9 @@ def validBatchPredict(testFile, normFile):
     saveSummaryFile(summaryFile, dP)
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
     
-    
+#***********************************************************
+# Save Plots with the model importance
+#************************************************************
 def plotImportances(dt, A_test, Cl_test, dP):
     import matplotlib.pyplot as plt
     import pandas as pd
@@ -574,10 +587,10 @@ def plotImportances(dt, A_test, Cl_test, dP):
     importances = dt.feature_importances_
     std = np.std([tree.feature_importances_ for tree in dt.estimators_], axis=0)
 
-    forest_importances = pd.Series(importances, index=feature_names)
+    forest_importances1 = pd.Series(importances, index=feature_names)
     
     fig, ax = plt.subplots()
-    forest_importances.plot.bar(yerr=std, ax=ax)
+    forest_importances1.plot.bar(yerr=std, ax=ax)
     ax.set_title("Feature importances using mean decrease in impurity")
     ax.set_ylabel("Mean decrease in impurity")
     fig.tight_layout()

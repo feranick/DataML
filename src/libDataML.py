@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 '''
 ***********************************************************
-* libDataML - Library for DataML
-* v2024.10.16.2
+* libDataML - Library for DataML/DataML_DT
+* v2024.10.16.3
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -766,4 +766,12 @@ def usage(name):
     print('  ',name,'-c <learningFile>\n')
     print(' Run Autoencoder - EXPERIMENTAL:')
     print('  ',name,'-a <learningFile> <validFile-optional>\n')
+    
+    if name == 'DataML_DT':
+        print(' Types of estimators:')
+        print(' - RandomForest')
+        print(' - HistGradientBoosting')
+        print(' - GradientBoosting')
+        print(' - DecisionTree\n')
+    
     print(' Requires python 3.x. Not compatible with python 2.x\n')
