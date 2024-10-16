@@ -225,9 +225,9 @@ def train(learnFile, testFile, normFile):
         totA = np.vstack((A, A_test))
         totCl = np.append(Cl, Cl_test)
     else:
-        A_train, Cl_train, A_test, Cl_test, _ = formatSubset(A, Cl, dP.cv_split)
         totA = A
         totCl = Cl
+        A, Cl, A_test, Cl_test, _ = formatSubset(A, Cl, dP.cv_split)
         
     if dP.trainFullData:
         A = totA
