@@ -3,7 +3,7 @@
 '''
 ***************************************************
 * DataML Decision Trees - Classifier and Regressor
-* v2024.10.16.1
+* v2024.10.16.2
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***************************************************
@@ -333,8 +333,10 @@ def train(learnFile, testFile, normFile):
         score = mean_absolute_error(pred, Cl_test)
     else:
         pred = le.inverse_transform_bulk(dt.predict(A_test))
+        pred_classes = le.inverse_transform_bulk(dt.classes_)
+        proba = dt.predict_proba(A_test)
         score = accuracy_score(pred, Cl_test)
-                
+        
     delta = pred - Cl_test
     
     printParamDT(dP)
@@ -350,7 +352,19 @@ def train(learnFile, testFile, normFile):
     print('  ',dP.metric,'= {0:.4f}'.format(score))
     print('   R^2 = {0:.4f}'.format(dt.score(A_test, Cl2_test)))
     print('   Average Delta: {0:.2f}, StDev = {1:.2f}'.format(mean(delta), stdev(delta)))
-    print('  --------------------------------------------------------------------------------\n')
+    
+    if not dP.regressor:
+        print('\n  ================================================================================')
+        print('   Real class\t| Predicted class\t| Probability')
+        print('  --------------------------------------------------------------------------------')
+    
+        for i in range(len(pred)):
+            ind = np.where(proba[i]==np.max(proba[i]))[0]
+            for j in range(len(ind)):
+                print("   {0:.2f}\t| {1:.2f}\t\t| {2:.2f} ".format(Cl_test[i], pred_classes[ind[j]], 100*proba[i][ind[j]]))
+            print("")
+    
+    print('  ================================================================================\n')
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
     
 #************************************

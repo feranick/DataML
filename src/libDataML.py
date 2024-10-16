@@ -2,7 +2,7 @@
 '''
 ***********************************************************
 * libDataML - Library for DataML
-* v2024.10.16.1
+* v2024.10.16.2
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************************
@@ -120,7 +120,7 @@ class MultiClassReductor():
     def inverse_transform_bulk(self,a):
         inv=[]
         for i in range(len(a)):
-            inv.append(int(self.totalClass[int(a[i])]))
+            inv.append(self.totalClass[int(a[i])])
         return inv
 
     def classes_(self):
