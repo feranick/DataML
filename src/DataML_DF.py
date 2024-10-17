@@ -338,7 +338,7 @@ def train(learnFile, testFile, normFile):
             df = DecisionTreeClassifier(max_depth=dP.max_depth, max_features = dP.max_features)
     
     df.fit(A, Cl2)
-        
+            
     print("\n  ",dP.typeDF+dP.mode,"model saved in:", dP.modelName)
     with open(dP.modelName,'wb') as f:
         pickle.dump(df, f)
@@ -351,8 +351,6 @@ def train(learnFile, testFile, normFile):
         pred_classes = le.inverse_transform_bulk(df.classes_)
         proba = df.predict_proba(A_test)
         
-        print(Cl_test)
-        print(pred)
         score = accuracy_score([int(round(x)) for x in pred], [int(round(x)) for x in Cl_test])
         
     delta = pred - Cl_test
