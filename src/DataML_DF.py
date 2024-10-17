@@ -27,13 +27,13 @@ def DataML_DF():
 class Conf():
     def __init__(self):
     
-        #############################
+        #################################
         ### Types of estimators:
+        ### - GradientBoosting (default)
         ### - RandomForest
         ### - HistGradientBoosting
-        ### - GradientBoosting
         ### - DecisionTree
-        #############################
+        #################################
         
         self.appName = "DataML_DF"
         confFileName = "DataML_DF.ini"
@@ -348,7 +348,10 @@ def train(learnFile, testFile, normFile):
         pred = le.inverse_transform_bulk(df.predict(A_test))
         pred_classes = le.inverse_transform_bulk(df.classes_)
         proba = df.predict_proba(A_test)
-        score = accuracy_score(pred, Cl_test)
+        
+        print(Cl_test)
+        print(pred)
+        score = accuracy_score([int(round(x)) for x in pred], [int(round(x)) for x in Cl_test])
         
     delta = pred - Cl_test
     
@@ -605,7 +608,6 @@ def plotImportances(df, A_test, Cl_test, dP):
     fig.savefig('model_'+dP.typeDF+dP.mode+'_importances_Perm' + '.png', dpi = 160, format = 'png')  # Save plot
     
     print("  Feature Importance plots saved\n")
-
 
 #************************************
 # Main initialization routine
