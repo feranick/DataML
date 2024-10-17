@@ -331,58 +331,6 @@ def readTestFile(testFile):
     return R, True
 
 #************************************
-# Print NN Info
-#************************************
-def printParam(dP):
-    print('\n  ================================================')
-    print('  \033[1m ML\033[0m - Parameters')
-    print('  ================================================')
-    print('  Optimizer:','Adam',
-                '\n  Hidden layers:', dP.HL,
-                '\n  Activation function:','relu',
-                '\n  L2:',dP.l2,
-                '\n  Dropout:', dP.drop,
-                '\n  Learning rate:', dP.l_rate,
-                '\n  Learning decay rate:', dP.l_rdecay)
-    if dP.fullSizeBatch:
-        print('  Batch size: full')
-    else:
-        print('  Batch size:', dP.batch_size)
-    print('  Epochs:',dP.epochs)
-    print('  Number of labels:', dP.numLabels)
-    print('  Stop at Best Model based on validation:', dP.stopAtBest)
-    print('  Save Best Model based on validation:', dP.saveBestModel)
-    if dP.regressor:
-        print('  Metric for Best Regression Model:', dP.metricBestModelR)
-    else:
-        print('  Metric for Best Classifier Model:', dP.metricBestModelC)
-    #print('  ================================================\n')
-    
-#************************************
-# Print NN Info
-#************************************
-def printParamDF(dP):
-    print('\n  ================================================')
-    print('  \033[1m',dP.typeDF,dP.mode,' \033[0m- Parameters')
-    print('  ================================================')
-    print('   Number of estimators:',dP.n_estimators,
-                '\n   Max depth:', dP.max_depth,
-                '\n   Max features:',dP.max_features,
-                '\n   Epochs/Max number of iterations:',dP.epochs,
-                '\n   Cross validation split:', str(dP.cv_split*100)+'%')
-    if dP.fullSizeBatch:
-        print('   Batch size: full')
-    else:
-        print('   Batch size:', dP.batch_size)
-    print('   Number of labels:', dP.numLabels)
-    print('   Normalize:', dP.normalize)
-    if dP.runDimRedFlag:
-        print('   Dimensionality reduction algorithm:', dP.typeDimRed)
-        print('   Number of dimensionality reduction components:', dP.numDimRedComp)
-    
-    #print('  ================================================\n')
-
-#************************************
 # Plot Weigths
 #************************************
 def plotWeights(En, A, model, dP):
@@ -731,6 +679,60 @@ def saveSummaryFile(summaryFile, dP):
     dframe = pd.DataFrame(summaryFile)
     dframe.to_csv(dP.summaryFileName, index=False, header=False)
     print("  Prediction summary saved in:",dP.summaryFileName,"\n")
+    
+
+#************************************
+# Print NN Info
+#************************************
+def printParam(dP):
+    print('\n  ================================================')
+    print('  \033[1m ML\033[0m - Parameters')
+    print('  ================================================')
+    print('  Optimizer:','Adam',
+                '\n  Hidden layers:', dP.HL,
+                '\n  Activation function:','relu',
+                '\n  L2:',dP.l2,
+                '\n  Dropout:', dP.drop,
+                '\n  Learning rate:', dP.l_rate,
+                '\n  Learning decay rate:', dP.l_rdecay)
+    if dP.fullSizeBatch:
+        print('  Batch size: full')
+    else:
+        print('  Batch size:', dP.batch_size)
+    print('  Epochs:',dP.epochs)
+    print('  Number of labels:', dP.numLabels)
+    print('  Stop at Best Model based on validation:', dP.stopAtBest)
+    print('  Save Best Model based on validation:', dP.saveBestModel)
+    if dP.regressor:
+        print('  Metric for Best Regression Model:', dP.metricBestModelR)
+    else:
+        print('  Metric for Best Classifier Model:', dP.metricBestModelC)
+    #print('  ================================================\n')
+    
+#************************************
+# Print NN Info
+#************************************
+def printParamDF(dP):
+    print('\n  ================================================')
+    print('  \033[1m',dP.typeDF,dP.mode,' \033[0m- Parameters')
+    print('  ================================================')
+    print('   Number of estimators:',dP.n_estimators,
+                '\n   Max depth:', dP.max_depth,
+                '\n   Max features:',dP.max_features,
+                '\n   Epochs/Max number of iterations:',dP.epochs,
+                '\n   Cross validation split:', str(dP.cv_split*100)+'%')
+    if dP.fullSizeBatch:
+        print('   Batch size: full')
+    else:
+        print('   Batch size:', dP.batch_size)
+    print('   Train on full dataset:',dP.trainFullData)
+    print('   Number of labels:', dP.numLabels)
+    print('   Normalize:', dP.normalize)
+    if dP.runDimRedFlag:
+        print('   Dimensionality reduction algorithm:', dP.typeDimRed)
+        print('   Number of dimensionality reduction components:', dP.numDimRedComp)
+    
+    #print('  ================================================\n')
 
 #************************************
 # Lists the program usage
