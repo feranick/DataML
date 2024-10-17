@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2024.10.17.1
+* v2024.10.17.2
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -65,6 +65,8 @@ class Conf():
         self.norm_file = self.model_directory+"norm_file.pkl"
                     
         self.rescaleForPCA = False
+        
+        self.verbose = 1
             
     def datamlDef(self):
         self.conf['Parameters'] = {
@@ -312,26 +314,26 @@ def train(learnFile, testFile, normFile):
         
     if dP.regressor:
         if dP.typeDF == 'RandomForest':
-            df = RandomForestRegressor(max_depth=dP.max_depth, n_estimators = dP.n_estimators, random_state=0, max_features = dP.max_features, verbose=2, n_jobs=dP.n_jobs)
+            df = RandomForestRegressor(max_depth=dP.max_depth, n_estimators = dP.n_estimators, random_state=0, max_features = dP.max_features, verbose=dP.verbose, n_jobs=dP.n_jobs)
         if dP.typeDF == 'HistGradientBoosting':
-            df = HistGradientBoostingRegressor(max_depth=dP.max_depth, max_iter=dP.epochs, max_features = dP.max_features, verbose = 2, learning_rate=dP.l_rate, l2_regularization=0.0,)
+            df = HistGradientBoostingRegressor(max_depth=dP.max_depth, max_iter=dP.epochs, max_features = dP.max_features, verbose = dP.verbose, learning_rate=dP.l_rate, l2_regularization=0.0,)
         if dP.typeDF == 'GradientBoosting':
             if dP.max_features == 0:
                 dP.max_features = None
-            df = GradientBoostingRegressor(n_estimators = dP.epochs, max_depth=dP.max_depth, max_features = dP.max_features, verbose = 2, learning_rate=dP.l_rate)
+            df = GradientBoostingRegressor(n_estimators = dP.epochs, max_depth=dP.max_depth, max_features = dP.max_features, verbose = dP.verbose, learning_rate=dP.l_rate)
         if dP.typeDF == 'DecisionTree':
             if dP.max_features == 0:
                 dP.max_features = None
             df = DecisionTreeRegressor(max_depth=dP.max_depth, max_features = dP.max_features)
     else:
         if dP.typeDF == 'RandomForest':
-            df = RandomForestClassifier(max_depth=dP.max_depth, n_estimators = dP.n_estimators, random_state=0, max_features = dP.max_features, verbose=2, n_jobs=dP.n_jobs, oob_score=False)
+            df = RandomForestClassifier(max_depth=dP.max_depth, n_estimators = dP.n_estimators, random_state=0, max_features = dP.max_features, verbose=dP.verbose, n_jobs=dP.n_jobs, oob_score=False)
         if dP.typeDF == 'HistGradientBoosting':
-            df = HistGradientBoostingClassifier(max_depth=dP.max_depth, max_iter=dP.epochs, max_features = dP.max_features, verbose = 2, learning_rate=dP.l_rate, l2_regularization=0.0)
+            df = HistGradientBoostingClassifier(max_depth=dP.max_depth, max_iter=dP.epochs, max_features = dP.max_features, verbose = dP.verbose, learning_rate=dP.l_rate, l2_regularization=0.0)
         if dP.typeDF == 'GradientBoosting':
             if dP.max_features == 0:
                 dP.max_features = None
-            df = GradientBoostingClassifier(n_estimators = dP.epochs, max_depth=dP.max_depth, max_features = dP.max_features, verbose = 2, learning_rate=dP.l_rate)
+            df = GradientBoostingClassifier(n_estimators = dP.epochs, max_depth=dP.max_depth, max_features = dP.max_features, verbose = dP.verbose, learning_rate=dP.l_rate)
         if dP.typeDF == 'DecisionTree':
             if dP.max_features == 0:
                 dP.max_features = None
@@ -382,7 +384,7 @@ def train(learnFile, testFile, normFile):
     
     print('  ================================================================================\n')
     
-    if dP.plotFeatImportance and dP.typeDF == 'RandomForest':
+    if dP.plotFeatImportance and (dP.typeDF == 'RandomForest' or dP.typeDF == 'GradientBoosting'):
         plotImportances(df, A_test, Cl2_test, dP)
     
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
@@ -580,19 +582,19 @@ def plotImportances(df, A_test, Cl_test, dP):
     from sklearn.inspection import permutation_importance
 
     feature_names = [f"feature {i}" for i in range(A_test.shape[1])]
-    
     importances = df.feature_importances_
-    std = np.std([tree.feature_importances_ for tree in df.estimators_], axis=0)
-
     forest_importances1 = pd.Series(importances, index=feature_names)
     
     fig, ax = plt.subplots()
-    forest_importances1.plot.bar(yerr=std, ax=ax)
+    if dP.typeDF == "RandomForests":
+        std = np.std([tree.feature_importances_ for tree in df.estimators_], axis=0)
+        forest_importances1.plot.bar(yerr=std, ax=ax)
+    else:
+        forest_importances1.plot.bar(ax=ax)
     ax.set_title("Feature importances using mean decrease in impurity")
     ax.set_ylabel("Mean decrease in impurity")
     fig.tight_layout()
     fig.savefig('model_'+dP.typeDF+dP.mode+'_importances_MDI' + '.png', dpi = 160, format = 'png')  # Save plot
-    
     
     result = permutation_importance(
         df, A_test, Cl_test, n_repeats=100, random_state=42, n_jobs=2)
@@ -607,7 +609,7 @@ def plotImportances(df, A_test, Cl_test, dP):
     
     fig.savefig('model_'+dP.typeDF+dP.mode+'_importances_Perm' + '.png', dpi = 160, format = 'png')  # Save plot
     
-    print("  Feature Importance plots saved\n")
+    print("  Feature importances plots saved\n")
 
 #************************************
 # Main initialization routine
