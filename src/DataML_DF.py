@@ -230,7 +230,7 @@ def train(learnFile, testFile, normFile):
     from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier, HistGradientBoostingRegressor, HistGradientBoostingClassifier, GradientBoostingRegressor, GradientBoostingClassifier
     from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
     from statistics import mean, stdev
-    from sklearn.metrics import accuracy_score, mean_absolute_error
+    from sklearn.metrics import accuracy_score, mean_absolute_error, r2_score
     
     learnFileRoot = os.path.splitext(learnFile)[0]
 
@@ -352,9 +352,8 @@ def train(learnFile, testFile, normFile):
         pred = le.inverse_transform_bulk(df.predict(A_test))
         pred_classes = le.inverse_transform_bulk(df.classes_)
         proba = df.predict_proba(A_test)
-        
         score = accuracy_score([int(round(x)) for x in pred], [int(round(x)) for x in Cl_test])
-        
+
     delta = pred - Cl_test
     
     printParamDF(dP)
@@ -368,7 +367,8 @@ def train(learnFile, testFile, normFile):
         print("   {0:.2f}\t| {1:.2f}\t\t| {2:.2f}".format(Cl_test[i], pred[i], delta[i]))
     print('  --------------------------------------------------------------------------------')
     print('  ',dP.metric,'= {0:.4f}'.format(score))
-    print('   R^2 = {0:.4f}'.format(df.score(A_test, Cl2_test)))
+    #print('   R^2 = {0:.4f}'.format(df.score(A_test, Cl2_test)))
+    print('   R^2 = {0:.4f}'.format(r2_score(Cl_test, pred)))
     print('   Average Delta: {0:.2f}, StDev = {1:.2f}'.format(mean(delta), stdev(delta)))
     
     if not dP.regressor:
