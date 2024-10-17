@@ -329,6 +329,8 @@ def train(learnFile, testFile, normFile):
         if dP.typeDF == 'HistGradientBoosting':
             df = HistGradientBoostingClassifier(max_depth=dP.max_depth, max_iter=dP.epochs, max_features = dP.max_features, verbose = 2, learning_rate=dP.l_rate, l2_regularization=0.0)
         if dP.typeDF == 'GradientBoosting':
+            if dP.max_features == 0:
+                dP.max_features = None
             df = GradientBoostingClassifier(n_estimators = dP.epochs, max_depth=dP.max_depth, max_features = dP.max_features, verbose = 2, learning_rate=dP.l_rate)
         if dP.typeDF == 'DecisionTree':
             if dP.max_features == 0:
