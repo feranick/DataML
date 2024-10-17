@@ -9,7 +9,7 @@ include = [
 
 [project]
 name = "DataML"
-version = "v2024.10.16.4"
+version = "v2024.10.17.1"
 dependencies = [
     "numpy",
     "h5py",
@@ -42,7 +42,7 @@ classifiers = [
 
 [project.scripts]
 DataML = "DataML:DataML"
-DataML_DT = "DataML_DT:DataML_DT"
+DataML_DF = "DataML_DF:DataML_DF"
 ConvertLabel = "ConvertLabel:ConvertLabel"
 GetClasses = "GetClasses:GetClasses"
 

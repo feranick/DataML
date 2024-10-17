@@ -1,19 +1,25 @@
 # DataML
-DataML Regression and Classification of sparse data.
+DataML Regression and Classification of sparse data using Neural Networks of Decision Forests.
 - Currently supported ML architectures:
-   - Classifier/Regressor (TensorFlow, TensorFlow-Lite)
+    - Classifier/Regressor (TensorFlow, TensorFlow-Lite)
 - Required libraries for prediction:
-   - tensorflow (version >= 2.13.x, >= 2.16.2 recommended)
-   - Optional: `tensorflow-lite` (v >= 2.13, >= 2.16.2 recommended)
-   - Optional: [tensorflow-lite runtime](https://www.tensorflow.org/lite/guide/python) 
-   - Optional: tensorflow-lite runtime with [Coral EdgeTPU](https://coral.ai/docs/accelerator/get-started/)
+    - tensorflow (version >= 2.13.x, >= 2.16.2 recommended)
+    - Optional: `tensorflow-lite` (v >= 2.13, >= 2.16.2 recommended)
+    - Optional: [tensorflow-lite runtime](https://www.tensorflow.org/lite/guide/python) 
+    - Optional: tensorflow-lite runtime with [Coral EdgeTPU](https://coral.ai/docs/accelerator/get-started/)
+   
+- Currently supported Decision Forests estimators:
+    - [GradientBoosting](https://scikit-learn.org/stable/modules/ensemble.html#gradient-boosted-trees) (default)
+    - [RandomForest](https://scikit-learn.org/stable/modules/ensemble.html#forest)
+    - [HistGradientBoosting](https://scikit-learn.org/stable/modules/ensemble.html#histogram-based-gradient-boosting)
+    - [DecisionTree](https://scikit-learn.org/stable/modules/tree.html)
 
 Installation
 =============
 ## Installation from available wheel package
 If available from the main site, you can install SpectraKeras by running:
 
-    python3 -m pip install --upgrade dataml-2024.10.16.4-py3-none-any.whl
+    python3 -m pip install --upgrade dataml-2024.10.17.1-py3-none-any.whl
     
 SpectraKeras_CNN and Spectrakeras_MLP are available directly from the command line.
 NOTE: The Utilities in the `Utilities` folder are not included in the package, and can be run locally as needed.
@@ -104,42 +110,42 @@ Train (Random cross validation):
   `DataML-r <learningFile>`
   `DataML-r <learningFile> <validFile-optional>`
 
-## Decision Trees / Random Forests: DataML_DT
+## Decision Forests: DataML_DF
 
 Train (Random cross validation):
-  `DataML_DT -r <learningFile> <validFile-optional>` -t <learningFile>`
+  `DataML_DF -r <learningFile> <validFile-optional>` -t <learningFile>`
 
  Train (with external validation):
-  `DataML_DT -t <learningFile> <validationFile> `
+  `DataML_DF -t <learningFile> <validationFile> `
 
  Train (with external validation, with labels normalized with pkl file):
-  `DataML_DT -t <learningFile> <validationFile> <pkl normalization file>`
+  `DataML_DF -t <learningFile> <validationFile> <pkl normalization file>`
 
  Predict (no label normalization used):
-  `DataML_DT -p <testFile>`
+  `DataML_DF -p <testFile>`
 
  Predict (labels normalized with pkl file):
-  `DataML_DT -p <testFile> <pkl normalization file>`
+  `DataML_DF -p <testFile> <pkl normalization file>`
 
  Batch predict (no label normalization used):
-  `DataML_DT -b <folder>`
+  `DataML_DF -b <folder>`
 
  Batch predict (labels normalized with pkl file):
-  `DataML_DT -b <folder> <pkl normalization file>`
+  `DataML_DF -b <folder> <pkl normalization file>`
 
  Batch predict on validation data in single file (no label normalization used):
-  `DataML_DT -v <singleValidationFile>`
+  `DataML_DF -v <singleValidationFile>`
 
  Batch predict on validation data in single file (labels normalized with pkl file):
-  `DataML_DT -v <singleValidationFile> <pkl normalization file>`
+  `DataML_DF -v <singleValidationFile> <pkl normalization file>`
   
  Evaluate principal component analysis (PCA) - EXPERIMENTAL:
-  `DataML_DT -c <learningFile>`
-  `DataML_DT -c <learningFile> <validFile-optional>`
+  `DataML_DF -c <learningFile>`
+  `DataML_DF -c <learningFile> <validFile-optional>`
   
  Evaluate Autoencoder - EXPERIMENTAL:
-  `DataML_DT -a <learningFile>`
-  `DataML_DT -a <learningFile> <validFile-optional>`
+  `DataML_DF -a <learningFile>`
+  `DataML_DF -a <learningFile> <validFile-optional>`
   
 ###Note: 
 Three different dimention reduction methods are supported and can be selected using the `typeDimRed` flag:
@@ -171,9 +177,9 @@ Essentially each line in the input file corresponds to a training file with its 
 
 Of course it is not expected that the user manually compiles the training file. For that,based on a CSV file with the raw data, [`MasterDatamaker.py`](https://github.com/feranick/DataML/tree/master/src/utilities/MasterDataMaker.py) is available in the [`Utilities`](https://github.com/feranick/DataML/tree/master/src/utilities) folder, that can be used to automatically create such files. Basically you can run from the folder where you have your spectra:
 
-`python3 DataMaker.py <paramFile> <pred column> `
+`python3 MasterDataMaker.py <paramFile> <pred column> `
 
-Specific DataMakers for specific applications may be available depending on the project. 
+Specific MasterDataMakers for specific applications may be available depending on the project. 
 
 One can use the same to create a validation file, or you can use [other scripts](https://github.com/feranick/DataML/tree/master/src/utilities) also provided to split the training set into training+validation. That can be done randomly within SpectraKeras, but the split will be different every time you run it.
 

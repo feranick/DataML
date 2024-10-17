@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 '''
 ***************************************************
-* DataML Decision Trees - Classifier and Regressor
-* v2024.10.16.4
+* DataML Decision Forests - Classifier and Regressor
+* v2024.10.17.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***************************************************
@@ -18,7 +18,7 @@ import platform, pickle, h5py, csv, glob, math
 #***************************************************
 # This is needed for installation through pip
 #***************************************************
-def DataML_DT():
+def DataML_DF_web():
     main()
 
 #************************************
@@ -34,13 +34,13 @@ class Conf():
         ### - GradientBoosting
         ### - DecisionTree
         #############################
-        self.appName = "DataML_DT"
-        confFileName = "DataML_DT.ini"
+        self.appName = "DataML_DF"
+        confFileName = "DataML_DF.ini"
         self.configFile = os.getcwd()+"/"+confFileName
         self.conf = configparser.ConfigParser()
         self.conf.optionxform = str
         if os.path.isfile(self.configFile) is False:
-            print(" Configuration file: \""+confFileName+"\" does not exist. Please create one with DataML_DT.py\n")
+            print(" Configuration file: \""+confFileName+"\" does not exist. Please create one with DataML_DF.py\n")
         self.readConfig(self.configFile)
         self.model_directory = "./"
         if self.regressor:
@@ -50,11 +50,11 @@ class Conf():
             self.mode = "Classifier"
             self.metric = "Accuracy"
         
-        self.modelNameRoot = "model_DT_"
-        self.modelName = self.modelNameRoot + self.typeDT + self.mode + ".pkl"
-        self.summaryFileName = self.modelNameRoot + self.typeDT + self.mode + ".csv"
+        self.modelNameRoot = "model_DF_"
+        self.modelName = self.modelNameRoot + self.typeDF + self.mode + ".pkl"
+        self.summaryFileName = self.modelNameRoot + self.typeDF + self.mode + ".csv"
         
-        self.tb_directory = "model_DT"
+        self.tb_directory = "model_DF"
         self.model_name = self.model_directory+self.modelNameRoot
         
         self.model_le = self.model_directory+"model_le.pkl"
@@ -66,7 +66,7 @@ class Conf():
             
     def datamlDef(self):
         self.conf['Parameters'] = {
-            'typeDT' : 'GradientBoosting',
+            'typeDF' : 'GradientBoosting',
             'regressor' : False,
             'n_estimators' : 4,
             'max_depth' : 7,
@@ -96,7 +96,7 @@ class Conf():
             self.datamlDef = self.conf['Parameters']
             self.sysDef = self.conf['System']
         
-            self.typeDT = self.conf.get('Parameters','typeDT')
+            self.typeDF = self.conf.get('Parameters','typeDF')
             self.regressor = self.conf.getboolean('Parameters','regressor')
             self.n_estimators = self.conf.getint('Parameters','n_estimators')
             self.max_depth = self.conf.getint('Parameters','max_depth')
@@ -150,19 +150,19 @@ def predict(testFile, normFile):
         R = runPCAValid(R, dP)
             
     with open(dP.modelName, "rb") as f:
-        dt = pickle.load(f)
+        df = pickle.load(f)
     
     if dP.regressor:
-        pred = dt.predict(R)
+        pred = df.predict(R)
     else:
         with open(dP.model_le, "rb") as f:
             le = pickle.load(f)
-        pred = le.inverse_transform_bulk(dt.predict(R))
-        pred_classes = le.inverse_transform_bulk(dt.classes_)
-        proba = dt.predict_proba(R)
+        pred = le.inverse_transform_bulk(df.predict(R))
+        pred_classes = le.inverse_transform_bulk(df.classes_)
+        proba = df.predict_proba(R)
         
     print('\n  ================================================================================')
-    print('  \033[1m',dP.typeDT,dP.mode,'\033[0m')
+    print('  \033[1m',dP.typeDF,dP.mode,'\033[0m')
     print('  ================================================================================')
     if dP.regressor:
         print('   Filename\t\t| Prediction')

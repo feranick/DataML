@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 '''
-***************************************************
-* DataML Decision Trees - Classifier and Regressor
-* v2024.10.16.4
+*****************************************************
+* DataML Decision Forests - Classifier and Regressor
+* v2024.10.17.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
-***************************************************
+*****************************************************
 '''
 print(__doc__)
 
@@ -18,7 +18,7 @@ from libDataML import *
 #***************************************************
 # This is needed for installation through pip
 #***************************************************
-def DataML_DT():
+def DataML_DF():
     main()
 
 #************************************
@@ -35,8 +35,8 @@ class Conf():
         ### - DecisionTree
         #############################
         
-        self.appName = "DataML_DT"
-        confFileName = "DataML_DT.ini"
+        self.appName = "DataML_DF"
+        confFileName = "DataML_DF.ini"
         self.configFile = os.getcwd()+"/"+confFileName
         self.conf = configparser.ConfigParser()
         self.conf.optionxform = str
@@ -52,11 +52,11 @@ class Conf():
             self.mode = "Classifier"
             self.metric = "Accuracy"
         
-        self.modelNameRoot = "model_DT_"
-        self.modelName = self.modelNameRoot + self.typeDT + self.mode + ".pkl"
-        self.summaryFileName = self.modelNameRoot + self.typeDT + self.mode + ".csv"
+        self.modelNameRoot = "model_DF_"
+        self.modelName = self.modelNameRoot + self.typeDF + self.mode + ".pkl"
+        self.summaryFileName = self.modelNameRoot + self.typeDF + self.mode + ".csv"
         
-        self.tb_directory = "model_DT"
+        self.tb_directory = "model_DF"
         self.model_name = self.model_directory+self.modelNameRoot
         
         self.model_le = self.model_directory+"model_le.pkl"
@@ -68,7 +68,7 @@ class Conf():
             
     def datamlDef(self):
         self.conf['Parameters'] = {
-            'typeDT' : 'GradientBoosting',
+            'typeDF' : 'GradientBoosting',
             'regressor' : False,
             'n_estimators' : 4,
             'max_depth' : 7,
@@ -98,7 +98,7 @@ class Conf():
             self.datamlDef = self.conf['Parameters']
             self.sysDef = self.conf['System']
         
-            self.typeDT = self.conf.get('Parameters','typeDT')
+            self.typeDF = self.conf.get('Parameters','typeDF')
             self.regressor = self.conf.getboolean('Parameters','regressor')
             self.n_estimators = self.conf.getint('Parameters','n_estimators')
             self.max_depth = self.conf.getint('Parameters','max_depth')
@@ -311,51 +311,51 @@ def train(learnFile, testFile, normFile):
         dP.batch_size = A.shape[0]
         
     if dP.regressor:
-        if dP.typeDT == 'RandomForest':
-            dt = RandomForestRegressor(max_depth=dP.max_depth, n_estimators = dP.n_estimators, random_state=0, max_features = dP.max_features, verbose=2, n_jobs=dP.n_jobs)
-        if dP.typeDT == 'HistGradientBoosting':
-            dt = HistGradientBoostingRegressor(max_depth=dP.max_depth, max_iter=dP.epochs, max_features = dP.max_features, verbose = 2, learning_rate=dP.l_rate, l2_regularization=0.0,)
-        if dP.typeDT == 'GradientBoosting':
+        if dP.typeDF == 'RandomForest':
+            df = RandomForestRegressor(max_depth=dP.max_depth, n_estimators = dP.n_estimators, random_state=0, max_features = dP.max_features, verbose=2, n_jobs=dP.n_jobs)
+        if dP.typeDF == 'HistGradientBoosting':
+            df = HistGradientBoostingRegressor(max_depth=dP.max_depth, max_iter=dP.epochs, max_features = dP.max_features, verbose = 2, learning_rate=dP.l_rate, l2_regularization=0.0,)
+        if dP.typeDF == 'GradientBoosting':
             if dP.max_features == 0:
                 dP.max_features = None
-            dt = GradientBoostingRegressor(n_estimators = dP.epochs, max_depth=dP.max_depth, max_features = dP.max_features, verbose = 2, learning_rate=dP.l_rate)
-        if dP.typeDT == 'DecisionTree':
+            df = GradientBoostingRegressor(n_estimators = dP.epochs, max_depth=dP.max_depth, max_features = dP.max_features, verbose = 2, learning_rate=dP.l_rate)
+        if dP.typeDF == 'DecisionTree':
             if dP.max_features == 0:
                 dP.max_features = None
-            dt = DecisionTreeRegressor(max_depth=dP.max_depth, max_features = dP.max_features)
+            df = DecisionTreeRegressor(max_depth=dP.max_depth, max_features = dP.max_features)
     else:
-        if dP.typeDT == 'RandomForest':
-            dt = RandomForestClassifier(max_depth=dP.max_depth, n_estimators = dP.n_estimators, random_state=0, max_features = dP.max_features, verbose=2, n_jobs=dP.n_jobs, oob_score=False)
-        if dP.typeDT == 'HistGradientBoosting':
-            dt = HistGradientBoostingClassifier(max_depth=dP.max_depth, max_iter=dP.epochs, max_features = dP.max_features, verbose = 2, learning_rate=dP.l_rate, l2_regularization=0.0)
-        if dP.typeDT == 'GradientBoosting':
-            dt = GradientBoostingClassifier(n_estimators = dP.epochs, max_depth=dP.max_depth, max_features = dP.max_features, verbose = 2, learning_rate=dP.l_rate)
-        if dP.typeDT == 'DecisionTree':
+        if dP.typeDF == 'RandomForest':
+            df = RandomForestClassifier(max_depth=dP.max_depth, n_estimators = dP.n_estimators, random_state=0, max_features = dP.max_features, verbose=2, n_jobs=dP.n_jobs, oob_score=False)
+        if dP.typeDF == 'HistGradientBoosting':
+            df = HistGradientBoostingClassifier(max_depth=dP.max_depth, max_iter=dP.epochs, max_features = dP.max_features, verbose = 2, learning_rate=dP.l_rate, l2_regularization=0.0)
+        if dP.typeDF == 'GradientBoosting':
+            df = GradientBoostingClassifier(n_estimators = dP.epochs, max_depth=dP.max_depth, max_features = dP.max_features, verbose = 2, learning_rate=dP.l_rate)
+        if dP.typeDF == 'DecisionTree':
             if dP.max_features == 0:
                 dP.max_features = None
-            dt = DecisionTreeClassifier(max_depth=dP.max_depth, max_features = dP.max_features)
+            df = DecisionTreeClassifier(max_depth=dP.max_depth, max_features = dP.max_features)
     
-    dt.fit(A, Cl2)
+    df.fit(A, Cl2)
         
-    print("\n  ",dP.typeDT+dP.mode,"model saved in:", dP.modelName)
+    print("\n  ",dP.typeDF+dP.mode,"model saved in:", dP.modelName)
     with open(dP.modelName,'wb') as f:
-        pickle.dump(dt, f)
+        pickle.dump(df, f)
 
     if dP.regressor:
-        pred = dt.predict(A_test)
+        pred = df.predict(A_test)
         score = mean_absolute_error(pred, Cl_test)
     else:
-        pred = le.inverse_transform_bulk(dt.predict(A_test))
-        pred_classes = le.inverse_transform_bulk(dt.classes_)
-        proba = dt.predict_proba(A_test)
+        pred = le.inverse_transform_bulk(df.predict(A_test))
+        pred_classes = le.inverse_transform_bulk(df.classes_)
+        proba = df.predict_proba(A_test)
         score = accuracy_score(pred, Cl_test)
         
     delta = pred - Cl_test
     
-    printParamDT(dP)
+    printParamDF(dP)
     
     print('\n  ================================================================================')
-    print('  \033[1m',dP.typeDT,dP.mode,'\033[0m- Results')
+    print('  \033[1m',dP.typeDF,dP.mode,'\033[0m- Results')
     print('  ================================================================================')
     print('   Real class\t| Predicted class\t| Delta')
     print('  --------------------------------------------------------------------------------')
@@ -363,7 +363,7 @@ def train(learnFile, testFile, normFile):
         print("   {0:.2f}\t| {1:.2f}\t\t| {2:.2f}".format(Cl_test[i], pred[i], delta[i]))
     print('  --------------------------------------------------------------------------------')
     print('  ',dP.metric,'= {0:.4f}'.format(score))
-    print('   R^2 = {0:.4f}'.format(dt.score(A_test, Cl2_test)))
+    print('   R^2 = {0:.4f}'.format(df.score(A_test, Cl2_test)))
     print('   Average Delta: {0:.2f}, StDev = {1:.2f}'.format(mean(delta), stdev(delta)))
     
     if not dP.regressor:
@@ -379,8 +379,8 @@ def train(learnFile, testFile, normFile):
     
     print('  ================================================================================\n')
     
-    if dP.plotFeatImportance and dP.typeDT == 'RandomForest':
-        plotImportances(dt, A_test, Cl2_test, dP)
+    if dP.plotFeatImportance and dP.typeDF == 'RandomForest':
+        plotImportances(df, A_test, Cl2_test, dP)
     
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
     
@@ -407,19 +407,19 @@ def predict(testFile, normFile):
         R = runPCAValid(R, dP)
             
     with open(dP.modelName, "rb") as f:
-        dt = pickle.load(f)
+        df = pickle.load(f)
     
     if dP.regressor:
-        pred = dt.predict(R)
+        pred = df.predict(R)
     else:
         with open(dP.model_le, "rb") as f:
             le = pickle.load(f)
-        pred = le.inverse_transform_bulk(dt.predict(R))
-        pred_classes = le.inverse_transform_bulk(dt.classes_)
-        proba = dt.predict_proba(R)
+        pred = le.inverse_transform_bulk(df.predict(R))
+        pred_classes = le.inverse_transform_bulk(df.classes_)
+        proba = df.predict_proba(R)
         
     print('\n  ================================================================================')
-    print('  \033[1m',dP.typeDT,dP.mode,'\033[0m')
+    print('  \033[1m',dP.typeDF,dP.mode,'\033[0m')
     print('  ================================================================================')
     if dP.regressor:
         print('   Filename\t\t| Prediction')
@@ -453,9 +453,9 @@ def batchPredict(folder, normFile):
             return
             
     with open(dP.modelName, "rb") as f:
-        dt = pickle.load(f)
+        df = pickle.load(f)
     
-    summaryFile = np.array([['Folder:',folder,''],['DataML_DT',dP.typeDT,dP.mode]])
+    summaryFile = np.array([['Folder:',folder,''],['DataML_DF',dP.typeDF,dP.mode]])
     
     if dP.regressor:
         summaryFile = np.vstack((summaryFile,['File Name','Predicted Value','']))
@@ -477,15 +477,15 @@ def batchPredict(folder, normFile):
         
         if good:
             if dP.regressor:
-                pred.append(dt.predict(R))
+                pred.append(df.predict(R))
             else:
-                pred.append(le.inverse_transform_bulk(dt.predict(R)))
-                pred_classes = le.inverse_transform_bulk(dt.classes_)
-                proba.append(dt.predict_proba(R))
+                pred.append(le.inverse_transform_bulk(df.predict(R)))
+                pred_classes = le.inverse_transform_bulk(df.classes_)
+                proba.append(df.predict_proba(R))
             fileName.append(file)
     
     print('\n  ================================================================================')
-    print('  \033[1m',dP.typeDT,dP.mode,'\033[0m')
+    print('  \033[1m',dP.typeDF,dP.mode,'\033[0m')
     print('  ================================================================================')
     if dP.regressor:
         print('   Filename\t| Prediction')
@@ -526,26 +526,26 @@ def validBatchPredict(testFile, normFile):
             return
             
     with open(dP.modelName, "rb") as f:
-        dt = pickle.load(f)
+        df = pickle.load(f)
         
     if dP.runDimRedFlag:
         A_test = runPCAValid(A_test, dP)
     
-    summaryFile = np.array([['File:',testFile,''],['DataML_DT',dP.typeDT,dP.mode]])
+    summaryFile = np.array([['File:',testFile,''],['DataML_DF',dP.typeDF,dP.mode]])
     
     if dP.regressor:
-        pred = dt.predict(A_test)
+        pred = df.predict(A_test)
         summaryFile = np.vstack((summaryFile,['Index','Predicted Value','']))
     else:
         with open(dP.model_le, "rb") as f:
             le = pickle.load(f)
-        pred = le.inverse_transform_bulk(dt.predict(A_test))
-        pred_classes = le.inverse_transform_bulk(dt.classes_)
-        proba = dt.predict_proba(A_test)
+        pred = le.inverse_transform_bulk(df.predict(A_test))
+        pred_classes = le.inverse_transform_bulk(df.classes_)
+        proba = df.predict_proba(A_test)
         summaryFile = np.vstack((summaryFile,['Index','Predicted Value','Probability %']))
     
     print('  ================================================================================')
-    print('  \033[1m',dP.typeDT,dP.mode,'\033[0m')
+    print('  \033[1m',dP.typeDF,dP.mode,'\033[0m')
     print('  ================================================================================')
     if dP.regressor:
         print('   Prediction')
@@ -571,15 +571,15 @@ def validBatchPredict(testFile, normFile):
 #***********************************************************
 # Save Plots with the model importance
 #************************************************************
-def plotImportances(dt, A_test, Cl_test, dP):
+def plotImportances(df, A_test, Cl_test, dP):
     import matplotlib.pyplot as plt
     import pandas as pd
     from sklearn.inspection import permutation_importance
 
     feature_names = [f"feature {i}" for i in range(A_test.shape[1])]
     
-    importances = dt.feature_importances_
-    std = np.std([tree.feature_importances_ for tree in dt.estimators_], axis=0)
+    importances = df.feature_importances_
+    std = np.std([tree.feature_importances_ for tree in df.estimators_], axis=0)
 
     forest_importances1 = pd.Series(importances, index=feature_names)
     
@@ -588,11 +588,11 @@ def plotImportances(dt, A_test, Cl_test, dP):
     ax.set_title("Feature importances using mean decrease in impurity")
     ax.set_ylabel("Mean decrease in impurity")
     fig.tight_layout()
-    fig.savefig('model_'+dP.typeDT+dP.mode+'_importances_MDI' + '.png', dpi = 160, format = 'png')  # Save plot
+    fig.savefig('model_'+dP.typeDF+dP.mode+'_importances_MDI' + '.png', dpi = 160, format = 'png')  # Save plot
     
     
     result = permutation_importance(
-        dt, A_test, Cl_test, n_repeats=100, random_state=42, n_jobs=2)
+        df, A_test, Cl_test, n_repeats=100, random_state=42, n_jobs=2)
             
     forest_importances = pd.Series(result.importances_mean, index=feature_names)
                 
@@ -602,7 +602,7 @@ def plotImportances(dt, A_test, Cl_test, dP):
     ax.set_ylabel("Mean accuracy decrease")
     fig.tight_layout()
     
-    fig.savefig('model_'+dP.typeDT+dP.mode+'_importances_Perm' + '.png', dpi = 160, format = 'png')  # Save plot
+    fig.savefig('model_'+dP.typeDF+dP.mode+'_importances_Perm' + '.png', dpi = 160, format = 'png')  # Save plot
     
     print("  Feature Importance plots saved\n")
 

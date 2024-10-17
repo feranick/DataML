@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 '''
-***********************************************************
-* libDataML - Library for DataML/DataML_DT
-* v2024.10.16.4
+**************************************************
+* libDataML - Library for DataML/DataML_DF
+* v2024.10.17.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
-***********************************************************
+**************************************************
 '''
 import numpy as np
 import scipy
@@ -361,9 +361,9 @@ def printParam(dP):
 #************************************
 # Print NN Info
 #************************************
-def printParamDT(dP):
+def printParamDF(dP):
     print('\n  ================================================')
-    print('  \033[1m',dP.typeDT,dP.mode,' \033[0m- Parameters')
+    print('  \033[1m',dP.typeDF,dP.mode,' \033[0m- Parameters')
     print('  ================================================')
     print('   Number of estimators:',dP.n_estimators,
                 '\n   Max depth:', dP.max_depth,
@@ -728,8 +728,8 @@ def formatSubset(A, Cl, percent):
 #************************************
 def saveSummaryFile(summaryFile, dP):
     import pandas as pd
-    df = pd.DataFrame(summaryFile)
-    df.to_csv(dP.summaryFileName, index=False, header=False)
+    dframe = pd.DataFrame(summaryFile)
+    dframe.to_csv(dP.summaryFileName, index=False, header=False)
     print("  Prediction summary saved in:",dP.summaryFileName,"\n")
 
 #************************************
@@ -767,7 +767,7 @@ def usage(name):
     print(' Run Autoencoder - EXPERIMENTAL:')
     print('  ',name,'-a <learningFile> <validFile-optional>\n')
     
-    if name == 'DataML_DT':
+    if name == 'DataML_DF':
         print(' Types of estimators:')
         print(' - RandomForest')
         print(' - HistGradientBoosting')
