@@ -369,7 +369,7 @@ def train(learnFile, testFile, normFile):
     print('  ',dP.metric,'= {0:.4f}'.format(score))
     #print('   R^2 = {0:.4f}'.format(df.score(A_test, Cl2_test)))
     print('   R^2 = {0:.4f}'.format(r2_score(Cl_test, pred)))
-    print('   Average Delta: {0:.2f}, StDev = {1:.2f}'.format(mean(delta), stdev(delta)))
+    print('   StDev = {0:.2f}'.format(stdev(delta)))
     
     if not dP.regressor:
         print('\n  ================================================================================')
