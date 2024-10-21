@@ -25,7 +25,7 @@ def DataML_DF_web():
 # Parameters
 #************************************
 class Conf():
-    def __init__(self):
+    def __init__(self, folder):
     
         #############################
         ### Types of estimators:
@@ -36,7 +36,7 @@ class Conf():
         #############################
         self.appName = "DataML_DF"
         confFileName = "DataML_DF.ini"
-        self.configFile = os.getcwd()+"/"+confFileName
+        self.configFile = os.getcwd()+"/"+folder+"/"+confFileName
         self.conf = configparser.ConfigParser()
         self.conf.optionxform = str
         if os.path.isfile(self.configFile) is False:
@@ -51,7 +51,7 @@ class Conf():
             self.metric = "Accuracy"
         
         self.modelNameRoot = "model_DF_"
-        self.modelName = self.modelNameRoot + self.typeDF + self.mode + ".pkl"
+        self.modelName = folder + "/" +self.modelNameRoot + self.typeDF + self.mode + ".pkl"
         self.summaryFileName = self.modelNameRoot + self.typeDF + self.mode + ".csv"
         
         self.tb_directory = "model_DF"
@@ -124,34 +124,25 @@ class Conf():
 # Main
 #************************************
 def main():
-    dP = Conf()
-    predict(sys.argv[1], None)
+    #dP = Conf()
+    predict(sys.argv[1], sys.argv[2])
 
 #************************************
 # Prediction
 #************************************
-def predict(testFile, normFile):
-    dP = Conf()
-    
-    R, _ = readTestFile(testFile)
+def predict(folder, testFile):
+    dP = Conf(folder)
 
-    if normFile is not None:
-        try:
-            with open(normFile, "rb") as f:
-                norm = pickle.load(f)
-            print("  Opening pkl file with normalization data:",normFile)
-            print("  Normalizing validation file for prediction...\n")
-            R = norm.transform_valid_data(R)
-        except:
-            print("\033[1m pkl file not found \033[0m")
-            return
-     
+    #R, _ = readTestFile(testFile)
+
+    R = [np.fromstring(testFile, sep=',', dtype=int)]
+
     if dP.runDimRedFlag:
         R = runPCAValid(R, dP)
-            
+
     with open(dP.modelName, "rb") as f:
         df = pickle.load(f)
-    
+
     if dP.regressor:
         pred = df.predict(R)
     else:
@@ -160,12 +151,12 @@ def predict(testFile, normFile):
         pred = le.inverse_transform_bulk(df.predict(R))
         pred_classes = le.inverse_transform_bulk(df.classes_)
         proba = df.predict_proba(R)
-        
+
     print('\n  ================================================================================')
-    print('  \033[1m',dP.typeDF,dP.mode,'\033[0m')
+    print('  ',dP.typeDF,dP.mode)
     print('  ================================================================================')
     if dP.regressor:
-        print('   Filename\t\t| Prediction')
+        print('   Parameters\t| Prediction')
         print('  --------------------------------------------------------------------------------')
         print("   {0:s}\t| {1:.2f}  ".format(testFile, pred[0]))
     else:
