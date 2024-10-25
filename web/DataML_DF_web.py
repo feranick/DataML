@@ -3,7 +3,7 @@
 '''
 ***************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2024.10.25.1
+* v2024.10.25.2
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***************************************************
@@ -42,7 +42,7 @@ class Conf():
         if os.path.isfile(self.configFile) is False:
             print(" Configuration file: \""+confFileName+"\" does not exist. Please create one with DataML_DF.py\n")
         self.readConfig(self.configFile)
-        self.model_directory = "./"
+        self.model_directory = "/"
         if self.regressor:
             self.mode = "Regressor"
             self.metric = "MAE"
@@ -57,10 +57,10 @@ class Conf():
         self.tb_directory = "model_DF"
         self.model_name = self.model_directory+self.modelNameRoot
         
-        self.model_le = self.model_directory+"model_le.pkl"
-        self.model_scaling = self.model_directory+"model_scaling.pkl"
-        self.model_pca = self.model_directory+"model_encoder.pkl"
-        self.norm_file = self.model_directory+"norm_file.pkl"
+        self.model_le = folder + self.model_directory+"model_le.pkl"
+        self.model_scaling = folder + self.model_directory+"model_scaling.pkl"
+        self.model_pca = folder + self.model_directory+"model_encoder.pkl"
+        self.norm_file = folder + self.model_directory+"norm_file.pkl"
                     
         self.rescaleForPCA = False
             
@@ -125,9 +125,9 @@ class Conf():
 #************************************
 def main():
     try:
-        predict(sys.argv[1], sys.argv[2], sys.argv[3])
+         predict(sys.argv[1], sys.argv[2], sys.argv[3])
     except:
-        print("Select model and run prediction.")
+         print("Select model and run prediction.")
 
 #************************************
 # Prediction
@@ -159,38 +159,22 @@ def predict(folder, testFile, features):
         pred_classes = le.inverse_transform_bulk(df.classes_)
         proba = df.predict_proba(R)
 
-    print('\n=============================')
+    print('\n==================================')
     if dP.regressor:
         print(" {0:s} = {1:.2f}  ".format(folder[:5], pred[0]))
-        print('=============================')
-        for i in range(0,len(R[0])):
-            print(" {0:s} = {1:s}  ".format(feat[i], str(R[0][i])))
     else:
-        print(' Features\t\t| Prediction\t| Probability')
-        print('-------------------------')
+        print(' Prediction\t| Probability [%]')
+        print('----------------------------------')
         ind = np.where(proba[0]==np.max(proba[0]))[0]
         for j in range(len(ind)):
-            print(" {0:s}\t| {1:.2f}\t| {2:.2f} ".format(testFile, pred_classes[ind[j]], 100*proba[0][ind[j]]))
-        print("")
-    print('=============================')
+            print(" {0:.2f}\t\t| {1:.2f} ".format(pred_classes[ind[j]], 100*proba[0][ind[j]]))
+    print('==================================')
+    for i in range(0,len(R[0])):
+        print(" {0:s} = {1:s}  ".format(feat[i], str(R[0][i])))
+    print('==================================')
     print('',dP.typeDF,dP.mode)
-    print('=============================\n')
-#************************************
-# Open Testing Data
-#************************************
-'''
-def readTestFile(testFile):
-    try:
-        with open(testFile, 'r') as f:
-            #print("\n  Opening sample data for prediction:",testFile)
-            Rtot = np.loadtxt(f, unpack =True)
-        R=np.array([Rtot[1,:]])
-        Rx=np.array([Rtot[0,:]])
-    except:
-        print("\033[1m\n File not found or corrupt\033[0m\n")
-        return 0, False
-    return R, True
-'''
+    print('==================================\n')
+
 #************************************
 # Main initialization routine
 #************************************
