@@ -1,0 +1,29 @@
+<!--<html manifest="igc_ml.manifest">-->
+<!DOCTYPE html><head>
+
+<title>IGC_ML</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0" />
+<!-- Eliminate url and button bars if added to home screen -->
+<meta name="mobile-web-app-capable" content="yes" />
+<!-- Choose how to handle the phone status bar -->
+<meta names="mobile-web-app-status-bar-style" content="black-translucent" />
+<!-- <link rel="stylesheet" type="text/css" href="nws.css" media="screen" />-->
+<link rel="apple-touch-icon" href="pm_icon.png" />
+
+<script type="text/javascript" src="igc_ml.js" ></script>
+</head>
+<body>
+<form name = "IGC_ML" action = "index.php" method = "POST" id="igc_ml">
+<br>Model: <select name="model" id="model" onchange="selectModel()">
+  <option>Perf1_4-params_GBR_full_20240923</option>
+  <option>Perf3_6-params_GBR_full_20240923</option>
+  <option>Perf4_8-params_GBR_full_20240923</option>
+  <option>Perf7_7-params_GBR_full_20240923</option>          
+  <option>Perf7_9-params_GBR_full_20240923</option>
+  </select><br><br>
+<script>
+createEntries();
+</script>
+</form>
+</body></html>

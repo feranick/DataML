@@ -3,7 +3,7 @@
 '''
 ***************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2024.10.17.1
+* v2024.10.25.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***************************************************
@@ -124,18 +124,25 @@ class Conf():
 # Main
 #************************************
 def main():
-    #dP = Conf()
-    predict(sys.argv[1], sys.argv[2])
+    try:
+        predict(sys.argv[1], sys.argv[2], sys.argv[3])
+    except:
+        print("Select model and run prediction.")
 
 #************************************
 # Prediction
 #************************************
-def predict(folder, testFile):
+def predict(folder, testFile, features):
     dP = Conf(folder)
 
     #R, _ = readTestFile(testFile)
 
-    R = [np.fromstring(testFile, sep=',', dtype=int)]
+    R = [testFile.split(',')]
+    feat = features.split(',')
+
+    if any(item == '' for item in R[0]):
+        print("  Make sure all entries are filled before running the prediction")
+        return 0
 
     if dP.runDimRedFlag:
         R = runPCAValid(R, dP)
@@ -152,25 +159,26 @@ def predict(folder, testFile):
         pred_classes = le.inverse_transform_bulk(df.classes_)
         proba = df.predict_proba(R)
 
-    print('\n  ================================================================================')
-    print('  ',dP.typeDF,dP.mode)
-    print('  ================================================================================')
+    print('\n=============================')
     if dP.regressor:
-        print('   Parameters\t| Prediction')
-        print('  --------------------------------------------------------------------------------')
-        print("   {0:s}\t| {1:.2f}  ".format(testFile, pred[0]))
+        print(" {0:s} = {1:.2f}  ".format(folder[:5], pred[0]))
+        print('=============================')
+        for i in range(0,len(R[0])):
+            print(" {0:s} = {1:s}  ".format(feat[i], str(R[0][i])))
     else:
-        print('   Filename\t\t| Prediction\t| Probability')
-        print('  --------------------------------------------------------------------------------')
+        print(' Features\t\t| Prediction\t| Probability')
+        print('-------------------------')
         ind = np.where(proba[0]==np.max(proba[0]))[0]
         for j in range(len(ind)):
-            print("   {0:s}\t| {1:.2f}\t| {2:.2f} ".format(testFile, pred_classes[ind[j]], 100*proba[0][ind[j]]))
+            print(" {0:s}\t| {1:.2f}\t| {2:.2f} ".format(testFile, pred_classes[ind[j]], 100*proba[0][ind[j]]))
         print("")
-    print('  ================================================================================\n')
-
+    print('=============================')
+    print('',dP.typeDF,dP.mode)
+    print('=============================\n')
 #************************************
 # Open Testing Data
 #************************************
+'''
 def readTestFile(testFile):
     try:
         with open(testFile, 'r') as f:
@@ -182,7 +190,7 @@ def readTestFile(testFile):
         print("\033[1m\n File not found or corrupt\033[0m\n")
         return 0, False
     return R, True
-
+'''
 #************************************
 # Main initialization routine
 #************************************
