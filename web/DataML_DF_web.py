@@ -3,7 +3,7 @@
 '''
 ***************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2024.10.25.2
+* v2024.10.31.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***************************************************
@@ -12,7 +12,7 @@
 
 import numpy as np
 import sys, os.path, configparser
-import platform, pickle, h5py, csv, glob, math
+import pickle
 #from libDataML import *
 
 #***************************************************
