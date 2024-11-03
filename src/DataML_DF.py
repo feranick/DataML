@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2024.10.17.2
+* v2024.11.03.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -90,7 +90,7 @@ class Conf():
             }
     def sysDef(self):
         self.conf['System'] = {
-            'kerasVersion' : 3,
+            'random_state' : None,
             'n_jobs' : 1
             }
 
@@ -118,7 +118,7 @@ class Conf():
             self.numDimRedComp = self.conf.getint('Parameters','numDimRedComp')
             self.plotFeatImportance = self.conf.getboolean('Parameters','plotFeatImportance')
             
-            self.kerasVersion = self.conf.getint('System','kerasVersion')
+            self.random_state = eval(self.sysDef['random_state'])
             self.n_jobs = self.conf.getint('System','n_jobs')
             
         except:
@@ -314,30 +314,30 @@ def train(learnFile, testFile, normFile):
         
     if dP.regressor:
         if dP.typeDF == 'RandomForest':
-            df = RandomForestRegressor(max_depth=dP.max_depth, n_estimators = dP.n_estimators, random_state=0, max_features = dP.max_features, verbose=dP.verbose, n_jobs=dP.n_jobs)
+            df = RandomForestRegressor(max_depth=dP.max_depth, n_estimators = dP.n_estimators, max_features = dP.max_features, verbose=dP.verbose, n_jobs=dP.n_jobs, random_state=dP.random_state)
         if dP.typeDF == 'HistGradientBoosting':
-            df = HistGradientBoostingRegressor(max_depth=dP.max_depth, max_iter=dP.epochs, max_features = dP.max_features, verbose = dP.verbose, learning_rate=dP.l_rate, l2_regularization=0.0,)
+            df = HistGradientBoostingRegressor(max_depth=dP.max_depth, max_iter=dP.epochs, max_features = dP.max_features, verbose = dP.verbose, learning_rate=dP.l_rate, l2_regularization=0.0, random_state=dP.random_state)
         if dP.typeDF == 'GradientBoosting':
             if dP.max_features == 0:
                 dP.max_features = None
-            df = GradientBoostingRegressor(n_estimators = dP.epochs, max_depth=dP.max_depth, max_features = dP.max_features, verbose = dP.verbose, learning_rate=dP.l_rate)
+            df = GradientBoostingRegressor(n_estimators = dP.epochs, max_depth=dP.max_depth, max_features = dP.max_features, verbose = dP.verbose, learning_rate=dP.l_rate, random_state=dP.random_state)
         if dP.typeDF == 'DecisionTree':
             if dP.max_features == 0:
                 dP.max_features = None
-            df = DecisionTreeRegressor(max_depth=dP.max_depth, max_features = dP.max_features)
+            df = DecisionTreeRegressor(max_depth=dP.max_depth, max_features = dP.max_features, random_state=dP.random_state)
     else:
         if dP.typeDF == 'RandomForest':
-            df = RandomForestClassifier(max_depth=dP.max_depth, n_estimators = dP.n_estimators, random_state=0, max_features = dP.max_features, verbose=dP.verbose, n_jobs=dP.n_jobs, oob_score=False)
+            df = RandomForestClassifier(max_depth=dP.max_depth, n_estimators = dP.n_estimators, max_features = dP.max_features, verbose=dP.verbose, n_jobs=dP.n_jobs, oob_score=False, random_state=dP.random_state)
         if dP.typeDF == 'HistGradientBoosting':
-            df = HistGradientBoostingClassifier(max_depth=dP.max_depth, max_iter=dP.epochs, max_features = dP.max_features, verbose = dP.verbose, learning_rate=dP.l_rate, l2_regularization=0.0)
+            df = HistGradientBoostingClassifier(max_depth=dP.max_depth, max_iter=dP.epochs, max_features = dP.max_features, verbose = dP.verbose, learning_rate=dP.l_rate, l2_regularization=0.0, random_state=dP.random_state)
         if dP.typeDF == 'GradientBoosting':
             if dP.max_features == 0:
                 dP.max_features = None
-            df = GradientBoostingClassifier(n_estimators = dP.epochs, max_depth=dP.max_depth, max_features = dP.max_features, verbose = dP.verbose, learning_rate=dP.l_rate)
+            df = GradientBoostingClassifier(n_estimators = dP.epochs, max_depth=dP.max_depth, max_features = dP.max_features, verbose = dP.verbose, learning_rate=dP.l_rate, random_state=dP.random_state)
         if dP.typeDF == 'DecisionTree':
             if dP.max_features == 0:
                 dP.max_features = None
-            df = DecisionTreeClassifier(max_depth=dP.max_depth, max_features = dP.max_features)
+            df = DecisionTreeClassifier(max_depth=dP.max_depth, max_features = dP.max_features, random_state=dP.random_state)
     
     df.fit(A, Cl2)
             

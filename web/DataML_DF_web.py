@@ -3,7 +3,7 @@
 '''
 ***************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2024.10.31.1
+* v2024.11.03.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***************************************************
@@ -86,7 +86,7 @@ class Conf():
             }
     def sysDef(self):
         self.conf['System'] = {
-            'kerasVersion' : 3,
+            'random_state' : None,
             'n_jobs' : 1
             }
 
@@ -114,7 +114,7 @@ class Conf():
             self.numDimRedComp = self.conf.getint('Parameters','numDimRedComp')
             self.plotFeatImportance = self.conf.getboolean('Parameters','plotFeatImportance')
             
-            self.kerasVersion = self.conf.getint('System','kerasVersion')
+            self.random_state = eval(self.sysDef['random_state'])
             self.n_jobs = self.conf.getint('System','n_jobs')
             
         except:

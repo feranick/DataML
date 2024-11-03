@@ -2,7 +2,7 @@
 '''
 **************************************************
 * libDataML - Library for DataML/DataML_DF
-* v2024.10.17.2
+* v2024.11.03.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
@@ -727,6 +727,7 @@ def printParamDF(dP):
         print('   Batch size:', dP.batch_size)
     print('   Train on full dataset:',dP.trainFullData)
     print('   Number of labels:', dP.numLabels)
+    print('   Random state:', dP.random_state)
     print('   Normalize:', dP.normalize)
     if dP.runDimRedFlag:
         print('   Dimensionality reduction algorithm:', dP.typeDimRed)
