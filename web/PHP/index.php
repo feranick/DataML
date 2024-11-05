@@ -43,7 +43,7 @@ $output = shell_exec($command);
 
 print "
 <!DOCTYPE html>
-<title> IGC_ML - Data: 20240923 - ML: 20241027</title>
+<title> Data_ML - pho version </title>
 <head>
 
 <script>
@@ -70,7 +70,7 @@ setCookie('featureValues',lv,1000);
 </head>
 
 <body>
-<b>IGC_ML - Data: 20240923 - ML: 20241027</b><br>
+<b>DataML_DF PHP version</b><br>
 ";
 
 include('igc_ml_ui.html');
