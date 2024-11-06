@@ -4,7 +4,7 @@
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
 * pyscript version
-* v2024.11.03.1
+* v2024.11.06.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -13,6 +13,8 @@
 import numpy as np
 import sys, pickle, configparser
 from pyscript import fetch, document
+
+baseUrl = "https://www.example.com/"
 
 class Conf():
     def __init__(self, folder, ini):
@@ -108,7 +110,7 @@ class Conf():
             print(" Error in reading configuration file. Please check it\n")
 
 async def getModel(folder, file, bin):
-    url = "https://gridedgedm.mit.edu/IGC_ML_pyscript/"+folder+"/"+file
+    url = baseUrl+folder+"/"+file
     if bin:
         data = await fetch(url).bytearray()
     else:
