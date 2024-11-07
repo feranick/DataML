@@ -1,4 +1,7 @@
+var modelPkl = 0;
+
 async function selectModel() {
+  
   document.getElementById("output").innerHTML = "";
   selIndex = document.IGC_ML.model.selectedIndex;
   setCookie("selectedIndex", selIndex ,1000);
@@ -15,6 +18,17 @@ async function selectModel() {
     setButtonLabel();
   })
   .catch(error => console.error('Error:', error));
+  /*
+  // Use this when opening modelPkl in JS
+
+  fetch(folder+"/model_DF_GradientBoostingClassifier.pkl")
+  .then(response => response.arrayBuffer())
+  .then(buffer => {
+    const byteArray = new Uint8Array(buffer);
+    modelPkl = byteArray;
+  })
+  .catch(error => console.error('Error:', error));
+  */
  }
 
 function createEntries(features) {

@@ -17,7 +17,7 @@
 
   <script type="text/javascript" src="igc_ml.js" ></script>
   <form name = "IGC_ML" id="igc_ml">
-  <br>Model: <select name="model" id="model" onchange="selectModel()">
+  <br>Model: <select name="model" id="model" onchange="selectModel()" py-change="getModel">
   <option>Perf1_model1</option>
   <option>Perf3_model1</option>
   </select><br><br>
@@ -30,5 +30,8 @@
   init();
   selectModel();
   </script>
+  <py-script>
+  getModel("")
+  </pyscript>
   </body>
 </html>

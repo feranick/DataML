@@ -4,17 +4,20 @@
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
 * pyscript version
-* v2024.11.06.1
+* v2024.11.07.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
 '''
 
 import numpy as np
-import sys, pickle, configparser
+import sys, configparser
 from pyscript import fetch, document
+import js
+import _pickle as pickle
+#import pickle
 
-baseUrl = "https://www.example.com/"
+baseUrl = "https://www.example.com"
 
 class Conf():
     def __init__(self, folder, ini):
@@ -109,7 +112,7 @@ class Conf():
         except:
             print(" Error in reading configuration file. Please check it\n")
 
-async def getModel(folder, file, bin):
+async def getFile(folder, file, bin):
     url = baseUrl+folder+"/"+file
     if bin:
         data = await fetch(url).bytearray()
@@ -117,19 +120,37 @@ async def getModel(folder, file, bin):
         data = await fetch(url).text()
     return data
     
+async def getModel(event):
+    global df
+    document.querySelector("#button").disabled = True
+    document.querySelector("#model").disabled = True
+    output_div = document.querySelector("#output")
+    output_div.innerHTML = "Loading ML model..."
+    folder = document.querySelector("#model").value
+    ini = await getFile(folder, "DataML_DF.ini", False)
+    dP = Conf(folder, ini)
+    modelPkl = await getFile(folder, dP.modelName, True)
+    df = pickle.loads(modelPkl)
+    output_div.innerHTML = ""
+    document.querySelector("#button").disabled = False
+    document.querySelector("#model").disabled = False
+    
 async def main(event):
     output_div = document.querySelector("#output")
     output_div.innerHTML = "Please wait..."
 
     folder = document.querySelector("#model").value
-    ini = await getModel(folder, "DataML_DF.ini", False)
-    features = await getModel(folder, "config.txt", False)
-    
+    ini = await getFile(folder, "DataML_DF.ini", False)
+    features = await getFile(folder, "config.txt", False)
     dP = Conf(folder, ini)
     
-    modelPkl = await getModel(folder, dP.modelName, True)
+    # Use this when opening modelPkl here.
+    #modelPkl = await getFile(folder, dP.modelName, True)
+    #df = pickle.loads(modelPkl)
     
-    df = pickle.loads(modelPkl)
+    # Use this when opening modelPkl in JS
+    #df = pickle.loads(js.modelPkl.to_py())
+    
     input_text = document.querySelector("#Entry0")
     #output_div.innerText = "The Value for Entry0:", input_text.value;
     R = []
@@ -142,7 +163,7 @@ async def main(event):
         proba = ""
         output += folder[:5] +" = " + str(pred[0])[:5]
     else:
-        lePkl = await getModel("", dP.model_le, True)
+        lePkl = await getFile("", dP.model_le, True)
         le = pickle.loads(lePkl)
         pred = le.inverse_transform_bulk(df.predict([R]))
         pred_classes = le.inverse_transform_bulk(df.classes_)
