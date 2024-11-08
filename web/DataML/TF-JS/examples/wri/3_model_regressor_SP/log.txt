@@ -1,0 +1,56 @@
+DoECFdata/PitchData/20191010a/Targeted/ML4-4/SP/6_30unif1
+
+
+ =============================================
+   MLP - Model Configuration
+  =============================================
+  Data size: (780, 6)
+
+  Training set file: ML4-4_train_noisy-30uniform0.01-M-A_opc1_partialDataSet-p8.txt
+  Testing set file: ML4-4_test_partialDataSet-p8.txt
+
+  Training set file datapoints: 780
+  Testing set file datapoints: 2
+
+  Number of learning labels: 1
+  Total number of points per data: 6
+
+  ================================================
+   MLP - Parameters
+  ================================================
+  Optimizer: Adam 
+  Hidden layers: [15, 10, 5] 
+  Activation function: relu 
+  L2: 0.001 
+  Dropout: 0.0 
+  Learning rate: 0.01 
+  Learning decay rate: 0.0001
+  Batch size: 16
+  Number of labels: 1
+  Stop at Best Model based on validation: False
+  Save Best Model based on validation: True
+  Metric for Best Regression Model: mae
+
+  ==========================================================
+   MLP - Regressor - Training Summary
+  ==========================================================
+  Loss - Average: 62.2507; Min: 19.9221; Last: 22.1785
+  Mean Abs Err - Average: 5.1231; Min: 3.5556; Last: 3.7998
+
+  ==========================================================
+   MLP - Regressor  - Validation Summary
+  ========================================================
+  Loss - Average: 17.5877; Min: 0.1103; Last: 12.9536
+  Mean Abs Err - Average: 3.3900; Min: 0.1418; Last: 3.1344
+  Saved model with validation MAE:: 2.7176
+  Saved model with min training MAE:: 3.5556
+
+  ===========================================================================
+  Real value | Predicted value | val_loss | val_mean_abs_err | % deviation 
+  ---------------------------------------------------------------------------
+  115.000	| 110.381	| 21.5752	| 4.6188	| 4.0
+  320.000	| 319.184	| 0.9079	| 0.8162	| 0.3
+
+  ========================================================================  
+
+ TensorFlow v. 2.5.0 

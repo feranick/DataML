@@ -1,0 +1,60 @@
+ =============================================
+   MLP - Model Configuration
+  =============================================
+  Data size: (4770, 9)
+
+  Training set file: ../Encoded_062121_NF20210623_wLit_train_noisy-30normal0.0025-M-A_cust-6-6-6-6-6-6-6-6-6-22-6-22-0_fullDataSet-p13.txt
+  Testing set file: ../Encoded_062121_NF20210623_test_fullDataSet-p13.txt
+
+  Training set file datapoints: 4770
+  Testing set file datapoints: 3
+
+  Number of learning labels: 1
+  Total number of points per data: 9
+  Number unique classes (training):  2
+  Number unique classes (validation): 1
+  Number unique classes (total):  2
+
+  ================================================
+   MLP - Parameters
+  ================================================
+  Optimizer: Adam 
+  Hidden layers: [7, 5, 3] 
+  Activation function: relu 
+  L2: 0.0001 
+  Dropout: 0.0 
+  Learning rate: 0.01 
+  Learning decay rate: 0.001
+  Batch size: 32
+  Epochs: 1000
+  Number of labels: 1
+  Stop at Best Model based on validation: False
+  Save Best Model based on validation: True
+  Metric for Best Classifier Model: accuracy
+
+  ========================================================
+   MLP - Classifier  - Training Summary
+  ========================================================
+
+  Accuracy - Average: 97.17%; Max: 97.40%; Last: 97.25%
+  Loss - Average: 0.0513; Min: 0.0500; Last: 0.0500
+
+
+  ========================================================
+   MLP - Classifier  - Validation Summary
+  ========================================================
+
+  Accuracy - Average: 100.00%; Max: 100.00%; Last: 100.00%
+  Loss - Average: 0.0028; Min: 0.0020; Last: 0.0029
+  Saved model with training accuracy:: 97.4004
+  ===========================================================
+  Real class	| Predicted class	| Probability
+  ---------------------------------------------------
+  1.00		| 1.00			| 100.00
+  1.00		| 1.00			| 100.00
+  1.00		| 1.00			| 100.00
+
+  ==========================================================
+
+ TensorFlow v. 2.5.0 
+/Users/feranick/Desktop/BP3_Encoded_20210621_NF20210623/ML/p13/3_wLit

@@ -1,0 +1,147 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>MIT ML - WRI</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"></script>
+</head>
+<body>
+  <div id="wrap">
+    <h1>MIT ML - WRI</h1>
+    <form name="wriml" action="javascript:void(0);" id="wriml">
+      ML models: 20191010a
+      <br>
+      <br><br>TGA-N2-Volatiles-30 to 395 C (%)A: <input name="c1" value="44.3" size="12" maxlength="12" type="text" id="c1"><br>
+      <br>TGA-N2-Combustion-15 minutes (%): <input name="c2" value="28.48" size="12" maxlength="12" type="text" id="c2"><br>
+      <br>TGA-Air-Wt-Loss-30 to 395 C (%): <input name="c3" value="35.38" size="12" maxlength="12" type="text" id="c3"><br>
+      <br>TGA-Air-Combustion-500 to 800 C(%)B: <input name="c4" value="62.82" size="12" maxlength="12" type="text" id="c4"><br>
+      <br>CHNOS-Hydrogen: <input name="c5" value="4.28" size="12" maxlength="12" type="text" id="c5"><br>
+      <br>CHNOS-Oxygen <input name="c6" value="0.4444" size="12" maxlength="3.72" type="text" id="c6"><br>
+      <br><div id="info"></div><br>
+      <input type="submit" value="Predict" class="btn"/><br>
+      <br><select name="modelCI" id="modelCI" onchange="setmodelCI()" onblur="setmodelCI()">
+            <option>6_model_regressor_CI</option>
+            <option>5_model_regressor_CI</option>
+            <option>4_model_regressor_CI</option>
+            <option>3_model_regressor_CI</option>
+            <option>2_model_regressor_CI</option>
+            <option>1_model_regressor_CI</option>
+            </select>
+            <div id="listCI"></div>
+      <br><select name="modelSP" id="modelSP" onchange="setmodelSP()" onblur="setmodelSP()">
+            <option>3_model_regressor_SP</option>
+            <option>2_model_regressor_SP</option>
+            <option>1_model_regressor_SP</option>
+            </select>
+            <div id="listSP"></div>
+        
+      <br><br>Preset Validation Samples: <select name="presetValid" id="presetValid" onchange="setPresetValid()" onblur="setPresetValid()">
+            <option>CTP4-NMP</option>
+            <option>CTP6-SP-320.0</option>
+            </select>
+  </form>
+  </div>
+  
+<script type="text/javascript">
+
+  function setmodelCI() {
+	var index=document.wriml.modelCI.selectedIndex;
+    console.info(document.wriml.modelCI.value);
+    modelCI = document.wriml.modelCI.value;
+    predictCI();
+  }
+  function setmodelSP() {
+	var index=document.wriml.modelSP.selectedIndex;
+    console.info(index);
+    modelSP = document.wriml.modelSP.value;
+    predictSP();
+  }
+  
+  function setPresetValid() {
+	var index=document.wriml.presetValid.selectedIndex;
+    console.info(index);
+    if(index==0) {
+        document.wriml.c1.value = 44.3;
+        document.wriml.c2.value = 28.48;
+        document.wriml.c3.value = 35.38;
+        document.wriml.c4.value = 62.82;
+        document.wriml.c5.value = 4.28;
+        document.wriml.c6.value = 3.72;}
+    if(index==1) {
+        document.wriml.c1.value = 3.53;
+        document.wriml.c2.value = 70.32;
+        document.wriml.c3.value = 0.63;
+        document.wriml.c4.value = 98.222;
+        document.wriml.c5.value = 1.28;
+        document.wriml.c6.value = 0.54;}
+    predictCI();
+    predictSP();
+  }
+  
+
+  class L2 {
+    static className = 'L2';
+    constructor(config) {
+        return tf.regularizers.l1l2(config)
+        }
+   }
+   tf.serialization.registerClass(L2);
+  
+ function getData(){
+    var c1=document.wriml.c1.value *1;
+    var c2=document.wriml.c2.value *1;
+    var c3=document.wriml.c3.value *1;
+    var c4=document.wriml.c4.value *1;
+    var c5=document.wriml.c5.value *1;
+    var c6=document.wriml.c6.value *1;
+        
+    var data = [[c1,c2,c3,c4,c5,c6]]
+    console.info(data)
+    return data;
+    }
+ 
+ function predictCI() {
+    var data = getData();
+    predict("R", data, modelCI,"listCI", "Coking Index: ");
+    }
+ function predictSP() {
+    var data = getData();
+    predict("R", data, modelSP,"listSP","Softening Point: ");
+    }
+ 
+  
+ function submitPredict(){
+    var data = getData();
+    predict("R", data, modelCI,"listCP", "Coking Index: ");
+    predict("R", data, modelSP,"listSP", "Softening Point: ");
+    };
+  
+  async function predict(type, data, folder, list, tag){
+    const model = await tf.loadLayersModel('./'+folder+'/model.json');
+    const xp = tf.tensor2d(data);
+    //console.info(data);
+    console.info(xp);
+    document.getElementById(list).innerText = xp;
+    const prediction = model.predict(xp).dataSync();
+    if (type=="C") {
+        if (prediction.indexOf(1) == 1)
+            {var succ = "YES"}
+        else
+            {var succ = "NO"}
+        document.getElementById(list).innerText = tag+succ;
+        }
+    else {document.getElementById(list).innerText = tag+(prediction*1).toFixed(2);}
+    }
+
+ window.onload = function() {
+ setmodelCI();
+ setmodelSP();
+ }
+
+ document.getElementById('wriml').addEventListener('submit', submitPredict, false);
+ //document.getElementById('the_file').addEventListener('change', fileInfo, false);
+
+</script>
+</body>
+</html>
+

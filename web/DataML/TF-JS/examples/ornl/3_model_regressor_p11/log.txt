@@ -1,0 +1,57 @@
+/Users/feranick/Desktop/BP3_Encoded_20210621_NF20210623/ML/p12/6
+
+ =============================================
+   MLP - Model Configuration
+  =============================================
+  Data size: (3441, 9)
+
+  Training set file: ../Encoded_062121_NF20210623_train_noisyFitP1P2P3-30normal0.0025-M_cust-6-6-6-6-6-6-6-6-6-22-6-22-0_fullDataSet-p12.txt
+  Testing set file: ../Encoded_062121_NF20210623_test_fullDataSet-p12.txt
+
+  Training set file datapoints: 3441
+  Testing set file datapoints: 3
+
+  Number of learning labels: 1
+  Total number of points per data: 9
+
+  ================================================
+   MLP - Parameters
+  ================================================
+  Optimizer: Adam 
+  Hidden layers: [7, 5, 3] 
+  Activation function: relu 
+  L2: 0.0001 
+  Dropout: 0.0 
+  Learning rate: 0.01 
+  Learning decay rate: 0.0001
+  Batch size: 32
+  Epochs: 1000
+  Number of labels: 1
+  Stop at Best Model based on validation: False
+  Save Best Model based on validation: True
+  Metric for Best Regression Model: mae
+
+  ==========================================================
+   MLP - Regressor - Training Summary
+  ==========================================================
+  Loss - Average: 0.0379; Min: 0.0348; Last: 0.0350
+  Mean Abs Err - Average: 0.1315; Min: 0.1226; Last: 0.1232
+
+  ==========================================================
+   MLP - Regressor  - Validation Summary
+  ========================================================
+  Loss - Average: 0.0069; Min: 0.0044; Last: 0.0059
+  Mean Abs Err - Average: 0.0645; Min: 0.0439; Last: 0.0635
+  Saved model with validation MAE:: 0.0613
+  Saved model with min training MAE:: 0.1226
+
+  ===========================================================================
+  Real value | Predicted value | val_loss | val_mean_abs_err | % deviation 
+  ---------------------------------------------------------------------------
+  1.210	| 1.155	| 0.0046	| 0.0555	| 4.6
+  1.050	| 1.110	| 0.0052	| 0.0602	| 5.7
+  0.850	| 0.918	| 0.0062	| 0.0683	| 8.0
+
+  ========================================================================  
+
+ TensorFlow v. 2.5.0

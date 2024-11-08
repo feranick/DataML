@@ -1,0 +1,188 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>WYO-MIT ML - Sheet -> Fiber -> Composite</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"></script>
+</head>
+<body>
+  <div id="wrap">
+    <h1>WYO-MIT ML</h1>
+    <h2>Sheet -> Fiber -> Composite</h1>
+    <form name="wyoml" action="javascript:void(0);" id="wyoml">
+      ML models: 20210714
+      <br><br>
+      SHEET Properties
+      <br><br>E11_sheet: <input name="c1" value="419.5058583" size="12" maxlength="12" type="text" id="c1"><br>
+      <br>G12p_sheet: <input name="c2" value="27.4306997" size="12" maxlength="12" type="text" id="c2"><br>
+      <br>FVF: <input name="c3" value="0.4" size="12" maxlength="12" type="text" id="c6"><br>
+      <br>E_matrix: <input name="c4" value="4.0" size="12" maxlength="12" type="text" id="c7"><br>
+      <br>v_matrix: <input name="c5" value="0.3" size="12" maxlength="12" type="text" id="c8"><br>
+      
+      
+      <br><div id="info"></div><br>
+      <input type="submit" value="Predict" class="btn"/><br>
+      <br>
+      FIBER Properties:
+      <br>
+      <div id="list1"></div>
+      <div id="list2"></div>
+      <div id="list3"></div>
+      <div id="list4"></div>
+      <div id="list5"></div>
+      <br>
+      COMPOSITE Properties:
+      <br>
+      <div id="list6"></div>
+      <div id="list7"></div>
+      <div id="list8"></div>
+      <div id="list9"></div>
+      <div id="list10"></div>
+  </form>
+  </div>
+  
+<script type="text/javascript">
+
+  function setVariables() {
+    Xmax_F = [499.9707,74.995605,49.99707,44.990288,3.7497802,1.1249341];
+    Xmin_F = [80.092735,12.01391,8.009274,0.32069528,0.6006955,0.18020865];
+    dmax_F_E11 = 499.73843;
+    dmin_F_E11 = 80.05675;
+    dmax_F_E22_E33 = 19.78555;
+    dmin_F_E22_E33 = 3.2063086;
+    dmax_F_G13_G12 = 13.517561;
+    dmin_F_G13_G12 = 1.0071378;
+    dmax_F_v12_v13 = 0.3001687;
+    dmin_F_v12_v13 = 0.30003452;
+    dmax_F_v23 = 0.5961686;
+    dmin_F_v23 = 0.59155756;
+
+    Xmax_C = [0.75,500.0,20.0,15.0,0.4,0.7,4.0,0.45];
+    Xmin_C = [0.3,80.0,2.0,1.0,0.2,0.3,1.0,0.3];
+    dmax_C_E11 = 370.37097;
+    dmin_C_E11 = 24.676718;
+    dmax_C_E22_E33 = 13.923995;
+    dmin_C_E22_E33 = 1.2882799;
+    dmax_C_G13_G12 = 6.4756;
+    dmin_C_G13_G12 = 0.4628;
+    dmax_C_v12_v13 = 0.44033787;
+    dmin_C_v12_v13 = 0.21886805;
+    dmax_C_v23 = 0.78672594;
+    dmin_C_v23 = 0.3209443;
+    
+    prec = 2;
+    }
+
+  class L2 {
+    static className = 'L2';
+    constructor(config) {
+        return tf.regularizers.l1l2(config)
+        }
+   }
+   tf.serialization.registerClass(L2);
+  
+ function getData(){
+    var c1=document.wyoml.c1.value *1;
+    var c2=document.wyoml.c2.value *1;
+    var c3=document.wyoml.c3.value *1;
+    var c4=document.wyoml.c4.value *1;
+    var c5=document.wyoml.c5.value *1;
+    
+    E22_sheet = 0.15*c1;
+    E33_sheet = 0.1*c1;
+    G12_sheet = (E22_sheet/c1)*c2;
+    G13_sheet = ((E33_sheet/2.0 ) /c2)*G12_sheet;
+    G23_sheet = 0.3*G13_sheet;
+    FVF = c3;
+    E_matrix = c4;
+    v_matrix = c5;
+        
+    var data = [c1,E22_sheet,E33_sheet,G12_sheet,G13_sheet,G23_sheet];
+    console.info(data);
+    return data;
+    }
+    
+  async function submitPredict(){
+    var X_raw = getData();
+    
+    const model_F_E11 = await tf.loadLayersModel(modName('Rad_Fiber_Prop_E11_js'));
+    const model_F_E22_E33 = await tf.loadLayersModel(modName('Rad_Fiber_Prop_E22_E33_js'));
+    const model_F_G12_G13 = await tf.loadLayersModel(modName('Rad_Fiber_Prop_G12_G13_js'));
+    const model_F_v12_v13 = await tf.loadLayersModel(modName('Rad_Fiber_Prop_v12_v13_js'));
+    const model_F_v23 = await tf.loadLayersModel(modName('Rad_Fiber_Prop_v23_js'));
+    
+    const model_C_E11 = await tf.loadLayersModel(modName('Comp_Prop_E11_js'));
+    const model_C_E22_E33 = await tf.loadLayersModel(modName('Comp_Prop_E22_E33_js'));
+    const model_C_G12_G13 = await tf.loadLayersModel(modName('Comp_Prop_G12_G13_js'));
+    const model_C_v12_v13 = await tf.loadLayersModel(modName('Comp_Prop_v12_v13_js'));
+    const model_C_v23 = await tf.loadLayersModel(modName('Comp_Prop_v23_js'));
+    
+    var X_F = X_raw.map((a, i) => (a - Xmin_F[i])/(Xmax_F[i]-Xmin_F[i]));
+    const tX_F = tf.tensor2d([X_F]);
+    
+    const pred_F_E11 = model_F_E11.predict(tX_F).dataSync()[0];
+    aPred_F_E11 = pred_F_E11*(dmax_F_E11-dmin_F_E11)+dmin_F_E11;
+    
+    const pred_F_E22_E33 = model_F_E22_E33.predict(tX_F).dataSync()[0];
+    aPred_F_E22_E33 = pred_F_E22_E33*(dmax_F_E22_E33-dmin_F_E22_E33)+dmin_F_E22_E33;
+    
+    const pred_F_G12_G13 = model_F_G12_G13.predict(tX_F).dataSync()[0];
+    aPred_F_G12_G13 = pred_F_G12_G13*(dmax_F_G13_G12-dmin_F_G13_G12)+dmin_F_G13_G12;
+    
+    const pred_F_v12_v13 = model_F_v12_v13.predict(tX_F).dataSync()[0];
+    aPred_F_v12_v13 = pred_F_v12_v13*(dmax_F_v12_v13-dmin_F_v12_v13)+dmin_F_v12_v13;
+    
+    const pred_F_v23 = model_F_v23.predict(tX_F).dataSync()[0];
+    aPred_F_v23 = pred_F_v23*(dmax_F_v23-dmin_F_v23)+dmin_F_v23;
+    
+    X_rawS = [FVF,aPred_F_E11, aPred_F_E22_E33, aPred_F_G12_G13, aPred_F_v12_v13, aPred_F_v23, E_matrix,v_matrix];
+    
+    var X_C = X_rawS.map((a, i) => (a - Xmin_C[i])/(Xmax_C[i]-Xmin_C[i]))
+        
+    const tX_C = tf.tensor2d([X_C]);
+    
+    pred_C_E11 = model_C_E11.predict(tX_C).dataSync()[0];
+    aPred_C_E11 = pred_C_E11*(dmax_C_E11-dmin_C_E11)+dmin_C_E11
+
+    pred_C_E22_E33 = model_C_E22_E33.predict(tX_C).dataSync()[0];
+    aPred_C_E22_E33 = pred_C_E22_E33*(dmax_C_E22_E33-dmin_C_E22_E33)+dmin_C_E22_E33
+
+    pred_C_G12_G13 = model_C_G12_G13.predict(tX_C).dataSync()[0];
+    aPred_C_G12_G13 = pred_C_G12_G13*(dmax_C_G13_G12-dmin_C_G13_G12)+dmin_C_G13_G12
+
+    pred_C_v12_v13 = model_C_v12_v13.predict(tX_C).dataSync()[0];
+    aPred_C_v12_v13 = pred_C_v12_v13*(dmax_C_v12_v13-dmin_C_v12_v13)+dmin_C_v12_v13
+
+    pred_C_v23 = model_C_v23.predict(tX_C).dataSync()[0];
+    aPred_C_v23 = pred_C_v23*(dmax_C_v23-dmin_C_v23)+dmin_C_v23
+    
+    document.getElementById("list1").innerText = 'E11: '+(aPred_F_E11).toFixed(prec)+" GPa";
+    document.getElementById("list2").innerText = 'E22=E33: '+(aPred_F_E22_E33).toFixed(prec)+" GPa";
+    document.getElementById("list3").innerText = 'G12=G13: '+(aPred_F_G12_G13).toFixed(prec)+" GPa";
+    document.getElementById("list4").innerText = 'v12=v13: '+(aPred_F_v12_v13).toFixed(prec);
+    document.getElementById("list5").innerText = 'v23: '+(aPred_F_v23).toFixed(prec);
+    
+    document.getElementById("list6").innerText = 'E11: '+(aPred_C_E11).toFixed(prec)+" GPa";
+    document.getElementById("list7").innerText = 'E22=E33: '+(aPred_C_E22_E33).toFixed(prec)+" GPa";
+    document.getElementById("list8").innerText = 'G12=G13: '+(aPred_C_G12_G13).toFixed(prec)+" GPa";
+    document.getElementById("list9").innerText = 'v12=v13: '+(aPred_C_v12_v13).toFixed(prec);
+    document.getElementById("list10").innerText = 'v23: '+(aPred_C_v23).toFixed(prec);
+    
+    }
+  
+ function modName(folder) {
+    const model = './'+folder+'/model.json';
+    return model;
+    }
+
+ window.onload = function() {
+ setVariables();
+ submitPredict();
+ }
+
+ document.getElementById('wyoml').addEventListener('submit', submitPredict, false);
+ 
+</script>
+</body>
+</html>
+

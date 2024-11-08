@@ -1,0 +1,52 @@
+/Users/feranick/Desktop/Data/DoECFdata/ORNL/ML/BP3_Encoded_20210604_NF20210609/ML/norm_vs_uniform/p11/2
+
+ =============================================
+   MLP - Model Configuration
+  =============================================
+  Data size: (3348, 9)
+
+  Training set file: ../Encoded_060421_NF20210609_train_noisyFitP1P2P3-30uniform0.005_postFitRand_cust6_fullDataSet-p11.txt
+  Testing set file: ../Encoded_060421_NF20210609_test_fullDataSet-p11.txt
+
+  Training set file datapoints: 3348
+  Testing set file datapoints: 3
+
+  Number of learning labels: 1
+  Total number of points per data: 9
+
+  ================================================
+   MLP - Parameters
+  ================================================
+  Optimizer: Adam 
+  Hidden layers: [7, 5, 3] 
+  Activation function: relu 
+  L2: 0.001 
+  Dropout: 0.0 
+  Learning rate: 0.01 
+  Learning decay rate: 0.0001
+  Batch size: 16
+  Number of labels: 1
+
+  ==========================================================
+   MLP - Regressor - Training Summary
+  ==========================================================
+  Loss - Average: 5.7516; Min: 5.0526; Last: 5.0669
+  Mean Abs Err - Average: 1.3684; Min: 1.2520; Last: 1.2546
+
+  ==========================================================
+   MLP - Regressor  - Validation Summary
+  ========================================================
+  Loss - Average: 1.5985; Min: 0.2038; Last: 0.8364
+  Mean Abs Err - Average: 0.9525; Min: 0.2241; Last: 0.7645
+  Saved model at min MAE:: 0.2241
+
+  ===========================================================================
+  Real value | Predicted value | val_loss | val_mean_abs_err | % deviation 
+  ---------------------------------------------------------------------------
+  18.930	| 18.978	| 0.1145	| 0.0483	| 0.3
+  19.280	| 19.789	| 0.3716	| 0.5093	| 2.6
+  16.460	| 16.575	| 0.1253	| 0.1147	| 0.7
+
+  ========================================================================  
+
+ TensorFlow v. 2.5.0

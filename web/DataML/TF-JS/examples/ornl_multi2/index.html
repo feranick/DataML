@@ -1,0 +1,174 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>MIT ML - ORNL</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"></script>
+</head>
+<body>
+  <div id="wrap">
+    <h1>MIT ML - ORNL</h1>
+    <form name="ornlml" action="javascript:void(0);" id="ornlml">
+      ML models: 20210604-NF20210609
+      <br>
+      <br><br>C1: <input name="c1" value="0.428571429" size="12" maxlength="12" type="text" id="c1"><br>
+      <br>C2: <input name="c2" value="0.428571429" size="12" maxlength="12" type="text" id="c2"><br>
+      <br>C3: <input name="c3" value="0.025" size="12" maxlength="12" type="text" id="c3"><br>
+      <br>C4: <input name="c4" value="0.1" size="12" maxlength="12" type="text" id="c4"><br>
+      <br>C5: <input name="c5" value="0" size="12" maxlength="12" type="text" id="c5"><br>
+      <br>C6: <input name="c6" value="0.4444" size="12" maxlength="12" type="text" id="c6"><br>
+      <br>C7: <input name="c7" value="1" size="12" maxlength="12" type="text" id="c7"><br>
+      <br>C8: <input name="c8" value="0.2" size="12" maxlength="12" type="text" id="c8"><br>
+      <br>C9: <input name="c9" value="25.43" size="12" maxlength="12" type="text" id="c9"><br>
+      <br><div id="info"></div><br>
+      <input type="submit" value="Predict" class="btn"/><br>
+      <br><select name="modelp10" id="modelp10" onchange="setmodelp10()" onblur="setmodelp10()">
+            <option>10_model_regressor_nb_p10</option>
+            <option>9_model_regressor_nb_p10</option>
+            <option>8_model_regressor_p10</option>
+            <option>7_model_regressor_p10</option>
+            <option>6_model_regressor_p10</option>
+            <option>5_model_regressor_p10</option>
+            <option>4_model_regressor_p10</option>
+            <option>3_model_regressor_p10</option>
+            <option>2_model_regressor_p10</option>
+            <option>1_model_regressor_p10</option>
+            </select>
+            <div id="list10"></div>
+      <br><select name="modelp11" id="modelp11" onchange="setmodelp11()" onblur="setmodelp11()">
+            <option>9_model_regressor_nb_p11</option>
+            <option>8_model_regressor_p11</option>
+            <option>7_model_regressor_p11</option>
+            <option>6_model_regressor_p11</option>
+            <option>5_model_regressor_p11</option>
+            <option>4_model_regressor_p11</option>
+            <option>3_model_regressor_p11</option>
+            <option>2_model_regressor_p11</option>
+            <option>1_model_regressor_p11</option>
+            </select>
+            <div id="list11"></div>
+      <br><select name="modelp12" id="modelp12" onchange="setmodelp12()" onblur="setmodelp12()">
+            <option>8_model_regressor_nb_p12</option>
+            <option>7_model_regressor_p12</option>
+            <option>6_model_regressor_p12</option>
+            <option>5_model_regressor_p12</option>
+            <option>4_model_regressor_p12</option>
+            <option>3_model_regressor_p12</option>
+            <option>2_model_regressor_p12</option>
+            <option>1_model_regressor_p12</option>
+            </select>
+            <div id="list12"></div>
+      <br><select name="modelp13" id="modelp13" onchange="setmodelp13()" onblur="setmodelp13()">
+            <option>3_model_classifier_wLit_p13</option>
+            <option>2_model_classifier_wLit_p13</option>
+            <option>1_model_classifier_wLit_p13</option>
+            </select>
+            <div id="list13"></div>
+  </form>
+  </div>
+  
+<script type="text/javascript">
+
+  function setmodelp10() {
+	var index=document.ornlml.modelp10.selectedIndex;
+    console.info(document.ornlml.modelp10.value);
+    modelp10 = document.ornlml.modelp10.value;
+    predictp10();
+  }
+  function setmodelp11() {
+	var index=document.ornlml.modelp11.selectedIndex;
+    console.info(index);
+    modelp11 = document.ornlml.modelp11.value;
+    predictp11();
+  }
+  function setmodelp12() {
+	var index=document.ornlml.modelp12.selectedIndex;
+    console.info(index);
+    modelp12 = document.ornlml.modelp12.value;
+    predictp12();
+  }
+  function setmodelp13() {
+	var index=document.ornlml.modelp13.selectedIndex;
+    console.info(index);
+    modelp13 = document.ornlml.modelp13.value;
+    predictp13();
+  }
+
+  class L2 {
+    static className = 'L2';
+    constructor(config) {
+        return tf.regularizers.l1l2(config)
+        }
+   }
+   tf.serialization.registerClass(L2);
+  
+ function getData(){
+    var c1=document.ornlml.c1.value *1;
+    var c2=document.ornlml.c2.value *1;
+    var c3=document.ornlml.c3.value *1;
+    var c4=document.ornlml.c4.value *1;
+    var c5=document.ornlml.c5.value *1;
+    var c6=document.ornlml.c6.value *1;
+    var c7=document.ornlml.c7.value *1;
+    var c8=document.ornlml.c8.value *1;
+    var c9=document.ornlml.c9.value *1;
+        
+    var data = [[c1,c2,c3,c4,c5,c6,c7,c8,c9]]
+    console.info(data)
+    return data;
+    }
+ 
+ function predictp10() {
+    var data = getData();
+    predict("R", data, modelp10,"list10", "Break Stress (Ksi): ");
+    }
+ function predictp11() {
+    var data = getData();
+    predict("R", data, modelp11,"list11","Modulus (Mpsi): ");
+    }
+ function predictp12() {
+    var data = getData();
+    predict("R", data, modelp12,"list12","Strain (%): ");
+    }
+ function predictp13() {
+    var data = getData();
+    predict("C", data, modelp13,"list13","Success?  ");
+    }
+  
+ function submitPredict(){
+    var data = getData();
+    predict("R", data, modelp10,"list10", "Break Stress (Ksi): ");
+    predict("R", data, modelp11,"list11","Modulus (Mpsi): ");
+    predict("R", data, modelp12,"list12","Strain (%): ");
+    predict("C", data, modelp13,"list13","Success?  ");
+    };
+  
+  async function predict(type, data, folder, list, tag){
+    const model = await tf.loadLayersModel('./'+folder+'/model.json');
+    const xp = tf.tensor2d(data);
+    document.getElementById(list).innerText = xp;
+    const prediction = model.predict(xp).dataSync();
+    if (type=="C") {
+        if (prediction.indexOf(1) == 1)
+            {var succ = "YES"}
+        else
+            {var succ = "NO"}
+        document.getElementById(list).innerText = tag+succ;
+        }
+    else {document.getElementById(list).innerText = tag+(prediction*1).toFixed(2);}
+    }
+
+ window.onload = function() {
+ setmodelp10();
+ setmodelp11();
+ setmodelp12();
+ setmodelp13();
+ }
+
+ document.getElementById('ornlml').addEventListener('submit', submitPredict, false);
+ //document.getElementById('the_file').addEventListener('change', fileInfo, false);
+
+</script>
+</body>
+</html>
+

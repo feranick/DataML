@@ -1,0 +1,52 @@
+BP3_Encoded_20210604_NF20210608/ML/planar_1-fit/p10
+
+  =============================================
+   MLP - Model Configuration
+  =============================================
+  Data size: (3410, 9)
+
+  Training set file: ../Encoded_060421_NF20210608_train_noisyFitP1P2P3-30cust6_fullDataSet-p10.txt
+  Testing set file: ../Encoded_060421_NF20210608_test_fullDataSet-p10.txt
+
+  Training set file datapoints: 3410
+  Testing set file datapoints: 3
+
+  Number of learning labels: 1
+  Total number of points per data: 9
+
+  ================================================
+   MLP - Parameters
+  ================================================
+  Optimizer: Adam 
+  Hidden layers: [7, 5, 3] 
+  Activation function: relu 
+  L2: 0.0001 
+  Dropout: 0.0 
+  Learning rate: 0.01 
+  Learning decay rate: 0.0001
+  Batch size: 128
+  Number of labels: 1
+
+  ==========================================================
+   MLP - Regressor - Training Summary
+  ==========================================================
+  Loss - Average: 1991.8780; Min: 1665.7214; Last: 1700.3707
+  Mean Abs Err - Average: 31.2135; Min: 28.5773; Last: 28.9688
+
+  ==========================================================
+   MLP - Regressor  - Validation Summary
+  ========================================================
+  Loss - Average: 371.9978; Min: 30.5373; Last: 389.8926
+  Mean Abs Err - Average: 15.0403; Min: 4.4849; Last: 15.3016
+  Saved model at min MAE:: 4.4849
+
+  ===========================================================================
+  Real value | Predicted value | val_loss | val_mean_abs_err | % deviation 
+  ---------------------------------------------------------------------------
+  225.020	| 233.568	| 73.0982	| 8.5482	| 3.8
+  236.860	| 232.181	| 21.9185	| 4.6789	| 2.0
+  173.690	| 173.462	| 0.0786	| 0.2278	| 0.1
+
+  ========================================================================  
+
+ TensorFlow v. 2.5.0 

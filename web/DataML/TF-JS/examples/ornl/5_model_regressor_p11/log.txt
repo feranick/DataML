@@ -1,0 +1,55 @@
+ =============================================
+   MLP - Model Configuration
+  =============================================
+  Data size: (3330, 9)
+
+  Training set file: ../Encoded_062121_NF20210623_train_noisy-30normal0.001-M_cust-6-6-6-6-6-6-6-6-6-22-6-22-0_fullDataSet-p12.txt
+  Testing set file: ../Encoded_062121_NF20210623_test_fullDataSet-p12.txt
+
+  Training set file datapoints: 3330
+  Testing set file datapoints: 3
+
+  Number of learning labels: 1
+  Total number of points per data: 9
+
+  ================================================
+   MLP - Parameters
+  ================================================
+  Optimizer: Adam
+  Hidden layers: [10, 8, 6, 4, 2]
+  Activation function: relu
+  L2: 1e-05
+  Dropout: 0.0
+  Learning rate: 0.01
+  Learning decay rate: 0.0001
+  Batch size: 32
+  Epochs: 855
+  Number of labels: 1
+  Stop at Best Model based on validation: False
+  Save Best Model based on validation: True
+  Metric for Best Regression Model: mae
+
+  ==========================================================
+   MLP - Regressor - Training Summary
+  ==========================================================
+  Loss - Average: 0.0275; Min: 0.0145; Last: 0.0152
+  Mean Abs Err - Average: 0.1083; Min: 0.0783; Last: 0.0811
+
+  ==========================================================
+   MLP - Regressor  - Validation Summary
+  ========================================================
+  Loss - Average: 0.0101; Min: 0.0028; Last: 0.0159
+  Mean Abs Err - Average: 0.0794; Min: 0.0398; Last: 0.1008
+  Saved model with validation MAE:: 0.0687
+  Saved model with min training MAE:: 0.0783
+
+  ===========================================================================
+  Real value | Predicted value | val_loss | val_mean_abs_err | % deviation
+  ---------------------------------------------------------------------------
+  1.210    | 1.229    | 0.0012    | 0.0194    | 1.6
+  1.050    | 1.065    | 0.0011    | 0.0153    | 1.5
+  0.850    | 1.021    | 0.0302    | 0.1712    | 20.1
+
+  ========================================================================  
+
+/Users/feranick/Desktop/BP3_Encoded_20210621_NF20210623/ML/p12/9

@@ -1,0 +1,63 @@
+  =============================================
+   MLP - Model Configuration
+  =============================================
+  Data size: (111, 9)
+
+  Training set file: ../Encoded_062121_NF20210623_train_fullDataSet-p13.txt
+  Testing set file: ../Encoded_062121_NF20210623_test_fullDataSet-p13.txt
+
+  Training set file datapoints: 111
+  Testing set file datapoints: 3
+
+  Number of learning labels: 1
+  Total number of points per data: 9
+  Number unique classes (training):  2
+  Number unique classes (validation): 1
+  Number unique classes (total):  2
+
+  ================================================
+   MLP - Parameters
+  ================================================
+  Optimizer: Adam 
+  Hidden layers: [7, 5, 3] 
+  Activation function: relu 
+  L2: 0.0001 
+  Dropout: 0.0 
+  Learning rate: 0.01 
+  Learning decay rate: 0.001
+  Batch size: 16
+  Epochs: 1000
+  Number of labels: 1
+  Stop at Best Model based on validation: False
+  Save Best Model based on validation: True
+  Metric for Best Classifier Model: accuracy
+
+  ========================================================
+   MLP - Classifier  - Training Summary
+  ========================================================
+
+  Accuracy - Average: 95.12%; Max: 97.30%; Last: 94.59%
+  Loss - Average: 0.0870; Min: 0.0780; Last: 0.0790
+
+
+  ========================================================
+   MLP - Classifier  - Validation Summary
+  ========================================================
+
+  Accuracy - Average: 99.90%; Max: 100.00%; Last: 100.00%
+  Loss - Average: 0.0052; Min: 0.0020; Last: 0.0030
+  Saved model with training accuracy:: 97.2973
+  ===========================================================
+  Real class	| Predicted class	| Probability
+  ---------------------------------------------------
+  1.00		| 1.00			| 100.00
+  1.00		| 1.00			| 100.00
+  1.00		| 1.00			| 100.00
+
+  ==========================================================
+
+ TensorFlow v. 2.5.0 
+
+ Total time: 26.9s or 0.4m or 0.0h 
+
+/Users/feranick/Desktop/BP3_Encoded_20210621_NF20210623/ML/p13/0

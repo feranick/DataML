@@ -1,0 +1,78 @@
+
+BP3_Encoded_20210604_NF20210608/ML/planar_3-fit/p11/1
+
+Model: "sequential"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+dense (Dense)                (None, 7)                 70        
+_________________________________________________________________
+dropout (Dropout)            (None, 7)                 0         
+_________________________________________________________________
+dense_1 (Dense)              (None, 5)                 40        
+_________________________________________________________________
+dropout_1 (Dropout)          (None, 5)                 0         
+_________________________________________________________________
+dense_2 (Dense)              (None, 3)                 18        
+_________________________________________________________________
+dropout_2 (Dropout)          (None, 3)                 0         
+_________________________________________________________________
+dense_3 (Dense)              (None, 1)                 4         
+=================================================================
+Total params: 132
+Trainable params: 132
+Non-trainable params: 0
+_________________________________________________________________
+
+  =============================================
+   MLP - Model Configuration
+  =============================================
+  Data size: (3410, 9)
+
+  Training set file: ../Encoded_060421_NF20210608_train_noisyFitP1P2P3-10_noisyFitP1P3P2-10_noisyFitP2P3P1-10cust6_fullDataSet-p11.txt
+  Testing set file: ../Encoded_060421_NF20210608_test_fullDataSet-p11.txt
+
+  Training set file datapoints: 3410
+  Testing set file datapoints: 3
+
+  Number of learning labels: 1
+  Total number of points per data: 9
+
+  ================================================
+   MLP - Parameters
+  ================================================
+  Optimizer: Adam 
+  Hidden layers: [7, 5, 3] 
+  Activation function: relu 
+  L2: 0.001 
+  Dropout: 0.0 
+  Learning rate: 0.01 
+  Learning decay rate: 0.0001
+  Batch size: 16
+  Number of labels: 1
+
+  ==========================================================
+   MLP - Regressor - Training Summary
+  ==========================================================
+  Loss - Average: 8.4659; Min: 8.1181; Last: 8.1181
+  Mean Abs Err - Average: 1.9202; Min: 1.8832; Last: 1.8858
+
+  ==========================================================
+   MLP - Regressor  - Validation Summary
+  ========================================================
+  Loss - Average: 2.5833; Min: 0.2634; Last: 3.3602
+  Mean Abs Err - Average: 1.1728; Min: 0.4319; Last: 1.4610
+  Saved model at min MAE:: 0.4319
+
+  ===========================================================================
+  Real value | Predicted value | val_loss | val_mean_abs_err | % deviation 
+  ---------------------------------------------------------------------------
+  18.930	| 18.120	| 0.7227	| 0.8096	| 4.3
+  19.280	| 18.892	| 0.2175	| 0.3877	| 2.0
+  16.460	| 16.559	| 0.0769	| 0.0985	| 0.6
+
+  ========================================================================  
+
+ TensorFlow v. 2.5.0 
+
+ Total time: 68.9s or 1.1m or 0.0h

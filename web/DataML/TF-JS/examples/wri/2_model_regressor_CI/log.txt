@@ -1,0 +1,55 @@
+DoECFdata/PitchData/20191010a/Targeted/ML4-4/CI/3_30unif6
+
+  =============================================
+   MLP - Model Configuration
+  =============================================
+  Data size: (780, 6)
+
+  Training set file: ML4-4_train_noisy-30uniform0.01-M-A_opc6_partialDataSet-p7.txt
+  Testing set file: ML4-4_partialDataSet-p7_test.txt
+
+  Training set file datapoints: 780
+  Testing set file datapoints: 2
+
+  Number of learning labels: 1
+  Total number of points per data: 6
+
+  ================================================
+   MLP - Parameters
+  ================================================
+  Optimizer: Adam 
+  Hidden layers: [15, 10, 5] 
+  Activation function: relu 
+  L2: 0.001 
+  Dropout: 0.0 
+  Learning rate: 0.01 
+  Learning decay rate: 0.0001
+  Batch size: 16
+  Number of labels: 1
+  Stop at Best Model based on validation: False
+  Save Best Model based on validation: True
+  Metric for Best Regression Model: mae
+
+  ==========================================================
+   MLP - Regressor - Training Summary
+  ==========================================================
+  Loss - Average: 12.5503; Min: 8.8348; Last: 9.0180
+  Mean Abs Err - Average: 2.6614; Min: 2.2396; Last: 2.2823
+
+  ==========================================================
+   MLP - Regressor  - Validation Summary
+  ========================================================
+  Loss - Average: 22.8179; Min: 4.4348; Last: 33.2584
+  Mean Abs Err - Average: 4.0107; Min: 1.8131; Last: 5.0381
+  Saved model with validation MAE:: 2.8036
+  Saved model with min training MAE:: 2.2396
+
+  ===========================================================================
+  Real value | Predicted value | val_loss | val_mean_abs_err | % deviation 
+  ---------------------------------------------------------------------------
+  34.890	| 40.033	| 26.5987	| 5.1432	| 14.7
+  84.160	| 84.624	| 0.3615	| 0.4640	| 0.6
+
+  ========================================================================  
+
+ TensorFlow v. 2.5.0 

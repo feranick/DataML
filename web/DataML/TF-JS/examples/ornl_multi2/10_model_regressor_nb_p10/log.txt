@@ -1,0 +1,80 @@
+DoECFdata/ORNL/ML/BP3_Encoded_20210604_NF20210609/ML/norm_vs_uniform/p10/1_not-best
+
+ 
+  =============================================
+   MLP - Model Configuration
+  =============================================
+  Data size: (3240, 9)
+
+  Training set file: ../random_noise/Encoded_060421_NF20210609_train_noisy-30normal0.002_cust6_fullDataSet-p10.txt
+  Testing set file: ../Encoded_060421_NF20210609_test_fullDataSet-p10.txt
+
+  Training set file datapoints: 3240
+  Testing set file datapoints: 3
+
+  Number of learning labels: 1
+  Total number of points per data: 9
+
+  ================================================
+   MLP - Parameters
+  ================================================
+  Optimizer: Adam 
+  Hidden layers: [7, 5, 3] 
+  Activation function: relu 
+  L2: 0.0001 
+  Dropout: 0.0 
+  Learning rate: 0.01 
+  Learning decay rate: 0.0001
+  Batch size: 128
+  Number of labels: 1
+  Stop at Best Model based on validation: False
+  Save Best Model based on validation: True
+  Metric for Best Regression Model: mae
+
+  ==========================================================
+   MLP - Regressor - Training Summary
+  ==========================================================
+  Loss - Average: 1410.0349; Min: 1278.4861; Last: 1283.7985
+  Mean Abs Err - Average: 25.2472; Min: 23.6102; Last: 23.7593
+
+  ==========================================================
+   MLP - Regressor  - Validation Summary
+  ========================================================
+  Loss - Average: 208.5726; Min: 41.5522; Last: 159.3493
+  Mean Abs Err - Average: 11.6487; Min: 5.8364; Last: 10.4542
+  Saved model with min training MAE:: 23.6102
+  Saved model with validation MAE:: 11.6080
+
+  ===========================================================================
+  Real value | Predicted value | val_loss | val_mean_abs_err | % deviation 
+  ---------------------------------------------------------------------------
+  225.020	| 220.607	| 19.6188	| 4.4129	| 2.0
+  236.860	| 215.485	| 457.0302	| 21.3749	| 9.0
+  173.690	| 182.726	| 81.7945	| 9.0360	| 5.2
+
+  ========================================================================  
+
+ TensorFlow v. 2.5.0 ====================================================
+   MLP - Regressor - Training Summary
+  ==========================================================
+  Loss - Average: 1410.0349; Min: 1278.4861; Last: 1283.7985
+  Mean Abs Err - Average: 25.2472; Min: 23.6102; Last: 23.7593
+
+  ==========================================================
+   MLP - Regressor  - Validation Summary
+  ========================================================
+  Loss - Average: 208.5726; Min: 41.5522; Last: 159.3493
+  Mean Abs Err - Average: 11.6487; Min: 5.8364; Last: 10.4542
+  Saved model with min training MAE:: 23.6102
+  Saved model with validation MAE:: 11.6080
+
+  ===========================================================================
+  Real value | Predicted value | val_loss | val_mean_abs_err | % deviation 
+  ---------------------------------------------------------------------------
+  225.020	| 220.607	| 19.6188	| 4.4129	| 2.0
+  236.860	| 215.485	| 457.0302	| 21.3749	| 9.0
+  173.690	| 182.726	| 81.7945	| 9.0360	| 5.2
+
+  ========================================================================  
+
+ TensorFlow v. 2.5.0 
