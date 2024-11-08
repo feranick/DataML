@@ -4,7 +4,7 @@
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
 * pyscript version
-* v2024.11.07.1
+* v2024.11.08.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -13,7 +13,6 @@
 import numpy as np
 import sys, configparser
 from pyscript import fetch, document
-import js
 import _pickle as pickle
 #import pickle
 
@@ -149,10 +148,9 @@ async def main(event):
     #df = pickle.loads(modelPkl)
     
     # Use this when opening modelPkl in JS
+    #import js
     #df = pickle.loads(js.modelPkl.to_py())
     
-    input_text = document.querySelector("#Entry0")
-    #output_div.innerText = "The Value for Entry0:", input_text.value;
     R = []
     for i in range(len(features.split(','))):
         R.append(int(document.querySelector("#Entry"+str(i)).value))
