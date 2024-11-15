@@ -3,7 +3,7 @@
 '''
 ***************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2024.11.14.1
+* v2024.11.15.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***************************************************
@@ -130,7 +130,21 @@ def main():
          print("Select model and run prediction.")
 
 #************************************
-# Prediction
+# Prediction - backend
+#************************************
+def getPrediction(dP, df, R, le):
+    if dP.regressor:
+        pred = df.predict(R)
+        pred_classes = None
+        proba = None
+    else:
+        pred = le.inverse_transform_bulk(df.predict(R))
+        pred_classes = le.inverse_transform_bulk(df.classes_)
+        proba = df.predict_proba(R)
+    return pred, pred_classes, proba
+
+#************************************
+# Prediction - frontend
 #************************************
 def predict(folder, testFile, features):
     dP = Conf(folder)
@@ -149,15 +163,15 @@ def predict(folder, testFile, features):
 
     with open(dP.modelName, "rb") as f:
         df = pickle.load(f)
-
+        
     if dP.regressor:
-        pred = df.predict(R)
+        le = None
     else:
         with open(dP.model_le, "rb") as f:
             le = pickle.load(f)
-        pred = le.inverse_transform_bulk(df.predict(R))
-        pred_classes = le.inverse_transform_bulk(df.classes_)
-        proba = df.predict_proba(R)
+
+    pred, pred_classes, proba = getPrediction(dP, df, R, le)
+
 
     print('\n==================================')
     if dP.regressor:
