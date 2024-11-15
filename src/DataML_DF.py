@@ -75,9 +75,7 @@ class Conf():
         self.rescaleForPCA = False
         
         self.verbose = 1
-        
-        self.saveAsTxt = True
-            
+                    
     def datamlDef(self):
         self.conf['Parameters'] = {
             'typeDF' : 'GradientBoosting',

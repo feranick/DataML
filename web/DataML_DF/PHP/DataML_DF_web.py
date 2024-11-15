@@ -3,7 +3,7 @@
 '''
 ***************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2024.11.15.1
+* v2024.11.15.2
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***************************************************
@@ -27,13 +27,22 @@ def DataML_DF_web():
 class Conf():
     def __init__(self, folder):
     
-        #############################
+        #################################
         ### Types of estimators:
+        ### Set using: typeDF
+        ### - GradientBoosting (default)
         ### - RandomForest
         ### - HistGradientBoosting
-        ### - GradientBoosting
         ### - DecisionTree
-        #############################
+        #################################
+        
+        ################################################
+        ### Types of training data generative method:
+        ### Set using: typeGenAddition
+        ### - NormalDistribution (default)
+        ### - DiffuseDistribution
+        ################################################
+        
         self.appName = "DataML_DF"
         confFileName = "DataML_DF.ini"
         self.configFile = os.getcwd()+"/"+folder+"/"+confFileName
@@ -84,6 +93,13 @@ class Conf():
             'numDimRedComp' : 3,
             'plotFeatImportance' : False,
             }
+    def datamlGenDef(self):
+        self.conf['Generative'] = {
+            'typeGenAddition' : 'NormalDistribution',
+            'numAddedGeneratedData' : 50,
+            'percDiffuseDistrMax' : 0.1,
+            'saveAsTxt' : True
+            }
     def sysDef(self):
         self.conf['System'] = {
             'random_state' : None,
@@ -94,6 +110,7 @@ class Conf():
         try:
             self.conf.read(configFile)
             self.datamlDef = self.conf['Parameters']
+            self.datamlGenDef = self.conf['Generative']
             self.sysDef = self.conf['System']
         
             self.typeDF = self.conf.get('Parameters','typeDF')
@@ -113,6 +130,11 @@ class Conf():
             self.typeDimRed = self.conf.get('Parameters','typeDimRed')
             self.numDimRedComp = self.conf.getint('Parameters','numDimRedComp')
             self.plotFeatImportance = self.conf.getboolean('Parameters','plotFeatImportance')
+            
+            self.typeGenAddition = self.conf.get('Generative','typeGenAddition')
+            self.numAddedGeneratedData = self.conf.getint('Generative','numAddedGeneratedData')
+            self.percDiffuseDistrMax = self.conf.getfloat('Generative','percDiffuseDistrMax')
+            self.saveAsTxt = self.conf.getboolean('Generative','saveAsTxt')
             
             self.random_state = eval(self.sysDef['random_state'])
             self.n_jobs = self.conf.getint('System','n_jobs')
@@ -171,7 +193,6 @@ def predict(folder, testFile, features):
             le = pickle.load(f)
 
     pred, pred_classes, proba = getPrediction(dP, df, R, le)
-
 
     print('\n==================================')
     if dP.regressor:
