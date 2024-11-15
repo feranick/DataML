@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2024.11.15.1
+* v2024.11.15.2
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -34,6 +34,12 @@ class Conf():
         ### - HistGradientBoosting
         ### - DecisionTree
         #################################
+        
+        ################################################
+        ### Types of training data generative method:
+        ### - NormalDistribution (default)
+        ### - DiffuseDistribution
+        ################################################
         
         self.appName = "DataML_DF"
         confFileName = "DataML_DF.ini"
@@ -67,6 +73,8 @@ class Conf():
         self.rescaleForPCA = False
         
         self.verbose = 1
+        
+        self.saveAsTxt = True
             
     def datamlDef(self):
         self.conf['Parameters'] = {
@@ -88,6 +96,13 @@ class Conf():
             'numDimRedComp' : 3,
             'plotFeatImportance' : False,
             }
+    def datamlGenDef(self):
+        self.conf['Generative'] = {
+            'typeGenAddition' : 'NormalDistribution',
+            'numAddedGeneratedData' : 50,
+            'percDiffuseDistrMax' : 0.1,
+            'saveAsTxt' : True
+            }
     def sysDef(self):
         self.conf['System'] = {
             'random_state' : None,
@@ -98,6 +113,7 @@ class Conf():
         try:
             self.conf.read(configFile)
             self.datamlDef = self.conf['Parameters']
+            self.datamlGenDef = self.conf['Generative']
             self.sysDef = self.conf['System']
         
             self.typeDF = self.conf.get('Parameters','typeDF')
@@ -117,6 +133,11 @@ class Conf():
             self.typeDimRed = self.conf.get('Parameters','typeDimRed')
             self.numDimRedComp = self.conf.getint('Parameters','numDimRedComp')
             self.plotFeatImportance = self.conf.getboolean('Parameters','plotFeatImportance')
+            
+            self.typeGenAddition = self.conf.get('Generative','typeGenAddition')
+            self.numAddedGeneratedData = self.conf.getint('Generative','numAddedGeneratedData')
+            self.percDiffuseDistrMax = self.conf.getfloat('Generative','percDiffuseDistrMax')
+            self.saveAsTxt = self.conf.getboolean('Generative','saveAsTxt')
             
             self.random_state = eval(self.sysDef['random_state'])
             self.n_jobs = self.conf.getint('System','n_jobs')
@@ -403,7 +424,6 @@ def train(learnFile, testFile, normFile):
 def generative(learnFile, normFile):
     dP = Conf()
     import sklearn
-    
     En, A, Cl, M = readLearnFile(learnFile, dP)
     
     if normFile is not None:
@@ -426,22 +446,62 @@ def generative(learnFile, normFile):
         with open(dP.model_le, "rb") as f:
             le = pickle.load(f)
     
-    R = [A[0]]
-    print(R)
-    print(A.shape)
+    if dP.typeGenAddition == 'NormalDistribution':
+        newM, tag = createNormalDist(dP, df, A, M, le)
+    elif dP.typeGenAddition == 'DiffuseDistribution':
+        newM, tag = createDiffuseDist(dP, df, A, M, le)
+    else:
+        return;
+        
+    saveLearnFile(dP, newM, learnFile, tag)
     
-    print(M)
-    print(M.shape)
-    
+#******************************************************
+# Create new Training data from normal distribution
+# within each feacture column
+#******************************************************
+def createNormalDist(dP, df, A, M, le):
     newM = np.copy(M)
+    A_min = A.min(axis=0)
+    A_max = A.max(axis=0)
+    A_mean = np.mean(A, axis=0)
+    A_std = A.std(axis=0)
     
-    for i in range(A.shape[0]):
-        pred, pred_classes, proba = getPrediction(dP, df, [A[i]], le)
-        tmp = np.hstack([pred, A[i]])
-        newM = np.vstack([newM, tmp])
+    for i in range(dP.numAddedGeneratedData):
+        A_tmp = []
+        for j in range(A.shape[1]):
+            tmp =  np.random.normal(A_mean[j], A_std[j], 1)
+            if tmp<0:
+                tmp=-tmp
+            A_tmp = np.hstack([A_tmp, tmp])
+        pred, pred_classes, proba = getPrediction(dP, df, [A_tmp], le)
+        M_tmp = np.hstack([pred, A_tmp])
+        newM = np.vstack([newM, M_tmp])
+    return newM, "_normal-random-n"+str(dP.numAddedGeneratedData)
 
-    print(newM)
-    print(newM.shape)
+#******************************************************
+# Create new Training data by adding a percentage of the max
+# for that feature
+#******************************************************
+def createDiffuseDist(dP, df, A, M, le):
+    import random
+    newM = np.copy(M)
+    A_min = A.min(axis=0)
+    A_max = A.max(axis=0)
+    A_mean = np.mean(A, axis=0)
+    A_std = A.std(axis=0)
+        
+    for i in range(A.shape[0]):
+        for h in range(int(dP.numAddedGeneratedData)):
+            A_tmp = []
+            for j in range(A.shape[1]):
+                tmp =  A[i][j]+A_max[j]*(np.random.uniform(-dP.percDiffuseDistrMax, dP.percDiffuseDistrMax, 1))
+                if tmp<0:
+                    tmp=-tmp
+                A_tmp = np.hstack([A_tmp, tmp])
+            pred, pred_classes, proba = getPrediction(dP, df, [A_tmp], le)
+            M_tmp = np.hstack([pred, A_tmp])
+        newM = np.vstack([newM, M_tmp])
+    return newM, "_diffuse-random-perc"+str(dP.percDiffuseDistrMax)+"-n"+str(dP.numAddedGeneratedData*A.shape[0])
 
 #************************************
 # Prediction - backend

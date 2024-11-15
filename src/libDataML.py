@@ -2,7 +2,7 @@
 '''
 **************************************************
 * libDataML - Library for DataML/DataML_DF
-* v2024.11.15.1
+* v2024.11.15.2
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
@@ -314,6 +314,22 @@ def readLearnFile(learnFile, dP):
         Cl = M[1:,[0,dP.numLabels-1]]
 
     return En, A, Cl, M
+    
+#***************************************
+# Save new learning Data
+#***************************************
+def saveLearnFile(dP, M, learnFile, tag):
+    learnFileRoot = os.path.splitext(learnFile)[0]
+    if dP.saveAsTxt == True:
+        learnFileRoot += tag + '.txt'
+        print("  Saving new training file (txt) in:", learnFileRoot+"\n")
+        with open(learnFileRoot, 'ab') as f:
+            np.savetxt(f, M, delimiter='\t', fmt='%10.6f')
+    else:
+        learnFileRoot += tag + '.h5'
+        print("  Saving new training file (hdf5) in: "+learnFileRoot+"\n")
+        with h5py.File(learnFileRoot, 'w') as hf:
+            hf.create_dataset("M",  data=M)
 
 #************************************
 # Open Testing Data
