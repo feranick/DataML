@@ -2,7 +2,7 @@
 '''
 **************************************************
 * libDataML - Library for DataML/DataML_DF
-* v2024.11.08.1
+* v2024.11.14.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
@@ -102,9 +102,6 @@ class CustomRound:
 # MultiClassReductor
 #************************************
 class MultiClassReductor():
-    def __self__(self):
-        self.name = name
-    
     def fit(self,tc):
         self.totalClass = tc.tolist()
     
@@ -272,7 +269,6 @@ def checkTFVersion(vers):
 # Convert model to quantized TFlite
 #****************************************************
 def convertTflite(learnFile, dP):
-    dP = Conf()
     dP.useTFlitePred = False
     dP.TFliteRuntime = False
     dP.runCoralEdge = False
@@ -519,9 +515,9 @@ def statsPCA(En, A_r, Cl, dP):
 #************************************
 def preAutoencoder(learnFile, validFile, dP):
     En, A, Cl = readLearnFile(learnFile, dP)
-    A_encoded = runAutoencoder(A, dP)
+    A_encoded = runAutoencoder(A, dP, Cl)
     
-def runAutoencoder(A, dP):
+def runAutoencoder(A, dP, Cl):
     if checkTFVersion("2.16.0"):
         import tensorflow.keras as keras
     else:
@@ -566,7 +562,7 @@ def runAutoencoder(A, dP):
         plt.figure(figsize=(8,4))
         plt.subplot(121)
         plt.title('Autoencoder')
-        plt.scatter(Zpca[:,0], Zpca[:,1], c=Cl[:], s=8, cmap='tab10')
+        plt.scatter(Zenc[:,0], Zenc[:,1], c=Cl[:], s=8, cmap='tab10')
         plt.gca().get_xaxis().set_ticklabels([])
         plt.gca().get_yaxis().set_ticklabels([])
 

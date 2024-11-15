@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.11.08.1
+* v2024.11.14.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -355,7 +355,7 @@ def train(learnFile, testFile, normFile):
     if dP.runDimRedFlag:
         print("  Dimensionality Reduction via:",dP.typeDimRed,"\n")
         if dP.typeDimRed == 'Autoencoder':
-            A = runAutoencoder(A, dP)
+            A = runAutoencoder(A, dP, Cl2)
         else:
             A = runPCA(A, dP.numDimRedComp, dP)
             if testFile is not None:
@@ -712,6 +712,8 @@ def predict(testFile, normFile):
             print('  ==========================================================\n')
 
         else:
+            pass
+            '''
             print('\n ============================================')
             print('\033[1m' + ' Predicted value \033[0m(probability = ' + str(predProb) + '%)')
             print(' ============================================\n')
@@ -719,6 +721,7 @@ def predict(testFile, normFile):
             print("  2:",str(predValue[1]),"%")
             print("  3:",str((predValue[1]/0.5)*(100-99.2-.3)),"%\n")
             print(' ============================================\n')
+            '''
 
 #************************************
 # Batch Prediction
