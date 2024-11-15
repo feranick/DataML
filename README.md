@@ -139,6 +139,9 @@ Train (Random cross validation):
  Batch predict on validation data in single file (labels normalized with pkl file):
   `DataML_DF -v <singleValidationFile> <pkl normalization file>`
   
+ Generate new training set using normal or diffused randomization on each feature:
+  `DataML_DF -g <learningFile> <pkl normalization file>`
+  
  Evaluate principal component analysis (PCA) - EXPERIMENTAL:
   `DataML_DF -c <learningFile>`
   `DataML_DF -c <learningFile> <validFile-optional>`
@@ -147,13 +150,23 @@ Train (Random cross validation):
   `DataML_DF -a <learningFile>`
   `DataML_DF -a <learningFile> <validFile-optional>`
   
-###Note: 
-Three different dimention reduction methods are supported and can be selected using the `typeDimRed` flag:
+###Notes: 
+Available Decision forests estimators that can be set using the `typeDF` flag:
+- `GradientBoosting` (default)
+- `RandomForest`
+- `HistGradientBoosting`
+- `DecisionTree`
+
+Available methods for augmenting training data, using working models to get classes. It can be set using the `typeDimRed` flag:
+- `NormalDistribution` (default): Random normal distribution from mean and stdev from each feature
+- `DiffuseDistribution`: Adding random percentage from the max to each feature.
+
+Available dimension reduction methods that can be selected using the `typeDimRed` flag:
 - `SparsePCA`
 - `PCA`
 - `TruncatedSVD`
 - `Autoencoder`
-
+    
 Formatting input file for training
 ========================
 The main idea behind the software is to train classification or regression models from raw data. So, suppose one has training files similar to this, where the first column is the a progressive index the second is the value of the quantity for a specific parameter:

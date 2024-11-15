@@ -29,6 +29,7 @@ class Conf():
     
         #################################
         ### Types of estimators:
+        ### Set using: typeDF
         ### - GradientBoosting (default)
         ### - RandomForest
         ### - HistGradientBoosting
@@ -37,6 +38,7 @@ class Conf():
         
         ################################################
         ### Types of training data generative method:
+        ### Set using: typeGenAddition
         ### - NormalDistribution (default)
         ### - DiffuseDistribution
         ################################################

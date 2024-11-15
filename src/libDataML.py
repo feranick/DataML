@@ -787,10 +787,15 @@ def usage(name):
     print('  ',name,'-a <learningFile> <validFile-optional>\n')
     
     if name == 'DataML_DF':
-        print(' Types of estimators:')
+        print(' Generate new training set using normal or diffused randomization on each feature:')
+        print('  ',name,'-g <learningFile> <pkl normalization file>')
+        print('\n Types of estimators:')
         print(' - RandomForest')
         print(' - HistGradientBoosting')
         print(' - GradientBoosting')
-        print(' - DecisionTree\n')
+        print(' - DecisionTree')
+        print('\n Types of randization generatige methods:')
+        print(' - NormalDistribution')
+        print(' - DiffuseDistribution\n')
     
     print(' Requires python 3.x. Not compatible with python 2.x\n')
