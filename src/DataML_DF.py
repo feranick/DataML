@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2024.11.08.1
+* v2024.11.15.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -143,7 +143,7 @@ def main():
     
     try:
         opts, args = getopt.getopt(sys.argv[1:],
-            "tpbvcah:", ["train", "predict", "batch", "validbatch", "comp", "autoencoder", "help"])
+            "tpbvgcah:", ["train", "predict", "batch", "validbatch", "generative", "comp", "autoencoder", "help"])
     except:
         usage(dP.appName)
         sys.exit(2)
@@ -192,6 +192,13 @@ def main():
                 validBatchPredict(sys.argv[2], None)
             else:
                 validBatchPredict(sys.argv[2], sys.argv[3])
+            #except:
+            #    usage(dP.appName)
+            #    sys.exit(2)
+            
+        if o in ("-g" , "--generative"):
+            #try:
+                generative(sys.argv[2], None)
             #except:
             #    usage(dP.appName)
             #    sys.exit(2)
@@ -388,9 +395,23 @@ def train(learnFile, testFile, normFile):
         plotImportances(df, A_test, Cl2_test, dP)
     
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
-    
+
 #************************************
-# Prediction
+# Prediction - backend
+#************************************
+def getPrediction(dP, df, R, le):
+    if dP.regressor:
+        pred = df.predict(R)
+        pred_classes = None
+        proba = None
+    else:
+        pred = le.inverse_transform_bulk(df.predict(R))
+        pred_classes = le.inverse_transform_bulk(df.classes_)
+        proba = df.predict_proba(R)
+    return pred, pred_classes, proba
+
+#************************************
+# Prediction - frontend
 #************************************
 def predict(testFile, normFile):
     dP = Conf()
@@ -413,15 +434,14 @@ def predict(testFile, normFile):
             
     with open(dP.modelName, "rb") as f:
         df = pickle.load(f)
-    
+        
     if dP.regressor:
-        pred = df.predict(R)
+        le = None
     else:
         with open(dP.model_le, "rb") as f:
             le = pickle.load(f)
-        pred = le.inverse_transform_bulk(df.predict(R))
-        pred_classes = le.inverse_transform_bulk(df.classes_)
-        proba = df.predict_proba(R)
+    
+    pred, pred_classes, proba = getPrediction(dP, df, R, le)
         
     print('\n  ================================================================================')
     print('  \033[1m',dP.typeDF,dP.mode,'\033[0m')
@@ -464,6 +484,7 @@ def batchPredict(folder, normFile):
     
     if dP.regressor:
         summaryFile = np.vstack((summaryFile,['File Name','Predicted Value','']))
+        le = None
     else:
         with open(dP.model_le, "rb") as f:
             le = pickle.load(f)
@@ -481,12 +502,9 @@ def batchPredict(folder, normFile):
             R = runPCAValid(R, dP)
         
         if good:
-            if dP.regressor:
-                pred.append(df.predict(R))
-            else:
-                pred.append(le.inverse_transform_bulk(df.predict(R)))
-                pred_classes = le.inverse_transform_bulk(df.classes_)
-                proba.append(df.predict_proba(R))
+            predtmp, pred_classes, probatmp = getPrediction(dP, df, R, le)
+            pred.append(predtmp)
+            proba.append(probatmp)
             fileName.append(file)
     
     print('\n  ================================================================================')
@@ -572,7 +590,14 @@ def validBatchPredict(testFile, normFile):
     
     saveSummaryFile(summaryFile, dP)
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
-    
+
+#************************************************************
+# Generate learning dataset from randomized features with
+# class predicted with predict()
+#************************************************************
+def generative(testFile, normFile):
+    pass
+
 #***********************************************************
 # Save Plots with the model importance
 #************************************************************
