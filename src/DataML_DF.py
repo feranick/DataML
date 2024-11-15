@@ -264,7 +264,7 @@ def train(learnFile, testFile, normFile):
 
     En, A, Cl, _ = readLearnFile(learnFile, dP)
     if testFile is not None:
-        En_test, A_test, Cl_test = readLearnFile(testFile, dP)
+        En_test, A_test, Cl_test, _ = readLearnFile(testFile, dP)
         totA = np.vstack((A, A_test))
         totCl = np.append(Cl, Cl_test)
     else:
