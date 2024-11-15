@@ -1,0 +1,60 @@
+BP3_Encoded_20210604_NF20210608/ML/random_noise/p13/1
+
+ =============================================
+   MLP - Model Configuration
+  =============================================
+  Data size: (4740, 9)
+
+  Training set file: ../Encoded_060421_NF20210608_wLit_train_noisy-30cust6_fullDataSet-p13.txt
+  Testing set file: ../Encoded_060421_NF20210608_test_fullDataSet-p13.txt
+
+  Training set file datapoints: 4740
+  Testing set file datapoints: 3
+
+  Number of learning labels: 1
+  Total number of points per data: 9
+  Number unique classes (training):  2
+  Number unique classes (validation): 1
+  Number unique classes (total):  2
+
+  ================================================
+   MLP - Parameters
+  ================================================
+  Optimizer: Adam 
+  Hidden layers: [7, 5, 3] 
+  Activation function: relu 
+  L2: 0.0001 
+  Dropout: 0.0 
+  Learning rate: 0.01 
+  Learning decay rate: 0.001
+  Batch size: 16
+  Number of labels: 1
+
+  ========================================================
+   MLP - Classifier  - Training Summary
+  ========================================================
+
+  Accuracy - Average: 96.71%; Max: 96.92%; Last: 96.65%
+  Loss - Average: 0.0545; Min: 0.0528; Last: 0.0528
+
+
+  ========================================================
+   MLP - Classifier  - Validation Summary
+  ========================================================
+
+  Accuracy - Average: 100.00%; Max: 100.00%; Last: 100.00%
+  Loss - Average: 0.0031; Min: 0.0023; Last: 0.0032
+  Saved model at max accuracy:: 100.0000
+
+  ===========================================================
+  Real class	| Predicted class	| Probability
+  ---------------------------------------------------
+  1.00		| 1.00			| 100.00
+  1.00		| 1.00			| 100.00
+  1.00		| 1.00			| 100.00
+
+  ==========================================================
+
+ TensorFlow v. 2.5.0 
+
+ Total time: 89.1s or 1.5m or 0.0h

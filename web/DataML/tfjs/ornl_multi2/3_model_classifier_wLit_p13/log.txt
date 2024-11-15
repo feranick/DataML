@@ -1,0 +1,58 @@
+/Users/feranick/Desktop/BP3_Encoded_20210604_NF20210609/ML/random_noise/p13/wLit/1
+
+ =============================================
+   MLP - Model Configuration
+  =============================================
+  Data size: (4680, 9)
+
+  Training set file: ../Encoded_060421_NF20210609_wLit_train_noisy-30cust6_fullDataSet-p13.txt
+  Testing set file: ../Encoded_060421_NF20210609_test_fullDataSet-p13.txt
+
+  Training set file datapoints: 4680
+  Testing set file datapoints: 3
+
+  Number of learning labels: 1
+  Total number of points per data: 9
+  Number unique classes (training):  2
+  Number unique classes (validation): 1
+  Number unique classes (total):  2
+
+  ================================================
+   MLP - Parameters
+  ================================================
+  Optimizer: Adam 
+  Hidden layers: [7, 5, 3] 
+  Activation function: relu 
+  L2: 0.0001 
+  Dropout: 0.0 
+  Learning rate: 0.01 
+  Learning decay rate: 0.001
+  Batch size: 16
+  Number of labels: 1
+
+  ========================================================
+   MLP - Classifier  - Training Summary
+  ========================================================
+
+  Accuracy - Average: 96.92%; Max: 97.18%; Last: 96.94%
+  Loss - Average: 0.0543; Min: 0.0527; Last: 0.0528
+
+
+  ========================================================
+   MLP - Classifier  - Validation Summary
+  ========================================================
+
+  Accuracy - Average: 100.00%; Max: 100.00%; Last: 100.00%
+  Loss - Average: 0.0024; Min: 0.0020; Last: 0.0024
+  Saved model at max accuracy:: 100.0000
+
+  ===========================================================
+  Real class	| Predicted class	| Probability
+  ---------------------------------------------------
+  1.00		| 1.00			| 100.00
+  1.00		| 1.00			| 100.00
+  1.00		| 1.00			| 100.00
+
+  ==========================================================
+
+ TensorFlow v. 2.5.0

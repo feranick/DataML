@@ -1,0 +1,58 @@
+/Users/feranick/Desktop/Data/DoECFdata/ORNL/ML/BP3_Encoded_20210604_NF20210609/ML/norm_vs_uniform/p12/2_not-best
+
+ =============================================
+   MLP - Model Configuration
+  =============================================
+  Data size: (3240, 9)
+
+  Training set file: ../Encoded_060421_NF20210609_train_noisy-30normal0.002_cust6_fullDataSet-p12.txt
+  Testing set file: ../Encoded_060421_NF20210609_test_fullDataSet-p12.txt
+
+  Training set file datapoints: 3240
+  Testing set file datapoints: 3
+
+  Number of learning labels: 1
+  Total number of points per data: 9
+
+  ================================================
+   MLP - Parameters
+  ================================================
+  Optimizer: Adam 
+  Hidden layers: [7, 5, 3] 
+  Activation function: relu 
+  L2: 1e-05 
+  Dropout: 0.0 
+  Learning rate: 0.01 
+  Learning decay rate: 0.0001
+  Batch size: 16
+  Number of labels: 1
+  Stop at Best Model based on validation: False
+  Save Best Model based on validation: True
+  Metric for Best Regression Model: mae
+
+  ==========================================================
+   MLP - Regressor - Training Summary
+  ==========================================================
+  Loss - Average: 0.0341; Min: 0.0324; Last: 0.0326
+  Mean Abs Err - Average: 0.1214; Min: 0.1164; Last: 0.1169
+
+  ==========================================================
+   MLP - Regressor  - Validation Summary
+  ========================================================
+  Loss - Average: 0.0046; Min: 0.0029; Last: 0.0037
+  Mean Abs Err - Average: 0.0543; Min: 0.0385; Last: 0.0533
+  Saved model with min training MAE:: 0.1164
+  Saved model with validation MAE:: 0.0557
+
+  ===========================================================================
+  Real value | Predicted value | val_loss | val_mean_abs_err | % deviation 
+  ---------------------------------------------------------------------------
+  1.210	| 1.172	| 0.0019	| 0.0376	| 3.1
+  1.050	| 1.110	| 0.0041	| 0.0603	| 5.7
+  1.090	| 1.021	| 0.0053	| 0.0691	| 6.3
+
+  ========================================================================  
+
+ TensorFlow v. 2.5.0 
+
+ Total time: 149.3s or 2.5m or 0.0h 

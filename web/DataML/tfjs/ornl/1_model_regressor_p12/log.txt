@@ -1,0 +1,55 @@
+/Users/feranick/Desktop/BP3_Encoded_20210621_NF20210623/ML/p12/0
+
+ =============================================
+   MLP - Model Configuration
+  =============================================
+  Data size: (111, 9)
+
+  Training set file: ../Encoded_062121_NF20210623_train_fullDataSet-p12.txt
+  Testing set file: ../Encoded_062121_NF20210623_test_fullDataSet-p12.txt
+
+  Training set file datapoints: 111
+  Testing set file datapoints: 3
+
+  Number of learning labels: 1
+  Total number of points per data: 9
+
+  ================================================
+   MLP - Parameters
+  ================================================
+  Optimizer: Adam 
+  Hidden layers: [10, 8, 6, 4, 2] 
+  Activation function: relu 
+  L2: 0.0001 
+  Dropout: 0.0 
+  Learning rate: 0.01 
+  Learning decay rate: 0.0001
+  Batch size: 16
+  Epochs: 895
+  Number of labels: 1
+  Stop at Best Model based on validation: False
+  Save Best Model based on validation: True
+  Metric for Best Regression Model: mae
+
+  ==========================================================
+   MLP - Regressor - Training Summary
+  ==========================================================
+  Loss - Average: 0.0475; Min: 0.0381; Last: 0.0406
+  Mean Abs Err - Average: 0.1501; Min: 0.1258; Last: 0.1311
+
+  ==========================================================
+   MLP - Regressor  - Validation Summary
+  ========================================================
+  Loss - Average: 0.0104; Min: 0.0055; Last: 0.0071
+  Mean Abs Err - Average: 0.0744; Min: 0.0416; Last: 0.0632
+  Saved model with validation MAE:: 0.0490
+  Saved model with min training MAE:: 0.1258
+
+  ===========================================================================
+  Real value | Predicted value | val_loss | val_mean_abs_err | % deviation 
+  ---------------------------------------------------------------------------
+  1.210	| 1.124	| 0.0101	| 0.0862	| 7.1
+  1.050	| 1.084	| 0.0038	| 0.0338	| 3.2
+  0.850	| 0.877	| 0.0034	| 0.0271	| 3.2
+
+  ===========================================

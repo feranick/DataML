@@ -1,0 +1,154 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>WYO-MIT ML - Composite -> Fiber </title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"></script>
+</head>
+<body>
+  <div id="wrap">
+    <h1>WYO-MIT ML</h1>
+    <h2>Composite -> Fiber</h1>
+    <form name="wyoml" action="javascript:void(0);" id="wyoml">
+      ML models: 20210726
+      <br><br>
+      COMPOSITE Properties
+      <br><br>E11_composite: <input name="c1" value="210.8" size="12" maxlength="12" type="text" id="c1"><br>
+      <br>E22_E33_composite: <input name="c2" value="7.1" size="12" maxlength="12" type="text" id="c2"><br>
+      <br>G12_G13_composite: <input name="c3" value="2.4" size="12" maxlength="12" type="text" id="c3"><br>
+      <br>v12_v13_composite: <input name="c4" value="0.39" size="12" maxlength="12" type="text" id="c4"><br>
+      <br>v23_composite: <input name="c5" value="0.7" size="12" maxlength="12" type="text" id="c5"><br>
+      <br>FVF: <input name="c6" value="0.43" size="12" maxlength="12" type="text" id="c6"><br>
+      <br>E_matrix: <input name="c7" value="3.3" size="12" maxlength="12" type="text" id="c7"><br>
+      <br>v_matrix: <input name="c8" value="0.43" size="12" maxlength="12" type="text" id="c8"><br>
+      
+      
+      <br><div id="info"></div><br>
+      <input type="submit" value="Predict" class="btn"/><br>
+      <br>
+      FIBER Properties
+      <br>
+      <div id="list1"></div>
+      <div id="list2"></div>
+      <div id="list3"></div>
+      <div id="list4"></div>
+      <div id="list5"></div>
+      
+  </form>
+  </div>
+  
+<script type="text/javascript">
+
+  function setVariables() {
+    Xmax_F_E11 = [4.0,0.45,371.7898,13.914589,6.4756,0.44033787,0.78672594,0.75];
+    Xmin_F_E11 = [1.0,0.3,24.676718,1.2882799,0.4628,0.21886805,0.3209443,0.3];
+    dmax_F_E11 = 500.0;
+    dmin_F_E11 = 80.0;
+    
+    Xmax_F_E22_E33 = [4.0,0.45,371.7898,13.923995,6.4756,0.44033787,0.78672594,0.75];
+    Xmin_F_E22_E33 = [1.0,0.3,24.676718,1.2882799,0.4628,0.21886805,0.3209443,0.3];
+    dmax_F_E22_E33 = 20.0;
+    dmin_F_E22_E33 = 2.0;
+     
+    Xmax_F_G13_G12 = [4.0,0.45,371.7898,13.923995,6.4756,0.44033787,0.78672594,0.75];
+    Xmin_F_G13_G12 = [1.0,0.3,24.676718,1.2882799,0.4628,0.21886805,0.3209443,0.3];
+    dmax_F_G13_G12 = 15.0;
+    dmin_F_G13_G12 = 1.0;
+    
+    Xmax_F_v12_v13 = [4.0,0.45,370.37097,13.923995,6.4756,0.44033787,0.78672594,0.75];
+    Xmin_F_v12_v13 = [1.0,0.3,24.676718,1.2882799,0.4628,0.21886805,0.3209443,0.3];
+    dmax_F_v12_v13 = 0.4;
+    dmin_F_v12_v13 = 0.2;
+    
+    Xmax_F_v23 = [4.0,0.45,371.7898,13.923995,6.4756,0.44033787,0.78672594,0.75];
+    Xmin_F_v23 = [1.0,0.3,24.676718,1.2882799,0.4628,0.21886805,0.3209443,0.3];
+    dmax_F_v23 = 0.7;
+    dmin_F_v23 = 0.3;
+    
+    prec = 2;
+    }
+
+  class L2 {
+    static className = 'L2';
+    constructor(config) {
+        return tf.regularizers.l1l2(config)
+        }
+   }
+   tf.serialization.registerClass(L2);
+  
+ function getData(){
+    var c1=document.wyoml.c1.value *1;
+    var c2=document.wyoml.c2.value *1;
+    var c3=document.wyoml.c3.value *1;
+    var c4=document.wyoml.c4.value *1;
+    var c5=document.wyoml.c5.value *1;
+    var c6=document.wyoml.c6.value *1;
+    var c7=document.wyoml.c7.value *1;
+    var c8=document.wyoml.c8.value *1;
+        
+    var data = [c7,c8,c1,c2,c3,c4,c5,c6];
+    console.info(data);
+    return data;
+    }
+    
+  async function submitPredict(){
+    var X_raw = getData();
+    
+    const model_F_E11 = await tf.loadLayersModel(modName("Fiber_Prop_E11_js"));
+    const model_F_E22_E33 = await tf.loadLayersModel(modName("Fiber_Prop_E22_E33_js"));
+    const model_F_G13_G12 = await tf.loadLayersModel(modName("Fiber_Prop_G13_G12_js"));
+    const model_F_v12_v13 = await tf.loadLayersModel(modName("Fiber_Prop_v12_v13_js"));
+    const model_F_v23 = await tf.loadLayersModel(modName("Fiber_Prop_v23_js"));
+    
+    var X_F_E11 = X_raw.map((a, i) => (a - Xmin_F_E11[i])/(Xmax_F_E11[i]-Xmin_F_E11[i]));
+    var X_F_E22_E33 = X_raw.map((a, i) => (a - Xmin_F_E22_E33[i])/(Xmax_F_E22_E33[i]-Xmin_F_E22_E33[i]));
+    var X_F_G12_G13 = X_raw.map((a, i) => (a - Xmin_F_G13_G12[i])/(Xmax_F_G13_G12[i]-Xmin_F_G13_G12[i]));
+    var X_F_v12_v13 = X_raw.map((a, i) => (a-Xmin_F_v12_v13[i])/(Xmax_F_v12_v13[i]-Xmin_F_v12_v13[i]));
+    var X_F_v23 = X_raw.map((a, i) => (a-Xmin_F_v23[i])/(Xmax_F_v23[i]-Xmin_F_v23[i]));
+    
+    console.info(X_F_G12_G13);
+    console.info(X_F_v12_v13);
+    console.info(X_F_v23);
+    
+    const tX_F_E11 = tf.tensor2d([X_F_E11]);
+    const tX_F_E22_E33 = tf.tensor2d([X_F_E22_E33]);
+    const tX_F_G12_G13 = tf.tensor2d([X_F_G12_G13]);
+    const tX_F_v12_v13 = tf.tensor2d([X_F_v12_v13]);
+    const tX_F_v23 = tf.tensor2d([X_F_v23]);
+    
+    const pred_F_E11 = model_F_E11.predict(tX_F_E11).dataSync()[0];
+    const pred_F_E22_E33 = model_F_E22_E33.predict(tX_F_E22_E33).dataSync()[0];
+    const pred_F_G12_G13 = model_F_G13_G12.predict(tX_F_G12_G13).dataSync()[0];
+    const pred_F_v12_v13 = model_F_v12_v13.predict(tX_F_v12_v13).dataSync()[0];
+    const pred_F_v23 = model_F_v23.predict(tX_F_v23).dataSync()[0];
+    
+    aPred_F_E11 = pred_F_E11*(dmax_F_E11-dmin_F_E11)+dmin_F_E11;
+    aPred_F_E22_E33 = pred_F_E22_E33*(dmax_F_E22_E33-dmin_F_E22_E33)+dmin_F_E22_E33;
+    aPred_F_G12_G13 = pred_F_G12_G13*(dmax_F_G13_G12-dmin_F_G13_G12)+dmin_F_G13_G12;
+    aPred_F_v12_v13 = pred_F_v12_v13*(dmax_F_v12_v13-dmin_F_v12_v13)+dmin_F_v12_v13;
+    aPred_F_v23 = pred_F_v23*(dmax_F_v23-dmin_F_v23)+dmin_F_v23;
+    
+    document.getElementById("list1").innerText = 'E11: '+(aPred_F_E11).toFixed(prec)+" GPa";
+    document.getElementById("list2").innerText = 'E22=E33: '+(aPred_F_E22_E33).toFixed(prec)+" GPa";
+    document.getElementById("list3").innerText = 'G12=G13: '+(aPred_F_G12_G13).toFixed(prec)+" GPa";
+    document.getElementById("list4").innerText = 'v12=v13: '+(aPred_F_v12_v13).toFixed(prec);
+    document.getElementById("list5").innerText = 'v23: '+(aPred_F_v23).toFixed(prec);
+    
+    }
+  
+ function modName(folder) {
+    const model = './'+folder+'/model.json';
+    return model;
+    }
+
+ window.onload = function() {
+ setVariables();
+ submitPredict();
+ }
+
+ document.getElementById('wyoml').addEventListener('submit', submitPredict, false);
+ 
+</script>
+</body>
+</html>
+

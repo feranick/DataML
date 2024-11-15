@@ -1,0 +1,121 @@
+/Users/feranick/Desktop/Data/DoECFdata/ORNL/ML/BP3_Encoded_20210604_NF20210609/ML/norm_vs_uniform/p11/2_not-best
+
+  Epoch 01995: mae did not improve from 1.18004
+Epoch 1996/2000
+210/210 - 0s - loss: 4.7775 - mae: 1.1825 - val_loss: 1.0735 - val_mae: 0.7616
+
+Epoch 01996: mae did not improve from 1.18004
+Epoch 1997/2000
+210/210 - 0s - loss: 4.7715 - mae: 1.1820 - val_loss: 0.9058 - val_mae: 0.6335
+
+Epoch 01997: mae did not improve from 1.18004
+Epoch 1998/2000
+210/210 - 0s - loss: 4.7719 - mae: 1.1832 - val_loss: 0.9818 - val_mae: 0.6943
+
+Epoch 01998: mae did not improve from 1.18004
+Epoch 1999/2000
+210/210 - 0s - loss: 4.7766 - mae: 1.1887 - val_loss: 1.4362 - val_mae: 0.9749
+
+Epoch 01999: mae did not improve from 1.18004
+Epoch 2000/2000
+210/210 - 0s - loss: 4.7786 - mae: 1.1841 - val_loss: 0.7608 - val_mae: 0.5271
+
+Epoch 02000: mae did not improve from 1.18004
+ TensorFlow v. 2.5.0 
+
+
+  Creating quantized TensorFlowLite Model...
+
+2021-06-16 19:27:32.030755: W tensorflow/python/util/util.cc:348] Sets are not currently considered sequences, but this may change in the future, so consider avoiding using them.
+2021-06-16 19:27:32.748898: I tensorflow/core/grappler/devices.cc:78] Number of eligible GPUs (core count >= 8, compute capability >= 0.0): 0 (Note: TensorFlow was not compiled with CUDA or ROCm support)
+2021-06-16 19:27:32.749001: I tensorflow/core/grappler/clusters/single_machine.cc:357] Starting new session
+2021-06-16 19:27:32.750275: I tensorflow/core/grappler/optimizers/meta_optimizer.cc:1144] Optimization results for grappler item: graph_to_optimize
+  function_optimizer: function_optimizer did nothing. time = 0.002ms.
+  function_optimizer: function_optimizer did nothing. time = 0.001ms.
+
+2021-06-16 19:27:32.803914: W tensorflow/compiler/mlir/lite/python/tf_tfl_flatbuffer_helpers.cc:345] Ignored output_format.
+2021-06-16 19:27:32.803941: W tensorflow/compiler/mlir/lite/python/tf_tfl_flatbuffer_helpers.cc:348] Ignored drop_control_dependency.
+2021-06-16 19:27:32.807165: I tensorflow/compiler/mlir/tensorflow/utils/dump_mlir_util.cc:210] disabling MLIR crash reproducer, set env var `MLIR_CRASH_REPRODUCER_DIRECTORY` to enable.
+fully_quantize: 0, inference_type: 6, input_inference_type: 3, output_inference_type: 3
+WARNING:absl:For model inputs containing unsupported operations which cannot be quantized, the `inference_input_type` attribute will default to the original type.
+
+
+Model: "sequential"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+dense (Dense)                (None, 7)                 70        
+_________________________________________________________________
+dropout (Dropout)            (None, 7)                 0         
+_________________________________________________________________
+dense_1 (Dense)              (None, 5)                 40        
+_________________________________________________________________
+dropout_1 (Dropout)          (None, 5)                 0         
+_________________________________________________________________
+dense_2 (Dense)              (None, 3)                 18        
+_________________________________________________________________
+dropout_2 (Dropout)          (None, 3)                 0         
+_________________________________________________________________
+dense_3 (Dense)              (None, 1)                 4         
+=================================================================
+Total params: 132
+Trainable params: 132
+Non-trainable params: 0
+_________________________________________________________________
+
+  =============================================
+   MLP - Model Configuration
+  =============================================
+  Data size: (3348, 9)
+
+  Training set file: ../Encoded_060421_NF20210609_train_noisyFitP1P2P3-30uniform0.005_postFitRand_cust6_fullDataSet-p11.txt
+  Testing set file: ../Encoded_060421_NF20210609_test_fullDataSet-p11.txt
+
+  Training set file datapoints: 3348
+  Testing set file datapoints: 3
+
+  Number of learning labels: 1
+  Total number of points per data: 9
+
+  ================================================
+   MLP - Parameters
+  ================================================
+  Optimizer: Adam 
+  Hidden layers: [7, 5, 3] 
+  Activation function: relu 
+  L2: 0.001 
+  Dropout: 0.0 
+  Learning rate: 0.01 
+  Learning decay rate: 0.0001
+  Batch size: 16
+  Number of labels: 1
+  Stop at Best Model based on validation: False
+  Save Best Model based on validation: True
+  Metric for Best Regression Model: mae
+
+  ==========================================================
+   MLP - Regressor - Training Summary
+  ==========================================================
+  Loss - Average: 5.1243; Min: 4.7561; Last: 4.7786
+  Mean Abs Err - Average: 1.2550; Min: 1.1800; Last: 1.1841
+
+  ==========================================================
+   MLP - Regressor  - Validation Summary
+  ========================================================
+  Loss - Average: 1.1510; Min: 0.2038; Last: 0.7608
+  Mean Abs Err - Average: 0.7765; Min: 0.2241; Last: 0.5271
+  Saved model with min training MAE:: 1.1800
+  Saved model with validation MAE:: 0.4683
+
+  ===========================================================================
+  Real value | Predicted value | val_loss | val_mean_abs_err | % deviation 
+  ---------------------------------------------------------------------------
+  18.930	| 18.685	| 0.2091	| 0.2450	| 1.3
+  19.280	| 20.421	| 1.4509	| 1.1410	| 5.9
+  16.460	| 16.441	| 0.1495	| 0.0190	| 0.1
+
+  ========================================================================  
+
+ TensorFlow v. 2.5.0 
+
+ Total time: 346.5s or 5.8m or 0.1h 

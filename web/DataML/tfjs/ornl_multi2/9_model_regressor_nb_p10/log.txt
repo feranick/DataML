@@ -1,0 +1,56 @@
+DoECFdata/ORNL/ML/BP3_Encoded_20210604_NF20210609/ML/norm_vs_uniform/p10/3_not-best
+
+ =============================================
+   MLP - Model Configuration
+  =============================================
+  Data size: (3348, 9)
+
+  Training set file: ../plane_1-fit/Encoded_060421_NF20210609_train_noisyFitP1P2P3-30uniform0.005_postFitRand_cust6_fullDataSet-p10.txt
+  Testing set file: ../Encoded_060421_NF20210609_test_fullDataSet-p10.txt
+
+  Training set file datapoints: 3348
+  Testing set file datapoints: 3
+
+  Number of learning labels: 1
+  Total number of points per data: 9
+
+  ================================================
+   MLP - Parameters
+  ================================================
+  Optimizer: Adam 
+  Hidden layers: [7, 5, 3] 
+  Activation function: relu 
+  L2: 0.0001 
+  Dropout: 0.0 
+  Learning rate: 0.01 
+  Learning decay rate: 0.0001
+  Batch size: 128
+  Number of labels: 1
+  Stop at Best Model based on validation: False
+  Save Best Model based on validation: True
+  Metric for Best Regression Model: mae
+
+  ==========================================================
+   MLP - Regressor - Training Summary
+  ==========================================================
+  Loss - Average: 1538.9802; Min: 1393.9413; Last: 1403.6925
+  Mean Abs Err - Average: 27.0232; Min: 25.5784; Last: 25.6782
+
+  ==========================================================
+   MLP - Regressor  - Validation Summary
+  ========================================================
+  Loss - Average: 198.3180; Min: 43.6893; Last: 169.8772
+  Mean Abs Err - Average: 11.0157; Min: 5.1422; Last: 10.8090
+  Saved model with min training MAE:: 25.5784
+  Saved model with validation MAE:: 10.1955
+
+  ===========================================================================
+  Real value | Predicted value | val_loss | val_mean_abs_err | % deviation 
+  ---------------------------------------------------------------------------
+  225.020	| 225.270	| 0.1464	| 0.2502	| 0.1
+  236.860	| 219.186	| 312.4685	| 17.6744	| 7.5
+  173.690	| 186.352	| 160.4086	| 12.6619	| 7.3
+
+  ========================================================================  
+
+ TensorFlow v. 2.5.0

@@ -1,0 +1,54 @@
+DoECFdata/ORNL/ML/BP3_Encoded_20210604_NF20210609/ML/random_noise/p12/2_no-noise
+
+=============================================
+   MLP - Model Configuration
+  =============================================
+  Data size: (110, 9)
+
+  Training set file: ../Encoded_060421_NF20210608_train_fullDataSet-p12.txt
+  Testing set file: ../Encoded_060421_NF20210608_test_fullDataSet-p12.txt
+
+  Training set file datapoints: 110
+  Testing set file datapoints: 3
+
+  Number of learning labels: 1
+  Total number of points per data: 9
+
+  ================================================
+   MLP - Parameters
+  ================================================
+  Optimizer: Adam 
+  Hidden layers: [7, 5, 3] 
+  Activation function: relu 
+  L2: 1e-05 
+  Dropout: 0.0 
+  Learning rate: 0.01 
+  Learning decay rate: 0.0001
+  Batch size: 16
+  Number of labels: 1
+
+  ==========================================================
+   MLP - Regressor - Training Summary
+  ==========================================================
+  Loss - Average: 0.0449; Min: 0.0351; Last: 0.0364
+  Mean Abs Err - Average: 0.1498; Min: 0.1275; Last: 0.1294
+
+  ==========================================================
+   MLP - Regressor  - Validation Summary
+  ========================================================
+  Loss - Average: 0.0088; Min: 0.0027; Last: 0.0047
+  Mean Abs Err - Average: 0.0777; Min: 0.0314; Last: 0.0651
+  Saved model at min MAE:: 0.0314
+
+  ===========================================================================
+  Real value | Predicted value | val_loss | val_mean_abs_err | % deviation 
+  ---------------------------------------------------------------------------
+  1.210	| 1.123	| 0.0077	| 0.0869	| 7.2
+  1.050	| 1.046	| 0.0002	| 0.0043	| 0.4
+  1.090	| 1.093	| 0.0002	| 0.0030	| 0.3
+
+  ========================================================================  
+
+ TensorFlow v. 2.5.0 
+
+ Total time: 12.4s or 0.2m or 0.0h 
