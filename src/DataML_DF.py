@@ -241,7 +241,7 @@ def train(learnFile, testFile, normFile):
     
     learnFileRoot = os.path.splitext(learnFile)[0]
 
-    En, A, Cl = readLearnFile(learnFile, dP)
+    En, A, Cl, _ = readLearnFile(learnFile, dP)
     if testFile is not None:
         En_test, A_test, Cl_test = readLearnFile(testFile, dP)
         totA = np.vstack((A, A_test))
@@ -396,6 +396,53 @@ def train(learnFile, testFile, normFile):
     
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
 
+#************************************************************
+# Generate learning dataset from randomized features with
+# class predicted with predict()
+#************************************************************
+def generative(learnFile, normFile):
+    dP = Conf()
+    import sklearn
+    
+    En, A, Cl, M = readLearnFile(learnFile, dP)
+    
+    if normFile is not None:
+        try:
+            with open(normFile, "rb") as f:
+                norm = pickle.load(f)
+            print("  Opening pkl file with normalization data:",normFile)
+            print("  Normalizing validation file for prediction...\n")
+            R = norm.transform_valid_data(R)
+        except:
+            print("\033[1m pkl file not found \033[0m")
+            return
+            
+    with open(dP.modelName, "rb") as f:
+        df = pickle.load(f)
+        
+    if dP.regressor:
+        le = None
+    else:
+        with open(dP.model_le, "rb") as f:
+            le = pickle.load(f)
+    
+    R = [A[0]]
+    print(R)
+    print(A.shape)
+    
+    print(M)
+    print(M.shape)
+    
+    newM = np.copy(M)
+    
+    for i in range(A.shape[0]):
+        pred, pred_classes, proba = getPrediction(dP, df, [A[i]], le)
+        tmp = np.hstack([pred, A[i]])
+        newM = np.vstack([newM, tmp])
+
+    print(newM)
+    print(newM.shape)
+
 #************************************
 # Prediction - backend
 #************************************
@@ -409,7 +456,7 @@ def getPrediction(dP, df, R, le):
         pred_classes = le.inverse_transform_bulk(df.classes_)
         proba = df.predict_proba(R)
     return pred, pred_classes, proba
-
+    
 #************************************
 # Prediction - frontend
 #************************************
@@ -535,7 +582,7 @@ def batchPredict(folder, normFile):
 #************************************************************
 def validBatchPredict(testFile, normFile):
     dP = Conf()
-    En_test, A_test, Cl_test = readLearnFile(testFile, dP)
+    En_test, A_test, Cl_test, _ = readLearnFile(testFile, dP)
     import sklearn
     
     if normFile is not None:
@@ -590,13 +637,6 @@ def validBatchPredict(testFile, normFile):
     
     saveSummaryFile(summaryFile, dP)
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
-
-#************************************************************
-# Generate learning dataset from randomized features with
-# class predicted with predict()
-#************************************************************
-def generative(testFile, normFile):
-    pass
 
 #***********************************************************
 # Save Plots with the model importance

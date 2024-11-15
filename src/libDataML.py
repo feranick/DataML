@@ -277,7 +277,7 @@ def convertTflite(learnFile, dP):
     if parse_version(tf.version.VERSION) < parse_version('2.0.0'):
         tf.compat.v1.enable_eager_execution()
     learnFileRoot = os.path.splitext(learnFile)[0]
-    En, A, Cl = readLearnFile(learnFile, dP)
+    En, A, Cl, _ = readLearnFile(learnFile, dP)
     model = loadModel(dP)
     makeQuantizedTFmodel(A, dP)
     
@@ -313,7 +313,7 @@ def readLearnFile(learnFile, dP):
     else:
         Cl = M[1:,[0,dP.numLabels-1]]
 
-    return En, A, Cl
+    return En, A, Cl, M
 
 #************************************
 # Open Testing Data
@@ -372,7 +372,7 @@ def makeOptParameters(dP):
 #********************************************************************************
 # Define correct value of numPCA
 def prePCA(learnFile, validFile, dP):
-    En, A, Cl = readLearnFile(learnFile, dP)
+    En, A, Cl, _ = readLearnFile(learnFile, dP)
     if dP.numDimRedComp > min(En.shape[0],Cl.shape[0]):
         numPCA = min(En.shape[0],Cl.shape[0])
     else:
@@ -514,7 +514,7 @@ def statsPCA(En, A_r, Cl, dP):
 # Autoencoder
 #************************************
 def preAutoencoder(learnFile, validFile, dP):
-    En, A, Cl = readLearnFile(learnFile, dP)
+    En, A, Cl, _ = readLearnFile(learnFile, dP)
     A_encoded = runAutoencoder(A, dP, Cl)
     
 def runAutoencoder(A, dP, Cl):
@@ -610,7 +610,7 @@ def runAutoencoder2(learnFile, testFile, dP):
             return decoded
             
     
-    En, A, Cl = readLearnFile(learnFile, dP)
+    En, A, Cl, _ = readLearnFile(learnFile, dP)
             
     shape = A.shape[1:]
     latent_dim = 4
@@ -626,7 +626,7 @@ def runAutoencoder2(learnFile, testFile, dP):
                 validation_split=dP.cv_split
                 )
     else:
-        En_test, A_test, Cl_test = readLearnFile(testFile, dP)
+        En_test, A_test, Cl_test, _ = readLearnFile(testFile, dP)
         autoencoder.fit(A, A,
                 epochs = dP.epochs,
                 batch_size = dP.batch_size,

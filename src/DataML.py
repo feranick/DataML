@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.11.14.1
+* v2024.11.15.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -290,9 +290,9 @@ def train(learnFile, testFile, normFile):
     
     learnFileRoot = os.path.splitext(learnFile)[0]
 
-    En, A, Cl = readLearnFile(learnFile, dP)
+    En, A, Cl, _ = readLearnFile(learnFile, dP)
     if testFile is not None:
-        En_test, A_test, Cl_test = readLearnFile(testFile, dP)
+        En_test, A_test, Cl_test, _ = readLearnFile(testFile, dP)
         totA = np.vstack((A, A_test))
         totCl = np.append(Cl, Cl_test)
     else:
@@ -800,7 +800,7 @@ def batchPredict(folder, normFile):
 #************************************************************
 def validBatchPredict(testFile, normFile):
     dP = Conf()
-    En_test, A_test, Cl_test = readLearnFile(testFile, dP)
+    En_test, A_test, Cl_test, _ = readLearnFile(testFile, dP)
     model = loadModel(dP)
 
     if normFile is not None:
@@ -889,9 +889,9 @@ def validBatchPredict(testFile, normFile):
 # Perform Random Forest - Preview
 #********************************************************************************
 def preDT(learnFile, validFile, dP):
-    En, A, Cl = readLearnFile(learnFile, dP)
+    En, A, Cl, _ = readLearnFile(learnFile, dP)
     if validFile is not None:
-        En_test, A_test, Cl_test = readLearnFile(validFile, dP)
+        En_test, A_test, Cl_test, _ = readLearnFile(validFile, dP)
     else:
         En_test, A_test, Cl_test = None, None, None
     
