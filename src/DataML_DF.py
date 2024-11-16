@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2024.11.15.2
+* v2024.11.16.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -500,7 +500,7 @@ def createDiffuseDist(dP, df, A, M, le):
                 A_tmp = np.hstack([A_tmp, tmp])
             pred, pred_classes, proba = getPrediction(dP, df, [A_tmp], le)
             M_tmp = np.hstack([pred, A_tmp])
-        newM = np.vstack([newM, M_tmp])
+            newM = np.vstack([newM, M_tmp])
     return newM, "_diffuse-random-perc"+str(dP.percDiffuseDistrMax)+"-n"+str(dP.numAddedGeneratedData*A.shape[0])
 
 #************************************
