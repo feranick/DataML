@@ -39,8 +39,8 @@ class Conf():
         ################################################
         ### Types of training data generative method:
         ### Set using: typeGenAddition
-        ### - NormalDistribution (default)
-        ### - DiffuseDistribution
+        ### - DiffuseDistribution (default)
+        ### - NormalDistribution
         ################################################
         
         self.appName = "DataML_DF"
@@ -99,6 +99,7 @@ class Conf():
     def datamlGenDef(self):
         self.conf['Generative'] = {
             'typeGenAddition' : 'NormalDistribution',
+            'excludeZeroFeatures' : False,
             'numAddedGeneratedData' : 50,
             'percDiffuseDistrMax' : 0.1,
             'saveAsTxt' : True
@@ -135,6 +136,7 @@ class Conf():
             self.plotFeatImportance = self.conf.getboolean('Parameters','plotFeatImportance')
             
             self.typeGenAddition = self.conf.get('Generative','typeGenAddition')
+            self.excludeZeroFeatures = self.conf.getboolean('Generative','excludeZeroFeatures')
             self.numAddedGeneratedData = self.conf.getint('Generative','numAddedGeneratedData')
             self.percDiffuseDistrMax = self.conf.getfloat('Generative','percDiffuseDistrMax')
             self.saveAsTxt = self.conf.getboolean('Generative','saveAsTxt')
@@ -484,6 +486,8 @@ def createNormalDist(dP, df, A, M, le):
 #******************************************************
 def createDiffuseDist(dP, df, A, M, le):
     import random
+    
+    tag = "_diffuse-random-perc"+str(dP.percDiffuseDistrMax)+"-n"+str(dP.numAddedGeneratedData*A.shape[0])
     newM = np.copy(M)
     A_min = A.min(axis=0)
     A_max = A.max(axis=0)
@@ -494,14 +498,19 @@ def createDiffuseDist(dP, df, A, M, le):
         for h in range(int(dP.numAddedGeneratedData)):
             A_tmp = []
             for j in range(A.shape[1]):
-                tmp =  A[i][j]+A_max[j]*(np.random.uniform(-dP.percDiffuseDistrMax, dP.percDiffuseDistrMax, 1))
-                if tmp<0:
-                    tmp=-tmp
+                if A[i][j] == 0 and dP.excludeZeroFeatures:
+                    tmp = A[i][j]
+                else:
+                    tmp =  A[i][j]+A_max[j]*(np.random.uniform(-dP.percDiffuseDistrMax, dP.percDiffuseDistrMax, 1))
+                    if tmp<0:
+                        tmp=-tmp
                 A_tmp = np.hstack([A_tmp, tmp])
             pred, pred_classes, proba = getPrediction(dP, df, [A_tmp], le)
             M_tmp = np.hstack([pred, A_tmp])
             newM = np.vstack([newM, M_tmp])
-    return newM, "_diffuse-random-perc"+str(dP.percDiffuseDistrMax)+"-n"+str(dP.numAddedGeneratedData*A.shape[0])
+    if dP.excludeZeroFeatures:
+        tag += "-exclude0"
+    return newM, tag
 
 #************************************
 # Prediction - backend
