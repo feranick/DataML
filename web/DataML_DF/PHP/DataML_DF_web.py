@@ -39,8 +39,8 @@ class Conf():
         ################################################
         ### Types of training data generative method:
         ### Set using: typeGenAddition
-        ### - NormalDistribution (default)
-        ### - DiffuseDistribution
+        ### - DiffuseDistribution (default)
+        ### - NormalDistribution
         ################################################
         
         self.appName = "DataML_DF"
@@ -96,6 +96,7 @@ class Conf():
     def datamlGenDef(self):
         self.conf['Generative'] = {
             'typeGenAddition' : 'NormalDistribution',
+            'excludeZeroFeatures' : False,
             'numAddedGeneratedData' : 50,
             'percDiffuseDistrMax' : 0.1,
             'saveAsTxt' : True
@@ -132,6 +133,7 @@ class Conf():
             self.plotFeatImportance = self.conf.getboolean('Parameters','plotFeatImportance')
             
             self.typeGenAddition = self.conf.get('Generative','typeGenAddition')
+            self.excludeZeroFeatures = self.conf.getboolean('Generative','excludeZeroFeatures')
             self.numAddedGeneratedData = self.conf.getint('Generative','numAddedGeneratedData')
             self.percDiffuseDistrMax = self.conf.getfloat('Generative','percDiffuseDistrMax')
             self.saveAsTxt = self.conf.getboolean('Generative','saveAsTxt')
