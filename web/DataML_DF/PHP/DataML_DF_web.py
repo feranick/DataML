@@ -3,7 +3,7 @@
 '''
 ***************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2024.11.16.1
+* v2024.11.20.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***************************************************
@@ -99,6 +99,8 @@ class Conf():
             'excludeZeroFeatures' : False,
             'numAddedGeneratedData' : 50,
             'percDiffuseDistrMax' : 0.1,
+            'minR2' : 0.6,
+            'numGenSplitModels' : 100,
             'saveAsTxt' : True
             }
     def sysDef(self):
@@ -136,6 +138,8 @@ class Conf():
             self.excludeZeroFeatures = self.conf.getboolean('Generative','excludeZeroFeatures')
             self.numAddedGeneratedData = self.conf.getint('Generative','numAddedGeneratedData')
             self.percDiffuseDistrMax = self.conf.getfloat('Generative','percDiffuseDistrMax')
+            self.minR2 = self.conf.getfloat('Generative','minR2')
+            self.numGenSplitModels = self.conf.getint('Generative','numGenSplitModels')
             self.saveAsTxt = self.conf.getboolean('Generative','saveAsTxt')
             
             self.random_state = eval(self.sysDef['random_state'])

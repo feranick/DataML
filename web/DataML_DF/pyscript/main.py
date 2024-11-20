@@ -4,7 +4,7 @@
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
 * pyscript version
-* v2024.11.08.1
+* v2024.11.20.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -75,6 +75,16 @@ class Conf():
             'numDimRedComp' : 3,
             'plotFeatImportance' : False,
             }
+    def datamlGenDef(self):
+        self.conf['Generative'] = {
+            'typeGenAddition' : 'NormalDistribution',
+            'excludeZeroFeatures' : False,
+            'numAddedGeneratedData' : 50,
+            'percDiffuseDistrMax' : 0.1,
+            'minR2' : 0.6,
+            'numGenSplitModels' : 100,
+            'saveAsTxt' : True
+            }
     def sysDef(self):
         self.conf['System'] = {
             'random_state' : None,
@@ -85,6 +95,7 @@ class Conf():
         try:
             self.conf.read_string(configFile)
             self.datamlDef = self.conf['Parameters']
+            self.datamlGenDef = self.conf['Generative']
             self.sysDef = self.conf['System']
         
             self.typeDF = self.conf.get('Parameters','typeDF')
@@ -104,6 +115,14 @@ class Conf():
             self.typeDimRed = self.conf.get('Parameters','typeDimRed')
             self.numDimRedComp = self.conf.getint('Parameters','numDimRedComp')
             self.plotFeatImportance = self.conf.getboolean('Parameters','plotFeatImportance')
+            
+            self.typeGenAddition = self.conf.get('Generative','typeGenAddition')
+            self.excludeZeroFeatures = self.conf.getboolean('Generative','excludeZeroFeatures')
+            self.numAddedGeneratedData = self.conf.getint('Generative','numAddedGeneratedData')
+            self.percDiffuseDistrMax = self.conf.getfloat('Generative','percDiffuseDistrMax')
+            self.minR2 = self.conf.getfloat('Generative','minR2')
+            self.numGenSplitModels = self.conf.getint('Generative','numGenSplitModels')
+            self.saveAsTxt = self.conf.getboolean('Generative','saveAsTxt')
             
             self.random_state = eval(self.sysDef['random_state'])
             self.n_jobs = self.conf.getint('System','n_jobs')

@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2024.11.16.1
+* v2024.11.20.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -102,6 +102,8 @@ class Conf():
             'excludeZeroFeatures' : False,
             'numAddedGeneratedData' : 50,
             'percDiffuseDistrMax' : 0.1,
+            'minR2' : 0.6,
+            'numGenSplitModels' : 100,
             'saveAsTxt' : True
             }
     def sysDef(self):
@@ -139,6 +141,8 @@ class Conf():
             self.excludeZeroFeatures = self.conf.getboolean('Generative','excludeZeroFeatures')
             self.numAddedGeneratedData = self.conf.getint('Generative','numAddedGeneratedData')
             self.percDiffuseDistrMax = self.conf.getfloat('Generative','percDiffuseDistrMax')
+            self.minR2 = self.conf.getfloat('Generative','minR2')
+            self.numGenSplitModels = self.conf.getint('Generative','numGenSplitModels')
             self.saveAsTxt = self.conf.getboolean('Generative','saveAsTxt')
             
             self.random_state = eval(self.sysDef['random_state'])
@@ -418,6 +422,8 @@ def train(learnFile, testFile, normFile):
         plotImportances(df, A_test, Cl2_test, dP)
     
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
+    
+    return r2_score(Cl_test, pred)
 
 #************************************************************
 # Generate learning dataset from randomized features with
@@ -426,36 +432,73 @@ def train(learnFile, testFile, normFile):
 def generative(learnFile, normFile):
     dP = Conf()
     import sklearn
-    En, A, Cl, M = readLearnFile(learnFile, dP)
+    if dP.typeGenAddition == 'MultiModelSplit':
+        newM, tag = multiModelSplit(dP, learnFile, normFile)
+    else:
+        En, A, Cl, M = readLearnFile(learnFile, dP)
     
-    if normFile is not None:
-        try:
-            with open(normFile, "rb") as f:
-                norm = pickle.load(f)
-            print("  Opening pkl file with normalization data:",normFile)
-            print("  Normalizing validation file for prediction...\n")
-            R = norm.transform_valid_data(R)
-        except:
-            print("\033[1m pkl file not found \033[0m")
-            return
+        if normFile is not None:
+            try:
+                with open(normFile, "rb") as f:
+                    norm = pickle.load(f)
+                print("  Opening pkl file with normalization data:",normFile)
+                print("  Normalizing validation file for prediction...\n")
+                R = norm.transform_valid_data(R)
+            except:
+                print("\033[1m pkl file not found \033[0m")
+                return
             
-    with open(dP.modelName, "rb") as f:
-        df = pickle.load(f)
+        with open(dP.modelName, "rb") as f:
+            df = pickle.load(f)
         
+        if dP.regressor:
+            le = None
+        else:
+            with open(dP.model_le, "rb") as f:
+                le = pickle.load(f)
+    
+        if dP.typeGenAddition == 'NormalDistribution':
+            newM, tag = createNormalDist(dP, df, A, M, le)
+        elif dP.typeGenAddition == 'DiffuseDistribution':
+            newM, tag = createDiffuseDist(dP, df, A, M, le)
+        else:
+            return;
+
+    saveLearnFile(dP, newM, learnFile, tag)
+    
+#******************************************************
+# Create new Training data from normal distribution
+# within each feacture column
+#******************************************************
+def multiModelSplit(dP, learnFile, normFile):
+    import statistics
+    En, A, Cl, M = readLearnFile(learnFile, dP)
+    newM = np.copy(M)
     if dP.regressor:
         le = None
     else:
         with open(dP.model_le, "rb") as f:
             le = pickle.load(f)
     
-    if dP.typeGenAddition == 'NormalDistribution':
-        newM, tag = createNormalDist(dP, df, A, M, le)
-    elif dP.typeGenAddition == 'DiffuseDistribution':
-        newM, tag = createDiffuseDist(dP, df, A, M, le)
-    else:
-        return;
-        
-    saveLearnFile(dP, newM, learnFile, tag)
+    goodModels = []
+    badModels = []
+    for h in range(dP.numGenSplitModels):
+        R2 = train(learnFile, None, None)
+        if R2 > dP.minR2:
+            with open(dP.modelName, "rb") as f:
+                df = pickle.load(f)
+            
+            tmpM, _ = createDiffuseDist(dP, df, A, M, le)
+            newM = np.vstack([newM, tmpM])
+            
+            goodModels.append(R2)
+        else:
+            badModels.append(R2)
+            
+    print("\n  Number of models with R2 > {0:.2f}: {1:d} (Average: {2:.2f}+-{3:.2f})".format(dP.minR2, len(goodModels), statistics.mean(goodModels), statistics.stdev(goodModels)))
+    print("  Number of models with R2 < {0:.2f}: {1:d}".format(dP.minR2,len(badModels))+"\n")
+    return newM, "_multiModelSplit-n"+str(newM.shape[0])
+    
     
 #******************************************************
 # Create new Training data from normal distribution
