@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2024.11.20.1
+* v2024.11.21.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -83,6 +83,7 @@ class Conf():
             'batch_size' : 8,
             'numLabels' : 1,
             'normalize' : False,
+            'normalizeLabel' : False,
             'runDimRedFlag' : False,
             'typeDimRed' : 'SparsePCA',
             'numDimRedComp' : 3,
@@ -124,6 +125,7 @@ class Conf():
             self.typeDimRed = self.conf.get('Parameters','typeDimRed')
             self.numDimRedComp = self.conf.getint('Parameters','numDimRedComp')
             self.normalize = self.conf.getboolean('Parameters','normalize')
+            self.normalizeLabel = self.conf.getboolean('Parameters','normalizeLabel')
             self.plotWeightsFlag = self.conf.getboolean('Parameters','plotWeightsFlag')
             self.optimizeParameters = self.conf.getboolean('Parameters','optimizeParameters')
             self.stopAtBest = self.conf.getboolean('Parameters','stopAtBest')

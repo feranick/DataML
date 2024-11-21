@@ -17,7 +17,7 @@ import os.path, pickle, h5py
 class Normalizer(object):
     def __init__(self, M, dP):
         self.M = M
-        self.normalizeLabel = False
+        self.normalizeLabel = dP.normalizeLabel
         self.useCustomRound = False
         self.minGeneralLabel = 0
         self.maxGeneralLabel = 1
@@ -37,6 +37,9 @@ class Normalizer(object):
         for i in range(1,M.shape[1]):
             self.min[i] = np.amin(self.M[1:,i])
             self.max[i] = np.amax(self.M[1:,i])
+            
+        print(self.min)
+        print(self.max)
     
     def transform(self,y):
         Mn = np.copy(y)
@@ -49,8 +52,11 @@ class Normalizer(object):
                     Mn[i,0] = customData(Mn[i,0])
         if self.saveNormalized:
             for i in range(1,y.shape[1]):
-                Mn[1:,i] = np.multiply(y[1:,i] - self.min[i],
-                    self.YnormTo/(self.max[i] - self.min[i]))
+                if self.max[i] == 0:
+                    Mn[1:,i] = 0
+                else:
+                    Mn[1:,i] = np.multiply(y[1:,i] - self.min[i],
+                        self.YnormTo/(self.max[i] - self.min[i]))
         return Mn
         
     def transform_valid(self,V):

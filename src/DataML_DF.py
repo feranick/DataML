@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2024.11.20.1
+* v2024.11.21.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -91,6 +91,7 @@ class Conf():
             'batch_size' : 8,
             'numLabels' : 1,
             'normalize' : False,
+            'normalizeLabel' : False,
             'runDimRedFlag' : False,
             'typeDimRed' : 'SparsePCA',
             'numDimRedComp' : 3,
@@ -132,6 +133,7 @@ class Conf():
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.numLabels = self.conf.getint('Parameters','numLabels')
             self.normalize = self.conf.getboolean('Parameters','normalize')
+            self.normalizeLabel = self.conf.getboolean('Parameters','normalizeLabel')
             self.runDimRedFlag = self.conf.getboolean('Parameters','runDimRedFlag')
             self.typeDimRed = self.conf.get('Parameters','typeDimRed')
             self.numDimRedComp = self.conf.getint('Parameters','numDimRedComp')
