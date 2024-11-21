@@ -37,9 +37,6 @@ class Normalizer(object):
         for i in range(1,M.shape[1]):
             self.min[i] = np.amin(self.M[1:,i])
             self.max[i] = np.amax(self.M[1:,i])
-            
-        print(self.min)
-        print(self.max)
     
     def transform(self,y):
         Mn = np.copy(y)
@@ -335,12 +332,12 @@ def saveLearnFile(dP, M, learnFile, tag):
     learnFileRoot = os.path.splitext(learnFile)[0]
     if dP.saveAsTxt == True:
         learnFileRoot += tag + '.txt'
-        print("  Saving new training file (txt) in:", learnFileRoot+"\n")
+        print("\n  Saving new training file (txt) in:", learnFileRoot+"\n")
         with open(learnFileRoot, 'ab') as f:
             np.savetxt(f, M, delimiter='\t', fmt='%10.6f')
     else:
         learnFileRoot += tag + '.h5'
-        print("  Saving new training file (hdf5) in: "+learnFileRoot+"\n")
+        print("\n Saving new training file (hdf5) in: "+learnFileRoot+"\n")
         with h5py.File(learnFileRoot, 'w') as hf:
             hf.create_dataset("M",  data=M)
 
