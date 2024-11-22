@@ -97,12 +97,12 @@ def createNoysyData(dP, A):
                             tmp=0
                     A_tmp = np.hstack([A_tmp, tmp])
                 newA = np.vstack([newA, A_tmp])
-
+    '''
     with open(dP.norm_file, "rb") as f:
         norm = pickle.load(f)
     saveLearnFile(dP, newA, "test_noisy_data_for_Dae_norm", "")
     saveLearnFile(dP, norm.transform_inverse(newA), "test_noisy_data_for_Dae", "")
-    
+    '''
     return newA
 
 #************************************
@@ -148,7 +148,7 @@ def trainAutoencoder(dP, A, file):
         shuffle = True, verbose=1, validation_split=dP.validation_split)
         #callbacks=[TensorBoard(log_dir='/tmp/autoencoder')])
         
-    saved_model_autoenc = os.path.splitext(file)[0]+".keras"
+    saved_model_autoenc = os.path.splitext(file)[0]+"_denoiseAE.keras"
     print("\n  Autoencoder saved in:", saved_model_autoenc,"\n")
     autoencoder.save(saved_model_autoenc)
     
