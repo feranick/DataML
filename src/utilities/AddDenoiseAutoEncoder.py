@@ -20,8 +20,10 @@ from libDataML import *
 class dP:
     saveAsTxt = True
     batch_size = 8
-    epochs = 50
+    epochs = 200
     validation_split = 0.1
+    l_rate = 0.1
+    l_rdecay = 0.01
     numAdditions = 1
     numAddedNoisyDataBlocks = 10
     percNoiseDistrMax = 0.1
@@ -78,8 +80,8 @@ def createNoysyData(dP, A):
     '''
     with open(dP.norm_file, "rb") as f:
         norm = pickle.load(f)
-    print(norm.transform_inverse(newM))
-    saveLearnFile(dP, norm.transform_inverse(newM), "test_noisy_data_for Dae", "")
+    print(norm.transform_inverse(newA))
+    saveLearnFile(dP, norm.transform_inverse(newA), "test_noisy_data_for Dae", "")
     '''
     return newA
 
@@ -114,8 +116,18 @@ def trainAutoencoder(dP, A, file):
     # Autoencoder
     ###############
     print("  Training Autoencoder... \n")
+    
+    lr_schedule = keras.optimizers.schedules.ExponentialDecay(
+            initial_learning_rate=dP.l_rate,
+            decay_steps=dP.epochs,
+            decay_rate=dP.l_rdecay)
+    optim2 = keras.optimizers.Adam(learning_rate=lr_schedule, beta_1=0.9,
+                beta_2=0.999, epsilon=1e-08,
+                amsgrad=False)
+    optim = keras.optimizers.Adam()
+    
     autoencoder = keras.Model(input, decoded)
-    autoencoder.compile(loss='mean_squared_error', optimizer = keras.optimizers.Adam())
+    autoencoder.compile(loss='mean_squared_error', optimizer = optim)
     history = autoencoder.fit(A, A, batch_size=dP.batch_size, epochs=dP.epochs,
         shuffle = True, verbose=1, validation_split=dP.validation_split)
         #callbacks=[TensorBoard(log_dir='/tmp/autoencoder')])
@@ -136,6 +148,8 @@ def generateData(dP, autoencoder, En, A, M):
     for i in range(dP.numAdditions):
         normDea = autoencoder.predict(A)
         invDea = norm.transform_inverse(normDea)
+        #print("normDea", normDea)
+        #print("invDea", invDea)
     
     tempM = np.vstack([En, norm.transform_inverse(M[1:,:])])
     newTrain = np.vstack([tempM, invDea])
