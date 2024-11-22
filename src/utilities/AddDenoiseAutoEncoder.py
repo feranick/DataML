@@ -4,7 +4,7 @@
 ***********************************************
 * AddDenoiseAutoEncoder
 * Data Augmentation via Denoising Autoencoder
-* version: v2024.11.21.1
+* version: v2024.11.22.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -21,6 +21,7 @@ class dP:
     saveAsTxt = True
     batch_size = 8
     epochs = 50
+    validation_split = 0.1
     numAdditions = 1
     numAddedNoisyDataBlocks = 10
     percNoiseDistrMax = 0.1
@@ -34,7 +35,7 @@ class dP:
 # Main
 #************************************
 def main():
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 2:
         print(' Usage:\n  python3 AddDenoiseAutoEncoder.py <learnData>')
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
@@ -116,7 +117,7 @@ def trainAutoencoder(dP, A, file):
     autoencoder = keras.Model(input, decoded)
     autoencoder.compile(loss='mean_squared_error', optimizer = keras.optimizers.Adam())
     history = autoencoder.fit(A, A, batch_size=dP.batch_size, epochs=dP.epochs,
-        shuffle = True, verbose=1,)
+        shuffle = True, verbose=1, validation_split=dP.validation_split)
         #callbacks=[TensorBoard(log_dir='/tmp/autoencoder')])
         
     saved_model_autoenc = os.path.splitext(file)[0]+".keras"
