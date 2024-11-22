@@ -24,7 +24,7 @@ class dP:
     validation_split = 0.1
     numAdditions = 1
     numAddedNoisyDataBlocks = 10
-    percNoiseDistrMax = 0.1
+    percNoiseDistrMax = 0.01
     excludeZeroFeatures = True
     removeSpurious = False
     numLabels = 1
@@ -55,10 +55,11 @@ def main():
     newFile = os.path.splitext(sys.argv[1])[0] + '_numDataTrainDae' + \
         str(dP.numAddedNoisyDataBlocks * A.shape[0]) + '_numAdded' + str(dP.numAdditions * A.shape[0])
     
-    newA = createNoysyData(dP, A)
-    dae = trainAutoencoder(dP, newA, sys.argv[1])
-    newTrain = generateData(dP, dae, En, A, M)
-    saveLearnFile(dP, newTrain, newFile, "")
+    noisyA = createNoysyData(dP, A)
+    dae = trainAutoencoder(dP, noisyA, sys.argv[1])
+    newA = generateData(dP, dae, En, A, M)
+    newTrain = np.vstack([En, newA])
+    saveLearnFile(dP, newA, newFile, "")
 
 #******************************************************
 # Create new Training data by adding a percentage of the max
@@ -171,22 +172,22 @@ def generateData(dP, autoencoder, En, A, M):
         norm = pickle.load(f)
 
     #newTrain = np.vstack([En, norm.transform_inverse(M[1:,:])])
-    newTrain = norm.transform_inverse(M[1:,:])
+    newA = norm.transform_inverse(M[1:,:])
     
     for i in range(dP.numAdditions):
         normDea = autoencoder.predict(A)
         invDea = norm.transform_inverse(normDea)
         #print("normDea", normDea)
-        #print("invDea", invDea)
-        newTrain = np.vstack([newTrain, invDea])
+        print("invDea", invDea)
+        newA = np.vstack([newA, invDea])
     if dP.removeSpurious:
-        newTrain = removeSpurious(A, newTrain, norm)
+        newA = removeSpurious(A, newA, norm)
         
-    newTrain = np.vstack([En, newTrain])
+    #newTrain = np.vstack([En, newTrain])
     
-    print(newTrain)
+    print(newA)
     
-    return newTrain
+    return newA
  
 #************************************
 # Open Learning Data
