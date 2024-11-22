@@ -4,7 +4,7 @@
 ***********************************************
 * AddDenoiseAutoEncoder
 * Data Augmentation via Denoising Autoencoder
-* version: v2024.11.22.1
+* version: v2024.11.22.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -19,19 +19,27 @@ from libDataML import *
 #************************************
 class dP:
     saveAsTxt = True
-    batch_size = 8
+    batch_size = 32
     epochs = 200
     validation_split = 0.1
-    l_rate = 0.1
-    l_rdecay = 0.01
     numAdditions = 1
     numAddedNoisyDataBlocks = 10
     percNoiseDistrMax = 0.1
     excludeZeroFeatures = True
+    removeSpurious = False
     numLabels = 1
     normalize = True
     normalizeLabel = True
     norm_file = "norm_file.pkl"
+    
+    '''
+    import tensorflow as tf
+    seed_value = 10  # Choose any integer
+    tf.random.set_seed(seed_value)
+    '''
+    #not used
+    l_rate = 0.1
+    l_rdecay = 0.01
     
 #************************************
 # Main
@@ -43,10 +51,10 @@ def main():
         return
 
     En, A, M = readLearnFile(sys.argv[1], True)
-
+    
     newFile = os.path.splitext(sys.argv[1])[0] + '_numDataTrainDae' + \
         str(dP.numAddedNoisyDataBlocks * A.shape[0]) + '_numAdded' + str(dP.numAdditions * A.shape[0])
-            
+    
     newA = createNoysyData(dP, A)
     dae = trainAutoencoder(dP, newA, sys.argv[1])
     newTrain = generateData(dP, dae, En, A, M)
@@ -56,33 +64,45 @@ def main():
 # Create new Training data by adding a percentage of the max
 # for that feature
 #******************************************************
+def getAmin(A):
+    A_min = []
+    for i in range(A.shape[1]):
+        A_min_single = min(x for x in A[:,i] if x != 0)
+        A_min = np.hstack([A_min,A_min_single])
+    A_min = np.asarray(A_min)
+    return A_min
+        
 def createNoysyData(dP, A):
     import random
     
     newA = np.zeros((0, A.shape[1]))
-    A_min = A.min(axis=0)
+    #A_min = A.min(axis=0)
+    A_min = getAmin(A)
     A_max = A.max(axis=0)
     A_mean = np.mean(A, axis=0)
     A_std = A.std(axis=0)
-        
+            
     for i in range(A.shape[0]):
         for h in range(int(dP.numAddedNoisyDataBlocks)):
             A_tmp = []
-            for j in range(A.shape[1]):
-                if A[i][j] == 0 and dP.excludeZeroFeatures:
-                    tmp = A[i][j]
-                else:
-                    tmp =  A[i][j]+A_max[j]*(np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, 1))
-                    if tmp<0:
-                        tmp=-tmp
-                A_tmp = np.hstack([A_tmp, tmp])
-            newA = np.vstack([newA, A_tmp])
-    '''
+            if any(A[i][1:]) != 0:
+                for j in range(A.shape[1]):
+                    if A[i][j] == 0 and dP.excludeZeroFeatures:
+                        tmp = A[i][j]
+                    else:
+                        tmp =  A[i][j]+A_max[j]*(np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, 1))
+                        if tmp<0:
+                            tmp=-tmp
+                        if tmp<A_min[j]:
+                            tmp=0
+                    A_tmp = np.hstack([A_tmp, tmp])
+                newA = np.vstack([newA, A_tmp])
+
     with open(dP.norm_file, "rb") as f:
         norm = pickle.load(f)
-    print(norm.transform_inverse(newA))
-    saveLearnFile(dP, norm.transform_inverse(newA), "test_noisy_data_for Dae", "")
-    '''
+    saveLearnFile(dP, newA, "test_noisy_data_for_Dae_norm", "")
+    saveLearnFile(dP, norm.transform_inverse(newA), "test_noisy_data_for_Dae", "")
+    
     return newA
 
 #************************************
@@ -90,7 +110,6 @@ def createNoysyData(dP, A):
 #************************************
 def trainAutoencoder(dP, A, file):
     import keras
-    
     input = keras.Input(shape=(A.shape[1],),sparse=True)
     
     ############
@@ -99,17 +118,14 @@ def trainAutoencoder(dP, A, file):
     encoded = keras.layers.Dense(A.shape[1]-1, activation='relu')(input)
     for i in range(A.shape[1]-1,2,-1):
         encoded = keras.layers.Dense(i-1,  activation='relu')(encoded)
-    
     encoded = keras.layers.Dense(1,activation='relu')(encoded)
     
     ############
     # Decoder
     ############
     decoded = keras.layers.Dense(2,  activation='relu')(encoded)
-
     for i in range(3,A.shape[1],1):
         decoded = keras.layers.Dense(i, activation='relu')(decoded)
-    
     decoded = keras.layers.Dense(A.shape[1], activation='sigmoid')(decoded)
     
     ###############
@@ -141,18 +157,32 @@ def trainAutoencoder(dP, A, file):
 #************************************
 # Generate data from Autoencoder
 #************************************
+def removeSpurious(A, T, norm):
+    A_min = norm.transform_inverse(np.asarray([getAmin(A)]))[0]
+    print(A_min)
+    for i in range(T.shape[0]):
+        for j in range(T.shape[1]):
+            if T[i,j] < A_min[j]:
+                T[i,j] = 0
+    return T
+
 def generateData(dP, autoencoder, En, A, M):
     with open(dP.norm_file, "rb") as f:
         norm = pickle.load(f)
-                
+
+    #newTrain = np.vstack([En, norm.transform_inverse(M[1:,:])])
+    newTrain = norm.transform_inverse(M[1:,:])
+    
     for i in range(dP.numAdditions):
         normDea = autoencoder.predict(A)
         invDea = norm.transform_inverse(normDea)
         #print("normDea", normDea)
         #print("invDea", invDea)
-    
-    tempM = np.vstack([En, norm.transform_inverse(M[1:,:])])
-    newTrain = np.vstack([tempM, invDea])
+        newTrain = np.vstack([newTrain, invDea])
+    if dP.removeSpurious:
+        newTrain = removeSpurious(A, newTrain, norm)
+        
+    newTrain = np.vstack([En, newTrain])
     
     print(newTrain)
     
