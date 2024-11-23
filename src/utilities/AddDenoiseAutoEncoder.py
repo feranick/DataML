@@ -22,11 +22,12 @@ class dP:
     batch_size = 32
     epochs = 200
     validation_split = 0.1
-    numAdditions = 1
+    min_loss_dae = 0.025
+    numAdditions = 20
     numAddedNoisyDataBlocks = 10
     percNoiseDistrMax = 0.01
     excludeZeroFeatures = True
-    removeSpurious = False
+    removeSpurious = True
     numLabels = 1
     normalize = True
     normalizeLabel = True
@@ -52,14 +53,30 @@ def main():
 
     En, A, M = readLearnFile(sys.argv[1], True)
     
-    newFile = os.path.splitext(sys.argv[1])[0] + '_numDataTrainDae' + \
-        str(dP.numAddedNoisyDataBlocks * A.shape[0]) + '_numAdded' + str(dP.numAdditions * A.shape[0])
-    
-    noisyA = createNoysyData(dP, A)
-    dae = trainAutoencoder(dP, noisyA, sys.argv[1])
-    newA = generateData(dP, dae, En, A, M)
-    newTrain = np.vstack([En, newA])
-    saveLearnFile(dP, newA, newFile, "")
+    with open(dP.norm_file, "rb") as f:
+        norm = pickle.load(f)
+        
+    newA = norm.transform_inverse(M[1:,:])
+    success = 0
+    for i in range(dP.numAdditions):
+        noisyA = createNoysyData(dP, A)
+        dae, val_loss = trainAutoencoder(dP, noisyA, sys.argv[1])
+        if val_loss < dP.min_loss_dae:
+            A_tmp = generateData(dP, dae, En, A, M, norm)
+            newA = np.vstack([newA, A_tmp])
+            success += 1
+        else:
+            print("  Skip this denoising autoencoder")
+    if success !=0:
+        if dP.removeSpurious:
+            newA = removeSpurious(A, newA, norm)
+        newTrain = np.vstack([En, newA])
+        print("  Added",str(success*A.shape[0]),"new data\n")
+        newFile = os.path.splitext(sys.argv[1])[0] + '_numDataTrainDae' + \
+            str(dP.numAddedNoisyDataBlocks * A.shape[0]) + '_numAdded' + str(success*A.shape[0])
+        saveLearnFile(dP, newA, newFile, "")
+    else:
+        print("  No new training data created. Try to increse numAdditions\n")
 
 #******************************************************
 # Create new Training data by adding a percentage of the max
@@ -145,15 +162,17 @@ def trainAutoencoder(dP, A, file):
     
     autoencoder = keras.Model(input, decoded)
     autoencoder.compile(loss='mean_squared_error', optimizer = optim)
-    history = autoencoder.fit(A, A, batch_size=dP.batch_size, epochs=dP.epochs,
+    log = autoencoder.fit(A, A, batch_size=dP.batch_size, epochs=dP.epochs,
         shuffle = True, verbose=1, validation_split=dP.validation_split)
         #callbacks=[TensorBoard(log_dir='/tmp/autoencoder')])
+        
+    final_val_loss = np.asarray(log.history['val_loss'])[-1]
         
     saved_model_autoenc = os.path.splitext(file)[0]+"_denoiseAE.keras"
     print("\n  Autoencoder saved in:", saved_model_autoenc,"\n")
     autoencoder.save(saved_model_autoenc)
     
-    return autoencoder
+    return autoencoder, final_val_loss
 
 #************************************
 # Generate data from Autoencoder
@@ -167,27 +186,13 @@ def removeSpurious(A, T, norm):
                 T[i,j] = 0
     return T
 
-def generateData(dP, autoencoder, En, A, M):
-    with open(dP.norm_file, "rb") as f:
-        norm = pickle.load(f)
-
+def generateData(dP, autoencoder, En, A, M, norm):
     #newTrain = np.vstack([En, norm.transform_inverse(M[1:,:])])
-    newA = norm.transform_inverse(M[1:,:])
-    
-    for i in range(dP.numAdditions):
-        normDea = autoencoder.predict(A)
-        invDea = norm.transform_inverse(normDea)
-        #print("normDea", normDea)
-        print("invDea", invDea)
-        newA = np.vstack([newA, invDea])
-    if dP.removeSpurious:
-        newA = removeSpurious(A, newA, norm)
-        
-    #newTrain = np.vstack([En, newTrain])
-    
-    print(newA)
-    
-    return newA
+    normDea = autoencoder.predict(A)
+    invDea = norm.transform_inverse(normDea)
+    #print("normDea", normDea)
+    #print("invDea", invDea)
+    return invDea
  
 #************************************
 # Open Learning Data
