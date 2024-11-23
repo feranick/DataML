@@ -70,8 +70,9 @@ def main():
     if success !=0:
         if dP.removeSpurious:
             newA = removeSpurious(A, newA, norm)
+            print("\n  Spurious data removed.")
         newTrain = np.vstack([En, newA])
-        print("  Added",str(success*A.shape[0]),"new data\n")
+        print(n  Added",str(success*A.shape[0]),"new data\n")
         newFile = os.path.splitext(sys.argv[1])[0] + '_numDataTrainDae' + \
             str(dP.numAddedNoisyDataBlocks * A.shape[0]) + '_numAdded' + str(success*A.shape[0])
         saveLearnFile(dP, newA, newFile, "")
@@ -179,7 +180,6 @@ def trainAutoencoder(dP, A, file):
 #************************************
 def removeSpurious(A, T, norm):
     A_min = norm.transform_inverse(np.asarray([getAmin(A)]))[0]
-    print(A_min)
     for i in range(T.shape[0]):
         for j in range(T.shape[1]):
             if T[i,j] < A_min[j]:
