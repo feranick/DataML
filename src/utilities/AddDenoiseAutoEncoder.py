@@ -71,10 +71,13 @@ def main():
         if dP.removeSpurious:
             newA = removeSpurious(A, newA, norm)
             print("\n  Spurious data removed.")
+            tag = '_removedSpurious'
+        else:
+            tag = ''
         newTrain = np.vstack([En, newA])
         print(n  Added",str(success*A.shape[0]),"new data\n")
         newFile = os.path.splitext(sys.argv[1])[0] + '_numDataTrainDae' + \
-            str(dP.numAddedNoisyDataBlocks * A.shape[0]) + '_numAdded' + str(success*A.shape[0])
+            str(dP.numAddedNoisyDataBlocks * A.shape[0]) + '_numAdded' + str(success*A.shape[0]) + tag
         saveLearnFile(dP, newA, newFile, "")
     else:
         print("  No new training data created. Try to increse numAdditions\n")
