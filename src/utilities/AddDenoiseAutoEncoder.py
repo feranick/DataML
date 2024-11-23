@@ -21,9 +21,9 @@ class dP:
     saveAsTxt = True
     batch_size = 32
     epochs = 200
-    validation_split = 0.1
-    min_loss_dae = 0.025
-    numAdditions = 20
+    validation_split = 0.2
+    min_loss_dae = 0.01
+    numAdditions = 300
     numAddedNoisyDataBlocks = 10
     percNoiseDistrMax = 0.01
     excludeZeroFeatures = True
@@ -65,13 +65,14 @@ def main():
             A_tmp = generateData(dP, dae, En, A, M, norm)
             newA = np.vstack([newA, A_tmp])
             success += 1
+            print("\n  Successful. Added so far:",str(success),"\n")
         else:
-            print("  Skip this denoising autoencoder")
+            print("  Skip this denoising autoencoder. Added so far:",str(success),"\n")
     if success !=0:
         if dP.removeSpurious:
             newA = removeSpurious(A, newA, norm)
             print("\n  Spurious data removed.")
-            tag = '_removedSpurious'
+            tag = '_noSpur'
         else:
             tag = ''
         newTrain = np.vstack([En, newA])
