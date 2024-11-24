@@ -1,0 +1,20 @@
+How to use DAEs for data augmentation:
+Train a DAE:
+Train a denoising autoencoder on your original dataset with a suitable noise level. 
+Generate new data:
+Once trained, feed your original data into the encoder part of the DAE to obtain a latent representation. Then, use the decoder to reconstruct the data, which will produce slightly modified versions of the original data, effectively acting as augmented samples. 
+
+Denoising autoencoders (DAE) are nice to find a better representation of the numeric data for later neural net supervised learning.
+One can use train+test features to build the DAE. The larger the testset, the better :)
+An autoencoder tries to reconstruct the inputs features. So features = targets. Linear output layer. Minimize MSE.
+A denoising autoencoder tries to reconstruct the noisy version of the features. It tries to find some representation of the data to better reconstruct the clean one.
+With modern GPUs we can put much computing power to solve this task by touching peak floating point performance with huge layers. Sometimes I saw over 300W power consumption by checking nvidia-smi.
+So why manually constructing 2,3,4-way interactions, use target encoding, search for count features, impute features, when a model can find something similar by itself?
+The critical part here is to invent the noise.
+In tabular datasets we cannot just flip, rotate, sheer like people are doing this in images.
+Adding gaussian or uniform additive / multiplicative noise is not optimal since features have different scale or a discrete set of values that some noise just didnt make sense.
+I found a noise schema called "swap noise". Here I sample from the feature itself with a certain probability "inputSwapNoise" in the table above. 0.15 means 15% of features replaced by values from another row.
+Two different topologies are used by myself. Deep stack, where the new features are the values of the activations on all hidden layers.
+Second, bottleneck, where one middle layer is used to grab the activations as new dataset. This DAE step usually blows the input dimensionality to 1k..10k range.
+
+https://www.kaggle.com/c/porto-seguro-safe-driver-prediction/discussion/44629
