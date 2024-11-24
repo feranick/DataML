@@ -4,7 +4,7 @@
 ***********************************************
 * AddDenoiseAutoEncoder
 * Data Augmentation via Denoising Autoencoder
-* version: v2024.11.22.2
+* version: v2024.11.23.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -21,11 +21,12 @@ class dP:
     saveAsTxt = True
     batch_size = 32
     epochs = 200
-    validation_split = 0.2
-    min_loss_dae = 0.01
+    validation_split = 0.1
+    regL1 = 1e-5
+    min_loss_dae = 0.025
     numAdditions = 300
-    numAddedNoisyDataBlocks = 10
-    percNoiseDistrMax = 0.01
+    numAddedNoisyDataBlocks = 20
+    percNoiseDistrMax = 0.05
     excludeZeroFeatures = True
     removeSpurious = True
     numLabels = 1
@@ -67,7 +68,9 @@ def main():
             success += 1
             print("\n  Successful. Added so far:",str(success),"\n")
         else:
+            #A_tmp = generateData(dP, dae, En, A, M, norm)
             print("  Skip this denoising autoencoder. Added so far:",str(success),"\n")
+        #print(A_tmp)
     if success !=0:
         if dP.removeSpurious:
             newA = removeSpurious(A, newA, norm)
@@ -138,10 +141,10 @@ def trainAutoencoder(dP, A, file):
     ############
     # Encoder
     ############
-    encoded = keras.layers.Dense(A.shape[1]-1, activation='relu')(input)
+    encoded = keras.layers.Dense(A.shape[1]-1, activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(input)
     for i in range(A.shape[1]-1,2,-1):
-        encoded = keras.layers.Dense(i-1,  activation='relu')(encoded)
-    encoded = keras.layers.Dense(1,activation='relu')(encoded)
+        encoded = keras.layers.Dense(i-1,  activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
+    encoded = keras.layers.Dense(1,activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
     
     ############
     # Decoder
