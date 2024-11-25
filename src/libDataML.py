@@ -2,7 +2,7 @@
 '''
 **************************************************
 * libDataML - Library for DataML/DataML_DF
-* v2024.11.22.2
+* v2024.11.25.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
@@ -76,7 +76,7 @@ class Normalizer(object):
         return vn
         
     def transform_inverse(self,V):
-        Vn = np.zeros([0,5])
+        Vn = np.zeros([0,V.shape[1]])
         for i in range (V.shape[0]):
             vn = self.min + V[i,:]*(self.max - self.min)/self.YnormTo
             Vn = np.vstack([Vn, vn])
