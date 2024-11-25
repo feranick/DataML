@@ -4,44 +4,91 @@
 ***********************************************
 * AddDenoiseAutoEncoder
 * Data Augmentation via Denoising Autoencoder
-* version: v2024.11.23.1
+* version: v2024.11.25.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
 print(__doc__)
 
 import numpy as np
-import sys, os.path, h5py, pickle
+import sys, os.path, h5py, pickle, configparser
 from libDataML import *
 
 #************************************
 # Parameters definition
 #************************************
-class dP:
-    saveAsTxt = True
-    batch_size = 32
-    epochs = 200
-    validation_split = 0.1
-    regL1 = 1e-5
-    min_loss_dae = 0.025
-    numAdditions = 300
-    numAddedNoisyDataBlocks = 20
-    percNoiseDistrMax = 0.05
-    excludeZeroFeatures = True
-    removeSpurious = True
-    numLabels = 1
-    normalize = True
-    normalizeLabel = True
-    norm_file = "norm_file.pkl"
+class Conf():
+    def __init__(self):
+        self.appName = "AddDenoiseAutoEncoder"
+        confFileName = "AddDenoiseAutoEncoder.ini"
+        self.configFile = os.getcwd()+"/"+confFileName
+        self.conf = configparser.ConfigParser()
+        self.conf.optionxform = str
+        if os.path.isfile(self.configFile) is False:
+            print(" Configuration file: \""+confFileName+"\" does not exist: Creating one.\n")
+            self.createConfig()
+        self.readConfig(self.configFile)
+        self.model_directory = "./"
+        
+        self.norm_file = self.model_directory+"norm_file.pkl"
+        self.numLabels = 1
+    
+    def denDaeDef(self):
+        self.conf['Parameters'] = {
+            'saveAsTxt' : True,
+            'batch_size' : 32,
+            'epochs' : 200,
+            'validation_split' : 0.1,
+            'regL1' : 1e-5,
+            'l_rate' : 0.1,
+            'l_rdecay' : 0.01,
+            'min_loss_dae' : 0.025,
+            'numAdditions' : 300,
+            'numAddedNoisyDataBlocks' : 20,
+            'percNoiseDistrMax' : 0.05,
+            'excludeZeroFeatures' : True,
+            'removeSpurious' : True,
+            'normalize' : True,
+            'normalizeLabel' : True,
+            }
+            
+    def readConfig(self,configFile):
+        try:
+            self.conf.read(configFile)
+            self.denDaeDef = self.conf['Parameters']
+        
+            self.saveAsTxt = self.conf.getboolean('Parameters','saveAsTxt')
+            self.batch_size = self.conf.getint('Parameters','batch_size')
+            self.epochs = self.conf.getint('Parameters','epochs')
+            self.validation_split = self.conf.getfloat('Parameters','validation_split')
+            self.regL1 = self.conf.getfloat('Parameters','regL1')
+            self.l_rate = self.conf.getfloat('Parameters','l_rate')
+            self.l_rdecay = self.conf.getfloat('Parameters','l_rdecay')
+            self.min_loss_dae = self.conf.getfloat('Parameters','min_loss_dae')
+            self.numAdditions = self.conf.getint('Parameters','numAdditions')
+            self.numAddedNoisyDataBlocks = self.conf.getint('Parameters','numAddedNoisyDataBlocks')
+            self.percNoiseDistrMax = self.conf.getfloat('Parameters','percNoiseDistrMax')
+            self.excludeZeroFeatures = self.conf.getboolean('Parameters','excludeZeroFeatures')
+            self.removeSpurious = self.conf.getboolean('Parameters','removeSpurious')
+            self.normalize = self.conf.getboolean('Parameters','normalize')
+            self.normalizeLabel = self.conf.getboolean('Parameters','normalizeLabel')
+        except:
+            print(" Error in reading configuration file. Please check it\n")
+
+    # Create configuration file
+    def createConfig(self):
+        try:
+            self.denDaeDef()
+            with open(self.configFile, 'w') as configfile:
+                self.conf.write(configfile)
+        except:
+            print("Error in creating configuration file")
     
     '''
     import tensorflow as tf
     seed_value = 10  # Choose any integer
     tf.random.set_seed(seed_value)
     '''
-    #not used
-    l_rate = 0.1
-    l_rdecay = 0.01
     
 #************************************
 # Main
@@ -51,8 +98,10 @@ def main():
         print(' Usage:\n  python3 AddDenoiseAutoEncoder.py <learnData>')
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
+    
+    dP = Conf()
 
-    En, A, M = readLearnFile(sys.argv[1], True)
+    En, A, M = readLearnFile(dP, sys.argv[1], True)
     
     with open(dP.norm_file, "rb") as f:
         norm = pickle.load(f)
@@ -204,7 +253,7 @@ def generateData(dP, autoencoder, En, A, M, norm):
 #************************************
 # Open Learning Data
 #************************************
-def readLearnFile(learnFile, newNorm):
+def readLearnFile(dP, learnFile, newNorm):
     print(" Opening learning file: "+learnFile+"\n")
     try:
         if os.path.splitext(learnFile)[1] == ".npy":
