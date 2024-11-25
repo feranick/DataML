@@ -45,6 +45,7 @@ DataML = "DataML:DataML"
 DataML_DF = "DataML_DF:DataML_DF"
 ConvertLabel = "ConvertLabel:ConvertLabel"
 GetClasses = "GetClasses:GetClasses"
+AddDenoiseAutoEncoder = "AddDenoiseAutoEncoder:AddDenoiseAutoEncoder"
 
 [project.urls]
 Homepage = "https://github.com/feranick/DataML"
