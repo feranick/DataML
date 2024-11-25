@@ -14,6 +14,12 @@ import numpy as np
 import sys, os.path, h5py, pickle, configparser
 from libDataML import *
 
+#***************************************************
+# This is needed for installation through pip
+#***************************************************
+def AddDenoiseAutoEncoder():
+    main()
+
 #************************************
 # Parameters definition
 #************************************
