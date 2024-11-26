@@ -133,17 +133,17 @@ def main():
     if success !=0:
         if dP.removeSpurious:
             newA = removeSpurious(A, newA, norm)
-            print("\n  Spurious data removed.")
+            print("  Spurious data removed.")
             tag = '_noSpur'
         else:
             tag = ''
         newTrain = np.vstack([En, newA])
         print("\n  Added",str(success*A.shape[0]),"new data\n")
-        newFile = os.path.splitext(sys.argv[1])[0] + '_numDataTrainDae' + \
+        newFile = dP.model_directory + os.path.splitext(os.path.basename(sys.argv[1]))[0] + '_numDataTrainDae' + \
             str(dP.numAddedNoisyDataBlocks * A.shape[0]) + '_numAdded' + str(success*A.shape[0]) + tag
         saveLearnFile(dP, newA, newFile, "")
     else:
-        print("  No new training data created. Try to increse numAdditions\n")
+        print("  No new training data created. Try to increse numAdditions or/and min_loss_dae.\n")
 
 #******************************************************
 # Create new Training data by adding a percentage of the max
@@ -243,8 +243,8 @@ def trainAutoencoder(dP, A, file):
         #callbacks=[TensorBoard(log_dir='/tmp/autoencoder')])
         
     final_val_loss = np.asarray(log.history['val_loss'])[-1]
-        
-    saved_model_autoenc = os.path.splitext(file)[0]+"_denoiseAE.keras"
+                
+    saved_model_autoenc = dP.model_directory + os.path.splitext(os.path.basename(file))[0]+"_denoiseAE.keras"
     print("\n  Autoencoder saved in:", saved_model_autoenc,"\n")
     autoencoder.save(saved_model_autoenc)
     
