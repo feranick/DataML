@@ -4,7 +4,7 @@
 ***********************************************
 * AddDenoiseAutoEncoder
 * Data Augmentation via Denoising Autoencoder
-* version: v2024.11.25.1
+* version: v2024.11.26.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -42,6 +42,8 @@ class Conf():
     def denDaeDef(self):
         self.conf['Parameters'] = {
             'saveAsTxt' : True,
+            'deepAutoencoder' : True,
+            'encoded_dim' : 1,
             'batch_size' : 32,
             'epochs' : 200,
             'validation_split' : 0.1,
@@ -64,6 +66,8 @@ class Conf():
             self.denDaeDef = self.conf['Parameters']
         
             self.saveAsTxt = self.conf.getboolean('Parameters','saveAsTxt')
+            self.deepAutoencoder = self.conf.getboolean('Parameters','deepAutoencoder')
+            self.encoded_dim = self.conf.getint('Parameters','encoded_dim')
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.epochs = self.conf.getint('Parameters','epochs')
             self.validation_split = self.conf.getfloat('Parameters','validation_split')
@@ -192,28 +196,37 @@ def createNoysyData(dP, A):
 def trainAutoencoder(dP, A, file):
     import keras
     input = keras.Input(shape=(A.shape[1],),sparse=True)
-    
     ############
     # Encoder
     ############
-    encoded = keras.layers.Dense(A.shape[1]-1, activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(input)
-    for i in range(A.shape[1]-1,2,-1):
-        encoded = keras.layers.Dense(i-1,  activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
-    encoded = keras.layers.Dense(1,activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
+    if dP.deepAutoencoder and A.shape[1] > dP.encoded_dim+2:
+        encoded = keras.layers.Dense(A.shape[1]-1, activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(input)
+        for i in range(A.shape[1]-1,dP.encoded_dim+1,-1):
+            encoded = keras.layers.Dense(i-1,  activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
+        encoded = keras.layers.Dense(dP.encoded_dim,activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
+    else:
+        encoded = keras.layers.Dense(dP.encoded_dim,activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(input)
     
     ############
     # Decoder
     ############
-    decoded = keras.layers.Dense(2,  activation='relu')(encoded)
-    for i in range(3,A.shape[1],1):
-        decoded = keras.layers.Dense(i, activation='relu')(decoded)
-    decoded = keras.layers.Dense(A.shape[1], activation='sigmoid')(decoded)
+    if dP.deepAutoencoder and A.shape[1] > dP.encoded_dim+2:
+        decoded = keras.layers.Dense(dP.encoded_dim+1,  activation='relu')(encoded)
+        for i in range(dP.encoded_dim+2,A.shape[1],1):
+            decoded = keras.layers.Dense(i, activation='relu')(decoded)
+        decoded = keras.layers.Dense(A.shape[1], activation='sigmoid')(decoded)
+    else:
+        decoded = keras.layers.Dense(A.shape[1], activation='sigmoid')(encoded)
     
     ###############
     # Autoencoder
     ###############
-    print("  Training Autoencoder... \n")
-    
+    if dP.deepAutoencoder and A.shape[1] > dP.encoded_dim+2:
+        print("  Training Deep Autoencoder \n   Hidden layers:",A.shape[1]-dP.encoded_dim,
+            "\n   Encoded dimension:",dP.encoded_dim,"\n")
+    else:
+        print("  Training shallow Autoencoder \n   Encoded dimension:",dP.encoded_dim,"\n")
+
     lr_schedule = keras.optimizers.schedules.ExponentialDecay(
             initial_learning_rate=dP.l_rate,
             decay_steps=dP.epochs,
