@@ -4,7 +4,7 @@
 ***********************************************
 * AddDenoiseAutoEncoder
 * Data Augmentation via Denoising Autoencoder
-* version: v2024.11.26.3
+* version: v2024.11.26.4
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -119,8 +119,8 @@ def main():
     newA = norm.transform_inverse(M[1:,:])
     success = 0
     for i in range(dP.numAdditions):
-        noisyA, newA = createNoysyData(dP, A)
-        dae, val_loss = trainAutoencoder(dP, noisyA, newA, sys.argv[1])
+        noisy_A, new_A = createNoisyData(dP, A)
+        dae, val_loss = trainAutoencoder(dP, noisy_A, new_A, sys.argv[1])
         if val_loss < dP.min_loss_dae:
             A_tmp = generateData(dP, dae, En, A, M, norm)
             newA = np.vstack([newA, A_tmp])
@@ -129,7 +129,7 @@ def main():
         else:
             #A_tmp = generateData(dP, dae, En, A, M, norm)
             print("  Skip this denoising autoencoder. Added so far:",str(success),"\n")
-        #print(A_tmp)
+        
     if success !=0:
         if dP.removeSpurious:
             newA = removeSpurious(A, newA, norm)
@@ -157,7 +157,7 @@ def getAmin(A):
     A_min = np.asarray(A_min)
     return A_min
         
-def createNoysyData(dP, A):
+def createNoisyData(dP, A):
     import random
     
     noisyA = np.zeros((0, A.shape[1]))
@@ -171,7 +171,7 @@ def createNoysyData(dP, A):
     
     for h in range(int(dP.numAddedNoisyDataBlocks)):
         for i in range(A.shape[0]):
-            noisy_A_tmp = []
+            noisyA_tmp = []
             A_tmp = []
             if any(A[i][1:]) != 0:
                 for j in range(A.shape[1]):
@@ -184,41 +184,14 @@ def createNoysyData(dP, A):
                         if tmp<A_min[j]:
                             tmp=0
                         
-                    noisy_A_tmp = np.hstack([noisy_A_tmp, tmp])
+                    noisyA_tmp = np.hstack([noisyA_tmp, tmp])
                     A_tmp = np.hstack([A_tmp, A[i][j]])
-                noisyA = np.vstack([noisyA, noisy_A_tmp])
+                noisyA = np.vstack([noisyA, noisyA_tmp])
                 newA = np.vstack([newA, A_tmp])
         #print(h,"A:",A.shape)
         #print(h,"noisyA:",noisyA.shape)
         #print(h, "newA:",newA.shape)
     return noisyA, newA
-    
-def createNoysyDataOLD(dP, A):
-    import random
-    
-    newA = np.zeros((0, A.shape[1]))
-    #A_min = A.min(axis=0)
-    A_min = getAmin(A)
-    A_max = A.max(axis=0)
-    A_mean = np.mean(A, axis=0)
-    A_std = A.std(axis=0)
-            
-    for i in range(A.shape[0]):
-        for h in range(int(dP.numAddedNoisyDataBlocks)):
-            A_tmp = []
-            if any(A[i][1:]) != 0:
-                for j in range(A.shape[1]):
-                    if A[i][j] == 0 and dP.excludeZeroFeatures:
-                        tmp = A[i][j]
-                    else:
-                        tmp =  A[i][j]+A_max[j]*(np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, 1))
-                        if tmp<0:
-                            tmp=-tmp
-                        if tmp<A_min[j]:
-                            tmp=0
-                    A_tmp = np.hstack([A_tmp, tmp])
-                newA = np.vstack([newA, A_tmp])
-    return newA
 
 #************************************
 # Train Autoencoder
@@ -297,7 +270,7 @@ def generateData(dP, autoencoder, En, A, M, norm):
     normDea = autoencoder.predict(A)
     invDea = norm.transform_inverse(normDea)
     #print("normDea", normDea)
-    print("invDea", invDea)
+    #print("invDea", invDea)
     return invDea
  
 #************************************
