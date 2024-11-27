@@ -166,6 +166,11 @@ def loadModel(dP):
             # model here is intended as interpreter
             model_name=os.path.splitext(dP.model_name)[0]+'.tflite'
             model = tf.lite.Interpreter(model_path=model_name)
+            
+            # Use this after the transition from tflite to ai_edge_litert
+            #from ai_edge_litert.interpreter import Interpreter
+            #model = Interpreter(model_path=model_name)
+            
             model.allocate_tensors()
         else:
             model_name = dP.model_name
