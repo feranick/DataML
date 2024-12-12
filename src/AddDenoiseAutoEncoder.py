@@ -36,13 +36,16 @@ class Conf():
         self.readConfig(self.configFile)
         self.model_directory = "./"
         
+        self.modelName = "model_DAE.keras"
+        
         self.norm_file = self.model_directory+"norm_file.pkl"
         self.numLabels = 1
-    
+            
     def denDaeDef(self):
         self.conf['Parameters'] = {
             'saveAsTxt' : True,
             'deepAutoencoder' : True,
+            'reinforce' : False,
             'encoded_dim' : 1,
             'batch_size' : 32,
             'epochs' : 200,
@@ -67,6 +70,7 @@ class Conf():
         
             self.saveAsTxt = self.conf.getboolean('Parameters','saveAsTxt')
             self.deepAutoencoder = self.conf.getboolean('Parameters','deepAutoencoder')
+            self.reinforce = self.conf.getboolean('Parameters','reinforce')
             self.encoded_dim = self.conf.getint('Parameters','encoded_dim')
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.epochs = self.conf.getint('Parameters','epochs')
@@ -244,8 +248,13 @@ def trainAutoencoder(dP, noisyA, A, file):
                 amsgrad=False)
     optim = keras.optimizers.Adam()
     
-    autoencoder = keras.Model(input, decoded)
-    autoencoder.compile(loss='mean_squared_error', optimizer = optim)
+    if dP.reinforce and os.path.exists(dP.modelName):
+        print("  Loading existing DAE model:",dP.modelName,"\n")
+        autoencoder = keras.saving.load_model(dP.modelName)
+    else:
+        print("  Initializing new DAE model:",dP.modelName,"\n")
+        autoencoder = keras.Model(input, decoded)
+        autoencoder.compile(loss='mean_squared_error', optimizer = optim)
     
     log = autoencoder.fit(noisyA, A, batch_size=dP.batch_size, epochs=dP.epochs,
         shuffle = True, verbose=1, validation_split=dP.validation_split)
@@ -253,9 +262,8 @@ def trainAutoencoder(dP, noisyA, A, file):
         
     final_val_loss = np.asarray(log.history['val_loss'])[-1]
                 
-    saved_model_autoenc = dP.model_directory + os.path.splitext(os.path.basename(file))[0]+"_denoiseAE.keras"
-    print("\n  Autoencoder saved in:", saved_model_autoenc,"\n")
-    autoencoder.save(saved_model_autoenc)
+    print("\n  Autoencoder saved in:", dP.modelName,"\n")
+    autoencoder.save(dP.modelName)
     
     return autoencoder, final_val_loss
 
