@@ -113,10 +113,15 @@ def main():
 
     En, A, M = readLearnFile(dP, sys.argv[1], True)
     
-    with open(dP.norm_file, "rb") as f:
-        norm = pickle.load(f)
+    if dP.normalize:
+        with open(dP.norm_file, "rb") as f:
+            norm = pickle.load(f)
         
-    newA = norm.transform_inverse(M[1:,:])
+        newA = norm.transform_inverse(M[1:,:])
+    else:
+        newA = A
+        norm = 0
+        
     success = 0
     for i in range(dP.numAdditions):
         noisy_A, new_A = createNoisyData(dP, A)
