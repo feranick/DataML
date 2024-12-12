@@ -4,7 +4,7 @@
 ***********************************************
 * AddDenoiseAutoEncoder
 * Data Augmentation via Denoising Autoencoder
-* version: v2024.11.26.4
+* version: v2024.12.12.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -257,8 +257,11 @@ def trainAutoencoder(dP, noisyA, A, file):
 #************************************
 # Generate data from Autoencoder
 #************************************
-def removeSpurious(A, T, norm):
-    A_min = norm.transform_inverse(np.asarray([getAmin(A)]))[0]
+def removeSpurious(A, T, norm, dP):
+    if dP.normalize:
+        A_min = norm.transform_inverse(np.asarray([getAmin(A)]))[0]
+    else:
+        A_min = getAmin(A)
     for i in range(T.shape[0]):
         for j in range(T.shape[1]):
             if T[i,j] < A_min[j]:
