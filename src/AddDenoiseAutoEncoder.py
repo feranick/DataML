@@ -132,7 +132,7 @@ def main():
         
     if success !=0:
         if dP.removeSpurious:
-            newA = removeSpurious(A, newA, norm)
+            newA = removeSpurious(A, newA, norm, dP)
             print("  Spurious data removed.")
             tag = '_noSpur'
         else:
