@@ -4,7 +4,7 @@
 ***********************************************
 * AddDenoiseAutoEncoder
 * Data Augmentation via Denoising Autoencoder
-* version: v2024.12.12.1
+* version: v2024.12.13.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -46,6 +46,7 @@ class Conf():
             'saveAsTxt' : True,
             'deepAutoencoder' : True,
             'reinforce' : False,
+            'shuffle' : False,
             'encoded_dim' : 1,
             'batch_size' : 32,
             'epochs' : 200,
@@ -71,6 +72,7 @@ class Conf():
             self.saveAsTxt = self.conf.getboolean('Parameters','saveAsTxt')
             self.deepAutoencoder = self.conf.getboolean('Parameters','deepAutoencoder')
             self.reinforce = self.conf.getboolean('Parameters','reinforce')
+            self.shuffle = self.conf.getboolean('Parameters','shuffle')
             self.encoded_dim = self.conf.getint('Parameters','encoded_dim')
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.epochs = self.conf.getint('Parameters','epochs')
@@ -128,6 +130,9 @@ def main():
         
     success = 0
     for i in range(dP.numAdditions):
+        if dP.shuffle:
+            np.random.shuffle(A)
+        print(A)
         noisy_A, new_A = createNoisyData(dP, A)
         dae, val_loss = trainAutoencoder(dP, noisy_A, new_A, sys.argv[1])
         if val_loss < dP.min_loss_dae:
