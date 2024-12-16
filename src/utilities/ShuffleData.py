@@ -29,17 +29,12 @@ def main():
         return
 
     learnFileExt = os.path.splitext(sys.argv[1])[1]
-        
     En, A = readLearnFile(sys.argv[1])
-    
-    print(A.shape[0])
-    print(sys.argv[2])
     numAdditions = str(A.shape[0]*(int(sys.argv[2])+1))
     
     print(" Adding "+sys.argv[2]+" new datasets (total datapoints: "+numAdditions+")\n")
     newFile = os.path.splitext(sys.argv[1])[0] + '_nShuffle-' + numAdditions
 
-    
     A_tmp = addShuffled(A, int(sys.argv[2]))
     
     if os.path.exists(newFile) == False:
@@ -73,7 +68,6 @@ def readLearnFile(learnFile):
     #Cl = M[1:,0]
     return En, A
 
-
 #***************************************
 # Save new learning Data
 #***************************************
@@ -97,7 +91,6 @@ def addShuffled(P, numRandomAdds):
     for i in range(numRandomAdds):
         np.random.shuffle(Pr)
         P = np.vstack((P, Pr))
-        
     return P
 
 #************************************
