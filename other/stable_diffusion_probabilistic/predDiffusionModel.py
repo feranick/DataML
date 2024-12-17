@@ -113,44 +113,21 @@ class Conf():
 # Main
 #************************************
 def main():
-    if len(sys.argv) < 2:
-        print(' Usage:\n  python3 DiffusionModel.py <learnData>')
+    if len(sys.argv) < 3:
+        print(' Usage:\n  python3 predDiffusionModel.py <keras model> <[Matrix]>')
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
     
     dP = Conf()
 
-    En, A, M = readLearnFile(dP, sys.argv[1], True)
-    if dP.normalize:
-        with open(dP.norm_file, "rb") as f:
-            norm = pickle.load(f)
+
+    saved_diff_model = dP.model_directory + sys.argv[1]
+    print("\n  Autoencoder saved in:", saved_diff_model,"\n")
+    model = keras.saving.load_model(saved_diff_model)
         
-        newA = norm.transform_inverse(M[1:,:])
-    else:
-        newA = A
-        norm = 0
+    pred = single_from_model(model, sys.argv[2], dP)
             
-    trained_model = train_diffusion_model(A, sys.argv[1], dP)
-    A_tmp = sample_from_model(trained_model, num_samples=dP.numAdditions, feature_dim=A.shape[1], conf=dP).numpy()
-    #print("Initial data:",A)
-    #print("Generated Samples:", A_tmp)
-    
-    if dP.removeSpurious:
-        A_tmp, numAddedData = removeSpurious(A, A_tmp, norm, dP)
-        #newA = removeSpurious(A, newA, norm)
-        print("  Spurious data removed.")
-        tag = '_noSpur'
-    else:
-        tag = ''
-        
-    print(A_tmp)
-    
-    newA = np.vstack([newA, A_tmp])
-    newTrain = np.vstack([En, newA])
-    print("\n  Added",str(numAddedData),"new data")
-    
-    newFile = dP.model_directory + os.path.splitext(os.path.basename(sys.argv[1]))[0] + '_diffModNumAdd' + str(numAddedData) + tag
-    saveLearnFile(dP, newA, newFile, "")
+    print(pred)
     
 #*******************************************
 # Helper function to create time embeddings
@@ -167,6 +144,7 @@ def get_time_embedding(timesteps, embedding_dim):
 #*******************************************
 # Define the model
 #*******************************************
+@keras.saving.register_keras_serializable()
 class DiffusionModel(keras.Model):
     def __init__(self, feature_dim, time_embedding_dim, encoded_dim):
         super().__init__()
