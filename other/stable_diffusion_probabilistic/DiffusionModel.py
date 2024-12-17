@@ -52,6 +52,7 @@ class Conf():
     def diffModDef(self):
         self.conf['Parameters'] = {
             'saveAsTxt' : True,
+            'reinforce' : True,
             'encoded_dim' : 1,
             'batch_size' : 16,
             'epochs' : 200,
@@ -75,6 +76,7 @@ class Conf():
             self.diffModDef = self.conf['Parameters']
         
             self.saveAsTxt = self.conf.getboolean('Parameters','saveAsTxt')
+            self.reinforce = self.conf.getboolean('Parameters','reinforce')
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.encoded_dim = self.conf.getint('Parameters','encoded_dim')
             self.epochs = self.conf.getint('Parameters','epochs')
@@ -129,8 +131,18 @@ def main():
     else:
         newA = A
         norm = 0
+    
+    # Load model or create a new one.
+    saved_diff_model = dP.model_directory + os.path.splitext(os.path.basename(sys.argv[1]))[0]+"_diffModel.keras"
+
+    if dP.reinforce and os.path.exists(saved_diff_model):
+        print("Loading Diffuse Model:",saved_diff_model,"\n")
+        model = keras.saving.load_model(saved_diff_model, custom_objects={'DiffusionModel': DiffusionModel})
+    else:
+        print("Initializing new Diffuse Model\n")
+        model = DiffusionModel(feature_dim=data.shape[1], time_embedding_dim=data.shape[1], encoded_dim = dP.encoded_dim)
             
-    trained_model = train_diffusion_model(A, sys.argv[1], dP)
+    trained_model = train_diffusion_model(model, A, saved_diff_model, dP)
     A_tmp = sample_from_model(trained_model, num_samples=dP.numAdditions, feature_dim=A.shape[1], conf=dP).numpy()
     #print("Initial data:",A)
     #print("Generated Samples:", A_tmp)
@@ -167,17 +179,31 @@ def get_time_embedding(timesteps, embedding_dim):
 #*******************************************
 # Define the model
 #*******************************************
+@keras.saving.register_keras_serializable()
 class DiffusionModel(keras.Model):
-    def __init__(self, feature_dim, time_embedding_dim, encoded_dim):
-        super().__init__()
+    def __init__(self, feature_dim, time_embedding_dim, encoded_dim, **kwargs):
+        super().__init__(**kwargs)
         self.feature_dim = feature_dim
         self.time_embedding_dim = time_embedding_dim
+        self.encoded_dim = encoded_dim
         
         self.time_embedding_layer = keras.layers.Dense(feature_dim, activation="relu")
         self.dense1 = keras.layers.Dense(encoded_dim, activation="relu")
         self.dense2 = keras.layers.Dense(encoded_dim, activation="relu")
         self.output_layer = keras.layers.Dense(feature_dim, activation=None)
-    
+        
+    def get_config(self):
+        config = super().get_config()
+        config.update(
+            {
+                "trainable": self.trainable,
+                "feature_dim": self.feature_dim,
+                "time_embedding_dim": self.time_embedding_dim,
+                "encoded_dim": self.encoded_dim,
+            }
+        )
+        return config
+       
     def build(self, input_shape):
         # Ensure input shapes are properly built
         self.built = True
@@ -224,10 +250,8 @@ def diffusion_loss(model, x_start, t, noise, dP):
 #*******************************************
 # Train loop
 #*******************************************
-def train_diffusion_model(data, file, dP):
-    model = DiffusionModel(feature_dim=data.shape[1], time_embedding_dim=data.shape[1], encoded_dim = dP.encoded_dim)
+def train_diffusion_model(model, data, file, dP):
     optimizer = keras.optimizers.Adam(learning_rate=dP.l_rate)
-
     for t in range(0,dP.time_steps,):
         noise = tf.random.normal(shape=data.shape)
         alpha_t = tf.gather(dP.sqrt_alphas_cumprod, t)
@@ -250,10 +274,9 @@ def train_diffusion_model(data, file, dP):
             optimizer.apply_gradients(zip(grads, model.trainable_weights))
 
         print(f"Epoch {epoch + 1}/{dP.epochs}, Loss: {loss.numpy()}")
-     
-    saved_diff_model = dP.model_directory + os.path.splitext(os.path.basename(file))[0]+"_diffModel.keras"
-    print("\n  Autoencoder saved in:", saved_diff_model,"\n")
-    model.save(saved_diff_model)
+    
+    print("\n  Autoencoder saved in:", file,"\n")
+    model.save(file)
 
     return model
     
