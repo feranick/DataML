@@ -257,7 +257,10 @@ def diffusion_loss(model, x_start, t, noise, dP):
 def train_diffusion_model(model, data, file, dP):
     optimizer = keras.optimizers.Adam(learning_rate=dP.l_rate)
     for t in range(0,dP.time_steps,):
-        noise = tf.random.normal(shape=data.shape)
+        #noise = np.abs(tf.random.normal(shape=data.shape))
+        #noise = random_normal(data, data.shape[0], data.shape[1])
+        noise = random_uniform(data, data.shape[0], data.shape[1])
+        
         alpha_t = tf.gather(dP.sqrt_alphas_cumprod, t)
         one_minus_alpha_t = tf.gather(dP.one_minus_sqrt_alphas_cumprod, t)
         noisy_input = alpha_t * data + one_minus_alpha_t * noise
@@ -327,7 +330,7 @@ def random_uniform(A, num_samples, feature_dim):
         #print(getMin(A[:,i]), np.max(A[:,i]))
         a = []
         for j in range(num_samples):
-            tmp = np.abs(np.random.uniform(low = getMin(A[:,i]), high = np.max(A[:,i])))
+            tmp = np.random.uniform(low = getMin(A[:,i]), high = np.max(A[:,i]))
             a.append(tmp)
         randA = np.vstack([randA, a])
     return randA.T
