@@ -56,14 +56,9 @@ class Conf():
             'encoded_dim' : 1,
             'batch_size' : 16,
             'epochs' : 200,
-            'validation_split' : 0.1,
             'time_steps' : 50,
-            'regL1' : 1e-5,
             'l_rate' : 0.1,
-            'l_rdecay' : 0.01,
-            'min_loss_dae' : 0.025,
             'numAdditions' : 300,
-            'percNoiseDistrMax' : 0.05,
             'excludeZeroFeatures' : True,
             'removeSpurious' : True,
             'normalize' : False,
@@ -80,14 +75,9 @@ class Conf():
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.encoded_dim = self.conf.getint('Parameters','encoded_dim')
             self.epochs = self.conf.getint('Parameters','epochs')
-            self.validation_split = self.conf.getfloat('Parameters','validation_split')
             self.time_steps = self.conf.getint('Parameters','time_steps')
-            self.regL1 = self.conf.getfloat('Parameters','regL1')
             self.l_rate = self.conf.getfloat('Parameters','l_rate')
-            self.l_rdecay = self.conf.getfloat('Parameters','l_rdecay')
-            self.min_loss_dae = self.conf.getfloat('Parameters','min_loss_dae')
             self.numAdditions = self.conf.getint('Parameters','numAdditions')
-            self.percNoiseDistrMax = self.conf.getfloat('Parameters','percNoiseDistrMax')
             self.excludeZeroFeatures = self.conf.getboolean('Parameters','excludeZeroFeatures')
             self.removeSpurious = self.conf.getboolean('Parameters','removeSpurious')
             self.normalize = self.conf.getboolean('Parameters','normalize')
@@ -123,29 +113,27 @@ def main():
     dP = Conf()
 
     En, A, M = readLearnFile(dP, sys.argv[1], True)
+    
     if dP.normalize:
         with open(dP.norm_file, "rb") as f:
             norm = pickle.load(f)
-        
         newA = norm.transform_inverse(M[1:,:])
     else:
         newA = A
         norm = 0
-    
+            
     # Load model or create a new one.
     saved_diff_model = dP.model_directory + os.path.splitext(os.path.basename(sys.argv[1]))[0]+"_diffModel.keras"
 
     if dP.reinforce and os.path.exists(saved_diff_model):
-        print("Loading Diffuse Model:",saved_diff_model,"\n")
+        print(" Loading Diffuse Model:",saved_diff_model,"\n")
         model = keras.saving.load_model(saved_diff_model, custom_objects={'DiffusionModel': DiffusionModel})
     else:
-        print("Initializing new Diffuse Model\n")
+        print(" Initializing new Diffuse Model\n")
         model = DiffusionModel(feature_dim=A.shape[1], time_embedding_dim=A.shape[1], encoded_dim = dP.encoded_dim)
             
     trained_model = train_diffusion_model(model, A, saved_diff_model, dP)
-    A_tmp = sample_from_model(trained_model, num_samples=dP.numAdditions, feature_dim=A.shape[1], conf=dP).numpy()
-    #print("Initial data:",A)
-    #print("Generated Samples:", A_tmp)
+    A_tmp = sample_from_model(trained_model, A, num_samples=dP.numAdditions, feature_dim=A.shape[1], conf=dP).numpy()
     
     if dP.removeSpurious:
         A_tmp, numAddedData = removeSpurious(A, A_tmp, norm, dP)
@@ -154,8 +142,7 @@ def main():
         tag = '_noSpur'
     else:
         tag = ''
-        
-    print(A_tmp)
+        numAddedData = dP.numAdditions
     
     newA = np.vstack([newA, A_tmp])
     newTrain = np.vstack([En, newA])
@@ -283,21 +270,51 @@ def train_diffusion_model(model, data, file, dP):
 #*******************************************
 # Sampling function
 #*******************************************
-def sample_from_model(model, num_samples, feature_dim, conf):
-    x = tf.random.normal(shape=(num_samples, feature_dim))
-    #print(x)
-    
+def sample_from_model(model, A, num_samples, feature_dim, conf):
+    #x = np.abs(tf.random.normal(shape=(num_samples, feature_dim)))
+    #x = tf.random.uniform(shape=(num_samples, feature_dim), minval = 0, maxval = 1)
+    #x = random_normal(A, num_samples, feature_dim)
+    x = random_uniform(A, num_samples, feature_dim)
+        
     for t in reversed(range(conf.time_steps)):
         t_tensor = tf.fill((num_samples,), t)
         predicted_noise = model([x, t_tensor], training=False)
-        
         alpha_t = tf.gather(conf.sqrt_alphas_cumprod, t)
         one_minus_alpha_t = tf.gather(conf.one_minus_sqrt_alphas_cumprod, t)
         beta_t = tf.gather(conf.betas, t)
-
         x = (x - beta_t * predicted_noise) / alpha_t
+        
     return x
 
+# custom random normal generator
+def random_normal(A, num_samples, feature_dim):
+    randA = np.empty(shape=(0, num_samples))
+    
+    for i in range(feature_dim):
+        #print(np.mean(A[:,i]), np.std(A[:,i]))
+        a = []
+        for j in range(num_samples):
+            tmp = np.abs(np.random.normal(loc = np.mean(A[:,i]), scale = np.std(A[:,i])))
+            a.append(tmp)
+        randA = np.vstack([randA, a])
+    return randA.T
+  
+# custom random uniform generator
+def random_uniform(A, num_samples, feature_dim):
+    randA = np.empty(shape=(0, num_samples))
+    
+    def getMin(A):
+        return np.min(A[np.where(A != 0)])
+    
+    for i in range(feature_dim):
+        #print(getMin(A[:,i]), np.max(A[:,i]))
+        a = []
+        for j in range(num_samples):
+            tmp = np.abs(np.random.uniform(low = getMin(A[:,i]), high = np.max(A[:,i])))
+            a.append(tmp)
+        randA = np.vstack([randA, a])
+    return randA.T
+    
 #*******************************************
 # Create from single data
 #*******************************************
@@ -338,23 +355,25 @@ def getAmax(A):
 def removeSpurious(A, T, norm, dP):
     if dP.normalize:
         A_min = norm.transform_inverse(np.asarray([getAmin(A)]))[0]
-        #A_max = norm.transform_inverse(np.asarray([getAmax(A)]))[0]
+        A_max = norm.transform_inverse(np.asarray([getAmax(A)]))[0]
     else:
         A_min = getAmin(A)
-        #A_max = getAmax(A)
+        A_max = getAmax(A)
     
     for i in range(T.shape[0]):
         for j in range(T.shape[1]):
-            if T[i,j] < 0:
-            #if T[i,j] < A_min[j]:
-                T[i,j] = 0
+            
+            if T[i,j] < A_min[j]:
+                T[i,j] = A_min[j]
+            if T[i,j] > A_max[j]:
+                T[i,j] = A_max[j]
+            
+            #if T[i,j] < A_min[j] or T[i,j] > A_max[j]:
+            #    T[i,j] = 0
     
     # Remove rows with all zero values
     T = T[np.any(T != 0, axis=1)]
-    
-    # Remove rows with first column value == 0
-    print(T)
-    
+    #T = T[np.all(T != 0, axis=1)]
     
     return T, T.shape[0]
 
