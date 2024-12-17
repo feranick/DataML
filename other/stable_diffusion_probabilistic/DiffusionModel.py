@@ -52,6 +52,7 @@ class Conf():
     def diffModDef(self):
         self.conf['Parameters'] = {
             'saveAsTxt' : True,
+            'deepModel' : True,
             'reinforce' : True,
             'encoded_dim' : 1,
             'batch_size' : 16,
@@ -71,6 +72,7 @@ class Conf():
             self.diffModDef = self.conf['Parameters']
         
             self.saveAsTxt = self.conf.getboolean('Parameters','saveAsTxt')
+            self.deepModel = self.conf.getboolean('Parameters','deepModel')
             self.reinforce = self.conf.getboolean('Parameters','reinforce')
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.encoded_dim = self.conf.getint('Parameters','encoded_dim')
@@ -130,7 +132,7 @@ def main():
         model = keras.saving.load_model(saved_diff_model, custom_objects={'DiffusionModel': DiffusionModel})
     else:
         print(" Initializing new Diffuse Model\n")
-        model = DiffusionModel(feature_dim=A.shape[1], time_embedding_dim=A.shape[1], encoded_dim = dP.encoded_dim)
+        model = DiffusionModel(feature_dim=A.shape[1], time_embedding_dim=A.shape[1], encoded_dim = dP.encoded_dim, conf = dP)
             
     trained_model = train_diffusion_model(model, A, saved_diff_model, dP)
     A_tmp = sample_from_model(trained_model, A, num_samples=dP.numAdditions, feature_dim=A.shape[1], conf=dP).numpy()
@@ -168,17 +170,27 @@ def get_time_embedding(timesteps, embedding_dim):
 #*******************************************
 @keras.saving.register_keras_serializable()
 class DiffusionModel(keras.Model):
-    def __init__(self, feature_dim, time_embedding_dim, encoded_dim, **kwargs):
+    def __init__(self, feature_dim, time_embedding_dim, encoded_dim, conf, **kwargs):
         super().__init__(**kwargs)
         self.feature_dim = feature_dim
         self.time_embedding_dim = time_embedding_dim
         self.encoded_dim = encoded_dim
+        self.conf = conf
         
         self.time_embedding_layer = keras.layers.Dense(feature_dim, activation="relu")
-        self.dense1 = keras.layers.Dense(encoded_dim, activation="relu")
-        self.dense2 = keras.layers.Dense(encoded_dim, activation="relu")
+        if self.conf.deepModel and feature_dim > encoded_dim+2:
+            self.dense1=[]
+            self.dense2=[]
+            for i in range(feature_dim-1,encoded_dim+1,-1):
+                self.dense1.append(keras.layers.Dense(i-1, activation="relu"))
+            for i in range(encoded_dim+2,feature_dim,1):
+                self.dense2.append(keras.layers.Dense(i, activation="relu"))
+            print(" Using Deep Diffusion Model, number of layers:",str(len(self.dense1)+len(self.dense2)+2),"\n")
+        else:
+            self.dense1 = keras.layers.Dense(encoded_dim, activation="relu")
+            print(" Using single layer diffusion model")
         self.output_layer = keras.layers.Dense(feature_dim, activation=None)
-        
+                
     def get_config(self):
         config = super().get_config()
         config.update(
@@ -201,8 +213,13 @@ class DiffusionModel(keras.Model):
         time_features = self.time_embedding_layer(time_embedding)
         
         x = x + time_features
-        x = self.dense1(x)
-        x = self.dense2(x)
+        if self.conf.deepModel and self.feature_dim > self.encoded_dim+2:
+            for i in range(len(self.dense1)):
+                x = self.dense1[i](x)
+            for i in range(len(self.dense2)):
+                x = self.dense2[i](x)
+        else:
+            x = self.dense1(x)
         return self.output_layer(x)
 
 #*******************************************
@@ -262,7 +279,7 @@ def train_diffusion_model(model, data, file, dP):
 
         print(f"Epoch {epoch + 1}/{dP.epochs}, Loss: {loss.numpy()}")
     
-    print("\n  Autoencoder saved in:", file,"\n")
+    print("\n  Diffusion model saved in:", file,"\n")
     model.save(file)
 
     return model
@@ -362,14 +379,14 @@ def removeSpurious(A, T, norm, dP):
     
     for i in range(T.shape[0]):
         for j in range(T.shape[1]):
-            
+            '''
             if T[i,j] < A_min[j]:
                 T[i,j] = A_min[j]
             if T[i,j] > A_max[j]:
                 T[i,j] = A_max[j]
-            
-            #if T[i,j] < A_min[j] or T[i,j] > A_max[j]:
-            #    T[i,j] = 0
+            '''
+            if T[i,j] < A_min[j] or T[i,j] > A_max[j]:
+                T[i,j] = 0
     
     # Remove rows with all zero values
     T = T[np.any(T != 0, axis=1)]
