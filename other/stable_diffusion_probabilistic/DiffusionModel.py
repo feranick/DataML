@@ -140,7 +140,7 @@ def main():
         model = keras.saving.load_model(saved_diff_model, custom_objects={'DiffusionModel': DiffusionModel})
     else:
         print("Initializing new Diffuse Model\n")
-        model = DiffusionModel(feature_dim=data.shape[1], time_embedding_dim=data.shape[1], encoded_dim = dP.encoded_dim)
+        model = DiffusionModel(feature_dim=A.shape[1], time_embedding_dim=A.shape[1], encoded_dim = dP.encoded_dim)
             
     trained_model = train_diffusion_model(model, A, saved_diff_model, dP)
     A_tmp = sample_from_model(trained_model, num_samples=dP.numAdditions, feature_dim=A.shape[1], conf=dP).numpy()
