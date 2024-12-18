@@ -4,7 +4,7 @@
 ***********************************************
 * DiffusionModel
 * Data Augmentation via Diffusion Model
-* version: v2024.12.17.1
+* version: v2024.12.18.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -150,6 +150,8 @@ def main():
     newTrain = np.vstack([En, newA])
     print("\n  Added",str(numAddedData),"new data")
     
+    #print("Final:\n", newTrain)
+    
     newFile = dP.model_directory + os.path.splitext(os.path.basename(sys.argv[1]))[0] + '_diffModNumAdd' + str(numAddedData) + tag
     saveLearnFile(dP, newA, newFile, "")
     
@@ -228,6 +230,7 @@ class DiffusionModel(keras.Model):
 def linear_beta_schedule(timesteps):
     beta_start = 1e-4
     beta_end = 0.02
+    #print( np.linspace(beta_start, beta_end, timesteps, dtype=np.float32))
     return np.linspace(beta_start, beta_end, timesteps, dtype=np.float32)
     
 #*******************************************
@@ -242,8 +245,13 @@ def diffusion_loss(model, x_start, t, noise, dP):
     alpha_t = tf.expand_dims(alpha_t, axis=-1)  # Shape: [BATCH_SIZE, 1]
     one_minus_alpha_t = tf.expand_dims(one_minus_alpha_t, axis=-1)  # Shape: [BATCH_SIZE, 1]
 
+    #print("DIFF_LOSS")
+    #print(alpha_t.numpy(),x_start.numpy(),one_minus_alpha_t.numpy(),noise)
+    #print(noise)
+
     # Compute the noisy input
     noisy_input = alpha_t * x_start + one_minus_alpha_t * noise
+    #noisy_input = one_minus_alpha_t * x_start + alpha_t * noise
 
     # Predict the noise
     predicted_noise = model([noisy_input, t], training=True)
@@ -260,11 +268,11 @@ def train_diffusion_model(model, data, file, dP):
         #noise = np.abs(tf.random.normal(shape=data.shape))
         #noise = random_normal(data, data.shape[0], data.shape[1])
         noise = random_uniform(data, data.shape[0], data.shape[1])
-        
+                
         alpha_t = tf.gather(dP.sqrt_alphas_cumprod, t)
         one_minus_alpha_t = tf.gather(dP.one_minus_sqrt_alphas_cumprod, t)
         noisy_input = alpha_t * data + one_minus_alpha_t * noise
-        
+                
     for epoch in range(dP.epochs):
         np.random.shuffle(data)
         for i in range(0, len(data), dP.batch_size):
@@ -272,11 +280,12 @@ def train_diffusion_model(model, data, file, dP):
             batch = tf.convert_to_tensor(batch, dtype=tf.float32)
                         
             t = tf.random.uniform((len(batch),), minval=0, maxval=dP.time_steps, dtype=tf.int32)
-            noise = tf.random.normal(shape=batch.shape)
+            #noise = tf.random.normal(shape=batch.shape)
+            noise = random_uniform(data, dP.batch_size, data.shape[1])
 
             with tf.GradientTape() as tape:
                 loss = diffusion_loss(model, batch, t, noise, dP)
-
+                
             grads = tape.gradient(loss, model.trainable_weights)
             optimizer.apply_gradients(zip(grads, model.trainable_weights))
 
@@ -303,6 +312,8 @@ def sample_from_model(model, A, num_samples, feature_dim, conf):
         one_minus_alpha_t = tf.gather(conf.one_minus_sqrt_alphas_cumprod, t)
         beta_t = tf.gather(conf.betas, t)
         x = (x - beta_t * predicted_noise) / alpha_t
+        
+    print(x)
         
     return x
 
