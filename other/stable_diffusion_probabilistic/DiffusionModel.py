@@ -4,7 +4,7 @@
 ***********************************************
 * DiffusionModel
 * Data Augmentation via Diffusion Model
-* version: v2024.12.19.1
+* version: v2024.12.19.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -41,11 +41,9 @@ class Conf():
         self.norm_file = self.model_directory+"norm_file.pkl"
         self.numLabels = 1
         
-        # Linear time - testing
-        # self.betas = linear_beta_schedule(self.time_steps)
         self.betas = np.linspace(self.beta_start, self.beta_end, self.time_steps, dtype=np.float32)
         self.alphas = 1.0 - self.betas
-        '''
+        
         # Non-linear time - original
         alphas_cumprod = np.cumprod(self.alphas)
         alphas_cumprod_prev = np.append(1.0, alphas_cumprod[:-1])
@@ -53,14 +51,15 @@ class Conf():
         self.sqrt_alphas_cumprod = np.sqrt(alphas_cumprod)
         self.one_minus_sqrt_alphas_cumprod = np.sqrt(1.0 - alphas_cumprod)
         '''
-        
+        # Linear time - testing
         self.sqrt_alphas_cumprod = self.alphas
         self.one_minus_sqrt_alphas_cumprod = self.betas
-        
+        '''
     def diffModDef(self):
         self.conf['Parameters'] = {
             'saveAsTxt' : True,
             'deepModel' : True,
+            'normalNoise' : True,
             'reinforce' : True,
             'encoded_dim' : 1,
             'batch_size' : 16,
@@ -86,6 +85,7 @@ class Conf():
             self.saveAsTxt = self.conf.getboolean('Parameters','saveAsTxt')
             self.deepModel = self.conf.getboolean('Parameters','deepModel')
             self.reinforce = self.conf.getboolean('Parameters','reinforce')
+            self.normalNoise = self.conf.getboolean('Parameters','normalNoise')
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.encoded_dim = self.conf.getint('Parameters','encoded_dim')
             self.epochs = self.conf.getint('Parameters','epochs')
@@ -277,8 +277,10 @@ def train_diffusion_model(model, data, file, dP):
     optimizer = keras.optimizers.Adam(learning_rate=lr_schedule)
     for t in range(0,dP.time_steps,):
         #noise = np.abs(tf.random.normal(shape=data.shape))
-        #noise = random_normal(data, data.shape[0], data.shape[1])
-        noise = random_uniform(data, data.shape[0], data.shape[1])
+        if dP.normalNoise:
+            noise = random_normal(data, data.shape[0], data.shape[1])
+        else:
+            noise = random_uniform(data, data.shape[0], data.shape[1])
                 
         alpha_t = tf.gather(dP.sqrt_alphas_cumprod, t)
         one_minus_alpha_t = tf.gather(dP.one_minus_sqrt_alphas_cumprod, t)
@@ -295,7 +297,10 @@ def train_diffusion_model(model, data, file, dP):
                         
             t = tf.random.uniform((len(batch),), minval=0, maxval=dP.time_steps, dtype=tf.int32)
             #noise = tf.random.normal(shape=batch.shape)
-            noise = random_uniform(data, batch.shape[0], data.shape[1])
+            if dP.normalNoise:
+                noise = random_normal(data, batch.shape[0], data.shape[1])
+            else:
+                noise = random_uniform(data, batch.shape[0], data.shape[1])
 
             with tf.GradientTape() as tape:
                 loss = diffusion_loss(model, batch, t, noise, dP)
