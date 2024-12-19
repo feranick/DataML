@@ -41,14 +41,22 @@ class Conf():
         self.norm_file = self.model_directory+"norm_file.pkl"
         self.numLabels = 1
         
-        self.betas = linear_beta_schedule(self.time_steps)
-        alphas = 1.0 - self.betas
-        alphas_cumprod = np.cumprod(alphas)
+        # Linear time - testing
+        # self.betas = linear_beta_schedule(self.time_steps)
+        self.betas = np.linspace(self.beta_start, self.beta_end, self.time_steps, dtype=np.float32)
+        self.alphas = 1.0 - self.betas
+        '''
+        # Non-linear time - original
+        alphas_cumprod = np.cumprod(self.alphas)
         alphas_cumprod_prev = np.append(1.0, alphas_cumprod[:-1])
-        self.sqrt_recip_alphas = np.sqrt(1.0 / alphas)
+        self.sqrt_recip_alphas = np.sqrt(1.0 / self.alphas)
         self.sqrt_alphas_cumprod = np.sqrt(alphas_cumprod)
         self.one_minus_sqrt_alphas_cumprod = np.sqrt(1.0 - alphas_cumprod)
-            
+        '''
+        
+        self.sqrt_alphas_cumprod = self.alphas
+        self.one_minus_sqrt_alphas_cumprod = self.betas
+        
     def diffModDef(self):
         self.conf['Parameters'] = {
             'saveAsTxt' : True,
@@ -58,6 +66,8 @@ class Conf():
             'batch_size' : 16,
             'epochs' : 200,
             'time_steps' : 50,
+            'beta_start' : 1e-4,
+            'beta_end' : 0.02,
             'l_rate' : 0.1,
             'numAdditions' : 300,
             'excludeZeroFeatures' : True,
@@ -78,6 +88,8 @@ class Conf():
             self.encoded_dim = self.conf.getint('Parameters','encoded_dim')
             self.epochs = self.conf.getint('Parameters','epochs')
             self.time_steps = self.conf.getint('Parameters','time_steps')
+            self.beta_start = self.conf.getfloat('Parameters','beta_start')
+            self.beta_end = self.conf.getfloat('Parameters','beta_end')
             self.l_rate = self.conf.getfloat('Parameters','l_rate')
             self.numAdditions = self.conf.getint('Parameters','numAdditions')
             self.excludeZeroFeatures = self.conf.getboolean('Parameters','excludeZeroFeatures')
@@ -223,15 +235,6 @@ class DiffusionModel(keras.Model):
         else:
             x = self.dense1(x)
         return self.output_layer(x)
-
-#*******************************************
-# Noise scheduler
-#*******************************************
-def linear_beta_schedule(timesteps):
-    beta_start = 1e-4
-    beta_end = 0.02
-    #print( np.linspace(beta_start, beta_end, timesteps, dtype=np.float32))
-    return np.linspace(beta_start, beta_end, timesteps, dtype=np.float32)
     
 #*******************************************
 # Loss function
@@ -244,6 +247,8 @@ def diffusion_loss(model, x_start, t, noise, dP):
     # Reshape scaling factors to broadcast properly
     alpha_t = tf.expand_dims(alpha_t, axis=-1)  # Shape: [BATCH_SIZE, 1]
     one_minus_alpha_t = tf.expand_dims(one_minus_alpha_t, axis=-1)  # Shape: [BATCH_SIZE, 1]
+    
+    #print(alpha_t.numpy(), one_minus_alpha_t.numpy())
 
     #print("DIFF_LOSS")
     #print(alpha_t.numpy(),x_start.numpy(),one_minus_alpha_t.numpy(),noise)
@@ -252,6 +257,8 @@ def diffusion_loss(model, x_start, t, noise, dP):
     # Compute the noisy input
     noisy_input = alpha_t * x_start + one_minus_alpha_t * noise
     #noisy_input = one_minus_alpha_t * x_start + alpha_t * noise
+    
+    #print((alpha_t*x_start).numpy(),(one_minus_alpha_t*noise).numpy(), noisy_input.numpy())
 
     # Predict the noise
     predicted_noise = model([noisy_input, t], training=True)
@@ -271,6 +278,9 @@ def train_diffusion_model(model, data, file, dP):
                 
         alpha_t = tf.gather(dP.sqrt_alphas_cumprod, t)
         one_minus_alpha_t = tf.gather(dP.one_minus_sqrt_alphas_cumprod, t)
+        
+        #print("alpha_t:", alpha_t.numpy(),one_minus_alpha_t.numpy())
+        
         noisy_input = alpha_t * data + one_minus_alpha_t * noise
                 
     for epoch in range(dP.epochs):
@@ -312,8 +322,6 @@ def sample_from_model(model, A, num_samples, feature_dim, conf):
         one_minus_alpha_t = tf.gather(conf.one_minus_sqrt_alphas_cumprod, t)
         beta_t = tf.gather(conf.betas, t)
         x = (x - beta_t * predicted_noise) / alpha_t
-        
-    print(x)
         
     return x
 
@@ -391,20 +399,30 @@ def removeSpurious(A, T, norm, dP):
         A_min = getAmin(A)
         A_max = getAmax(A)
     
+    '''
     for i in range(T.shape[0]):
         for j in range(T.shape[1]):
-            '''
             if T[i,j] < A_min[j]:
                 T[i,j] = A_min[j]
             if T[i,j] > A_max[j]:
                 T[i,j] = A_max[j]
-            '''
+            #if T[i,j] < A_min[j] or T[i,j] > A_max[j]:
+            #    T[i,j] = 0
+    '''
+    for i in range(T.shape[0]):
+        flag = False
+        for j in range(T.shape[1]):
             if T[i,j] < A_min[j] or T[i,j] > A_max[j]:
-                T[i,j] = 0
+                flag = True
+        if flag:
+            T[i] = 0
+    
     
     # Remove rows with all zero values
     T = T[np.any(T != 0, axis=1)]
     #T = T[np.all(T != 0, axis=1)]
+    
+    print(T)
     
     return T, T.shape[0]
 
