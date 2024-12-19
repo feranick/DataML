@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: v2024.10.07.2
+* version: v2024.12.19.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -37,7 +37,7 @@ class dP:
     predCol = [41,48]       # IGC (column range)
     #trainCol = [14,21,23,29,34,35,36,37,38,39,40]       # IGC (column range)
     #trainCol = [15,21,23,29]       # IGC (column range)
-    #predCol = [41,48]       # IGC (column range)
+    #predCol = [41]       # IGC (column range)
     
     includeAdditionalCol = False
     initialAdditionalCol = 41
@@ -52,9 +52,9 @@ class dP:
     ### Heat Maps
     heatMapsCorr = True             # True: use for Master data
     heatMapCorrFull = False          #True: plot all correlation data
-    #corrMax = 1
+    corrMax = 1
     #corrMin = 0.75
-    corrMax = -0.75
+    #corrMax = -0.75
     corrMin = -1
     
     ### Plotting correlation 2D plots
@@ -169,8 +169,8 @@ def readParamFile(paramFile):
     return dfP
 
 def processParamFile(dfP, lims):
-    if lims[1]>len(dfP.columns):
-        lims[1] = len(dfP.columns)
+    if lims[0]>len(dfP.columns):
+        lims[0] = len(dfP.columns)
         print(" Warning: Column range is larger than actual number of columns. Using full dataset")
     #P = dfP.iloc[:,lims].astype(float).to_numpy()
     P = dfP.iloc[:,lims].to_numpy()
