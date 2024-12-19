@@ -36,6 +36,7 @@ class dP:
     trainCol = [1, 40]       # IGC (column range)
     predCol = [41,48]       # IGC (column range)
     #trainCol = [14,21,23,29,34,35,36,37,38,39,40]       # IGC (column range)
+    #trainCol = [15,21,23,29]       # IGC (column range)
     #predCol = [41,48]       # IGC (column range)
     
     includeAdditionalCol = False
@@ -45,7 +46,7 @@ class dP:
     separateValidFile = False
     validRows = [103,104,105,106,107]   # ORNL
 
-    valueForNan = -1
+    valueForNan = 0
     removeNaNfromCorr = True
 
     ### Heat Maps
