@@ -4,7 +4,7 @@
 ***********************************************
 * DiffusionModel
 * Data Augmentation via Diffusion Model
-* version: v2024.12.18.1
+* version: v2024.12.19.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -69,6 +69,8 @@ class Conf():
             'beta_start' : 1e-4,
             'beta_end' : 0.02,
             'l_rate' : 0.1,
+            'l_rdecay' : 0.01,
+            'l2' : 1e-5,
             'numAdditions' : 300,
             'excludeZeroFeatures' : True,
             'removeSpurious' : True,
@@ -91,6 +93,8 @@ class Conf():
             self.beta_start = self.conf.getfloat('Parameters','beta_start')
             self.beta_end = self.conf.getfloat('Parameters','beta_end')
             self.l_rate = self.conf.getfloat('Parameters','l_rate')
+            self.l_rdecay = self.conf.getfloat('Parameters','l_rdecay')
+            self.l2 = self.conf.getfloat('Parameters','l2')
             self.numAdditions = self.conf.getint('Parameters','numAdditions')
             self.excludeZeroFeatures = self.conf.getboolean('Parameters','excludeZeroFeatures')
             self.removeSpurious = self.conf.getboolean('Parameters','removeSpurious')
@@ -152,7 +156,7 @@ def main():
     if dP.removeSpurious:
         A_tmp, numAddedData = removeSpurious(A, A_tmp, norm, dP)
         #newA = removeSpurious(A, newA, norm)
-        print("  Spurious data removed.")
+        print("\n  Spurious data removed.")
         tag = '_noSpur'
     else:
         tag = ''
@@ -196,12 +200,12 @@ class DiffusionModel(keras.Model):
             self.dense1=[]
             self.dense2=[]
             for i in range(feature_dim-1,encoded_dim+1,-1):
-                self.dense1.append(keras.layers.Dense(i-1, activation="relu"))
+                self.dense1.append(keras.layers.Dense(i-1, activation="relu", kernel_regularizer=keras.regularizers.l2(conf.l2)))
             for i in range(encoded_dim+2,feature_dim,1):
-                self.dense2.append(keras.layers.Dense(i, activation="relu"))
+                self.dense2.append(keras.layers.Dense(i, activation="relu",kernel_regularizer=keras.regularizers.l2(conf.l2)))
             print(" Using Deep Diffusion Model, number of layers:",str(len(self.dense1)+len(self.dense2)+2),"\n")
         else:
-            self.dense1 = keras.layers.Dense(encoded_dim, activation="relu")
+            self.dense1 = keras.layers.Dense(encoded_dim, activation="relu", kernel_regularizer=keras.regularizers.l2(conf.l2))
             print(" Using single layer diffusion model")
         self.output_layer = keras.layers.Dense(feature_dim, activation=None)
                 
@@ -248,12 +252,6 @@ def diffusion_loss(model, x_start, t, noise, dP):
     alpha_t = tf.expand_dims(alpha_t, axis=-1)  # Shape: [BATCH_SIZE, 1]
     one_minus_alpha_t = tf.expand_dims(one_minus_alpha_t, axis=-1)  # Shape: [BATCH_SIZE, 1]
     
-    #print(alpha_t.numpy(), one_minus_alpha_t.numpy())
-
-    #print("DIFF_LOSS")
-    #print(alpha_t.numpy(),x_start.numpy(),one_minus_alpha_t.numpy(),noise)
-    #print(noise)
-
     # Compute the noisy input
     noisy_input = alpha_t * x_start + one_minus_alpha_t * noise
     #noisy_input = one_minus_alpha_t * x_start + alpha_t * noise
@@ -264,13 +262,19 @@ def diffusion_loss(model, x_start, t, noise, dP):
     predicted_noise = model([noisy_input, t], training=True)
 
     # Compute the loss
-    return tf.reduce_mean(tf.square(noise - predicted_noise))
+    #return tf.reduce_mean(tf.square(noise - predicted_noise))
+    return tf.reduce_mean(tf.abs(noise - predicted_noise))
     
 #*******************************************
 # Train loop
 #*******************************************
 def train_diffusion_model(model, data, file, dP):
-    optimizer = keras.optimizers.Adam(learning_rate=dP.l_rate)
+    lr_schedule = keras.optimizers.schedules.ExponentialDecay(
+            initial_learning_rate=dP.l_rate,
+            decay_steps=dP.epochs,
+            decay_rate=dP.l_rdecay)
+    #optimizer = keras.optimizers.Adam(learning_rate=dP.l_rate)
+    optimizer = keras.optimizers.Adam(learning_rate=lr_schedule)
     for t in range(0,dP.time_steps,):
         #noise = np.abs(tf.random.normal(shape=data.shape))
         #noise = random_normal(data, data.shape[0], data.shape[1])
@@ -291,7 +295,7 @@ def train_diffusion_model(model, data, file, dP):
                         
             t = tf.random.uniform((len(batch),), minval=0, maxval=dP.time_steps, dtype=tf.int32)
             #noise = tf.random.normal(shape=batch.shape)
-            noise = random_uniform(data, dP.batch_size, data.shape[1])
+            noise = random_uniform(data, batch.shape[0], data.shape[1])
 
             with tf.GradientTape() as tape:
                 loss = diffusion_loss(model, batch, t, noise, dP)
