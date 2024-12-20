@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: v2024.12.19.1
+* version: v2024.12.20.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -76,7 +76,8 @@ class dP:
     
     if specifyColumns == False:
         trainCol = [item for item in range(trainCol[0], trainCol[1]+1)]
-        predCol = [item for item in range(predCol[0], predCol[1]+1)]
+        if len(predCol)!=1:
+            predCol = [item for item in range(predCol[0], predCol[1]+1)]
     
     if includeAdditionalCol == True:
         inTrainCol=trainCol[-1]
