@@ -4,7 +4,7 @@
 ***********************************************
 * DiffusionModel
 * Data Augmentation via Diffusion Model
-* version: v2024.12.19.2
+* version: v2024.12.20.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -70,6 +70,7 @@ class Conf():
             'l_rate' : 0.1,
             'l_rdecay' : 0.01,
             'l2' : 1e-5,
+            'stdNoiseFactor' : 1,
             'numAdditions' : 300,
             'excludeZeroFeatures' : True,
             'removeSpurious' : True,
@@ -95,6 +96,7 @@ class Conf():
             self.l_rate = self.conf.getfloat('Parameters','l_rate')
             self.l_rdecay = self.conf.getfloat('Parameters','l_rdecay')
             self.l2 = self.conf.getfloat('Parameters','l2')
+            self.stdNoiseFactor = self.conf.getfloat('Parameters','stdNoiseFactor')
             self.numAdditions = self.conf.getint('Parameters','numAdditions')
             self.excludeZeroFeatures = self.conf.getboolean('Parameters','excludeZeroFeatures')
             self.removeSpurious = self.conf.getboolean('Parameters','removeSpurious')
@@ -167,7 +169,6 @@ def main():
     print("\n  Added",str(numAddedData),"new data")
     
     np.set_printoptions(suppress=True)
-    print(" Final:\n", newTrain.astype(float))
     
     newFile = dP.model_directory + os.path.splitext(os.path.basename(sys.argv[1]))[0] + '_diffModNumAdd' + str(numAddedData) + tag
     saveLearnFile(dP, newA, newFile, "")
@@ -284,9 +285,9 @@ def train_diffusion_model(model, data, file, dP):
     for t in range(0,dP.time_steps,):
         #noise = np.abs(tf.random.normal(shape=data.shape))
         if dP.normalNoise:
-            noise = random_normal(data, data.shape[0], data.shape[1])
+            noise = random_normal(data, data.shape[0], data.shape[1], dP)
         else:
-            noise = random_uniform(data, data.shape[0], data.shape[1])
+            noise = random_uniform(data, data.shape[0], data.shape[1], dP)
                 
         alpha_t = tf.gather(dP.sqrt_alphas_cumprod, t)
         one_minus_alpha_t = tf.gather(dP.one_minus_sqrt_alphas_cumprod, t)
@@ -304,9 +305,9 @@ def train_diffusion_model(model, data, file, dP):
             t = tf.random.uniform((len(batch),), minval=0, maxval=dP.time_steps, dtype=tf.int32)
             #noise = tf.random.normal(shape=batch.shape)
             if dP.normalNoise:
-                noise = random_normal(data, batch.shape[0], data.shape[1])
+                noise = random_normal(data, batch.shape[0], data.shape[1], dP)
             else:
-                noise = random_uniform(data, batch.shape[0], data.shape[1])
+                noise = random_uniform(data, batch.shape[0], data.shape[1], dP)
 
             with tf.GradientTape() as tape:
                 loss = diffusion_loss(model, batch, t, noise, dP)
@@ -327,8 +328,8 @@ def train_diffusion_model(model, data, file, dP):
 def sample_from_model(model, A, num_samples, feature_dim, conf):
     #x = np.abs(tf.random.normal(shape=(num_samples, feature_dim)))
     #x = tf.random.uniform(shape=(num_samples, feature_dim), minval = 0, maxval = 1)
-    #x = random_normal(A, num_samples, feature_dim)
-    x = random_uniform(A, num_samples, feature_dim)
+    x = random_normal(A, num_samples, feature_dim, conf)
+    #x = random_uniform(A, num_samples, feature_dim, conf)
         
     for t in reversed(range(conf.time_steps)):
         t_tensor = tf.fill((num_samples,), t)
@@ -341,20 +342,20 @@ def sample_from_model(model, A, num_samples, feature_dim, conf):
     return x
 
 # custom random normal generator
-def random_normal(A, num_samples, feature_dim):
+def random_normal(A, num_samples, feature_dim, conf):
     randA = np.empty(shape=(0, num_samples))
     
     for i in range(feature_dim):
         #print(np.mean(A[:,i]), np.std(A[:,i]))
         a = []
         for j in range(num_samples):
-            tmp = np.abs(np.random.normal(loc = np.mean(A[:,i]), scale = np.std(A[:,i])))
+            tmp = np.abs(np.random.normal(loc = np.mean(A[:,i]), scale = np.std(A[:,i])*conf.stdNoiseFactor))
             a.append(tmp)
         randA = np.vstack([randA, a])
     return randA.T
   
 # custom random uniform generator
-def random_uniform(A, num_samples, feature_dim):
+def random_uniform(A, num_samples, feature_dim, conf):
     randA = np.empty(shape=(0, num_samples))
     
     def getMin(A):
