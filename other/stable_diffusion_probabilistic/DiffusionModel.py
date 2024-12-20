@@ -166,10 +166,16 @@ def main():
     newTrain = np.vstack([En, newA])
     print("\n  Added",str(numAddedData),"new data")
     
-    #print("Final:\n", newTrain)
+    np.set_printoptions(suppress=True)
+    print(" Final:\n", newTrain.astype(float))
     
     newFile = dP.model_directory + os.path.splitext(os.path.basename(sys.argv[1]))[0] + '_diffModNumAdd' + str(numAddedData) + tag
     saveLearnFile(dP, newA, newFile, "")
+    
+    file_csv = os.path.splitext(os.path.basename(newFile))[0]+".csv"
+    np.savetxt(file_csv, newTrain, delimiter=",", fmt='%.2f')
+    print("  Saving matrix for correlation analysis\n  ",file_csv,"\n")
+    
     
 #*******************************************
 # Helper function to create time embeddings
@@ -439,7 +445,7 @@ def removeSpurious(A, T, norm, dP):
 # Open Learning Data
 #************************************
 def readLearnFile(dP, learnFile, newNorm):
-    print(" Opening learning file: "+learnFile+"\n")
+    print(" Opening learning file:\n  "+learnFile+"\n")
     try:
         if os.path.splitext(learnFile)[1] == ".npy":
             M = np.load(learnFile)

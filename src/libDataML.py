@@ -300,7 +300,7 @@ def convertTflite(learnFile, dP):
 # Open Training Data
 #************************************
 def readLearnFile(learnFile, dP):
-    print("  Opening training file:",learnFile,"\n")
+    print("  Opening training file:\n  ",learnFile,"\n")
     try:
         if os.path.splitext(learnFile)[1] == ".npy":
             M = np.load(learnFile)
@@ -337,12 +337,12 @@ def saveLearnFile(dP, M, learnFile, tag):
     learnFileRoot = os.path.splitext(learnFile)[0]
     if dP.saveAsTxt == True:
         learnFileRoot += tag + '.txt'
-        print("\n  Saving new training file (txt) in:", learnFileRoot+"\n")
+        print("\n  Saving new training file (txt) in:\n  ", learnFileRoot+"\n")
         with open(learnFileRoot, 'ab') as f:
             np.savetxt(f, M, delimiter='\t', fmt='%10.6f')
     else:
         learnFileRoot += tag + '.h5'
-        print("\n Saving new training file (hdf5) in: "+learnFileRoot+"\n")
+        print("\n Saving new training file (hdf5) in:\n  "+learnFileRoot+"\n")
         with h5py.File(learnFileRoot, 'w') as hf:
             hf.create_dataset("M",  data=M)
 
