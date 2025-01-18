@@ -4,7 +4,7 @@
 ***********************************************
 * AddDenoiseAutoEncoder
 * Data Augmentation via Denoising Autoencoder
-* version: v2024.12.13.1
+* version: v2025.1.18.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -47,6 +47,8 @@ class Conf():
             'deepAutoencoder' : True,
             'reinforce' : False,
             'shuffle' : False,
+            'linear_net' : True,
+            'net_arch' : [40, 30, 20, 10],
             'encoded_dim' : 1,
             'batch_size' : 32,
             'epochs' : 200,
@@ -73,6 +75,8 @@ class Conf():
             self.deepAutoencoder = self.conf.getboolean('Parameters','deepAutoencoder')
             self.reinforce = self.conf.getboolean('Parameters','reinforce')
             self.shuffle = self.conf.getboolean('Parameters','shuffle')
+            self.linear_net = self.conf.getboolean('Parameters','linear_net')
+            self.net_arch = eval(self.SKDef['net_arch'])
             self.encoded_dim = self.conf.getint('Parameters','encoded_dim')
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.epochs = self.conf.getint('Parameters','epochs')
@@ -216,10 +220,18 @@ def trainAutoencoder(dP, noisyA, A, file):
     ############
     # Encoder
     ############
+    
+    
+    
     if dP.deepAutoencoder and A.shape[1] > dP.encoded_dim+2:
         encoded = keras.layers.Dense(A.shape[1]-1, activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(input)
-        for i in range(A.shape[1]-1,dP.encoded_dim+1,-1):
-            encoded = keras.layers.Dense(i-1,  activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
+        if linear_net:
+            for i in range(A.shape[1]-1,dP.encoded_dim+1,-1):
+                encoded = keras.layers.Dense(i-1,  activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
+        else:
+            for i in range(len(dP.net_arch)):
+                encoded = keras.layers.Dense(dP.net_arch[i],  activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
+        
         encoded = keras.layers.Dense(dP.encoded_dim,activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
     else:
         encoded = keras.layers.Dense(dP.encoded_dim,activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(input)
@@ -229,8 +241,12 @@ def trainAutoencoder(dP, noisyA, A, file):
     ############
     if dP.deepAutoencoder and A.shape[1] > dP.encoded_dim+2:
         decoded = keras.layers.Dense(dP.encoded_dim+1,  activation='relu')(encoded)
-        for i in range(dP.encoded_dim+2,A.shape[1],1):
-            decoded = keras.layers.Dense(i, activation='relu')(decoded)
+        if linear_net:
+            for i in range(dP.encoded_dim+2,A.shape[1],1):
+                decoded = keras.layers.Dense(i, activation='relu')(decoded)
+        else:
+            for i in range(len(dP.net_arch),0,-1):
+                decoded = keras.layers.Dense(dP.net_arch[i], activation='relu')(decoded)
         decoded = keras.layers.Dense(A.shape[1], activation='sigmoid')(decoded)
     else:
         decoded = keras.layers.Dense(A.shape[1], activation='sigmoid')(encoded)
@@ -239,8 +255,12 @@ def trainAutoencoder(dP, noisyA, A, file):
     # Autoencoder
     ###############
     if dP.deepAutoencoder and A.shape[1] > dP.encoded_dim+2:
-        print("  Training Deep Autoencoder \n   Hidden layers:",A.shape[1]-dP.encoded_dim,
-            "\n   Encoded dimension:",dP.encoded_dim,"\n")
+        if linear_net:
+            print("  Training Deep Autoencoder with linear architecture\n   Hidden layers:",A.shape[1]-dP.encoded_dim,
+                "\n   Encoded dimension:",dP.encoded_dim,"\n")
+        else:
+            print("  Training Deep Autoencoder with discrete architecture\n   Hidden layers:",dP.net_arch,
+                "\n   Encoded dimension:",dP.encoded_dim,"\n")
     else:
         print("  Training shallow Autoencoder \n   Encoded dimension:",dP.encoded_dim,"\n")
 
