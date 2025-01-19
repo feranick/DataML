@@ -4,7 +4,7 @@
 ***********************************************
 * AddDenoiseAutoEncoder
 * Data Augmentation via Denoising Autoencoder
-* version: v2025.1.18.1
+* version: v2025.1.19.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -76,7 +76,7 @@ class Conf():
             self.reinforce = self.conf.getboolean('Parameters','reinforce')
             self.shuffle = self.conf.getboolean('Parameters','shuffle')
             self.linear_net = self.conf.getboolean('Parameters','linear_net')
-            self.net_arch = eval(self.SKDef['net_arch'])
+            self.net_arch = eval(self.denDaeDef['net_arch'])
             self.encoded_dim = self.conf.getint('Parameters','encoded_dim')
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.epochs = self.conf.getint('Parameters','epochs')
@@ -225,7 +225,7 @@ def trainAutoencoder(dP, noisyA, A, file):
     
     if dP.deepAutoencoder and A.shape[1] > dP.encoded_dim+2:
         encoded = keras.layers.Dense(A.shape[1]-1, activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(input)
-        if linear_net:
+        if dP.linear_net:
             for i in range(A.shape[1]-1,dP.encoded_dim+1,-1):
                 encoded = keras.layers.Dense(i-1,  activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
         else:
@@ -241,11 +241,11 @@ def trainAutoencoder(dP, noisyA, A, file):
     ############
     if dP.deepAutoencoder and A.shape[1] > dP.encoded_dim+2:
         decoded = keras.layers.Dense(dP.encoded_dim+1,  activation='relu')(encoded)
-        if linear_net:
+        if dP.linear_net:
             for i in range(dP.encoded_dim+2,A.shape[1],1):
                 decoded = keras.layers.Dense(i, activation='relu')(decoded)
         else:
-            for i in range(len(dP.net_arch),0,-1):
+            for i in range(len(dP.net_arch)-1,-1,-1):
                 decoded = keras.layers.Dense(dP.net_arch[i], activation='relu')(decoded)
         decoded = keras.layers.Dense(A.shape[1], activation='sigmoid')(decoded)
     else:
@@ -255,7 +255,7 @@ def trainAutoencoder(dP, noisyA, A, file):
     # Autoencoder
     ###############
     if dP.deepAutoencoder and A.shape[1] > dP.encoded_dim+2:
-        if linear_net:
+        if dP.linear_net:
             print("  Training Deep Autoencoder with linear architecture\n   Hidden layers:",A.shape[1]-dP.encoded_dim,
                 "\n   Encoded dimension:",dP.encoded_dim,"\n")
         else:
