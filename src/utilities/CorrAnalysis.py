@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: v2025.02.04.1
+* version: v2025.02.05.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -44,7 +44,7 @@ class dP:
     finalAdditionalCol = 95
     
     separateValidFile = False
-    validRows = [10,17,28]   # ORNL
+    validRows = [10,17,26]   # ORNL
 
     valueForNan = 0
     removeNaNfromCorr = True
@@ -53,9 +53,9 @@ class dP:
     heatMapsCorr = True             # True: use for Master data
     heatMapCorrFull = False          #True: plot all correlation data
     corrMax = 1
-    #corrMin = 0.75
+    corrMin = 0.75
     #corrMax = -0.75
-    corrMin = -1
+    #corrMin = -1
     
     ### Plotting correlation 2D plots
     plotSelectedGraphs = False
@@ -330,10 +330,12 @@ def plotGraphThreshold(dfP, dfC, validRows, title, pdf, sumFile):
             x, y, ann = purgeSparse(dfP[col].to_numpy(), dfP[ind].to_numpy(), dfP.iloc[:,0], dP.removeNaNfromCorr)
             plt.plot(x,y, 'bo')
             
-            dfSummary = pd.concat([dfSummary, pd.DataFrame([{'PAR': col, 'PERF': ind, 'Corr': dfC[col].loc[ind], 'Num_points': len(x)}])], ignore_index=True)
+            dfSummary = pd.concat([dfSummary, pd.DataFrame([{'PAR': col, 'PERF': ind, 'Corr': dfC[col].loc[ind], 'Num_points': len(x), 'Valid': 'NO'}])], ignore_index=True)
         
             if dP.plotValidData:
+                print("\nValid datapoint:\n",dfP.loc[validRows,col])
                 xv, yv, ann = purgeSparse(dfP.loc[validRows,col].to_numpy(), dfP.loc[validRows, ind].to_numpy(), dfP.iloc[:,0], dP.removeNaNfromCorr)
+                dfSummary = pd.concat([dfSummary, pd.DataFrame([{'PAR': col, 'PERF': ind, 'Corr': dfC[col].loc[ind], 'Num_points': len(xv), 'Valid': 'YES'}])], ignore_index=True)
                 plt.plot(xv, yv, 'ro')
                 
             plt.xlabel(col)
