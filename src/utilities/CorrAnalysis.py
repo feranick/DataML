@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: v2024.12.20.1
+* version: v2025.02.04.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -33,8 +33,8 @@ class dP:
     specifyColumns = False
     #trainCol = [1, 40]       # IGC (column range)
     #predCol = [41, 48]       # IGC (column range)
-    trainCol = [1, 40]       # IGC (column range)
-    predCol = [41,48]       # IGC (column range)
+    trainCol = [0, 41]       # IGC (column range)
+    predCol = [42,49]       # IGC (column range)
     #trainCol = [14,21,23,29,34,35,36,37,38,39,40]       # IGC (column range)
     #trainCol = [15,21,23,29]       # IGC (column range)
     #predCol = [41]       # IGC (column range)
@@ -44,7 +44,7 @@ class dP:
     finalAdditionalCol = 95
     
     separateValidFile = False
-    validRows = [103,104,105,106,107]   # ORNL
+    validRows = [10,17,28]   # ORNL
 
     valueForNan = 0
     removeNaNfromCorr = True
@@ -60,7 +60,7 @@ class dP:
     ### Plotting correlation 2D plots
     plotSelectedGraphs = False
     plotGraphsThreshold = True
-    plotValidData = False
+    plotValidData = True
     plotLinRegression = True
     addSampleTagPlot = True
     polyDegree = 1
@@ -102,7 +102,7 @@ def main():
         dP.validRows = dfP.index.tolist()[-len(dfV.index.tolist()):]
     P,headP = processParamFile(dfP, dP.trainCol)
     V,headV = processParamFile(dfP, dP.predCol)
-        
+                
     rootFile = os.path.splitext(sys.argv[1])[0]
     pearsonFile = rootFile + '_pearsonR.csv'
     spearmanFile = rootFile + '_spearmanR.csv'
@@ -193,7 +193,8 @@ def getCorrelations(V, P, sparse):
             
     return pearsonR, spearmanR
     
-def purgeSparse(P, V, label, sparse):
+'''
+def purgeSparseNotWorking(P, V, label, sparse):
     if sparse:
         x = list(range(P.shape[0]))
         P2 = P[(P[x] != dP.valueForNan) & (V[x] != dP.valueForNan)]
@@ -206,7 +207,7 @@ def purgeSparse(P, V, label, sparse):
     return P, V, ann
 
 '''
-def purgeSparseOld(P, V, label, sparse):
+def purgeSparse(P, V, label, sparse):
     if sparse:
         pt = []
         vt = []
@@ -223,12 +224,12 @@ def purgeSparseOld(P, V, label, sparse):
         V2 = V
         ann = label
     return P2, V2, ann
-    
+
 
 def getCorrelationsExperimental(dfP):
     dfPearson = dfP.corr(method='pearson')
     dfSpearman = dfP.corr(method='spearman')
-'''
+
 
 #************************************
 # Plot Heat Maps Correlations
