@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: v2025.02.12.1
+* version: v2025.02.12.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -58,7 +58,8 @@ class Conf():
             
     def corrAnalysisDef(self):
         self.conf['Parameters'] = {
-            'skipHeadRows' : 0,
+            'skipHeadRows' : 4,
+            
             'specifyColumns'  : True,
             'trainCol' : [2,113],
             'predCol' : [114,121],
@@ -162,6 +163,10 @@ def main():
     dP = Conf()
     
     dfP = readParamFile(sys.argv[1], dP)
+    
+    dfL = getLabelsParamFile(sys.argv[1], dP)
+    print(dfL)
+    
     if dP.separateValidFile:
         dfV = readParamFile(sys.argv[2])
         #dfP = dfP.append(dfV,ignore_index=True) # deprecated in Pandas v>2
@@ -245,6 +250,16 @@ def processParamFile(dfP, lims, dP):
     headP = dfP.columns[lims].values
     P[np.isnan(P)] = dP.valueForNan
     return P, headP
+    
+def getLabelsParamFile(paramFile, dP):
+    try:
+        with open(paramFile, 'r') as f:
+            dfP = pd.read_csv(f, delimiter = ",", nrows=dP.skipHeadRows)
+        print(dfP)
+    except:
+        print("\033[1m Param file:",paramFile," not found/broken \n\033[0m")
+        return
+    return dfP
     
 #************************************
 # Calculate Correlations
