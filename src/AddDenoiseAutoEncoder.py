@@ -220,9 +220,6 @@ def trainAutoencoder(dP, noisyA, A, file):
     ############
     # Encoder
     ############
-    
-    
-    
     if dP.deepAutoencoder and A.shape[1] > dP.encoded_dim+2:
         encoded = keras.layers.Dense(A.shape[1]-1, activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(input)
         if dP.linear_net:
