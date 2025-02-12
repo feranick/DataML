@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: v2025.02.12.1
+* version: v2025.02.05.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -14,7 +14,7 @@ print(__doc__)
 import numpy as np
 import pandas as pd
 from scipy import stats
-import sys, os.path, configparser, h5py
+import sys, os.path, h5py
 from random import uniform
 from bisect import bisect_left
 from datetime import datetime, date
@@ -23,131 +23,66 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
-#***************************************************
-# This is needed for installation through pip
-#***************************************************
-def CorrAnalysis():
-    main()
-
 #************************************
 # Parameters definition
 #************************************
-class Conf():
-
-    def __init__(self):
-        self.appName = "CorrAnalysis"
-        confFileName = "CorrAnalysis.ini"
-        self.configFile = os.getcwd()+"/"+confFileName
-        self.conf = configparser.ConfigParser()
-        self.conf.optionxform = str
-        if os.path.isfile(self.configFile) is False:
-            print(" Configuration file: \""+confFileName+"\" does not exist: Creating one.\n")
-            self.createConfig()
-        self.readConfig(self.configFile)
-        self.model_directory = "./"
+class dP:
+    skipHeadRows = 0
         
-        if self.specifyColumns == False:
-            self.trainCol = [item for item in range(self.trainCol[0], self.trainCol[1]+1)]
-        if len(self.predCol)!=1:
-            self.predCol = [item for item in range(self.predCol[0], self.predCol[1]+1)]
+    ### Master Data Handling
+    specifyColumns = False
+    #trainCol = [1, 40]       # IGC (column range)
+    #predCol = [41, 48]       # IGC (column range)
+    trainCol = [0, 41]       # IGC (column range)
+    predCol = [42,49]       # IGC (column range)
+    #trainCol = [14,21,23,29,34,35,36,37,38,39,40]       # IGC (column range)
+    #trainCol = [15,21,23,29]       # IGC (column range)
+    #predCol = [41]       # IGC (column range)
     
-        if self.includeAdditionalCol == True:
-            self.inTrainCol=self.trainCol[-1]
-            self.trainCol.extend(list(item for item in range(self.initialAdditionalCol, self.finalAdditionalCol+1)))
-            self.predCol = [item for item in range(self.predCol[0]+self.trainCol[-1]-self.inTrainCol, self.predCol[1]+self.trainCol[-1]-self.inTrainCol+1)]
-            
-    def corrAnalysisDef(self):
-        self.conf['Parameters'] = {
-            'skipHeadRows' : 0,
-            'specifyColumns'  : True,
-            'trainCol' : [2,113],
-            'predCol' : [114,121],
+    includeAdditionalCol = False
+    initialAdditionalCol = 41
+    finalAdditionalCol = 95
     
-            'includeAdditionalCol' : False,
-            'initialAdditionalCol' : 41,
-            'finalAdditionalCol' : 95,
+    separateValidFile = False
+    validRows = [10,17,26]   # ORNL
+
+    valueForNan = 0
+    removeNaNfromCorr = True
+
+    ### Heat Maps
+    heatMapsCorr = True             # True: use for Master data
+    heatMapCorrFull = False          #True: plot all correlation data
+    corrMax = 1
+    corrMin = 0.75
+    #corrMax = -0.75
+    #corrMin = -1
     
-            'separateValidFile' : False,
-            'validRows' : [0],   # ORNL
+    ### Plotting correlation 2D plots
+    plotSelectedGraphs = False
+    plotGraphsThreshold = True
+    plotValidData = True
+    plotLinRegression = True
+    addSampleTagPlot = True
+    polyDegree = 1
 
-            'valueForNan' : 0,
-            'removeNaNfromCorr' : False,
-
-            ### Heat Maps
-            'heatMapsCorr' : True,             # True: use for Master data
-            'heatMapCorrFull' : False,          #True: plot all correlation data
-            'corrMax' : 1,
-            'corrMin' : 0.75,
+    graphX = [1,2]
+    graphY = [3,4]
     
-            ### Plotting correlation 2D plots
-            'plotSelectedGraphs' : False,
-            'plotGraphsThreshold' : True,
-            'plotValidData' : False,
-            'plotLinRegression' : True,
-            'addSampleTagPlot' : True,
-            'polyDegree' : 1,
-
-            'graphX' : [1,2],
-            'graphY' : [3,4],
+    ### Plotting Spectral correlations
+    plotSpectralCorr = False                # True: use for raw data (spectra, etc)
+    stepXticksPlot = 1500
+    corrSpectraFull = False
+    corrSpectraMin = 0.8
     
-            ### Plotting Spectral correlations
-            'plotSpectralCorr' : False,                # True: use for raw data (spectra, etc)
-            'stepXticksPlot' : 1500,
-            'corrSpectraFull' : False,
-            'corrSpectraMin' : 0.8,
-            }
-
-    def readConfig(self,configFile):
-        try:
-            self.conf.read(configFile)
-            self.corrAnalysisDef = self.conf['Parameters']
-
-            self.skipHeadRows = self.conf.getint('Parameters','skipHeadRows')
-            self.specifyColumns = self.conf.getboolean('Parameters','specifyColumns')
-            self.trainCol = eval(self.corrAnalysisDef['trainCol'])
-            self.predCol = eval(self.corrAnalysisDef['predCol'])
-            self.includeAdditionalCol = self.conf.getboolean('Parameters','includeAdditionalCol')
-            self.initialAdditionalCol = self.conf.getint('Parameters','initialAdditionalCol')
-            self.finalAdditionalCol = self.conf.getint('Parameters','finalAdditionalCol')
+    if specifyColumns == False:
+        trainCol = [item for item in range(trainCol[0], trainCol[1]+1)]
+        if len(predCol)!=1:
+            predCol = [item for item in range(predCol[0], predCol[1]+1)]
     
-            self.separateValidFile = self.conf.getboolean('Parameters','separateValidFile')
-            self.validRows = eval(self.corrAnalysisDef['validRows'])
-
-            self.valueForNan = self.conf.getint('Parameters','valueForNan')
-            self.removeNaNfromCorr = self.conf.getboolean('Parameters','removeNaNfromCorr')
-
-            self.heatMapsCorr = self.conf.getboolean('Parameters','heatMapsCorr')            # True: use for Master data
-            self.heatMapCorrFull = self.conf.getboolean('Parameters','heatMapCorrFull')          #True: plot all correlation data
-            self.corrMax = self.conf.getfloat('Parameters','corrMax')
-            self.corrMin = self.conf.getfloat('Parameters','corrMin')
-    
-            self.plotSelectedGraphs = self.conf.getboolean('Parameters','plotSelectedGraphs')
-            self.plotGraphsThreshold = self.conf.getboolean('Parameters','plotGraphsThreshold')
-            self.plotValidData = self.conf.getboolean('Parameters','plotValidData')
-            self.plotLinRegression = self.conf.getboolean('Parameters','plotLinRegression')
-            self.addSampleTagPlot = self.conf.getboolean('Parameters','addSampleTagPlot')
-            self.polyDegree = self.conf.getint('Parameters','polyDegree')
-
-            self.graphX = eval(self.corrAnalysisDef['graphX'])
-            self.graphY = eval(self.corrAnalysisDef['graphY'])
-    
-            self.plotSpectralCorr = self.conf.getboolean('Parameters','plotSpectralCorr')                # True: use for raw data (spectra, etc)
-            self.stepXticksPlot = self.conf.getint('Parameters','stepXticksPlot')
-            self.corrSpectraFull = self.conf.getboolean('Parameters','corrSpectraFull')
-            self.corrSpectraMin = self.conf.getfloat('Parameters','corrSpectraMin')
-                        
-        except:
-            print(" Error in reading configuration file. Please check it\n")
-
-    # Create configuration file
-    def createConfig(self):
-        try:
-            self.corrAnalysisDef()
-            with open(self.configFile, 'w') as configfile:
-                self.conf.write(configfile)
-        except:
-            print("Error in creating configuration file")
-
+    if includeAdditionalCol == True:
+        inTrainCol=trainCol[-1]
+        trainCol.extend(list(item for item in range(initialAdditionalCol, finalAdditionalCol+1)))
+        predCol = [item for item in range(predCol[0]+trainCol[-1]-inTrainCol, predCol[1]+trainCol[-1]-inTrainCol+1)]
 
 #************************************
 # Main
@@ -159,16 +94,14 @@ def main():
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
     
-    dP = Conf()
-    
-    dfP = readParamFile(sys.argv[1], dP)
+    dfP = readParamFile(sys.argv[1])
     if dP.separateValidFile:
         dfV = readParamFile(sys.argv[2])
         #dfP = dfP.append(dfV,ignore_index=True) # deprecated in Pandas v>2
         dfP = dfP.concat([dfP, dfV], ignore_index=True)
         dP.validRows = dfP.index.tolist()[-len(dfV.index.tolist()):]
-    P,headP = processParamFile(dfP, dP.trainCol, dP)
-    V,headV = processParamFile(dfP, dP.predCol, dP)
+    P,headP = processParamFile(dfP, dP.trainCol)
+    V,headV = processParamFile(dfP, dP.predCol)
                 
     rootFile = os.path.splitext(sys.argv[1])[0]
     pearsonFile = rootFile + '_pearsonR.csv'
@@ -201,12 +134,12 @@ def main():
 
     if dP.heatMapsCorr:
         print(" Correlation heat maps saved in:",plotFile,"\n")
-        heatMapsCorrelations(dfPearson, "PearsonR_correlation", pdf, dP)
-        heatMapsCorrelations(dfSpearman, "SpearmanR_correlation", pdf,dP)
+        heatMapsCorrelations(dfPearson, "PearsonR_correlation", pdf)
+        heatMapsCorrelations(dfSpearman, "SpearmanR_correlation", pdf)
     if dP.plotSpectralCorr:
         print(" Correlation plots saved in:",plotFile,"\n")
-        plotSpectralCorrelations(dfPearson, P, "PearsonR_correlation", rootFile, pdf, dP)
-        plotSpectralCorrelations(dfSpearman, P, "SpearmanR_correlation", rootFile, pdf, dP)
+        plotSpectralCorrelations(dfPearson, P, "PearsonR_correlation", rootFile, pdf)
+        plotSpectralCorrelations(dfSpearman, P, "SpearmanR_correlation", rootFile, pdf)
         if not dP.corrSpectraFull:
             dfPearson[dfPearson<dP.corrSpectraMin] = 0
             dfSpearman[dfSpearman<dP.corrSpectraMin] = 0
@@ -214,19 +147,19 @@ def main():
             plotCorrelations(dfSpearman, P, "SpearmanR_correlation", rootFile, pdf)
 
     if dP.plotSelectedGraphs:
-        num = plotSelectedGraphs(dfP, dP.graphX, dP.graphY, dP.validRows, pdf, dP.removeNaNfromCorr)
+        num = plotSelectedGraphs(dfP, dP.graphX, dP.graphY, dP.validRows, pdf)
         print(" ",num,"Manually selected plots saved in:",plotFile,"\n")
 
     if dP.plotGraphsThreshold:
-        num1 = plotGraphThreshold(dfP, dfPearson, dP.validRows, "PearsonR_correlation", pdf, pearsonSummary, dP)
-        num2 = plotGraphThreshold(dfP, dfSpearman, dP.validRows, "SpearmanR_correlation", pdf, spearmanSummary, dP)
+        num1 = plotGraphThreshold(dfP, dfPearson, dP.validRows, "PearsonR_correlation", pdf, pearsonSummary)
+        num2 = plotGraphThreshold(dfP, dfSpearman, dP.validRows, "SpearmanR_correlation", pdf, spearmanSummary)
         print(" ",num1+num2,"XY plots with correlation in [",dP.corrMin,",",dP.corrMax,"] saved in:",plotFile,"\n")
     pdf.close()
     
 #************************************
 # Open Learning Data
 #************************************
-def readParamFile(paramFile, dP):
+def readParamFile(paramFile):
     try:
         with open(paramFile, 'r') as f:
             dfP = pd.read_csv(f, delimiter = ",", skiprows=dP.skipHeadRows)
@@ -236,7 +169,7 @@ def readParamFile(paramFile, dP):
         return
     return dfP
 
-def processParamFile(dfP, lims, dP):
+def processParamFile(dfP, lims):
     if lims[0]>len(dfP.columns):
         lims[0] = len(dfP.columns)
         print(" Warning: Column range is larger than actual number of columns. Using full dataset")
@@ -254,7 +187,7 @@ def getCorrelations(V, P, sparse):
     spearmanR=np.empty((V.shape[1],P.shape[1]))
     for j in range(V.shape[1]):
         for i in range(P.shape[1]):
-            P2, V2, _ = purgeSparse(P[:,i], V[:,j], P[:,i], sparse)
+            P2, V2, _ = purgeSparse(P[:,i], V[:,j], P[:,i], dP.removeNaNfromCorr)
             pearsonR[j,i], _ = pearsonr(P2, V2)
             spearmanR[j,i], _ = spearmanr(P2, V2)
             
@@ -301,7 +234,7 @@ def getCorrelationsExperimental(dfP):
 #************************************
 # Plot Heat Maps Correlations
 #************************************
-def heatMapsCorrelations(dfP, title, pdf, dP):
+def heatMapsCorrelations(dfP, title, pdf):
     data = dfP.to_numpy()
     Rlabels = dfP.index.tolist()
     Clabels = dfP.columns.values
@@ -361,7 +294,7 @@ def heatMapsCorrelations2(dfP):
 #************************************
 # Plot Graphs based on manual input
 #************************************
-def plotSelectedGraphs(dfP, X, Y, validRows, pdf, sparse):
+def plotSelectedGraphs(dfP, X, Y, validRows, pdf):
     num = 0
     for i in X:
         for j in Y:
@@ -369,11 +302,11 @@ def plotSelectedGraphs(dfP, X, Y, validRows, pdf, sparse):
             xlabels = dfP.columns.values[i]
             #plt.figure()
             
-            P, V, ann = purgeSparse(dfP.iloc[:,i].to_numpy(), dfP.iloc[:,j].to_numpy(), dfP.iloc[:,0], sparse)
+            P, V, ann = purgeSparse(dfP.iloc[:,i].to_numpy(), dfP.iloc[:,j].to_numpy(), dfP.iloc[:,0], dP.removeNaNfromCorr)
             plt.plot(P, V, 'bo')
             
             if dP.plotValidData:
-                PV, VV, ann = purgeSparse(dfP.iloc[validRows,i].to_numpy(), dfP.iloc[validRows, j].to_numpy(), dfP.iloc[validRows, 0], sparse)
+                PV, VV, ann = purgeSparse(dfP.iloc[validRows,i].to_numpy(), dfP.iloc[validRows, j].to_numpy(), dfP.iloc[validRows, 0], dP.removeNaNfromCorr)
                 plt.plot(PV, VV, 'ro')
                 
             plt.xlabel(xlabels)
@@ -389,7 +322,7 @@ def plotSelectedGraphs(dfP, X, Y, validRows, pdf, sparse):
 #************************************
 # Plot Graphs based on threshold
 #************************************
-def plotGraphThreshold(dfP, dfC, validRows, title, pdf, sumFile, dP):
+def plotGraphThreshold(dfP, dfC, validRows, title, pdf, sumFile):
     num = 0
     dfSummary = pd.DataFrame()
     for col in dfC.columns:
@@ -432,7 +365,7 @@ def plotGraphThreshold(dfP, dfC, validRows, title, pdf, sumFile, dP):
 #************************************
 # Plot Spectral Correlations
 #************************************
-def plotSpectralCorrelations(dfP, P, title, filename, pdf, dP):
+def plotSpectralCorrelations(dfP, P, title, filename ,pdf):
     data = dfP.to_numpy()
     
     plt.xlabel('Wavelength')
