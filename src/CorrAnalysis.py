@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: v2025.02.12.2
+* version: v2025.02.12.3
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -48,14 +48,14 @@ class Conf():
         
         if self.specifyColumns == False:
             self.trainCol = [item for item in range(self.trainCol[0], self.trainCol[1]+1)]
-        if len(self.predCol)!=1:
-            self.predCol = [item for item in range(self.predCol[0], self.predCol[1]+1)]
+            if len(self.predCol)!=1:
+                self.predCol = [item for item in range(self.predCol[0], self.predCol[1]+1)]
     
         if self.includeAdditionalCol == True:
             self.inTrainCol=self.trainCol[-1]
             self.trainCol.extend(list(item for item in range(self.initialAdditionalCol, self.finalAdditionalCol+1)))
             self.predCol = [item for item in range(self.predCol[0]+self.trainCol[-1]-self.inTrainCol, self.predCol[1]+self.trainCol[-1]-self.inTrainCol+1)]
-            
+                                    
     def corrAnalysisDef(self):
         self.conf['Parameters'] = {
             'skipHeadRows' : 4,
@@ -107,6 +107,7 @@ class Conf():
             self.specifyColumns = self.conf.getboolean('Parameters','specifyColumns')
             self.trainCol = eval(self.corrAnalysisDef['trainCol'])
             self.predCol = eval(self.corrAnalysisDef['predCol'])
+            
             self.includeAdditionalCol = self.conf.getboolean('Parameters','includeAdditionalCol')
             self.initialAdditionalCol = self.conf.getint('Parameters','initialAdditionalCol')
             self.finalAdditionalCol = self.conf.getint('Parameters','finalAdditionalCol')
@@ -136,7 +137,6 @@ class Conf():
             self.stepXticksPlot = self.conf.getint('Parameters','stepXticksPlot')
             self.corrSpectraFull = self.conf.getboolean('Parameters','corrSpectraFull')
             self.corrSpectraMin = self.conf.getfloat('Parameters','corrSpectraMin')
-                        
         except:
             print(" Error in reading configuration file. Please check it\n")
 
@@ -160,7 +160,7 @@ def main():
         return
     
     dP = Conf()
-    
+        
     dfP,dfL = readParamFile(sys.argv[1], dP)
         
     if dP.separateValidFile:
@@ -170,7 +170,7 @@ def main():
         dP.validRows = dfP.index.tolist()[-len(dfV.index.tolist()):]
     P,headP = processParamFile(dfP, dP.trainCol, dP)
     V,headV = processParamFile(dfP, dP.predCol, dP)
-                
+    
     rootFile = os.path.splitext(sys.argv[1])[0]
     pearsonFile = rootFile + '_pearsonR.csv'
     spearmanFile = rootFile + '_spearmanR.csv'
@@ -178,8 +178,8 @@ def main():
     spearmanSummary = rootFile + '_spearmanR_summary' + str(datetime.now().strftime('_%Y-%m-%d_%H-%M-%S.csv'))
     pearsonSummary = rootFile + '_pearsonR_summary' + str(datetime.now().strftime('_%Y-%m-%d_%H-%M-%S.csv'))
 
-    pearsonR, spearmanR = getCorrelations (V, P, dP.removeNaNfromCorr)
-
+    pearsonR, spearmanR = getCorrelations (V, P, dP)
+    
     #print(pearsonR)
     dfPearson = pd.DataFrame(pearsonR)
     dfSpearman = pd.DataFrame(spearmanR)
@@ -254,33 +254,19 @@ def processParamFile(dfP, lims, dP):
 #************************************
 # Calculate Correlations
 #************************************
-def getCorrelations(V, P, sparse):
+def getCorrelations(V, P, dP):
     pearsonR=np.empty((V.shape[1],P.shape[1]))
     spearmanR=np.empty((V.shape[1],P.shape[1]))
     for j in range(V.shape[1]):
         for i in range(P.shape[1]):
-            P2, V2, _ = purgeSparse(P[:,i], V[:,j], P[:,i], sparse)
+            P2, V2, _ = purgeSparse(P[:,i], V[:,j], P[:,i], dP)
             pearsonR[j,i], _ = pearsonr(P2, V2)
             spearmanR[j,i], _ = spearmanr(P2, V2)
-            
+    print(pearsonR.shape)
     return pearsonR, spearmanR
-    
-'''
-def purgeSparseNotWorking(P, V, label, sparse):
-    if sparse:
-        x = list(range(P.shape[0]))
-        P2 = P[(P[x] != dP.valueForNan) & (V[x] != dP.valueForNan)]
-        V2 = V[(P[x] != dP.valueForNan) & (V[x] != dP.valueForNan)]
-        ann = label[(P[x] != dP.valueForNan) & (V[x] != dP.valueForNan)].tolist()
-        P = P2
-        V = V2
-    else:
-        ann = label
-    return P, V, ann
 
-'''
-def purgeSparse(P, V, label, sparse):
-    if sparse:
+def purgeSparse(P, V, label, dP):
+    if dP.removeNaNfromCorr:
         pt = []
         vt = []
         ann = []
@@ -297,11 +283,24 @@ def purgeSparse(P, V, label, sparse):
         ann = label
     return P2, V2, ann
 
+'''
+def purgeSparseNotWorking(P, V, label, dP):
+    if dP.removeNaNfromCorr:
+        x = list(range(P.shape[0]))
+        P2 = P[(P[x] != dP.valueForNan) & (V[x] != dP.valueForNan)]
+        V2 = V[(P[x] != dP.valueForNan) & (V[x] != dP.valueForNan)]
+        ann = label[(P[x] != dP.valueForNan) & (V[x] != dP.valueForNan)].tolist()
+        P = P2
+        V = V2
+    else:
+        ann = label
+    return P, V, ann
+
+'''
 
 def getCorrelationsExperimental(dfP):
     dfPearson = dfP.corr(method='pearson')
     dfSpearman = dfP.corr(method='spearman')
-
 
 #************************************
 # Plot Heat Maps Correlations
@@ -374,11 +373,11 @@ def plotSelectedGraphs(dfP, X, Y, validRows, pdf, sparse):
             xlabels = dfP.columns.values[i]
             #plt.figure()
             
-            P, V, ann = purgeSparse(dfP.iloc[:,i].to_numpy(), dfP.iloc[:,j].to_numpy(), dfP.iloc[:,0], sparse)
+            P, V, ann = purgeSparse(dfP.iloc[:,i].to_numpy(), dfP.iloc[:,j].to_numpy(), dfP.iloc[:,0], dP)
             plt.plot(P, V, 'bo')
             
             if dP.plotValidData:
-                PV, VV, ann = purgeSparse(dfP.iloc[validRows,i].to_numpy(), dfP.iloc[validRows, j].to_numpy(), dfP.iloc[validRows, 0], sparse)
+                PV, VV, ann = purgeSparse(dfP.iloc[validRows,i].to_numpy(), dfP.iloc[validRows, j].to_numpy(), dfP.iloc[validRows, 0], dP)
                 plt.plot(PV, VV, 'ro')
                 
             plt.xlabel(xlabels)
@@ -399,16 +398,14 @@ def plotGraphThreshold(dfP, dfL, dfC, validRows, title, pdf, sumFile, dP):
     dfSummary = pd.DataFrame()
     for col in dfC.columns:
         for ind in dfC[dfC[col].between(dP.corrMin,dP.corrMax)].index:
-            x, y, ann = purgeSparse(dfP[col].to_numpy(), dfP[ind].to_numpy(), dfP.iloc[:,0], dP.removeNaNfromCorr)
+            x, y, ann = purgeSparse(dfP[col].to_numpy(), dfP[ind].to_numpy(), dfP.iloc[:,0], dP)
             plt.plot(x,y, 'bo')
-            
-            print(formatLabels(dfL, ind))
-            
+                    
             dfSummary = pd.concat([dfSummary, pd.DataFrame([{'PAR': formatLabels(dfL, col), 'PERF': formatLabels(dfL, ind), 'Corr': dfC[col].loc[ind], 'Num_points': len(x), 'Valid': 'NO'}])], ignore_index=True)
         
             if dP.plotValidData:
                 print("\nValid datapoint:\n",dfP.loc[validRows,col])
-                xv, yv, ann = purgeSparse(dfP.loc[validRows,col].to_numpy(), dfP.loc[validRows, ind].to_numpy(), dfP.iloc[:,0], dP.removeNaNfromCorr)
+                xv, yv, ann = purgeSparse(dfP.loc[validRows,col].to_numpy(), dfP.loc[validRows, ind].to_numpy(), dfP.iloc[:,0], dP)
                 dfSummary = pd.concat([dfSummary, pd.DataFrame([{'PAR': formatLabels(dfL, col), 'PERF': formatLabels(dfL, ind), 'Corr': dfC[col].loc[ind], 'Num_points': len(xv), 'Valid': 'YES'}])], ignore_index=True)
                 plt.plot(xv, yv, 'ro')
                 
