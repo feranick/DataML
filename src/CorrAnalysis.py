@@ -232,10 +232,13 @@ def readParamFile(paramFile, dP):
         with open(paramFile, 'r') as f:
             dfP = pd.read_csv(f, delimiter = ",", skiprows=dP.skipHeadRows)
         print(dfP)
-        with open(paramFile, 'r') as f:
-            dfL = pd.read_csv(f, delimiter = ",", nrows=dP.skipHeadRows)
-        dfL.columns = dfL.iloc[3]
-        print(dfL)
+        if dP.skipHeadRows != 0 :
+            with open(paramFile, 'r') as f:
+                dfL = pd.read_csv(f, delimiter = ",", nrows=dP.skipHeadRows)
+            dfL.columns = dfL.iloc[3]
+            print(dfL)
+        else:
+            dfL = pd.DataFrame([])
     except:
         print("\033[1m Param file:",paramFile," not found/broken \n\033[0m")
         return
@@ -282,21 +285,6 @@ def purgeSparse(P, V, label, dP):
         V2 = V
         ann = label
     return P2, V2, ann
-
-'''
-def purgeSparseNotWorking(P, V, label, dP):
-    if dP.removeNaNfromCorr:
-        x = list(range(P.shape[0]))
-        P2 = P[(P[x] != dP.valueForNan) & (V[x] != dP.valueForNan)]
-        V2 = V[(P[x] != dP.valueForNan) & (V[x] != dP.valueForNan)]
-        ann = label[(P[x] != dP.valueForNan) & (V[x] != dP.valueForNan)].tolist()
-        P = P2
-        V = V2
-    else:
-        ann = label
-    return P, V, ann
-
-'''
 
 def getCorrelationsExperimental(dfP):
     dfPearson = dfP.corr(method='pearson')
@@ -400,19 +388,24 @@ def plotGraphThreshold(dfP, dfL, dfC, validRows, title, pdf, sumFile, dP):
         for ind in dfC[dfC[col].between(dP.corrMin,dP.corrMax)].index:
             x, y, ann = purgeSparse(dfP[col].to_numpy(), dfP[ind].to_numpy(), dfP.iloc[:,0], dP)
             plt.plot(x,y, 'bo')
-                    
-            dfSummary = pd.concat([dfSummary, pd.DataFrame([{'PAR': formatLabels(dfL, col), 'PERF': formatLabels(dfL, ind), 'Corr': dfC[col].loc[ind], 'Num_points': len(x), 'Valid': 'NO'}])], ignore_index=True)
+            
+            if dfL.empty:
+                colL = col
+                indL = ind
+            else:
+                colL = formatLabels(dfL, col)
+                indL = formatLabels(dfL, ind)
+               
+            dfSummary = pd.concat([dfSummary, pd.DataFrame([{'PAR': colL, 'PERF': indL, 'Corr': dfC[col].loc[ind], 'Num_points': len(x), 'Valid': 'NO'}])], ignore_index=True)
         
             if dP.plotValidData:
                 print("\nValid datapoint:\n",dfP.loc[validRows,col])
                 xv, yv, ann = purgeSparse(dfP.loc[validRows,col].to_numpy(), dfP.loc[validRows, ind].to_numpy(), dfP.iloc[:,0], dP)
-                dfSummary = pd.concat([dfSummary, pd.DataFrame([{'PAR': formatLabels(dfL, col), 'PERF': formatLabels(dfL, ind), 'Corr': dfC[col].loc[ind], 'Num_points': len(xv), 'Valid': 'YES'}])], ignore_index=True)
+                dfSummary = pd.concat([dfSummary, pd.DataFrame([{'PAR': colL, 'PERF': indL, 'Corr': dfC[col].loc[ind], 'Num_points': len(xv), 'Valid': 'YES'}])], ignore_index=True)
                 plt.plot(xv, yv, 'ro')
                 
-            #plt.xlabel(col)
-            #plt.ylabel(ind)
-            plt.xlabel(formatLabels(dfL, col))
-            plt.ylabel(formatLabels(dfL, ind))
+            plt.xlabel(colL)
+            plt.ylabel(indL)
             plt.title(title+": {0:.3f}".format(dfC[col].loc[ind]))
             
             if dP.addSampleTagPlot:
