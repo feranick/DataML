@@ -35,6 +35,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Chemistry",
     "Topic :: Scientific/Engineering :: Physics",
@@ -46,6 +47,7 @@ DataML_DF = "DataML_DF:DataML_DF"
 ConvertLabel = "ConvertLabel:ConvertLabel"
 GetClasses = "GetClasses:GetClasses"
 AddDenoiseAutoEncoder = "AddDenoiseAutoEncoder:AddDenoiseAutoEncoder"
+CorrAnalysis = "CorrAnalysis:CorrAnalysis"
 
 [project.urls]
 Homepage = "https://github.com/feranick/DataML"
