@@ -149,7 +149,6 @@ class Conf():
         except:
             print("Error in creating configuration file")
 
-
 #************************************
 # Main
 #************************************
@@ -162,13 +161,10 @@ def main():
     
     dP = Conf()
     
-    dfP = readParamFile(sys.argv[1], dP)
-    
-    dfL = getLabelsParamFile(sys.argv[1], dP)
-    print(dfL)
-    
+    dfP,dfL = readParamFile(sys.argv[1], dP)
+        
     if dP.separateValidFile:
-        dfV = readParamFile(sys.argv[2])
+        dfV, _ = readParamFile(sys.argv[2])
         #dfP = dfP.append(dfV,ignore_index=True) # deprecated in Pandas v>2
         dfP = dfP.concat([dfP, dfV], ignore_index=True)
         dP.validRows = dfP.index.tolist()[-len(dfV.index.tolist()):]
@@ -236,10 +232,13 @@ def readParamFile(paramFile, dP):
         with open(paramFile, 'r') as f:
             dfP = pd.read_csv(f, delimiter = ",", skiprows=dP.skipHeadRows)
         print(dfP)
+        with open(paramFile, 'r') as f:
+            dfL = pd.read_csv(f, delimiter = ",", nrows=dP.skipHeadRows)
+        print(dfL)
     except:
         print("\033[1m Param file:",paramFile," not found/broken \n\033[0m")
         return
-    return dfP
+    return dfP, dfL
 
 def processParamFile(dfP, lims, dP):
     if lims[0]>len(dfP.columns):
@@ -250,16 +249,6 @@ def processParamFile(dfP, lims, dP):
     headP = dfP.columns[lims].values
     P[np.isnan(P)] = dP.valueForNan
     return P, headP
-    
-def getLabelsParamFile(paramFile, dP):
-    try:
-        with open(paramFile, 'r') as f:
-            dfP = pd.read_csv(f, delimiter = ",", nrows=dP.skipHeadRows)
-        print(dfP)
-    except:
-        print("\033[1m Param file:",paramFile," not found/broken \n\033[0m")
-        return
-    return dfP
     
 #************************************
 # Calculate Correlations
