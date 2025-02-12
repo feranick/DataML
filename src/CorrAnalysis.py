@@ -219,8 +219,8 @@ def main():
         print(" ",num,"Manually selected plots saved in:",plotFile,"\n")
 
     if dP.plotGraphsThreshold:
-        num1 = plotGraphThreshold(dfP, dfPearson, dP.validRows, "PearsonR_correlation", pdf, pearsonSummary, dP)
-        num2 = plotGraphThreshold(dfP, dfSpearman, dP.validRows, "SpearmanR_correlation", pdf, spearmanSummary, dP)
+        num1 = plotGraphThreshold(dfP, dfL, dfPearson, dP.validRows, "PearsonR_correlation", pdf, pearsonSummary, dP)
+        num2 = plotGraphThreshold(dfP, dfL, dfSpearman, dP.validRows, "SpearmanR_correlation", pdf, spearmanSummary, dP)
         print(" ",num1+num2,"XY plots with correlation in [",dP.corrMin,",",dP.corrMax,"] saved in:",plotFile,"\n")
     pdf.close()
     
@@ -234,6 +234,7 @@ def readParamFile(paramFile, dP):
         print(dfP)
         with open(paramFile, 'r') as f:
             dfL = pd.read_csv(f, delimiter = ",", nrows=dP.skipHeadRows)
+        dfL.columns = dfL.iloc[3]
         print(dfL)
     except:
         print("\033[1m Param file:",paramFile," not found/broken \n\033[0m")
@@ -393,7 +394,7 @@ def plotSelectedGraphs(dfP, X, Y, validRows, pdf, sparse):
 #************************************
 # Plot Graphs based on threshold
 #************************************
-def plotGraphThreshold(dfP, dfC, validRows, title, pdf, sumFile, dP):
+def plotGraphThreshold(dfP, dfL, dfC, validRows, title, pdf, sumFile, dP):
     num = 0
     dfSummary = pd.DataFrame()
     for col in dfC.columns:
@@ -401,16 +402,20 @@ def plotGraphThreshold(dfP, dfC, validRows, title, pdf, sumFile, dP):
             x, y, ann = purgeSparse(dfP[col].to_numpy(), dfP[ind].to_numpy(), dfP.iloc[:,0], dP.removeNaNfromCorr)
             plt.plot(x,y, 'bo')
             
-            dfSummary = pd.concat([dfSummary, pd.DataFrame([{'PAR': col, 'PERF': ind, 'Corr': dfC[col].loc[ind], 'Num_points': len(x), 'Valid': 'NO'}])], ignore_index=True)
+            print(formatLabels(dfL, ind))
+            
+            dfSummary = pd.concat([dfSummary, pd.DataFrame([{'PAR': formatLabels(dfL, col), 'PERF': formatLabels(dfL, ind), 'Corr': dfC[col].loc[ind], 'Num_points': len(x), 'Valid': 'NO'}])], ignore_index=True)
         
             if dP.plotValidData:
                 print("\nValid datapoint:\n",dfP.loc[validRows,col])
                 xv, yv, ann = purgeSparse(dfP.loc[validRows,col].to_numpy(), dfP.loc[validRows, ind].to_numpy(), dfP.iloc[:,0], dP.removeNaNfromCorr)
-                dfSummary = pd.concat([dfSummary, pd.DataFrame([{'PAR': col, 'PERF': ind, 'Corr': dfC[col].loc[ind], 'Num_points': len(xv), 'Valid': 'YES'}])], ignore_index=True)
+                dfSummary = pd.concat([dfSummary, pd.DataFrame([{'PAR': formatLabels(dfL, col), 'PERF': formatLabels(dfL, ind), 'Corr': dfC[col].loc[ind], 'Num_points': len(xv), 'Valid': 'YES'}])], ignore_index=True)
                 plt.plot(xv, yv, 'ro')
                 
-            plt.xlabel(col)
-            plt.ylabel(ind)
+            #plt.xlabel(col)
+            #plt.ylabel(ind)
+            plt.xlabel(formatLabels(dfL, col))
+            plt.ylabel(formatLabels(dfL, ind))
             plt.title(title+": {0:.3f}".format(dfC[col].loc[ind]))
             
             if dP.addSampleTagPlot:
@@ -467,36 +472,17 @@ def plotSpectralCorrelations(dfP, P, title, filename, pdf, dP):
     plt.close
 
 #************************************
+# Format Labels
+#************************************
+def formatLabels(dfL, ind):
+    label = ""
+    for l in range(len(dfL)):
+        if str(dfL[ind][l]) != "nan":
+            label += " " + str(dfL[ind][l])
+    return label.replace('\n',' ')
+
+#************************************
 # Main initialization routine
 #************************************
 if __name__ == "__main__":
     sys.exit(main())
-
-# Old settings
-    #trainCol = [3,3553]    # Raw data
-    #trainCol = [3,80000]   # Raw data
-    #predCol = [1,3]        # Raw data
-    #trainCol = [1,7]       # Pitch
-    #predCol = [7,9]        # Pitch
-    #trainCol = [1,35]      # Pitch
-    #predCol = [1,35]       # Pitch
-    #validRows = [5]        # Pitch
-    #trainCol = [33,36,40,42,46,48]       # Pitch (specific columns)
-    #predCol = [7,8]       # Pitch (specific columns)
-    #trainCol = [1,2,3,4,5,6,7,8,9]       # ORNL (specific columns)
-    #predCol = [10,11,12]       # ORNL (specific columns)
-    #trainCol = [1,9]       # ORNL (column range)
-    #predCol = [10,12]       # ORNL (column range)
-    
-    #trainCol = [7,54]      # Asphalt
-    #predCol = [1,7]        # Asphalt
-    #validRows = [40,41,42,43] # Asphalt
-    #trainCol = [1,61]
-    #trainCol = [61,106]
-    #predCol = [1,61]
-    #predCol = [61,106]
-    
-    #graphX = [1,2,3,4,5,6,7,8]     # Pitch
-    #graphY = [1,2,3,4,5,6,7,8]     # Pitch
-    #graphX = [8,10,12,13,14]        # Asphalt
-    #graphY = [62,69,78,79,80,81]    # Asphalt
