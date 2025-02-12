@@ -83,13 +83,12 @@ class Conf():
             ### Plotting correlation 2D plots
             'plotSelectedGraphs' : False,
             'plotGraphsThreshold' : True,
+            'graphX' : [1,2],
+            'graphY' : [3,4],
             'plotValidData' : False,
             'plotLinRegression' : True,
             'addSampleTagPlot' : True,
             'polyDegree' : 1,
-
-            'graphX' : [1,2],
-            'graphY' : [3,4],
     
             ### Plotting Spectral correlations
             'plotSpectralCorr' : False,                # True: use for raw data (spectra, etc)
@@ -215,8 +214,9 @@ def main():
             plotCorrelations(dfSpearman, P, "SpearmanR_correlation", rootFile, pdf)
 
     if dP.plotSelectedGraphs:
-        num = plotSelectedGraphs(dfP, dP.graphX, dP.graphY, dP.validRows, pdf, dP.removeNaNfromCorr)
-        print(" ",num,"Manually selected plots saved in:",plotFile,"\n")
+        num1 = plotSelectedGraphs(dfP, dfL, dfPearson, dP.graphX, dP.graphY, dP.validRows, "PearsonR_correlation", pdf, dP)
+        num2 = plotSelectedGraphs(dfP, dfL, dfSpearman, dP.graphX, dP.graphY, dP.validRows, "SpearmanR_correlation", pdf, dP)
+        print(" ",num1+num2,"Manually selected plots saved in:",plotFile,"\n")
 
     if dP.plotGraphsThreshold:
         num1 = plotGraphThreshold(dfP, dfL, dfPearson, dP.validRows, "PearsonR_correlation", pdf, pearsonSummary, dP)
@@ -336,7 +336,6 @@ def heatMapsCorrelations(dfP, title, pdf, dP):
     #plt.show()
     plt.close()
 
-
 def heatMapsCorrelations2(dfP):
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -351,34 +350,6 @@ def heatMapsCorrelations2(dfP):
     plt.show()
 
 #************************************
-# Plot Graphs based on manual input
-#************************************
-def plotSelectedGraphs(dfP, X, Y, validRows, pdf, sparse):
-    num = 0
-    for i in X:
-        for j in Y:
-            ylabels = dfP.columns.values[j]
-            xlabels = dfP.columns.values[i]
-            #plt.figure()
-            
-            P, V, ann = purgeSparse(dfP.iloc[:,i].to_numpy(), dfP.iloc[:,j].to_numpy(), dfP.iloc[:,0], dP)
-            plt.plot(P, V, 'bo')
-            
-            if dP.plotValidData:
-                PV, VV, ann = purgeSparse(dfP.iloc[validRows,i].to_numpy(), dfP.iloc[validRows, j].to_numpy(), dfP.iloc[validRows, 0], dP)
-                plt.plot(PV, VV, 'ro')
-                
-            plt.xlabel(xlabels)
-            plt.ylabel(ylabels)
-            for k, txt, in enumerate(ann):
-                plt.annotate(txt,xy=(P[k],V[k]), fontsize='x-small')
-            #plt.legend(loc='upper left')
-            pdf.savefig()
-            plt.close()
-            num += 1
-    return num
-
-#************************************
 # Plot Graphs based on threshold
 #************************************
 def plotGraphThreshold(dfP, dfL, dfC, validRows, title, pdf, sumFile, dP):
@@ -390,22 +361,22 @@ def plotGraphThreshold(dfP, dfL, dfC, validRows, title, pdf, sumFile, dP):
             plt.plot(x,y, 'bo')
             
             if dfL.empty:
-                colL = col
-                indL = ind
+                xlabel = col
+                ylabel = ind
             else:
-                colL = formatLabels(dfL, col)
-                indL = formatLabels(dfL, ind)
+                xlabel = formatLabels(dfL, col)
+                ylabel = formatLabels(dfL, ind)
                
-            dfSummary = pd.concat([dfSummary, pd.DataFrame([{'PAR': colL, 'PERF': indL, 'Corr': dfC[col].loc[ind], 'Num_points': len(x), 'Valid': 'NO'}])], ignore_index=True)
+            dfSummary = pd.concat([dfSummary, pd.DataFrame([{'PAR': xlabel, 'PERF': ylabel, 'Corr': dfC[col].loc[ind], 'Num_points': len(x), 'Valid': 'NO'}])], ignore_index=True)
         
             if dP.plotValidData:
                 print("\nValid datapoint:\n",dfP.loc[validRows,col])
                 xv, yv, ann = purgeSparse(dfP.loc[validRows,col].to_numpy(), dfP.loc[validRows, ind].to_numpy(), dfP.iloc[:,0], dP)
-                dfSummary = pd.concat([dfSummary, pd.DataFrame([{'PAR': colL, 'PERF': indL, 'Corr': dfC[col].loc[ind], 'Num_points': len(xv), 'Valid': 'YES'}])], ignore_index=True)
+                dfSummary = pd.concat([dfSummary, pd.DataFrame([{'PAR': xlabel, 'PERF': ylabel, 'Corr': dfC[col].loc[ind], 'Num_points': len(xv), 'Valid': 'YES'}])], ignore_index=True)
                 plt.plot(xv, yv, 'ro')
                 
-            plt.xlabel(colL)
-            plt.ylabel(indL)
+            plt.xlabel(xlabel)
+            plt.ylabel(ylabel)
             plt.title(title+": {0:.3f}".format(dfC[col].loc[ind]))
             
             if dP.addSampleTagPlot:
@@ -426,6 +397,49 @@ def plotGraphThreshold(dfP, dfL, dfC, validRows, title, pdf, sumFile, dP):
     dfSummary = dfSummary.sort_values(by=['PERF'])
     print(title, "\n", dfSummary, "\n")
     dfSummary.to_csv(sumFile, index=True, header=True)
+    return num
+    
+#************************************
+# Plot Graphs based on manual input
+#************************************
+def plotSelectedGraphs(dfP, dfL, dfC, X, Y, validRows, title, pdf, dP):
+    num = 0
+    for i in X:
+        for j in Y:
+            if dfL.empty:
+                xlabel = dfP.columns.values[i]
+                ylabel = dfP.columns.values[j]
+            else:
+                xlabel = formatLabels(dfL, dfP.columns.values[i])
+                ylabel = formatLabels(dfL, dfP.columns.values[j])
+            
+            P, V, ann = purgeSparse(dfP.iloc[:,i].to_numpy(), dfP.iloc[:,j].to_numpy(), dfP.iloc[:,0], dP)
+            plt.plot(P, V, 'bo')
+            
+            if dP.plotValidData:
+                PV, VV, ann = purgeSparse(dfP.iloc[validRows,i].to_numpy(), dfP.iloc[validRows, j].to_numpy(), dfP.iloc[validRows, 0], dP)
+                plt.plot(PV, VV, 'ro')
+                
+            plt.xlabel(xlabel)
+            plt.ylabel(ylabel)
+            plt.title(title+": {0:.3f}".format(dfC[dfP.columns.values[i]].loc[dfP.columns.values[j]]))
+            
+            if dP.addSampleTagPlot:
+                for k, txt, in enumerate(ann):
+                    plt.annotate(txt,xy=(P[k],V[k]), fontsize='x-small')
+            #plt.legend(loc='upper left')
+            
+            if dP.plotLinRegression and dfP.columns.values[i] is not dfP.columns.values[j]:
+                try:
+                    slope, intercept, r_value, p_value, std_err = stats.linregress(P,V)
+                    plt.text(min(P), max(V),"{0:s} = {2:.3f}*{1:s} + {3:.3f}".format(dfP.columns.values[j], dfP.columns.values[i], slope, intercept))
+                    plt.plot(np.unique(P), np.poly1d(np.polyfit(P, V, dP.polyDegree))(np.unique(P)))
+                except:
+                    pass
+            
+            pdf.savefig()
+            plt.close()
+            num += 1
     return num
 
 #************************************
