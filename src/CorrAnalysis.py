@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: v2025.02.12.3
+* version: v2025.02.21.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -46,19 +46,28 @@ class Conf():
         self.readConfig(self.configFile)
         self.model_directory = "./"
         
+        self.skipHeadColumns = self.skipHeadColumns-1
         if self.specifyColumns == False:
-            self.trainCol = [item for item in range(self.trainCol[0], self.trainCol[1]+1)]
+            self.trainCol = [item for item in range(self.trainCol[0]+self.skipHeadColumns, self.trainCol[1]+1+self.skipHeadColumns)]
             if len(self.predCol)!=1:
-                self.predCol = [item for item in range(self.predCol[0], self.predCol[1]+1)]
+                self.predCol = [item for item in range(self.predCol[0]+self.skipHeadColumns, self.predCol[1]+1+self.skipHeadColumns)]
+        else:
+            self.trainCol = [x + self.skipHeadColumns for x in self.trainCol]
+            if len(self.predCol)!=1:
+                self.predCol = [x + self.skipHeadColumns for x in self.predCol]
+        print(self.trainCol)
     
         if self.includeAdditionalCol == True:
             self.inTrainCol=self.trainCol[-1]
             self.trainCol.extend(list(item for item in range(self.initialAdditionalCol, self.finalAdditionalCol+1)))
             self.predCol = [item for item in range(self.predCol[0]+self.trainCol[-1]-self.inTrainCol, self.predCol[1]+self.trainCol[-1]-self.inTrainCol+1)]
+                
                                     
     def corrAnalysisDef(self):
         self.conf['Parameters'] = {
             'skipHeadRows' : 4,
+            'skipHeadColumns' : 7,
+            'skipEmptyColumns' : True,
             
             'specifyColumns'  : True,
             'trainCol' : [2,113],
@@ -103,6 +112,8 @@ class Conf():
             self.corrAnalysisDef = self.conf['Parameters']
 
             self.skipHeadRows = self.conf.getint('Parameters','skipHeadRows')
+            self.skipHeadColumns = self.conf.getint('Parameters','skipHeadColumns')
+            self.skipEmptyColumns = self.conf.getboolean('Parameters','skipEmptyColumns')
             self.specifyColumns = self.conf.getboolean('Parameters','specifyColumns')
             self.trainCol = eval(self.corrAnalysisDef['trainCol'])
             self.predCol = eval(self.corrAnalysisDef['predCol'])
@@ -248,9 +259,17 @@ def processParamFile(dfP, lims, dP):
     if lims[0]>len(dfP.columns):
         lims[0] = len(dfP.columns)
         print(" Warning: Column range is larger than actual number of columns. Using full dataset")
-    #P = dfP.iloc[:,lims].astype(float).to_numpy()
-    P = dfP.iloc[:,lims].to_numpy()
-    headP = dfP.columns[lims].values
+    
+    P = dfP.iloc[:,lims]
+    
+    if dP.skipEmptyColumns:
+        cols_to_drop = P.columns[(P == 0).all()]
+        print(cols_to_drop)
+        P = P.drop(cols_to_drop, axis=1)
+    
+    headP = P.columns.values
+    P = P.to_numpy()
+    
     P[np.isnan(P)] = dP.valueForNan
     return P, headP
     
