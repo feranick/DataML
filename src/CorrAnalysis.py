@@ -418,10 +418,12 @@ def plotGraphThreshold(dfP, dfL, dfC, validRows, title, pdf, sumFile, dP):
             pdf.savefig()
             plt.close()
             num+=1
-    
-    dfSummary = dfSummary.sort_values(by=['PERF'])
-    print(title, "\n", dfSummary, "\n")
-    dfSummary.to_csv(sumFile, index=True, header=True)
+    if num ==0:
+        print(" All correlations are outside the requested range\n")
+    else:
+        dfSummary = dfSummary.sort_values(by=['PERF'])
+        print(title, "\n", dfSummary, "\n")
+        dfSummary.to_csv(sumFile, index=True, header=True)
     return num
     
 #************************************
