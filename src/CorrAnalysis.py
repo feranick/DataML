@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: v2025.02.21.1
+* version: v2025.02.21.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -55,7 +55,6 @@ class Conf():
             self.trainCol = [x + self.skipHeadColumns for x in self.trainCol]
             if len(self.predCol)!=1:
                 self.predCol = [x + self.skipHeadColumns for x in self.predCol]
-        print(self.trainCol)
     
         if self.includeAdditionalCol == True:
             self.inTrainCol=self.trainCol[-1]
@@ -263,8 +262,15 @@ def processParamFile(dfP, lims, dP):
     P = dfP.iloc[:,lims]
     
     if dP.skipEmptyColumns:
-        cols_to_drop = P.columns[(P == 0).all()]
-        print(cols_to_drop)
+        # Use this for only empty columns
+        #cols_to_drop = P.columns[(P == 0).all()]
+        
+        # Use this for columns with the same value
+        cols_to_drop = []
+        for col in P.columns:
+            if (P[col] == P[col].iloc[0]).all():
+                cols_to_drop.append(col)
+                
         P = P.drop(cols_to_drop, axis=1)
     
     headP = P.columns.values
