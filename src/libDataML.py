@@ -137,6 +137,7 @@ class MultiClassReductor():
 # Load saved models
 #************************************
 def loadModel(dP):
+    getTFVersion(dP)
     if dP.TFliteRuntime:
         #import tflite_runtime.interpreter as litert
         import ai_edge_litert.interpreter as litert
@@ -154,7 +155,6 @@ def loadModel(dP):
             model = litert.Interpreter(model_path=model_name)
         model.allocate_tensors()
     else:
-        getTFVersion(dP)
         import tensorflow as tf
         if checkTFVersion("2.16.0"):
             import tensorflow.keras as keras
@@ -275,9 +275,17 @@ def getTFVersion(dP):
             kv = "- Keras v. " + keras.__version__
     from packaging import version
     if dP.useTFlitePred:
-        print("\n TensorFlow (Lite) v.",tf.version.VERSION,kv, "\n")
+        if dP.TFliteRuntime:
+            try:
+                import tflite_runtime as litert
+                print("\n  TFlite-runtime v.",litert.__version__,kv, "\n")
+            except:
+                import ai_edge_litert as litert
+                print("\n  LiteRT v.",litert.__version__,kv, "\n")
+        else:
+            print("\n  TensorFlow (Lite) v.",tf.version.VERSION,kv, "\n")
     else:
-        print("\n TensorFlow v.",tf.version.VERSION,kv, "\n" )
+        print("\n  TensorFlow v.",tf.version.VERSION,kv, "\n" )
         
 def checkTFVersion(vers):
     import tensorflow as tf
