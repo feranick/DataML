@@ -2,7 +2,7 @@
 '''
 **************************************************
 * libDataML - Library for DataML/DataML_DF
-* v2025.2.21.2
+* v2025.2.25.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
@@ -138,19 +138,20 @@ class MultiClassReductor():
 #************************************
 def loadModel(dP):
     if dP.TFliteRuntime:
-        import tflite_runtime.interpreter as tflite
+        #import tflite_runtime.interpreter as litert
+        import ai_edge_litert.interpreter as litert
         # model here is intended as interpreter
         if dP.runCoralEdge:
             print(" Running on Coral Edge TPU")
             try:
                 model_name = os.path.splitext(dP.model_name)[0]+'_edgetpu.tflite'
-                model = tflite.Interpreter(model_path=model_name,
-                    experimental_delegates=[tflite.load_delegate(dP.edgeTPUSharedLib,{})])
+                model = litert.Interpreter(model_path=model_name,
+                    experimental_delegates=[litert.load_delegate(dP.edgeTPUSharedLib,{})])
             except:
                 print(" Coral Edge TPU not found. Please make sure it's connected and Tflite-runtime matches the TF version that is installled.")
         else:
             model_name = os.path.splitext(dP.model_name)[0]+'.tflite'
-            model = tflite.Interpreter(model_path=model_name)
+            model = litert.Interpreter(model_path=model_name)
         model.allocate_tensors()
     else:
         getTFVersion(dP)
@@ -165,11 +166,16 @@ def loadModel(dP):
         if dP.useTFlitePred:
             # model here is intended as interpreter
             model_name=os.path.splitext(dP.model_name)[0]+'.tflite'
-            model = tf.lite.Interpreter(model_path=model_name)
             
-            # Use this after the transition from tflite to ai_edge_litert
-            #from ai_edge_litert.interpreter import Interpreter
-            #model = Interpreter(model_path=model_name)
+            try:
+                # Using tf.lite (to be deprecated)
+                model = tf.lite.Interpreter(model_path=model_name)
+                print("  Running on tf.lite\n")
+            except:
+                # Using ai_edge_litert
+                import ai_edge_litert.interpreter as litert
+                model = litert.Interpreter(model_path=model_name)
+                print("  Running on ai_edge_litert\n")
             
             model.allocate_tensors()
         else:
