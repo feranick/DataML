@@ -50,7 +50,9 @@ class Conf():
         if self.specifyColumns == False:
             self.trainCol = [item for item in range(self.trainCol[0]+self.skipHeadColumns, self.trainCol[1]+1+self.skipHeadColumns)]
             if len(self.predCol)!=1:
-                self.predCol = [item for item in range(self.predCol[0]+self.skipHeadColumns, self.predCol[1]+1+self.skipHeadColumns)]
+                self.predCol = [item for item in range(self.predCol[0]+self.skipHeadColumns, self.predCol[1]+1+self.skipHeadColumns)]                
+        if self.plotValidData:
+            self.validRows = [x - 1 for x in self.validRows]
         else:
             self.trainCol = [x + self.skipHeadColumns for x in self.trainCol]
             if len(self.predCol)!=1:
