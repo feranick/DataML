@@ -85,9 +85,6 @@ class Conf():
             'numLabels' : 1,
             'normalize' : False,
             'normalizeLabel' : False,
-            'runDimRedFlag' : False,
-            'typeDimRed' : 'SparsePCA',
-            'numDimRedComp' : 3,
             'plotFeatImportance' : False,
             }
     def sysDef(self):
@@ -116,9 +113,6 @@ class Conf():
             self.numLabels = self.conf.getint('Parameters','numLabels')
             self.normalize = self.conf.getboolean('Parameters','normalize')
             self.normalizeLabel = self.conf.getboolean('Parameters','normalizeLabel')
-            self.runDimRedFlag = self.conf.getboolean('Parameters','runDimRedFlag')
-            self.typeDimRed = self.conf.get('Parameters','typeDimRed')
-            self.numDimRedComp = self.conf.getint('Parameters','numDimRedComp')
             self.plotFeatImportance = self.conf.getboolean('Parameters','plotFeatImportance')
             self.random_state = eval(self.sysDef['random_state'])
             self.n_jobs = self.conf.getint('System','n_jobs')
@@ -275,18 +269,6 @@ def train(learnFile, testFile, normFile):
         print("\n  Label encoder saved in:", dP.model_le,"\n")
         with open(dP.model_le, 'ab') as f:
             pickle.dump(le, f)
-
-    #************************************
-    # Run PCA if needed.
-    #************************************
-    if dP.runDimRedFlag:
-        print("  Dimensionality Reduction via:",dP.typeDimRed,"\n")
-        if dP.typeDimRed == 'Autoencoder':
-            A = runAutoencoder(A, dP)
-        else:
-            A = runPCA(A, dP.numDimRedComp, dP)
-            #if testFile is not None:
-            A_test = runPCAValid(A_test, dP)
     
     #************************************
     # Training
@@ -405,9 +387,6 @@ def predict(testFile, normFile):
         except:
             print("\033[1m pkl file not found \033[0m")
             return
-     
-    if dP.runDimRedFlag:
-        R = runPCAValid(R, dP)
             
     with open(dP.modelName, "rb") as f:
         df = pickle.load(f)
@@ -474,9 +453,6 @@ def batchPredict(folder, normFile):
         R, good = readTestFile(file)
         if  normFile is not None:
             R = norm.transform_valid_data(R)
-            
-        if dP.runDimRedFlag:
-            R = runPCAValid(R, dP)
         
         if good:
             predtmp, pred_classes, probatmp = getPrediction(dP, df, R, le)
@@ -527,9 +503,6 @@ def validBatchPredict(testFile, normFile):
             
     with open(dP.modelName, "rb") as f:
         df = pickle.load(f)
-        
-    if dP.runDimRedFlag:
-        A_test = runPCAValid(A_test, dP)
     
     summaryFile = np.array([['File:',testFile,''],['DataML_DF',dP.typeDF,dP.mode]])
     
