@@ -9,7 +9,7 @@ include = [
 
 [project]
 name = "DataML"
-version = "v2025.2.27.1"
+version = "v2025.2.27.2"
 dependencies = [
     "numpy",
     "h5py",
@@ -48,6 +48,7 @@ ConvertLabel = "ConvertLabel:ConvertLabel"
 GetClasses = "GetClasses:GetClasses"
 AddDenoiseAutoEncoder = "AddDenoiseAutoEncoder:AddDenoiseAutoEncoder"
 CorrAnalysis = "CorrAnalysis:CorrAnalysis"
+MasterDataMaker = "MasterDataMaker:MasterDataMaker"
 
 [project.urls]
 Homepage = "https://github.com/feranick/DataML"
