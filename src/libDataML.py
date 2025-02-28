@@ -401,16 +401,6 @@ def plotWeights(En, A, model, dP):
     plt.xlabel('Parameter')
     plt.legend(loc='upper right')
     plt.savefig('model_MLP_weights' + '.png', dpi = 160, format = 'png')  # Save plot
-
-#************************************
-# Make Optimization Parameter File
-#************************************
-def makeOptParameters(dP):
-    import json
-    grid = {"learnRate": [0.01, 0.001, 0.0001], "l2": [0.001, 0.0001, 1e-05], "decay": [0.001, 0.0001, 1e-05], "dropout": [0, 0.1, 0.2, 0.3, 0.4], "batch_size": [16, 32, 64, 128, 256], "epochs": [300, 400, 500]}
-    with open(dP.optParFile, 'w') as json_file:
-        json.dump(grid, json_file)
-    print(" Created: ",dP.optParFile,"\n")
     
 #********************************************************************************
 # Perform PCA for feature dimensionality reduction - EXPERIMENTAL
