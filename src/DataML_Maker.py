@@ -52,6 +52,7 @@ class Conf():
         else:
             self.charCCols = rescaleList(self.charCCols, self.numHeadColumns - 1)
         
+        self.predRColTag = self.predRCol
         self.predRCol = rescaleList(self.predRCol, self.numHeadColumns - 1)
         
         self.numLabels = len(self.predRCol)
@@ -155,8 +156,10 @@ def main():
     
     if len(sys.argv) >= 3:
         predRCol = [int(sys.argv[2])]
+        predRColTag = predRCol
     else:
         predRCol = dP.predRCol
+        predRColTag = dP.predRColTag
     
     if dP.fullDataset:
         datasetLabel = '_fullDataSet'
@@ -168,7 +171,7 @@ def main():
     if dP.purgeUndefRows:
         rootFile += '_purged'
         
-    rootFile += '_p' + str(predRCol[0])
+    rootFile += '_p' + str(predRColTag[0])
     learnFile = rootFile + '_train'
     
     try:
