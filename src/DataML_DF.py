@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2025.2.28.3
+* v2025.2.28.4
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -36,6 +36,16 @@ class Conf():
         ### - DecisionTree
         #################################
         
+        ###################################
+        ### Types of optimization scoring:
+        ### Set using:
+        ### optScoringR for Regression
+        ### optScoringC for Classification
+        ### - neg_mean_absolute_error (default)
+        ### - r2
+        ### - accuracy
+        #################################
+
         self.appName = "DataML_DF"
         confFileName = "DataML_DF.ini"
         self.configFile = os.getcwd()+"/"+confFileName
@@ -64,8 +74,14 @@ class Conf():
         self.model_scaling = self.model_directory+"model_scaling.pkl"
         self.model_pca = self.model_directory+"model_encoder.pkl"
         self.norm_file = self.model_directory+"norm_file.pkl"
+        
+        self.optParFile = "opt_parameters.txt"
                     
         self.rescaleForPCA = False
+        if self.regressor:
+            self.optScoring = self.optScoringR
+        else:
+            self.optScoring = self.optScoringC
         
         self.verbose = 1
                     
@@ -89,19 +105,23 @@ class Conf():
             'typeDimRed' : 'SparsePCA',
             'numDimRedComp' : 3,
             'plotFeatImportance' : False,
+            'optimizeParameters' : False,
+            'optScoringR' : 'neg_mean_absolute_error',
+            'optScoringC' : 'accuracy',
             }
+    
     def sysDef(self):
         self.conf['System'] = {
             'random_state' : 1,
             'n_jobs' : 1
             }
-
+    
     def readConfig(self,configFile):
         try:
             self.conf.read(configFile)
             self.datamlDef = self.conf['Parameters']
             self.sysDef = self.conf['System']
-        
+    
             self.typeDF = self.conf.get('Parameters','typeDF')
             self.regressor = self.conf.getboolean('Parameters','regressor')
             self.n_estimators = self.conf.getint('Parameters','n_estimators')
@@ -120,6 +140,9 @@ class Conf():
             self.typeDimRed = self.conf.get('Parameters','typeDimRed')
             self.numDimRedComp = self.conf.getint('Parameters','numDimRedComp')
             self.plotFeatImportance = self.conf.getboolean('Parameters','plotFeatImportance')
+            self.optimizeParameters = self.conf.getboolean('Parameters','optimizeParameters')
+            self.optScoringR = self.conf.get('Parameters','optScoringR')
+            self.optScoringC = self.conf.get('Parameters','optScoringC')
             self.random_state = eval(self.sysDef['random_state'])
             self.n_jobs = self.conf.getint('System','n_jobs')
             
@@ -145,7 +168,7 @@ def main():
     
     try:
         opts, args = getopt.getopt(sys.argv[1:],
-            "tpbvh:", ["train", "predict", "batch", "validbatch","help"])
+            "tpbvoh:", ["train", "predict", "batch", "validbatch", "opt", "help"])
     except:
         usage(dP.appName)
         sys.exit(2)
@@ -169,34 +192,41 @@ def main():
             #    sys.exit(2)
 
         if o in ("-p" , "--predict"):
-            #try:
-            if len(sys.argv)<4:
-                predict(sys.argv[2], None)
-            else:
-                predict(sys.argv[2], sys.argv[3])
-            #except:
-            #    usage(dP.appName)
-            #    sys.exit(2)
+            try:
+                if len(sys.argv)<4:
+                    predict(sys.argv[2], None)
+                else:
+                    predict(sys.argv[2], sys.argv[3])
+            except:
+                usage(dP.appName)
+                sys.exit(2)
 
         if o in ("-b" , "--batch"):
-            #try:
-            if len(sys.argv)<4:
-                batchPredict(sys.argv[2], None)
-            else:
-                batchPredict(sys.argv[2], sys.argv[3])
-            #except:
-            #    usage(dP.appName)
-            #    sys.exit(2)
+            try:
+                if len(sys.argv)<4:
+                    batchPredict(sys.argv[2], None)
+                else:
+                    batchPredict(sys.argv[2], sys.argv[3])
+            except:
+                usage(dP.appName)
+                sys.exit(2)
             
         if o in ("-v" , "--validbatch"):
-            #try:
-            if len(sys.argv)<4:
-                validBatchPredict(sys.argv[2], None)
-            else:
-                validBatchPredict(sys.argv[2], sys.argv[3])
-            #except:
-            #    usage(dP.appName)
-            #    sys.exit(2)
+            try:
+                if len(sys.argv)<4:
+                    validBatchPredict(sys.argv[2], None)
+                else:
+                    validBatchPredict(sys.argv[2], sys.argv[3])
+            except:
+                usage(dP.appName)
+                sys.exit(2)
+            
+        if o in ["-o" , "--opt"]:
+            try:
+                makeOptParameters(dP)
+            except:
+                usage(dP.appName)
+                sys.exit(2)
 
     total_time = time.perf_counter() - start_time
     print(" Total time: {0:.1f}s or {1:.1f}m or {2:.1f}h".format(total_time,
@@ -369,8 +399,50 @@ def train(learnFile, testFile, normFile):
     if dP.plotFeatImportance and (dP.typeDF == 'RandomForest' or dP.typeDF == 'GradientBoosting'):
         plotImportances(df, A_test, Cl2_test, dP)
     
-    print('  Scikit-learn v.',str(sklearn.__version__),'\n')
+    ##################################################################
+    # Hyperparameter optimization
+    ##################################################################
+    if dP.optimizeParameters:
+        print('  ========================================================')
+        print('  \033[1m HyperParameters Optimization\033[0m')
+        print('  ========================================================\n')
+                
+        from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
+        from scikeras.wrappers import KerasClassifier, KerasRegressor
+        import json
+        
+        with open(dP.optParFile) as f:
+            grid = json.load(f)
+        '''
+        grid = {
+            "random_state": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+            }
+        '''
+        
+                
+        #searcher = RandomizedSearchCV(estimator=model2, n_jobs=n_jobs, cv=3,
+        #    param_distributions=grid, scoring=scoring)
+        searcher = GridSearchCV(estimator=df, n_jobs=dP.n_jobs, cv=5,
+            param_grid=grid, scoring=dP.optScoring)
+        
+        searchResults = searcher.fit(A, Cl2)
     
+        if dP.regressor:
+            results = searchResults.cv_results_
+            print("\n Optimal parameters for best model:")
+            print(searchResults.best_params_,"\n")
+        else:
+            print("  Optimal parameters for best model: ")
+            bestScore = searchResults.best_score_
+            bestParams = searchResults.best_params_
+            print(bestParams)
+            print("  Best score is:",bestScore)
+            print("  Evaluating the best model...")
+            bestModel = searchResults.best_estimator_
+            accuracy = bestModel.score(A_test, Cl2_test)
+            print("  Accuracy: {:.2f}%\n".format(accuracy))
+            
+    print(' Scikit-learn v.',str(sklearn.__version__),'\n')
     return r2_score(Cl_test, pred)
 
 #************************************
@@ -605,6 +677,17 @@ def plotImportances(df, A_test, Cl_test, dP):
     fig.savefig('model_'+dP.typeDF+dP.mode+'_importances_Perm' + '.png', dpi = 160, format = 'png')  # Save plot
     
     print("  Feature importances plots saved\n")
+
+#************************************
+# Make Optimization Parameter File
+#************************************
+def makeOptParameters(dP):
+    import json
+    #grid = {"n_estimators": [1,2,3,4,5,6,7,8,9,10], "max_depth": [1,2,3,4,5,6,7,8,9,10], "max_features": [1,2,3,4,5,6,7,8,9,10], "random_state": [1,2,3,4,5,6,7,8,9,10]}
+    grid = {"random_state": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]}
+    with open(dP.optParFile, 'w') as json_file:
+        json.dump(grid, json_file)
+    print(" Created: ",dP.optParFile,"\n")
 
 #************************************
 # Main initialization routine
