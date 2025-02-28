@@ -164,7 +164,7 @@ def main():
     
     try:
         opts, args = getopt.getopt(sys.argv[1:],
-            "tpbvlocarh:", ["train", "predict", "batch", "validbatch","lite", "opt", "comp", "autoencoder", "rforest", "help"])
+            "tpbvlocah:", ["train", "predict", "batch", "validbatch","lite", "opt", "comp", "autoencoder", "help"])
     except:
         usage(dP.appName)
         sys.exit(2)
@@ -247,16 +247,6 @@ def main():
                     preAutoencoder(sys.argv[2], None, dP)
                 else:
                     preAutoencoder(sys.argv[2], sys.argv[3], dP)
-            except:
-                usage(dP.appName)
-                sys.exit(2)
-            
-        if o in ["-r" , "--rforest"]:
-            try:
-                if len(sys.argv)<4:
-                    preDT(sys.argv[2], None, dP)
-                else:
-                    preDT(sys.argv[2], sys.argv[3], dP)
             except:
                 usage(dP.appName)
                 sys.exit(2)
@@ -886,65 +876,6 @@ def validBatchPredict(testFile, normFile):
     print(" SpearmanR correlation: {0:0.4f}".format(spearmanr_corr))
     
     saveSummaryFile(summaryFile, dP)
-    
-#********************************************************************************
-# Perform Random Forest - Preview
-#********************************************************************************
-def preDT(learnFile, validFile, dP):
-    En, A, Cl, _ = readLearnFile(learnFile, dP)
-    if validFile is not None:
-        En_test, A_test, Cl_test, _ = readLearnFile(validFile, dP)
-    else:
-        En_test, A_test, Cl_test = None, None, None
-    
-    if dP.runDimRedFlag:
-        print("  Dimensionality Reduction via:",dP.typeDimRed,"\n")
-        if dP.typeDimRed == 'Autoencoder':
-            A = runAutoencoder(A, dP)
-        else:
-            A = runPCA(A, dP.numDimRedComp, dP)
-            if validFile is not None:
-                A_test = runPCAValid(A_test, dP)
-    
-    runDT(A, Cl, A_test, Cl_test,dP)
-
-def runDT(A, Cl, A_test, Cl_test, dP):
-    import sklearn
-    from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
-    from statistics import mean, stdev
-
-    max_depth = 5
-    n_estimators = 10
-    n_jobs = 1
-
-    if dP.regressor:
-        rf = RandomForestRegressor(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs)
-        tag = "Regressor"
-    else:
-        rf = RandomForestClassifier(max_depth=max_depth, n_estimators = n_estimators, random_state=0, verbose=2, n_jobs=n_jobs)
-        tag = "Classifier"
-        
-    rf.fit(A, Cl)
-    print("\n  Random Forest", tag,"model saved in:", dP.model_rf)
-    with open(dP.model_rf,'wb') as f:
-        pickle.dump(rf, f)
-
-    if A_test is not None:
-        pred = rf.predict(A_test)
-        delta = pred - Cl_test
-    
-        print('\n  ================================================================================')
-        print('  \033[1m Random Forest \033[0m - Prediction')
-        print('  ================================================================================')
-        print('   Real class\t| Predicted class\t| Delta')
-        print('  --------------------------------------------------------------------------------')
-        for i in range(len(pred)):
-            print("   {0:.2f}\t| {1:.2f}\t\t| {2:.2f}".format(Cl_test[i], pred[i], delta[i]))
-        print('  --------------------------------------------------------------------------------')
-        print('   Average Delta: {0:.2f}, StDev = {1:.2f}'.format(mean(delta), stdev(delta)))
-        print('   R^2: {0:.4f}'.format(rf.score(A_test, Cl_test)))
-        print('  --------------------------------------------------------------------------------\n')
-        print('  Scikit-learn v.',str(sklearn.__version__),'\n')
 
 #************************************
 # Main initialization routine
