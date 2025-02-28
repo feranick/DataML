@@ -92,7 +92,7 @@ class Conf():
             }
     def sysDef(self):
         self.conf['System'] = {
-            'random_state' : None,
+            'random_state' : 1,
             'n_jobs' : 1
             }
 
