@@ -823,8 +823,5 @@ def usage(name):
         print(' - HistGradientBoosting')
         print(' - GradientBoosting')
         print(' - DecisionTree')
-        print('\n Types of randization generatige methods:')
-        print(' - NormalDistribution')
-        print(' - DiffuseDistribution\n')
     
     print(' Requires python 3.x. Not compatible with python 2.x\n')
