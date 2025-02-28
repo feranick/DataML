@@ -5,7 +5,7 @@
 * DataML_Maker
 * Adds data from single file to Master Doc
 * File must be in ASCII
-* version: v2025.02.28.1
+* version: v2025.02.28.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -45,15 +45,15 @@ class Conf():
         def rescaleList(list, value):
             list = [x + value for x in list]
             return list
-    
+        
         if self.fullDataset:
             self.minCCol = self.minCCol + self.numHeadColumns-1
             self.maxCCol = self.maxCCol + self.numHeadColumns-1
         else:
-            rescaleList(self.charCCols, self.numHeadColumns - 1)
+            self.charCCols = rescaleList(self.charCCols, self.numHeadColumns - 1)
         
         self.predRCol = rescaleList(self.predRCol, self.numHeadColumns - 1)
-
+        
         self.numLabels = len(self.predRCol)
         self.validRows = [x-1 for x in self.validRows]
     
@@ -62,11 +62,11 @@ class Conf():
             'saveAsTxt' : True,
             'numHeadColumns' : 2,
             'numHeadRows' : 0,
-            'fullDataset' : True,
+            'fullDataset' : False,
             'minCCol' : 1,
             'maxCCol' : 42,
             'charCCols' : [21,23,25,34],
-            'predRCol' : [42],
+            'predRCol' : [43],
             'purgeUndefRows' : False,
             'validFile' : True,
             'createRandomValidSet' : False,
@@ -147,12 +147,11 @@ class Conf():
 # Main
 #************************************
 def main():
+    dP = Conf()
     if len(sys.argv) < 2:
         print(' Usage:\n  python3 DataMaker.py <paramFile> <pred column - optional>')
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
-    
-    dP = Conf()
     
     if len(sys.argv) >= 3:
         predRCol = [int(sys.argv[2])]
