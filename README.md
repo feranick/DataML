@@ -4,8 +4,8 @@ DataML Regression and Classification of sparse data using Neural Networks of Dec
     - Classifier/Regressor (TensorFlow, TensorFlow-Lite)
 - Required libraries for prediction:
     - tensorflow (version >= 2.13.x, >= 2.16.2 recommended)
-    - Optional: `tensorflow-lite` (v >= 2.13, >= 2.16.2 recommended)
-    - Optional: [tensorflow-lite runtime](https://www.tensorflow.org/lite/guide/python) 
+    - Optional: [ai_edge_litert (v=> 1.1.4)] (https://ai.google.dev/edge/litert)
+    - Optional - soon to be deprecated: [tensorflow-lite runtime](https://www.tensorflow.org/lite/guide/python) 
     - Optional: tensorflow-lite runtime with [Coral EdgeTPU](https://coral.ai/docs/accelerator/get-started/)
    
 - Currently supported Decision Forests estimators:
@@ -19,7 +19,7 @@ Installation
 ## Installation from available wheel package
 If available from the main site, you can install SpectraKeras by running:
 
-    python3 -m pip install --upgrade dataml-2025.2.27.2-py3-none-any.whl
+    python3 -m pip install --upgrade dataml-2025.2.28.1-py3-none-any.whl
     
 SpectraKeras_CNN and Spectrakeras_MLP are available directly from the command line.
 NOTE: The Utilities in the `Utilities` folder are not included in the package, and can be run locally as needed.

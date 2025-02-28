@@ -48,7 +48,7 @@ ConvertLabel = "ConvertLabel:ConvertLabel"
 GetClasses = "GetClasses:GetClasses"
 AddDenoiseAutoEncoder = "AddDenoiseAutoEncoder:AddDenoiseAutoEncoder"
 CorrAnalysis = "CorrAnalysis:CorrAnalysis"
-MasterDataMaker = "MasterDataMaker:MasterDataMaker"
+DataML_Maker = "DataML_Maker:DataML_Maker"
 
 [project.urls]
 Homepage = "https://github.com/feranick/DataML"
