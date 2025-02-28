@@ -177,7 +177,7 @@ def main():
     try:
         P,V = readParamFile(sys.argv[1], predRCol, rootFile, dP)
     except:
-        print("\033[1m" + " Something went wring, maybe Param file not found\n" + "\033[0m")
+        print("\033[1m" + " Something went wrong, maybe Param file not found\n" + "\033[0m")
         return
     
     #************************************
