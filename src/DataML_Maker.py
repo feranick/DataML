@@ -163,7 +163,7 @@ def main():
     else:
         datasetLabel = '_partialDataSet'
     
-    rootFile = os.path.splitext(sys.argv[1])[0] + datasetLabel
+    rootFile = os.path.splitext((os.path.basename(sys.argv[1])))[0] + datasetLabel
     
     if dP.purgeUndefRows:
         rootFile += '_purged'

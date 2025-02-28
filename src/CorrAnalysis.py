@@ -183,7 +183,8 @@ def main():
     P,headP = processParamFile(dfP, dP.trainCol, dP)
     V,headV = processParamFile(dfP, dP.predCol, dP)
     
-    rootFile = os.path.splitext(sys.argv[1])[0]
+    #rootFile = os.path.splitext(sys.argv[1])[0]
+    rootFile = os.path.splitext((os.path.basename(sys.argv[1])))[0]
     pearsonFile = rootFile + '_pearsonR.csv'
     spearmanFile = rootFile + '_spearmanR.csv'
     plotFile = rootFile + '_plots.pdf'
