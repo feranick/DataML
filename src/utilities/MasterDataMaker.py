@@ -5,7 +5,7 @@
 * MasterDataMaker
 * Adds data from single file to Master Doc
 * File must be in ASCII
-* version: v2024.10.14.1
+* version: v2025.02.27.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -16,28 +16,32 @@ import pandas as pd
 import sys, os.path, h5py, pickle
 from random import uniform
 from bisect import bisect_left
+from libDataML import *
 
 #************************************
 # Parameters definition
 #************************************
 class dP:
+    
     saveAsTxt = True
 
-    fullDataset = False
+    numHeadColumns = 2
+    numHeadRows = 0
+    
+    fullDataset = True
     minCCol = 1
-    maxCCol = 41
+    maxCCol = 42
     #charCCols = [8,10,12,13]
-    charCCols = [15,21,23,29]
-    predRCol = [41]
+    charCCols = [21,23,25,34]
+    #charCCols = [1,2,3]
+    predRCol = [42]
     
     purgeUndefRows = False
     
-    validFile = False
+    validFile = True
     createRandomValidSet =  False
     percentValid = 0.05
     validRows = [1,2,3]
-    
-    numHeadRows = 0
     
     precData = 3
     saveNormalized = False
@@ -60,6 +64,19 @@ class dP:
     valueForNan = -1
     
     # Do not change
+    
+    def rescaleList(list, value):
+        list = [x + value for x in list]
+        return list
+    
+    if fullDataset:
+        minCCol = minCCol + numHeadColumns-1
+        maxCCol = maxCCol + numHeadColumns-1
+    else:
+        rescaleList(charCCols, numHeadColumns - 1)
+        
+    predRCol = rescaleList(predRCol, numHeadColumns - 1)
+
     numLabels = len(predRCol)
     validRows = [x-1 for x in validRows]
 
@@ -68,7 +85,7 @@ class dP:
 #************************************
 def main():
     if len(sys.argv) < 2:
-        print(' Usage:\n  python3 MasterDataMaker.py <paramFile> <pred column>')
+        print(' Usage:\n  python3 DataMaker.py <paramFile> <pred column - optional>')
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
     
@@ -90,11 +107,11 @@ def main():
     rootFile += '_p' + str(predRCol[0])
     learnFile = rootFile + '_train'
     
-    try:
-        P,V = readParamFile(sys.argv[1], predRCol, rootFile)
-    except:
-        print("\033[1m" + " param file not found \n" + "\033[0m")
-        return
+    #try:
+    P,V = readParamFile(sys.argv[1], predRCol, rootFile)
+    #except:
+    #    print("\033[1m" + " param file not found \n" + "\033[0m")
+    #    return
     
     #************************************
     # Creating training set
@@ -236,18 +253,11 @@ def formatSubset2(A, Cl, percent):
 # Purge rows with undefined Cl value
 #************************************
 def purgeRows(M):
-    print(" Shape original dataset:", M.shape)
     condition = M[:,0] == 0
-    M = M[~condition]
-    
-    #for i in range(5):
-    #    print(i)
-    #    condition = M[:,i] == 0
-    #    M = M[~condition]
-    #    print(M.shape)
-    
-    print(" Purged from undefined values. \n Shape new dataset:",M.shape,"\n")
-    return M
+    M2 = M[~condition]
+    print(" Shape original dataset:", M.shape)
+    print(" Purged from undefined values. \n Shape new dataset:",M2.shape,"\n")
+    return M2
 
 #************************************
 # Main initialization routine
