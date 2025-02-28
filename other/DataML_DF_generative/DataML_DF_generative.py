@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2025.2.28.3
+* v2025.2.28.2
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -18,7 +18,7 @@ from libDataML import *
 #***************************************************
 # This is needed for installation through pip
 #***************************************************
-def DataML_DF():
+def DataML_DF_generative():
     main()
 
 #************************************
@@ -35,6 +35,13 @@ class Conf():
         ### - HistGradientBoosting
         ### - DecisionTree
         #################################
+        
+        ################################################
+        ### Types of training data generative method:
+        ### Set using: typeGenAddition
+        ### - DiffuseDistribution (default)
+        ### - NormalDistribution
+        ################################################
         
         self.appName = "DataML_DF"
         confFileName = "DataML_DF.ini"
@@ -90,6 +97,16 @@ class Conf():
             'numDimRedComp' : 3,
             'plotFeatImportance' : False,
             }
+    def datamlGenDef(self):
+        self.conf['Generative'] = {
+            'typeGenAddition' : 'NormalDistribution',
+            'excludeZeroFeatures' : False,
+            'numAddedGeneratedData' : 50,
+            'percDiffuseDistrMax' : 0.1,
+            'minR2' : 0.6,
+            'numGenSplitModels' : 100,
+            'saveAsTxt' : True
+            }
     def sysDef(self):
         self.conf['System'] = {
             'random_state' : None,
@@ -100,6 +117,7 @@ class Conf():
         try:
             self.conf.read(configFile)
             self.datamlDef = self.conf['Parameters']
+            self.datamlGenDef = self.conf['Generative']
             self.sysDef = self.conf['System']
         
             self.typeDF = self.conf.get('Parameters','typeDF')
@@ -120,6 +138,15 @@ class Conf():
             self.typeDimRed = self.conf.get('Parameters','typeDimRed')
             self.numDimRedComp = self.conf.getint('Parameters','numDimRedComp')
             self.plotFeatImportance = self.conf.getboolean('Parameters','plotFeatImportance')
+            
+            self.typeGenAddition = self.conf.get('Generative','typeGenAddition')
+            self.excludeZeroFeatures = self.conf.getboolean('Generative','excludeZeroFeatures')
+            self.numAddedGeneratedData = self.conf.getint('Generative','numAddedGeneratedData')
+            self.percDiffuseDistrMax = self.conf.getfloat('Generative','percDiffuseDistrMax')
+            self.minR2 = self.conf.getfloat('Generative','minR2')
+            self.numGenSplitModels = self.conf.getint('Generative','numGenSplitModels')
+            self.saveAsTxt = self.conf.getboolean('Generative','saveAsTxt')
+            
             self.random_state = eval(self.sysDef['random_state'])
             self.n_jobs = self.conf.getint('System','n_jobs')
             
@@ -197,6 +224,33 @@ def main():
             #except:
             #    usage(dP.appName)
             #    sys.exit(2)
+            
+        if o in ("-g" , "--generative"):
+            #try:
+                generative(sys.argv[2], None)
+            #except:
+            #    usage(dP.appName)
+            #    sys.exit(2)
+                
+        if o in ["-c" , "--comp"]:
+            try:
+                if len(sys.argv)<4:
+                    prePCA(sys.argv[2], None, dP)
+                else:
+                    prePCA(sys.argv[2], sys.argv[3], dP)
+            except:
+                usage(dP.appName)
+                sys.exit(2)
+            
+        if o in ["-a" , "--autoencoder"]:
+            try:
+                if len(sys.argv)<4:
+                    preAutoencoder(sys.argv[2], None, dP)
+                else:
+                    preAutoencoder(sys.argv[2], sys.argv[3], dP)
+            except:
+                usage(dP.appName)
+                sys.exit(2)
 
     total_time = time.perf_counter() - start_time
     print(" Total time: {0:.1f}s or {1:.1f}m or {2:.1f}h".format(total_time,
@@ -372,6 +426,136 @@ def train(learnFile, testFile, normFile):
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
     
     return r2_score(Cl_test, pred)
+
+#************************************************************
+# Generate learning dataset from randomized features with
+# class predicted with predict()
+#************************************************************
+def generative(learnFile, normFile):
+    dP = Conf()
+    import sklearn
+    if dP.typeGenAddition == 'MultiModelSplit':
+        newM, tag = multiModelSplit(dP, learnFile, normFile)
+    else:
+        En, A, Cl, M = readLearnFile(learnFile, dP)
+    
+        if normFile is not None:
+            try:
+                with open(normFile, "rb") as f:
+                    norm = pickle.load(f)
+                print("  Opening pkl file with normalization data:",normFile)
+                print("  Normalizing validation file for prediction...\n")
+                R = norm.transform_valid_data(R)
+            except:
+                print("\033[1m pkl file not found \033[0m")
+                return
+            
+        with open(dP.modelName, "rb") as f:
+            df = pickle.load(f)
+        
+        if dP.regressor:
+            le = None
+        else:
+            with open(dP.model_le, "rb") as f:
+                le = pickle.load(f)
+    
+        if dP.typeGenAddition == 'NormalDistribution':
+            newM, tag = createNormalDist(dP, df, A, M, le)
+        elif dP.typeGenAddition == 'DiffuseDistribution':
+            newM, tag = createDiffuseDist(dP, df, A, M, le)
+        else:
+            return;
+
+    saveLearnFile(dP, newM, learnFile, tag)
+    
+#******************************************************
+# Create new Training data from normal distribution
+# within each feacture column
+#******************************************************
+def multiModelSplit(dP, learnFile, normFile):
+    import statistics
+    En, A, Cl, M = readLearnFile(learnFile, dP)
+    newM = np.copy(M)
+    if dP.regressor:
+        le = None
+    else:
+        with open(dP.model_le, "rb") as f:
+            le = pickle.load(f)
+    
+    goodModels = []
+    badModels = []
+    for h in range(dP.numGenSplitModels):
+        R2 = train(learnFile, None, None)
+        if R2 > dP.minR2:
+            with open(dP.modelName, "rb") as f:
+                df = pickle.load(f)
+            
+            tmpM, _ = createDiffuseDist(dP, df, A, M, le)
+            newM = np.vstack([newM, tmpM])
+            
+            goodModels.append(R2)
+        else:
+            badModels.append(R2)
+            
+    print("\n  Number of models with R2 > {0:.2f}: {1:d} (Average: {2:.2f}+-{3:.2f})".format(dP.minR2, len(goodModels), statistics.mean(goodModels), statistics.stdev(goodModels)))
+    print("  Number of models with R2 < {0:.2f}: {1:d}".format(dP.minR2,len(badModels))+"\n")
+    return newM, "_multiModelSplit-n"+str(newM.shape[0])
+    
+    
+#******************************************************
+# Create new Training data from normal distribution
+# within each feacture column
+#******************************************************
+def createNormalDist(dP, df, A, M, le):
+    newM = np.copy(M)
+    A_min = A.min(axis=0)
+    A_max = A.max(axis=0)
+    A_mean = np.mean(A, axis=0)
+    A_std = A.std(axis=0)
+    
+    for i in range(dP.numAddedGeneratedData):
+        A_tmp = []
+        for j in range(A.shape[1]):
+            tmp =  np.random.normal(A_mean[j], A_std[j], 1)
+            if tmp<0:
+                tmp=-tmp
+            A_tmp = np.hstack([A_tmp, tmp])
+        pred, pred_classes, proba = getPrediction(dP, df, [A_tmp], le)
+        M_tmp = np.hstack([pred, A_tmp])
+        newM = np.vstack([newM, M_tmp])
+    return newM, "_normal-random-n"+str(dP.numAddedGeneratedData)
+
+#******************************************************
+# Create new Training data by adding a percentage of the max
+# for that feature
+#******************************************************
+def createDiffuseDist(dP, df, A, M, le):
+    import random
+    
+    tag = "_diffuse-random-perc"+str(dP.percDiffuseDistrMax)+"-n"+str(dP.numAddedGeneratedData*A.shape[0])
+    newM = np.copy(M)
+    A_min = A.min(axis=0)
+    A_max = A.max(axis=0)
+    A_mean = np.mean(A, axis=0)
+    A_std = A.std(axis=0)
+        
+    for i in range(A.shape[0]):
+        for h in range(int(dP.numAddedGeneratedData)):
+            A_tmp = []
+            for j in range(A.shape[1]):
+                if A[i][j] == 0 and dP.excludeZeroFeatures:
+                    tmp = A[i][j]
+                else:
+                    tmp =  A[i][j]+A_max[j]*(np.random.uniform(-dP.percDiffuseDistrMax, dP.percDiffuseDistrMax, 1))
+                    if tmp<0:
+                        tmp=-tmp
+                A_tmp = np.hstack([A_tmp, tmp])
+            pred, pred_classes, proba = getPrediction(dP, df, [A_tmp], le)
+            M_tmp = np.hstack([pred, A_tmp])
+            newM = np.vstack([newM, M_tmp])
+    if dP.excludeZeroFeatures:
+        tag += "-exclude0"
+    return newM, tag
 
 #************************************
 # Prediction - backend
