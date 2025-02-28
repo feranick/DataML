@@ -145,7 +145,7 @@ def main():
     
     try:
         opts, args = getopt.getopt(sys.argv[1:],
-            "tpbvgcah:", ["train", "predict", "batch", "validbatch", "generative", "comp", "autoencoder", "help"])
+            "tpbvh:", ["train", "predict", "batch", "validbatch","help"])
     except:
         usage(dP.appName)
         sys.exit(2)
