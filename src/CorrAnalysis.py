@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: v2025.02.28.2
+* version: v2025.02.28.5
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
