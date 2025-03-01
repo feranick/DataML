@@ -180,6 +180,8 @@ def main():
     for o, a in opts:
         if o in ("-t" , "--train"):
             #try:
+            setTrain(sys.argv)
+            '''
             if len(sys.argv)<4:
                 train(sys.argv[2], None, None)
             else:
@@ -187,6 +189,7 @@ def main():
                     train(sys.argv[2], sys.argv[3], None)
                 else:
                     train(sys.argv[2], sys.argv[3], sys.argv[4])
+            '''
             #except:
             #    usage(dP.appName)
             #    sys.exit(2)
@@ -235,6 +238,15 @@ def main():
 #************************************
 # Training
 #************************************
+def setTrain(sysargv):
+    if len(sysargv)<4:
+        train(sysargv[2], None, None)
+    else:
+        if len(sysargv)<5:
+            train(sysargv[2], sysargv[3], None)
+        else:
+            train(sysargv[2], sysargv[3], sysargv[4])
+
 def train(learnFile, testFile, normFile):
     dP = Conf()
    
@@ -411,17 +423,14 @@ def train(learnFile, testFile, normFile):
         from scikeras.wrappers import KerasClassifier, KerasRegressor
         import json
         
+        if os.path.isfile(dP.optParFile) is False:
+            makeOptParameters(dP)
+        
         with open(dP.optParFile) as f:
             grid = json.load(f)
-        '''
-        grid = {
-            "random_state": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
-            }
-        '''
         
-                
-        #searcher = RandomizedSearchCV(estimator=model2, n_jobs=n_jobs, cv=3,
-        #    param_distributions=grid, scoring=scoring)
+        #searcher = RandomizedSearchCV(estimator=df, n_jobs=dP.n_jobs, cv=5,
+        #    param_distributions=grid, scoring=dP.optScoring)
         searcher = GridSearchCV(estimator=df, n_jobs=dP.n_jobs, cv=5,
             param_grid=grid, scoring=dP.optScoring)
         
@@ -429,19 +438,22 @@ def train(learnFile, testFile, normFile):
     
         if dP.regressor:
             results = searchResults.cv_results_
-            print("\n Optimal parameters for best model:")
-            print(searchResults.best_params_,"\n")
+            print(results)
         else:
-            print("  Optimal parameters for best model: ")
             bestScore = searchResults.best_score_
-            bestParams = searchResults.best_params_
-            print(bestParams)
             print("  Best score is:",bestScore)
             print("  Evaluating the best model...")
             bestModel = searchResults.best_estimator_
             accuracy = bestModel.score(A_test, Cl2_test)
             print("  Accuracy: {:.2f}%\n".format(accuracy))
-            
+        
+        bestParams = searchResults.best_params_
+        print("\n Optimal parameters for best model:")
+        print(searchResults.best_params_,"\n")
+    
+        #print(list(bestParams.values())[0])
+        #dP.random_state=list(bestParams.values())[0]
+ 
     print(' Scikit-learn v.',str(sklearn.__version__),'\n')
     return r2_score(Cl_test, pred)
 
