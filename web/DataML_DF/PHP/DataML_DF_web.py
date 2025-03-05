@@ -3,7 +3,7 @@
 '''
 ***************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2024.11.20.1
+* v2025.03.05.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***************************************************
@@ -36,22 +36,26 @@ class Conf():
         ### - DecisionTree
         #################################
         
-        ################################################
-        ### Types of training data generative method:
-        ### Set using: typeGenAddition
-        ### - DiffuseDistribution (default)
-        ### - NormalDistribution
-        ################################################
-        
+        ###################################
+        ### Types of optimization scoring:
+        ### Set using:
+        ### optScoringR for Regression
+        ### optScoringC for Classification
+        ### - neg_mean_absolute_error (default)
+        ### - r2
+        ### - accuracy
+        #################################
+
         self.appName = "DataML_DF"
         confFileName = "DataML_DF.ini"
         self.configFile = os.getcwd()+"/"+folder+"/"+confFileName
         self.conf = configparser.ConfigParser()
         self.conf.optionxform = str
         if os.path.isfile(self.configFile) is False:
-            print(" Configuration file: \""+confFileName+"\" does not exist. Please create one with DataML_DF.py\n")
+            print(" Configuration file: \""+confFileName+"\" does not exist: Creating one.\n")
+            self.createConfig()
         self.readConfig(self.configFile)
-        self.model_directory = "/"
+        self.model_directory = "./"
         if self.regressor:
             self.mode = "Regressor"
             self.metric = "MAE"
@@ -66,13 +70,21 @@ class Conf():
         self.tb_directory = "model_DF"
         self.model_name = self.model_directory+self.modelNameRoot
         
-        self.model_le = folder + self.model_directory+"model_le.pkl"
+        self.model_le = self.model_directory+"model_le.pkl"
         self.model_scaling = folder + self.model_directory+"model_scaling.pkl"
         self.model_pca = folder + self.model_directory+"model_encoder.pkl"
         self.norm_file = folder + self.model_directory+"norm_file.pkl"
+        
+        self.optParFile = "opt_parameters.txt"
                     
         self.rescaleForPCA = False
-            
+        if self.regressor:
+            self.optScoring = self.optScoringR
+        else:
+            self.optScoring = self.optScoringC
+        
+        self.verbose = 1
+                    
     def datamlDef(self):
         self.conf['Parameters'] = {
             'typeDF' : 'GradientBoosting',
@@ -88,34 +100,28 @@ class Conf():
             'batch_size' : 8,
             'numLabels' : 1,
             'normalize' : False,
+            'normalizeLabel' : False,
             'runDimRedFlag' : False,
             'typeDimRed' : 'SparsePCA',
             'numDimRedComp' : 3,
             'plotFeatImportance' : False,
+            'optimizeParameters' : False,
+            'optScoringR' : 'neg_mean_absolute_error',
+            'optScoringC' : 'accuracy',
             }
-    def datamlGenDef(self):
-        self.conf['Generative'] = {
-            'typeGenAddition' : 'NormalDistribution',
-            'excludeZeroFeatures' : False,
-            'numAddedGeneratedData' : 50,
-            'percDiffuseDistrMax' : 0.1,
-            'minR2' : 0.6,
-            'numGenSplitModels' : 100,
-            'saveAsTxt' : True
-            }
+    
     def sysDef(self):
         self.conf['System'] = {
-            'random_state' : None,
+            'random_state' : 1,
             'n_jobs' : 1
             }
-
+    
     def readConfig(self,configFile):
         try:
             self.conf.read(configFile)
             self.datamlDef = self.conf['Parameters']
-            self.datamlGenDef = self.conf['Generative']
             self.sysDef = self.conf['System']
-        
+    
             self.typeDF = self.conf.get('Parameters','typeDF')
             self.regressor = self.conf.getboolean('Parameters','regressor')
             self.n_estimators = self.conf.getint('Parameters','n_estimators')
@@ -129,24 +135,29 @@ class Conf():
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.numLabels = self.conf.getint('Parameters','numLabels')
             self.normalize = self.conf.getboolean('Parameters','normalize')
+            self.normalizeLabel = self.conf.getboolean('Parameters','normalizeLabel')
             self.runDimRedFlag = self.conf.getboolean('Parameters','runDimRedFlag')
             self.typeDimRed = self.conf.get('Parameters','typeDimRed')
             self.numDimRedComp = self.conf.getint('Parameters','numDimRedComp')
             self.plotFeatImportance = self.conf.getboolean('Parameters','plotFeatImportance')
-            
-            self.typeGenAddition = self.conf.get('Generative','typeGenAddition')
-            self.excludeZeroFeatures = self.conf.getboolean('Generative','excludeZeroFeatures')
-            self.numAddedGeneratedData = self.conf.getint('Generative','numAddedGeneratedData')
-            self.percDiffuseDistrMax = self.conf.getfloat('Generative','percDiffuseDistrMax')
-            self.minR2 = self.conf.getfloat('Generative','minR2')
-            self.numGenSplitModels = self.conf.getint('Generative','numGenSplitModels')
-            self.saveAsTxt = self.conf.getboolean('Generative','saveAsTxt')
-            
+            self.optimizeParameters = self.conf.getboolean('Parameters','optimizeParameters')
+            self.optScoringR = self.conf.get('Parameters','optScoringR')
+            self.optScoringC = self.conf.get('Parameters','optScoringC')
             self.random_state = eval(self.sysDef['random_state'])
             self.n_jobs = self.conf.getint('System','n_jobs')
             
         except:
             print(" Error in reading configuration file. Please check it\n")
+
+    # Create configuration file
+    def createConfig(self):
+        try:
+            self.datamlDef()
+            self.sysDef()
+            with open(self.configFile, 'w') as configfile:
+                self.conf.write(configfile)
+        except:
+            print("Error in creating configuration file")
 
 #************************************
 # Main
