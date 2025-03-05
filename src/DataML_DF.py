@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2025.2.28.5
+* v2025.03.05.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -419,8 +419,7 @@ def train(learnFile, testFile, normFile):
         print('  \033[1m HyperParameters Optimization\033[0m')
         print('  ========================================================\n')
                 
-        from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
-        from scikeras.wrappers import KerasClassifier, KerasRegressor
+        from sklearn.model_selection import RandomizedSearchCV, GridSearchCV, PredefinedSplit
         import json
         
         if os.path.isfile(dP.optParFile) is False:
@@ -428,27 +427,32 @@ def train(learnFile, testFile, normFile):
         
         with open(dP.optParFile) as f:
             grid = json.load(f)
+            
+        if dP.trainFullData:
+            cv = 5
+        else:
+            A_tot = np.append(A,A_test, axis=0)
+            Cl2_tot = np.append(Cl2,Cl2_test, axis=0)
+            test_fold = [-1] * A.shape[0] + [0] * A_test.shape[0]
+            cv = PredefinedSplit(test_fold=test_fold)
         
-        #searcher = RandomizedSearchCV(estimator=df, n_jobs=dP.n_jobs, cv=5,
+        #searcher = RandomizedSearchCV(estimator=df, n_jobs=dP.n_jobs, cv=cv,
         #    param_distributions=grid, scoring=dP.optScoring)
-        searcher = GridSearchCV(estimator=df, n_jobs=dP.n_jobs, cv=5,
-            param_grid=grid, scoring=dP.optScoring)
+        searcher = GridSearchCV(estimator=df, n_jobs=dP.n_jobs, cv=cv,
+            param_grid=grid, scoring=dP.optScoring, refit=True)
         
-        searchResults = searcher.fit(A, Cl2)
+        searchResults = searcher.fit(A_tot, Cl2_tot)
     
         if dP.regressor:
             results = searchResults.cv_results_
-            print(results)
+            print("\n Using scoring:", dP.optScoringR)
         else:
-            bestScore = searchResults.best_score_
-            print("  Best score is:",bestScore)
-            print("  Evaluating the best model...")
-            bestModel = searchResults.best_estimator_
+            print("\n Using scoring:", dP.optScoringC)
             accuracy = bestModel.score(A_test, Cl2_test)
             print("  Accuracy: {:.2f}%\n".format(accuracy))
         
         bestParams = searchResults.best_params_
-        print("\n Optimal parameters for best model:")
+        print("\n Optimal parameter for best model:", )
         print(searchResults.best_params_,"\n")
     
         #print(list(bestParams.values())[0])
