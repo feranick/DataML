@@ -580,7 +580,7 @@ def train(learnFile, testFile, normFile):
         print('  \033[1m HyperParameters Optimization\033[0m')
         print('  ========================================================\n')
                 
-        from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
+        from sklearn.model_selection import RandomizedSearchCV, GridSearchCV, PredefinedSplit
         from scikeras.wrappers import KerasClassifier, KerasRegressor
         import json
         
@@ -614,10 +614,15 @@ def train(learnFile, testFile, normFile):
         else:
             n_jobs = numGPUs
             print(" Running paramter optimization using:",n_jobs,"GPUs\n")
-                
+        
+        A_tot = np.append(A,A_test, axis=0)
+        Cl2_tot = np.append(Cl2,Cl2_test, axis=0)
+        test_fold = [-1] * A.shape[0] + [0] * A_test.shape[0]
+        cv = PredefinedSplit(test_fold=test_fold)
+        
         #searcher = RandomizedSearchCV(estimator=model2, n_jobs=n_jobs, cv=3,
         #    param_distributions=grid, scoring=scoring)
-        searcher = GridSearchCV(estimator=model2, n_jobs=n_jobs, cv=3,
+        searcher = GridSearchCV(estimator=model2, n_jobs=n_jobs, cv=cv,
             param_grid=grid)
         
         searchResults = searcher.fit(A, Cl2)
