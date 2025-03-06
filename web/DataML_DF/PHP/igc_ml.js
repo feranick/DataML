@@ -1,3 +1,11 @@
+function showLog() {
+  const url="./";
+  const dropdown = document.getElementById('model');
+  const selectedText = dropdown.options[dropdown.selectedIndex].text;
+  const label = document.getElementById("log");
+  label.href = url+"/"+selectedText+"/log.txt";
+  }
+
 function selectModel() {
   setCookie("selectedIndex", document.IGC_ML.model.selectedIndex ,1000);
   document.IGC_ML.submit();
