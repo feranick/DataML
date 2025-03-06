@@ -421,6 +421,7 @@ def train(learnFile, testFile, normFile):
                 
         from sklearn.model_selection import RandomizedSearchCV, GridSearchCV, PredefinedSplit
         import json
+        import pandas as pd
         
         if os.path.isfile(dP.optParFile) is False:
             makeOptParameters(dP)
@@ -439,12 +440,18 @@ def train(learnFile, testFile, normFile):
         #searcher = RandomizedSearchCV(estimator=df, n_jobs=dP.n_jobs, cv=cv,
         #    param_distributions=grid, scoring=dP.optScoring)
         searcher = GridSearchCV(estimator=df, n_jobs=dP.n_jobs, cv=cv,
-            param_grid=grid, scoring=dP.optScoring, refit=True)
+            param_grid=grid, scoring=dP.optScoring, refit=True, verbose = 3)
         
         searchResults = searcher.fit(A_tot, Cl2_tot)
+        
+        print('\n  ========================================================')
+        print('  \033[1m HyperParameters Optimization: Results\033[0m')
+        print('  ========================================================')
+        
+        results = pd.DataFrame.from_dict(searchResults.cv_results_).sort_values(by='rank_test_score')
+        print(results)
     
         if dP.regressor:
-            results = searchResults.cv_results_
             print("\n Using scoring:", dP.optScoringR)
         else:
             print("\n Using scoring:", dP.optScoringC)
@@ -703,7 +710,7 @@ def makeOptParameters(dP):
     grid = {"random_state": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
             "n_estimators": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
             "max_depth": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
-            "max_features": [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+            "max_features": [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
             }
     with open(dP.optParFile, 'w') as json_file:
         json.dump(grid, json_file)
