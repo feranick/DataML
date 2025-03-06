@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2025.03.05.1
+* version: 2025.03.06.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -450,17 +450,15 @@ def train(learnFile, testFile, normFile):
         
         results = pd.DataFrame.from_dict(searchResults.cv_results_).sort_values(by='rank_test_score')
         print(results)
-    
+            
         if dP.regressor:
             print("\n Using scoring:", dP.optScoringR)
         else:
             print("\n Using scoring:", dP.optScoringC)
-            accuracy = bestModel.score(A_test, Cl2_test)
-            print("  Accuracy: {:.2f}%\n".format(accuracy))
         
         bestParams = searchResults.best_params_
         print("\n Optimal parameter for best model:", )
-        print(searchResults.best_params_,"\n")
+        print(" ",searchResults.best_params_,"\n")
     
         #print(list(bestParams.values())[0])
         #dP.random_state=list(bestParams.values())[0]

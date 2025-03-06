@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* v2025.03.05.1
+* version: 2025.03.06.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -583,6 +583,7 @@ def train(learnFile, testFile, normFile):
         from sklearn.model_selection import RandomizedSearchCV, GridSearchCV, PredefinedSplit
         from scikeras.wrappers import KerasClassifier, KerasRegressor
         import json
+        import pandas as pd
         
         with open(dP.optParFile) as f:
             grid = json.load(f)
@@ -626,24 +627,17 @@ def train(learnFile, testFile, normFile):
             param_grid=grid)
         
         searchResults = searcher.fit(A, Cl2)
-    
-        if dP.regressor:
-            #results = searchResults.cv_results_
-            print(" Optimal parameters for best model: ")
-            bestParams = searchResults.best_params_
-            print(bestParams)
-        else:
-            print(" Optimal parameters for best model: ")
-            bestScore = searchResults.best_score_
-            bestParams = searchResults.best_params_
-            print(bestParams)
-            print(" Best score is {:.2f} using {}".format(bestScore))
-            # extract the best model, make predictions on our data, and show a
-            # classification report
-            print(" Evaluating the best model...")
-            bestModel = searchResults.best_estimator_
-            accuracy = bestModel.score(A_test, Cl2_test)
-            print(" Accuracy: {:.2f}%".format(accuracy))
+        
+        print('\n  ========================================================')
+        print('  \033[1m HyperParameters Optimization: Results\033[0m')
+        print('  ========================================================')
+        
+        results = pd.DataFrame.from_dict(searchResults.cv_results_).sort_values(by='rank_test_score')
+        print(results)
+        
+        bestParams = searchResults.best_params_
+        print(" Optimal parameters for best model: ")
+        print(bestParams)
     
 #************************************
 # Prediction
