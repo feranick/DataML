@@ -303,6 +303,9 @@ def purgeSparse(P, V, label, dP):
         vt = []
         ann = []
         for l in range (P.shape[0]):
+            # EXPERIMENTAL: Use this to remove additional points.
+            #if P[l] != dP.valueForNan and V[l] != dP.valueForNan and V[l] > 1:
+            # USE THIS FOR REGULAR USE
             if P[l] != dP.valueForNan and V[l] != dP.valueForNan:
                 pt.append(P[l])
                 vt.append(V[l])
