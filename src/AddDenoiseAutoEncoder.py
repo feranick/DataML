@@ -135,13 +135,7 @@ def main():
         newA = A
         norm = 0
     
-    Acl = np.zeros((0, A.shape[1]))
-    for i in range(A.shape[0]):
-        if all(A[i,:]) != 0:
-            Acl = np.vstack([Acl, A[i,:]])
-    A = Acl
-            
-    plotAugmData(A.shape, A, rootFile+"_initial-plots.pdf")
+    #plotAugmData(A.shape, A, rootFile+"_initial-plots.pdf")
     
     success = 0
     for i in range(dP.numAdditions):
@@ -222,8 +216,8 @@ def createNoisyData(dP, A):
 
     #np.savetxt("test_newA.csv", newA, delimiter=",")
     #np.savetxt("test_noisyA.csv", noisyA, delimiter=",")
-    plotAugmData([2,4], newA, "test_newA_plots.pdf")
-    plotAugmData([2,4], noisyA, "test_noisyA_plots.pdf")
+    #plotAugmData([2,4], newA, "test_newA_plots.pdf")
+    #plotAugmData([2,4], noisyA, "test_noisyA_plots.pdf")
     return noisyA, newA
 
 #************************************
@@ -357,10 +351,13 @@ def readLearnFile(dP, learnFile, newNorm):
         M = norm.transform(M)
         norm.save()
 
+    if dP.excludeZeroFeatures:
+        ind = np.any(M == 0, axis=1)
+        M = M[~ind]
+    
     En = M[0,:]
     A = M[1:,:]
     Cl = M[1:,0]
-    
     return En, A, M
 
 #************************************
