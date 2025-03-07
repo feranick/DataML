@@ -363,12 +363,13 @@ def plotAugmData(A, newA, plotFile):
     from matplotlib.backends.backend_pdf import PdfPages
     
     pdf = PdfPages(plotFile)
+    
     for i in range(1, A.shape[1]):
         x = A[:,0]
         y = A[:,i]
-        xA = newA[:,0]
-        yA = newA[:,i]
-        plt.plot(xA,yA, 'bs')
+        xA = newA[A.shape[0]:,0]
+        yA = newA[A.shape[0]:,i]
+        plt.plot(xA,yA, 'bo', markersize=3)
         plt.plot(x,y, 'ro', markersize=3)
         plt.xlabel("col "+str(i))
         plt.ylabel("col 0")
