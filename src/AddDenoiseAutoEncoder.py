@@ -134,7 +134,15 @@ def main():
     else:
         newA = A
         norm = 0
-        
+    
+    Acl = np.zeros((0, A.shape[1]))
+    for i in range(A.shape[0]):
+        if all(A[i,:]) != 0:
+            Acl = np.vstack([Acl, A[i,:]])
+    A = Acl
+            
+    plotAugmData(A.shape, A, rootFile+"_initial-plots.pdf")
+    
     success = 0
     for i in range(dP.numAdditions):
         if dP.shuffle:
@@ -206,16 +214,16 @@ def createNoisyData(dP, A):
                             tmp=-tmp
                         if tmp<A_min[j]:
                             tmp=0
-
+                    noisyA_tmp = np.hstack([noisyA_tmp, tmp])
+                    A_tmp = np.hstack([A_tmp, A[i][j]])
                 if all(A_tmp) != 0 and all(noisyA_tmp) != 0:
-                    print("FINE")
                     noisyA = np.vstack([noisyA, noisyA_tmp])
                     newA = np.vstack([newA, A_tmp])
 
     #np.savetxt("test_newA.csv", newA, delimiter=",")
     #np.savetxt("test_noisyA.csv", noisyA, delimiter=",")
-    #plotAugmData([2,4], newA, "test_newA_plots.pdf")
-    #plotAugmData([2,4], noisyA, "test_noisyA_plots.pdf")
+    plotAugmData([2,4], newA, "test_newA_plots.pdf")
+    plotAugmData([2,4], noisyA, "test_noisyA_plots.pdf")
     return noisyA, newA
 
 #************************************
