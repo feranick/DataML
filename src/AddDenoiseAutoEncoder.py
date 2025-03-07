@@ -123,7 +123,10 @@ def main():
         return
 
     En, A, M = readLearnFile(dP, sys.argv[1], True)
-        
+    
+    rootFile = dP.model_directory + os.path.splitext(os.path.basename(sys.argv[1]))[0] + \
+            '_numDataTrainDae' + str(dP.numAddedNoisyDataBlocks * A.shape[0])
+    
     if dP.normalize:
         with open(dP.norm_file, "rb") as f:
             norm = pickle.load(f)
@@ -143,6 +146,7 @@ def main():
             newA = np.vstack([newA, A_tmp])
             success += 1
             print("\n  Successful. Added so far:",str(success),"\n")
+            #plotAugmData(A.shape, newA, rootFile+"_"+str(i)+"_plots.pdf")
         else:
             #A_tmp = generateData(dP, dae, En, A, M, norm)
             print("  Skip this denoising autoencoder. Added so far:",str(success),"\n")
@@ -156,8 +160,7 @@ def main():
             tag = ''
         newTrain = np.vstack([En, newA])
         print("\n  Added",str(success*A.shape[0]),"new data")
-        newFile = dP.model_directory + os.path.splitext(os.path.basename(sys.argv[1]))[0] + '_numDataTrainDae' + \
-            str(dP.numAddedNoisyDataBlocks * A.shape[0]) + '_numAdded' + str(success*A.shape[0]) + tag
+        newFile = rootFile + '_numAdded' + str(success*A.shape[0]) + tag
         saveLearnFile(dP, newA, newFile, "")
         
         if dP.plotAugmData:
@@ -188,7 +191,7 @@ def createNoisyData(dP, A):
     A_max = A.max(axis=0)
     A_mean = np.mean(A, axis=0)
     A_std = A.std(axis=0)
-    
+
     for h in range(int(dP.numAddedNoisyDataBlocks)):
         for i in range(A.shape[0]):
             noisyA_tmp = []
@@ -198,19 +201,21 @@ def createNoisyData(dP, A):
                     if A[i][j] == 0 and dP.excludeZeroFeatures:
                         tmp = A[i][j]
                     else:
-                        tmp =  A[i][j] * (1+np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, 1))
+                        tmp =  A[i][j] + A_mean[j]*(np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, 1))
                         if tmp<0:
                             tmp=-tmp
                         if tmp<A_min[j]:
                             tmp=0
-                    noisyA_tmp = np.hstack([noisyA_tmp, tmp])
-                    A_tmp = np.hstack([A_tmp, A[i][j]])
-                if all(A_tmp) != 0:
+
+                if all(A_tmp) != 0 and all(noisyA_tmp) != 0:
+                    print("FINE")
                     noisyA = np.vstack([noisyA, noisyA_tmp])
                     newA = np.vstack([newA, A_tmp])
-        #print(h,"A:",A.shape)
-        #print(h,"noisyA:",noisyA.shape)
-        #print(h, "newA:",newA.shape)
+
+    #np.savetxt("test_newA.csv", newA, delimiter=",")
+    #np.savetxt("test_noisyA.csv", noisyA, delimiter=",")
+    #plotAugmData([2,4], newA, "test_newA_plots.pdf")
+    #plotAugmData([2,4], noisyA, "test_noisyA_plots.pdf")
     return noisyA, newA
 
 #************************************
