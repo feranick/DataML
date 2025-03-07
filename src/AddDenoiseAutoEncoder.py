@@ -124,7 +124,7 @@ def main():
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
 
-    En, A, A_orig, M = readLearnFile(dP, sys.argv[1], True)
+    En, A, M = readLearnFile(dP, sys.argv[1], True)
         
     if dP.normalize:
         with open(dP.norm_file, "rb") as f:
@@ -163,7 +163,7 @@ def main():
         saveLearnFile(dP, newA, newFile, "")
         
         if dP.plotAugmData:
-            plotAugmData(A_orig, newA, newFile+"_plots.pdf")
+            plotAugmData(A.shape, newA, newFile+"_plots.pdf")
     else:
         print("  No new training data created. Try to increse numAdditions or/and min_loss_dae.\n")
 
@@ -342,33 +342,29 @@ def readLearnFile(dP, learnFile, newNorm):
             print("  Normalization parameters from:", dP.norm_file,"\n")
             with open(dP.norm_file, "rb") as f:
                 norm = pickle.load(f)
-        M_orig = M
         M = norm.transform(M)
         norm.save()
-    else:
-        M_orig = M
 
     En = M[0,:]
     A = M[1:,:]
     Cl = M[1:,0]
-    A_orig = M_orig[1:,:]
     
-    return En, A, A_orig, M
+    return En, A, M
 
 #************************************
 # Plot augmented training data
 #************************************
-def plotAugmData(A, newA, plotFile):
+def plotAugmData(shape, newA, plotFile):
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_pdf import PdfPages
     
     pdf = PdfPages(plotFile)
     
-    for i in range(1, A.shape[1]):
-        x = A[:,0]
-        y = A[:,i]
-        xA = newA[A.shape[0]:,0]
-        yA = newA[A.shape[0]:,i]
+    for i in range(1, shape[1]):
+        x = newA[:shape[0],0]
+        y = newA[:shape[0]:,i]
+        xA = newA[shape[0]:,0]
+        yA = newA[shape[0]:,i]
         plt.plot(xA,yA, 'bo', markersize=3)
         plt.plot(x,y, 'ro', markersize=3)
         plt.xlabel("col "+str(i))
