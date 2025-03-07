@@ -199,13 +199,11 @@ def createNoisyData(dP, A):
                         tmp = A[i][j]
                         print("zero", A[i][j])
                     else:
-                        tmp =  A[i][j]+A_max[j]*(np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, 1))
+                        tmp =  A[i][j] * (1+np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, 1))
                         if tmp<0:
                             tmp=-tmp
                         if tmp<A_min[j]:
-                            tmp=0
-                        print("non-zero", A[i][j])
-                        
+                            tmp=0                        
                     noisyA_tmp = np.hstack([noisyA_tmp, tmp])
                     A_tmp = np.hstack([A_tmp, A[i][j]])
                 noisyA = np.vstack([noisyA, noisyA_tmp])
