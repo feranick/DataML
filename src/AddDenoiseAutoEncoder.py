@@ -116,9 +116,7 @@ class Conf():
 # Main
 #************************************
 def main():
-    
     dP = Conf()
-    
     if len(sys.argv) < 2:
         print(' Usage:\n  python3 AddDenoiseAutoEncoder.py <learnData>')
         print(' Requires python 3.x. Not compatible with python 2.x\n')
@@ -199,12 +197,14 @@ def createNoisyData(dP, A):
                 for j in range(A.shape[1]):
                     if A[i][j] == 0 and dP.excludeZeroFeatures:
                         tmp = A[i][j]
+                        print("zero", A[i][j])
                     else:
                         tmp =  A[i][j]+A_max[j]*(np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, 1))
                         if tmp<0:
                             tmp=-tmp
                         if tmp<A_min[j]:
                             tmp=0
+                        print("non-zero", A[i][j])
                         
                     noisyA_tmp = np.hstack([noisyA_tmp, tmp])
                     A_tmp = np.hstack([A_tmp, A[i][j]])
@@ -310,10 +310,11 @@ def removeSpurious(A, T, norm, dP):
 def generateData(dP, autoencoder, En, A, M, norm):
     #newTrain = np.vstack([En, norm.transform_inverse(M[1:,:])])
     normDea = autoencoder.predict(A)
-    invDea = norm.transform_inverse(normDea)
+    if dP.normalize:
+        normDea = norm.transform_inverse(normDea)
     #print("normDea", normDea)
     #print("invDea", invDea)
-    return invDea
+    return normDea
  
 #************************************
 # Open Learning Data
