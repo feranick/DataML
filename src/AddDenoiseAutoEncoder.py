@@ -49,7 +49,7 @@ class Conf():
             'shuffle' : True,
             'linear_net' : True,
             'net_arch' : [40, 30, 20, 10],
-            'encoded_dim' : 1,
+            'encoded_dim' : 2,
             'batch_size' : 32,
             'epochs' : 200,
             'validation_split' : 0.1,
@@ -197,13 +197,12 @@ def createNoisyData(dP, A):
                 for j in range(A.shape[1]):
                     if A[i][j] == 0 and dP.excludeZeroFeatures:
                         tmp = A[i][j]
-                        print("zero", A[i][j])
                     else:
                         tmp =  A[i][j] * (1+np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, 1))
                         if tmp<0:
                             tmp=-tmp
                         if tmp<A_min[j]:
-                            tmp=0                        
+                            tmp=0
                     noisyA_tmp = np.hstack([noisyA_tmp, tmp])
                     A_tmp = np.hstack([A_tmp, A[i][j]])
                 noisyA = np.vstack([noisyA, noisyA_tmp])
