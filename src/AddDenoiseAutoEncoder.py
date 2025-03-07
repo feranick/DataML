@@ -4,7 +4,7 @@
 ***********************************************
 * AddDenoiseAutoEncoder
 * Data Augmentation via Denoising Autoencoder
-* version: 2025.03.06.1
+* version: 2025.03.07.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -46,7 +46,7 @@ class Conf():
             'saveAsTxt' : True,
             'deepAutoencoder' : True,
             'reinforce' : False,
-            'shuffle' : False,
+            'shuffle' : True,
             'linear_net' : True,
             'net_arch' : [40, 30, 20, 10],
             'encoded_dim' : 1,
@@ -64,6 +64,7 @@ class Conf():
             'removeSpurious' : True,
             'normalize' : True,
             'normalizeLabel' : True,
+            'plotAugmData' : False,
             }
             
     def readConfig(self,configFile):
@@ -92,6 +93,7 @@ class Conf():
             self.removeSpurious = self.conf.getboolean('Parameters','removeSpurious')
             self.normalize = self.conf.getboolean('Parameters','normalize')
             self.normalizeLabel = self.conf.getboolean('Parameters','normalizeLabel')
+            self.plotAugmData = self.conf.getboolean('Parameters','plotAugmData')
         except:
             print(" Error in reading configuration file. Please check it\n")
 
@@ -122,12 +124,11 @@ def main():
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
 
-    En, A, M = readLearnFile(dP, sys.argv[1], True)
-    
+    En, A, A_orig, M = readLearnFile(dP, sys.argv[1], True)
+        
     if dP.normalize:
         with open(dP.norm_file, "rb") as f:
             norm = pickle.load(f)
-        
         newA = norm.transform_inverse(M[1:,:])
     else:
         newA = A
@@ -137,7 +138,6 @@ def main():
     for i in range(dP.numAdditions):
         if dP.shuffle:
             np.random.shuffle(A)
-        print(A)
         noisy_A, new_A = createNoisyData(dP, A)
         dae, val_loss = trainAutoencoder(dP, noisy_A, new_A, sys.argv[1])
         if val_loss < dP.min_loss_dae:
@@ -157,10 +157,13 @@ def main():
         else:
             tag = ''
         newTrain = np.vstack([En, newA])
-        print("\n  Added",str(success*A.shape[0]),"new data\n")
+        print("\n  Added",str(success*A.shape[0]),"new data")
         newFile = dP.model_directory + os.path.splitext(os.path.basename(sys.argv[1]))[0] + '_numDataTrainDae' + \
             str(dP.numAddedNoisyDataBlocks * A.shape[0]) + '_numAdded' + str(success*A.shape[0]) + tag
         saveLearnFile(dP, newA, newFile, "")
+        
+        if dP.plotAugmData:
+            plotAugmData(A_orig, newA, newFile+"_plots.pdf")
     else:
         print("  No new training data created. Try to increse numAdditions or/and min_loss_dae.\n")
 
@@ -254,7 +257,7 @@ def trainAutoencoder(dP, noisyA, A, file):
     ###############
     if dP.deepAutoencoder and A.shape[1] > dP.encoded_dim+2:
         if dP.linear_net:
-            print("  Training Deep Autoencoder with linear architecture\n   Hidden layers:",A.shape[1]-dP.encoded_dim,
+            print("\n  Training Deep Autoencoder with linear architecture\n   Hidden layers:",A.shape[1]-dP.encoded_dim,
                 "\n   Encoded dimension:",dP.encoded_dim,"\n")
         else:
             print("  Training Deep Autoencoder with discrete architecture\n   Hidden layers:",dP.net_arch,
@@ -339,15 +342,40 @@ def readLearnFile(dP, learnFile, newNorm):
             print("  Normalization parameters from:", dP.norm_file,"\n")
             with open(dP.norm_file, "rb") as f:
                 norm = pickle.load(f)
+        M_orig = M
         M = norm.transform(M)
         norm.save()
+    else:
+        M_orig = M
 
     En = M[0,:]
     A = M[1:,:]
     Cl = M[1:,0]
+    A_orig = M_orig[1:,:]
     
-    return En, A, M
+    return En, A, A_orig, M
 
+#************************************
+# Plot augmented training data
+#************************************
+def plotAugmData(A, newA, plotFile):
+    import matplotlib.pyplot as plt
+    from matplotlib.backends.backend_pdf import PdfPages
+    
+    pdf = PdfPages(plotFile)
+    for i in range(1, A.shape[1]):
+        x = A[:,0]
+        y = A[:,i]
+        xA = newA[:,0]
+        yA = newA[:,i]
+        plt.plot(xA,yA, 'bs')
+        plt.plot(x,y, 'ro', markersize=3)
+        plt.xlabel("col "+str(i))
+        plt.ylabel("col 0")
+        pdf.savefig()
+        plt.close()
+    pdf.close()
+    
 #************************************
 # Main initialization routine
 #************************************

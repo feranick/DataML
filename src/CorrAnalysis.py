@@ -33,7 +33,6 @@ def CorrAnalysis():
 # Parameters definition
 #************************************
 class Conf():
-
     def __init__(self):
         self.appName = "CorrAnalysis"
         confFileName = "CorrAnalysis.ini"
