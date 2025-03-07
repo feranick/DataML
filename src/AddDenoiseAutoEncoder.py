@@ -114,12 +114,13 @@ class Conf():
 # Main
 #************************************
 def main():
+    
+    dP = Conf()
+    
     if len(sys.argv) < 2:
         print(' Usage:\n  python3 AddDenoiseAutoEncoder.py <learnData>')
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
-    
-    dP = Conf()
 
     En, A, M = readLearnFile(dP, sys.argv[1], True)
     
