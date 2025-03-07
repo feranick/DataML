@@ -205,8 +205,9 @@ def createNoisyData(dP, A):
                             tmp=0
                     noisyA_tmp = np.hstack([noisyA_tmp, tmp])
                     A_tmp = np.hstack([A_tmp, A[i][j]])
-                noisyA = np.vstack([noisyA, noisyA_tmp])
-                newA = np.vstack([newA, A_tmp])
+                if all(A_tmp) != 0:
+                    noisyA = np.vstack([noisyA, noisyA_tmp])
+                    newA = np.vstack([newA, A_tmp])
         #print(h,"A:",A.shape)
         #print(h,"noisyA:",noisyA.shape)
         #print(h, "newA:",newA.shape)
