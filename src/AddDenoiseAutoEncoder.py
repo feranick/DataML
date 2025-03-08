@@ -135,7 +135,7 @@ def main():
         newA = A
         norm = 0
     
-    #plotAugmData(A.shape, A, rootFile+"_initial-plots.pdf")
+    plotAugmData(A.shape, A, rootFile+"_initial-plots.pdf")
     
     success = 0
     for i in range(dP.numAdditions):
