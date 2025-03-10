@@ -4,7 +4,7 @@
 ***********************************************
 * AddDenoiseAutoEncoder
 * Data Augmentation via Denoising Autoencoder
-* version: 2025.03.07.1
+* version: 2025.03.09.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -353,11 +353,13 @@ def readLearnFile(dP, learnFile, newNorm):
 
     if dP.excludeZeroFeatures:
         ind = np.any(M == 0, axis=1)
+        ind[0] = False
         M = M[~ind]
-    
+
     En = M[0,:]
     A = M[1:,:]
     Cl = M[1:,0]
+    
     return En, A, M
 
 #************************************
