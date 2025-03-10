@@ -4,7 +4,7 @@
 ***********************************************
 * PlotLearnData
 * Plot learning data
-* version: 2025.03.07.1
+* version: 2025.03.09.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
