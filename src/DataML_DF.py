@@ -113,7 +113,7 @@ class Conf():
     def sysDef(self):
         self.conf['System'] = {
             'random_state' : 1,
-            'n_jobs' : 1
+            'n_jobs' : -1
             }
     
     def readConfig(self,configFile):
