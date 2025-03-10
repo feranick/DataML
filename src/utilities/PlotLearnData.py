@@ -24,7 +24,7 @@ def PlotLearnData():
 # Parameters definition
 #************************************
 class Conf():
-    excludeZeroFeatures = True
+    excludeZeroFeatures = False
     normalize = False
     
 #************************************
@@ -77,14 +77,14 @@ def readLearnFile(dP, learnFile, newNorm):
         M = norm.transform(M)
         norm.save()
     
+    if dP.excludeZeroFeatures:
+        ind = np.any(M == 0, axis=1)
+        ind[0] = False
+        M = M[~ind]
+    
     En = M[0,:]
     A = M[1:,:]
     Cl = M[1:,0]
-    
-    if dP.excludeZeroFeatures:
-        ind = np.any(A == 0, axis=1)
-        A = A[~ind]
-        Cl = Cl[~ind]
     
     return En, A, M
 
@@ -105,7 +105,7 @@ def plotAugmData(shape, A1,A2,A3, plotFile):
         if A3 is not None:
             xA3 = A3[:,0]
             yA3 = A3[:,i]
-            plt.plot(xA3,yA3, 'go', markersize=3)
+            plt.plot(xA3,yA3, 'gx', markersize=3, mfc='none')
         plt.plot(xA1,yA1, 'bo', markersize=3)
         plt.plot(xA2,yA2, 'ro', markersize=3)
         plt.xlabel("col "+str(i))
