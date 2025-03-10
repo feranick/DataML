@@ -4,7 +4,7 @@
 ***********************************************
 * PlotLearnData
 * Plot learning data
-* version: 2025.03.09.1
+* version: 2025.03.10.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -24,8 +24,10 @@ def PlotLearnData():
 # Parameters definition
 #************************************
 class Conf():
-    excludeZeroFeatures = False
+    excludeZeroFeatures = True
     normalize = False
+    useLabels = False
+    labels = [8,4,5,35]  # First parameter is always the performance
     
 #************************************
 # Main
@@ -45,7 +47,7 @@ def main():
         A3 = None
     
     rootFile = os.path.splitext(os.path.basename(sys.argv[1]))[0]
-    plotAugmData(A1.shape, A1, A2, A3, rootFile+"_plots.pdf")
+    plotAugmData(dP, A1.shape, A1, A2, A3, rootFile+"_plots.pdf")
  
 #************************************
 # Open Learning Data
@@ -77,11 +79,12 @@ def readLearnFile(dP, learnFile, newNorm):
         M = norm.transform(M)
         norm.save()
     
+    '''
     if dP.excludeZeroFeatures:
         ind = np.any(M == 0, axis=1)
         ind[0] = False
         M = M[~ind]
-    
+    '''
     En = M[0,:]
     A = M[1:,:]
     Cl = M[1:,0]
@@ -91,12 +94,12 @@ def readLearnFile(dP, learnFile, newNorm):
 #************************************
 # Plot augmented training data
 #************************************
-def plotAugmData(shape, A1,A2,A3, plotFile):
+def plotAugmData(dP, shape, A1,A2,A3, plotFile):
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_pdf import PdfPages
     
     pdf = PdfPages(plotFile)
-    
+        
     for i in range(1, shape[1]):
         xA1 = A1[:,0]
         yA1 = A1[:,i]
@@ -105,15 +108,31 @@ def plotAugmData(shape, A1,A2,A3, plotFile):
         if A3 is not None:
             xA3 = A3[:,0]
             yA3 = A3[:,i]
+            xA3,yA3 = removeZeros(dP, xA3,yA3)
             plt.plot(xA3,yA3, 'gx', markersize=3, mfc='none')
+        
+        xA1,yA1 = removeZeros(dP, xA1,yA1)
+        xA2,yA2 = removeZeros(dP, xA2,yA2)
         plt.plot(xA1,yA1, 'bo', markersize=3)
         plt.plot(xA2,yA2, 'ro', markersize=3)
-        plt.xlabel("col "+str(i))
-        plt.ylabel("col 0")
+        if dP.useLabels:
+            plt.xlabel("m"+str(dP.labels[i]))
+            plt.ylabel("Perf"+str(dP.labels[0]))
+        else:
+            plt.xlabel("col "+str(i))
+            plt.ylabel("col 0")
         pdf.savefig()
         plt.close()
     pdf.close()
     print(" Plots saved in:", plotFile,"\n")
+    
+def removeZeros(dP, A,B):
+    if dP.excludeZeroFeatures:
+        A = A[~(B==0)]
+        B = B[~(B==0)]
+        B = B[~(A==0)]
+        A = A[~(A==0)]
+    return A, B
     
 #************************************
 # Main initialization routine
