@@ -2,7 +2,7 @@
 '''
 **************************************************
 * libDataML - Library for DataML/DataML_DF
-* version: 2025.03.09.1
+* version: 2025.03.11.1
 * Uses: Keras, TensorFlow, scikit-learn
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
@@ -809,9 +809,15 @@ def usage(name):
         print(' Generate new training set using normal or diffused randomization on each feature:')
         print('  ',name,'-g <learningFile> <pkl normalization file>')
         print('\n Types of estimators:')
-        print(' - RandomForest')
-        print(' - HistGradientBoosting')
-        print(' - GradientBoosting')
-        print(' - DecisionTree')
+        print('  - RandomForest')
+        print('  - HistGradientBoosting')
+        print('  - GradientBoosting')
+        print('  - DecisionTree')
+        print('\n Create parameter optimization file:')
+        print('  ',name,'-o <type of optimization>')
+        print('\n Types of optimization:')
+        print('  1 - random_state, max_depth')
+        print('  2 - n_estimators, max_features')
+        print('  else - random_state, max_depth, n_estimators, max_features\n')
     
     print(' Requires python 3.x. Not compatible with python 2.x\n')

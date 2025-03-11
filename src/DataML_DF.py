@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2025.03.09.1
+* version: 2025.03.11.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -226,7 +226,10 @@ def main():
             
         if o in ["-o" , "--opt"]:
             try:
-                makeOptParameters(dP)
+                if len(sys.argv) > 2:
+                    makeOptParameters(dP, sys.argv[2])
+                else:
+                    makeOptParameters(dP, "1")
             except:
                 usage(dP.appName)
                 sys.exit(2)
@@ -424,7 +427,7 @@ def train(learnFile, testFile, normFile):
         import pandas as pd
         
         if os.path.isfile(dP.optParFile) is False:
-            makeOptParameters(dP)
+            makeOptParameters(dP,"1")
         
         with open(dP.optParFile) as f:
             grid = json.load(f)
@@ -702,17 +705,23 @@ def plotImportances(df, A_test, Cl_test, dP):
 #************************************
 # Make Optimization Parameter File
 #************************************
-def makeOptParameters(dP):
+def makeOptParameters(dP, ind):
     import json
-    #grid = {"n_estimators": [1,2,3,4,5,6,7,8,9,10], "max_depth": [1,2,3,4,5,6,7,8,9,10], "max_features": [1,2,3,4,5,6,7,8,9,10], "random_state": [1,2,3,4,5,6,7,8,9,10]}
-    grid = {"random_state": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+    if ind == "1":
+        grid = {"random_state": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+            "max_depth": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]}
+    elif ind == "2":
+        grid = {"n_estimators": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+            "max_features": [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]}
+    else:
+        grid = {"random_state": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
             "max_depth": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
             "n_estimators": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
-            "max_features": [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
-            }
+            "max_features": [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]}
+    print(" Grid:",grid)
     with open(dP.optParFile, 'w') as json_file:
         json.dump(grid, json_file)
-    print(" Created: ",dP.optParFile,"\n")
+    print("\n Created: ",dP.optParFile,"\n")
 
 #************************************
 # Main initialization routine
