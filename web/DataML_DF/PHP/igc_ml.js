@@ -2,13 +2,18 @@ function showLog() {
   const url="./";
   const dropdown = document.getElementById('model');
   const selectedText = dropdown.options[dropdown.selectedIndex].text;
-  const label = document.getElementById("log");
-  label.href = url+"/"+selectedText+"/log.txt";
+  const log = document.getElementById("log");
+  const importance1 = document.getElementById("importance1");
+  const importance2 = document.getElementById("importance2");
+  log.href = url+"/"+selectedText+"/log.txt";
+  importance1.href = url+"/"+selectedText+"/model_GradientBoostingRegressor_importances_MDI.png";
+  importance2.href = url+"/"+selectedText+"/model_GradientBoostingRegressor_importances_Perm.png";
   }
 
 function selectModel() {
   setCookie("selectedIndex", document.IGC_ML.model.selectedIndex ,1000);
   document.IGC_ML.submit();
+  showLog();
  }
 
 function createEntries() {
@@ -52,6 +57,7 @@ function createEntries() {
 
 function init() {
   document.IGC_ML.model.selectedIndex = getCookie("selectedIndex");
+  showLog();
 }
 
 window.onload = init;
