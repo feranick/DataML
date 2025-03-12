@@ -315,6 +315,10 @@ def purgeSparse(P, V, label, dP):
         P2 = P
         V2 = V
         ann = label
+        
+    if P2.size < 2 or V2.size <2:
+        P2 = [0,0]
+        V2 = [0,0]
     return P2, V2, ann
 
 def getCorrelationsExperimental(dfP):
