@@ -168,7 +168,7 @@ Available dimension reduction methods that can be selected using the `typeDimRed
 - `Autoencoder`
     
 Formatting input file for training
-========================
+===================================
 The main idea behind the software is to train classification or regression models from raw data. So, suppose one has training files similar to this, where the first column is the a progressive index the second is the value of the quantity for a specific parameter:
 
 ```
@@ -197,3 +197,16 @@ Specific MasterDataMakers for specific applications may be available depending o
 One can use the same to create a validation file, or you can use [other scripts](https://github.com/feranick/DataML/tree/master/src/utilities) also provided to split the training set into training+validation. That can be done randomly within SpectraKeras, but the split will be different every time you run it.
 
 Once models are trained trained, prediction on individual files can be made using simply formatted ASCII files (like in the example above).
+
+
+Web Versions
+========================
+More details soon. 
+
+To run any of the web versions locally, run this command:
+
+```python3 -m http.server```
+
+and then open the browser:
+
+`http://localhost:8000`
