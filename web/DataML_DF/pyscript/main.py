@@ -16,8 +16,6 @@ from pyscript import fetch, document
 import _pickle as pickle
 #import pickle
 
-baseUrl = "./"
-
 class Conf():
     def __init__(self, configIni):
 
@@ -124,7 +122,7 @@ class Conf():
 
 
 async def getFile(folder, file, bin):
-    url = baseUrl+folder+"/"+file
+    url = "./"+folder+"/"+file
     if bin:
         data = await fetch(url).bytearray()
     else:
