@@ -16,7 +16,7 @@ from pyscript import fetch, document
 import _pickle as pickle
 #import pickle
 
-baseUrl = "https://www.example.com"
+baseUrl = "./"
 
 class Conf():
     def __init__(self, configIni):
