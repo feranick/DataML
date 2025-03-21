@@ -3,13 +3,13 @@
   <head>
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width,initial-scale=1" />
-      <title>DataML_DF - pyscript version</title>
-      <link rel="stylesheet" href="https://pyscript.net/releases/2024.10.2/core.css">
-      <script type="module" src="https://pyscript.net/releases/2024.10.2/core.js"></script>
+      <title>DataML - pyscript version</title>
+      <link rel="stylesheet" href="https://pyscript.net/releases/2025.30.1/core.css">
+      <script type="module" src="https://pyscript.net/releases/2025.3.1/core.js"></script>
       
   </head>
   <body>
-  <b>DataML_DF pyscript</b><br>
+  <b>DataML_DF Pyscript</b><br>
   <!--<input type="text" name="english" id="english" placeholder="Type English here..." />
   <button py-click="main">Translate</button>
   <div id="output"></div> -->
@@ -25,6 +25,9 @@
 
 <div name="predict" id="predict"><br><button name="button" id="button" py-click="main">Predict</button></div>
 <script>setButtonLabel();</script>
+<br><a id="importance1">Parametric importance vs decrease in impurity</a><br>
+<a id="importance2">Parametric importance vs mean accuracy</a><br>
+<small><a id="log">Training log</a></small><br>
 <div id="out"><br><text_area id="output"><br></text_area></div>
   <script>
   init();

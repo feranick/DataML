@@ -1,6 +1,6 @@
-name = "ICG_ML_pyscript"
-description = "IGC ML models"
-packages = ["numpy", "scikit-learn==1.4.2"]
+name = "DataML pyscript"
+description = "DataML pyscript"
+packages = ["numpy", "scikit-learn==1.6.1"]
 [[fetch]]
 files = ['libDataML.py']
 

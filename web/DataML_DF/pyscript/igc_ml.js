@@ -1,13 +1,25 @@
 var modelPkl = 0;
 
+function showLog() {
+  const url="./";
+  const dropdown = document.getElementById('model');
+  const selectedText = dropdown.options[dropdown.selectedIndex].text;
+  const log = document.getElementById("log");
+  const importance1 = document.getElementById("importance1");
+  const importance2 = document.getElementById("importance2");
+  log.href = url+"/"+selectedText+"/log.txt";
+  importance1.href = url+"/"+selectedText+"/model_GradientBoostingRegressor_importances_MDI.png";
+  importance2.href = url+"/"+selectedText+"/model_GradientBoostingRegressor_importances_Perm.png";
+  }
+
 async function selectModel() {
-  
   document.getElementById("output").innerHTML = "";
   selIndex = document.IGC_ML.model.selectedIndex;
   setCookie("selectedIndex", selIndex ,1000);
   folder = (document.IGC_ML.model[selIndex].text);
   console.log(folder);
-  
+  showLog();
+
   fetch(folder+"/config.txt")
   .then(response => response.text())
   .then(text => {
@@ -77,7 +89,12 @@ function setButtonLabel() {
 }
 
 function init() {
-  document.IGC_ML.model.selectedIndex = getCookie("selectedIndex");
+  selIndex = getCookie("selectedIndex");
+  if(selIndex == -1) {
+    document.IGC_ML.model.selectedIndex = 0 }
+  else {
+    document.IGC_ML.model.selectedIndex = selIndex;}
+  showLog();
 }
 
 //window.onload = init();

@@ -4,7 +4,7 @@
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
 * pyscript version
-* v2024.11.20.1
+* v2025.3.21.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -19,8 +19,8 @@ import _pickle as pickle
 baseUrl = "https://www.example.com"
 
 class Conf():
-    def __init__(self, folder, ini):
-    
+    def __init__(self, configIni):
+
         #############################
         ### Types of estimators:
         ### - RandomForest
@@ -31,8 +31,8 @@ class Conf():
 
         self.conf = configparser.ConfigParser()
         self.conf.optionxform = str
-        
-        self.readConfig(ini)
+
+        self.readConfig(configIni)
         self.model_directory = "/"
         if self.regressor:
             self.mode = "Regressor"
@@ -40,21 +40,26 @@ class Conf():
         else:
             self.mode = "Classifier"
             self.metric = "Accuracy"
-        
+
         self.modelNameRoot = "model_DF_"
         self.modelName = "/" +self.modelNameRoot + self.typeDF + self.mode + ".pkl"
         self.summaryFileName = self.modelNameRoot + self.typeDF + self.mode + ".csv"
-        
-        self.tb_directory = "model_DF"
-        self.model_name = self.model_directory+self.modelNameRoot
-        
-        self.model_le = folder + self.model_directory+"model_le.pkl"
-        self.model_scaling = folder + self.model_directory+"model_scaling.pkl"
-        self.model_pca = folder + self.model_directory+"model_encoder.pkl"
-        self.norm_file = folder + self.model_directory+"norm_file.pkl"
-                    
+
+        self.model_le = self.model_directory+"model_le.pkl"
+        self.model_scaling = self.model_directory+"model_scaling.pkl"
+        self.model_pca = self.model_directory+"model_encoder.pkl"
+        self.norm_file = self.model_directory+"norm_file.pkl"
+
+        self.optParFile = "opt_parameters.txt"
+
         self.rescaleForPCA = False
-            
+        if self.regressor:
+            self.optScoring = self.optScoringR
+        else:
+            self.optScoring = self.optScoringC
+
+        self.verbose = 1
+
     def datamlDef(self):
         self.conf['Parameters'] = {
             'typeDF' : 'GradientBoosting',
@@ -70,20 +75,14 @@ class Conf():
             'batch_size' : 8,
             'numLabels' : 1,
             'normalize' : False,
+            'normalizeLabel' : False,
             'runDimRedFlag' : False,
             'typeDimRed' : 'SparsePCA',
             'numDimRedComp' : 3,
             'plotFeatImportance' : False,
-            }
-    def datamlGenDef(self):
-        self.conf['Generative'] = {
-            'typeGenAddition' : 'NormalDistribution',
-            'excludeZeroFeatures' : False,
-            'numAddedGeneratedData' : 50,
-            'percDiffuseDistrMax' : 0.1,
-            'minR2' : 0.6,
-            'numGenSplitModels' : 100,
-            'saveAsTxt' : True
+            'optimizeParameters' : False,
+            'optScoringR' : 'neg_mean_absolute_error',
+            'optScoringC' : 'accuracy',
             }
     def sysDef(self):
         self.conf['System'] = {
@@ -95,9 +94,8 @@ class Conf():
         try:
             self.conf.read_string(configFile)
             self.datamlDef = self.conf['Parameters']
-            self.datamlGenDef = self.conf['Generative']
             self.sysDef = self.conf['System']
-        
+
             self.typeDF = self.conf.get('Parameters','typeDF')
             self.regressor = self.conf.getboolean('Parameters','regressor')
             self.n_estimators = self.conf.getint('Parameters','n_estimators')
@@ -111,24 +109,19 @@ class Conf():
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.numLabels = self.conf.getint('Parameters','numLabels')
             self.normalize = self.conf.getboolean('Parameters','normalize')
+            self.normalizeLabel = self.conf.getboolean('Parameters','normalizeLabel')
             self.runDimRedFlag = self.conf.getboolean('Parameters','runDimRedFlag')
             self.typeDimRed = self.conf.get('Parameters','typeDimRed')
             self.numDimRedComp = self.conf.getint('Parameters','numDimRedComp')
             self.plotFeatImportance = self.conf.getboolean('Parameters','plotFeatImportance')
-            
-            self.typeGenAddition = self.conf.get('Generative','typeGenAddition')
-            self.excludeZeroFeatures = self.conf.getboolean('Generative','excludeZeroFeatures')
-            self.numAddedGeneratedData = self.conf.getint('Generative','numAddedGeneratedData')
-            self.percDiffuseDistrMax = self.conf.getfloat('Generative','percDiffuseDistrMax')
-            self.minR2 = self.conf.getfloat('Generative','minR2')
-            self.numGenSplitModels = self.conf.getint('Generative','numGenSplitModels')
-            self.saveAsTxt = self.conf.getboolean('Generative','saveAsTxt')
-            
+            self.optimizeParameters = self.conf.getboolean('Parameters','optimizeParameters')
+            self.optScoringR = self.conf.get('Parameters','optScoringR')
+            self.optScoringC = self.conf.get('Parameters','optScoringC')
             self.random_state = eval(self.sysDef['random_state'])
             self.n_jobs = self.conf.getint('System','n_jobs')
-            
         except:
             print(" Error in reading configuration file. Please check it\n")
+
 
 async def getFile(folder, file, bin):
     url = baseUrl+folder+"/"+file
@@ -137,7 +130,7 @@ async def getFile(folder, file, bin):
     else:
         data = await fetch(url).text()
     return data
-    
+
 async def getModel(event):
     global df
     document.querySelector("#button").disabled = True
@@ -146,13 +139,13 @@ async def getModel(event):
     output_div.innerHTML = "Loading ML model..."
     folder = document.querySelector("#model").value
     ini = await getFile(folder, "DataML_DF.ini", False)
-    dP = Conf(folder, ini)
+    dP = Conf(ini)
     modelPkl = await getFile(folder, dP.modelName, True)
     df = pickle.loads(modelPkl)
     output_div.innerHTML = ""
     document.querySelector("#button").disabled = False
     document.querySelector("#model").disabled = False
-    
+
 async def main(event):
     output_div = document.querySelector("#output")
     output_div.innerHTML = "Please wait..."
@@ -160,7 +153,7 @@ async def main(event):
     folder = document.querySelector("#model").value
     ini = await getFile(folder, "DataML_DF.ini", False)
     features = await getFile(folder, "config.txt", False)
-    dP = Conf(folder, ini)
+    dP = Conf(ini)
     
     # Use this when opening modelPkl here.
     #modelPkl = await getFile(folder, dP.modelName, True)
