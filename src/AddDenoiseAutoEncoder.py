@@ -25,6 +25,14 @@ def AddDenoiseAutoEncoder():
 #************************************
 class Conf():
     def __init__(self):
+    
+        #################################
+        ### Types of noise:
+        ### Set using: typeNoise
+        ### - Random (default)
+        ### - ColumnValueSwap
+        #################################
+        
         self.appName = "AddDenoiseAutoEncoder"
         confFileName = "AddDenoiseAutoEncoder.ini"
         self.configFile = os.getcwd()+"/"+confFileName
@@ -59,7 +67,7 @@ class Conf():
             'min_loss_dae' : 0.025,
             'numAdditions' : 100,
             'numAddedNoisyDataBlocks' : 100,
-            'colSwaps' : False,
+            'typeNoise' : 'Random',
             'numColSwaps' : 10,
             'percNoiseDistrMax' : 0.025,
             'excludeZeroFeatures' : True,
@@ -90,7 +98,7 @@ class Conf():
             self.min_loss_dae = self.conf.getfloat('Parameters','min_loss_dae')
             self.numAdditions = self.conf.getint('Parameters','numAdditions')
             self.numAddedNoisyDataBlocks = self.conf.getint('Parameters','numAddedNoisyDataBlocks')
-            self.colSwaps = self.conf.getboolean('Parameters','colSwaps')
+            self.typeNoise = self.typeDF = self.conf.get('Parameters','typeNoise')
             self.numColSwaps = self.conf.getint('Parameters','numColSwaps')
             self.percNoiseDistrMax = self.conf.getfloat('Parameters','percNoiseDistrMax')
             self.excludeZeroFeatures = self.conf.getboolean('Parameters','excludeZeroFeatures')
@@ -145,10 +153,15 @@ def main():
     for i in range(dP.numAdditions):
         if dP.shuffle:
             np.random.shuffle(A)
-        if dP.colSwaps:
+        if dP.typeNoise == 'Random':
+            print("  Creating random noise. \n")
+            noisy_A, new_A = createNoisyData(dP, A)
+        elif dP.typeNoise == 'ColumnValueSwap':
+            print("  Creating noise via random swapping of values within columns. \n")
             noisy_A, new_A = swapValuesColumn(dP, A)
         else:
-            noisy_A, new_A = createNoisyData(dP, A)
+            print("  Check value of typeNoise in ini file. Aborting. \n")
+            return 0;
             
         dae, val_loss = trainAutoencoder(dP, noisy_A, new_A, sys.argv[1])
         if val_loss < dP.min_loss_dae:
@@ -162,10 +175,7 @@ def main():
             print("  Skip this denoising autoencoder. Added so far:",str(success),"\n")
         
     if success !=0:
-        if dP.colSwaps:
-            tag = "_swap"
-        else:
-            tag = "_rand"
+        tag = "_"+dP.typeNoise
         if dP.removeSpurious:
             newA = removeSpurious(A, newA, norm, dP)
             print("  Spurious data removed.")
