@@ -4,7 +4,7 @@
 ***********************************************
 * AddDenoiseAutoEncoder
 * Data Augmentation via Denoising Autoencoder
-* version: 2025.03.11.1
+* version: 2025.03.25.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -59,6 +59,8 @@ class Conf():
             'min_loss_dae' : 0.025,
             'numAdditions' : 100,
             'numAddedNoisyDataBlocks' : 100,
+            'colSwaps' : False,
+            'numColSwaps' : 10,
             'percNoiseDistrMax' : 0.025,
             'excludeZeroFeatures' : True,
             'removeSpurious' : True,
@@ -88,6 +90,8 @@ class Conf():
             self.min_loss_dae = self.conf.getfloat('Parameters','min_loss_dae')
             self.numAdditions = self.conf.getint('Parameters','numAdditions')
             self.numAddedNoisyDataBlocks = self.conf.getint('Parameters','numAddedNoisyDataBlocks')
+            self.colSwaps = self.conf.getboolean('Parameters','colSwaps')
+            self.numColSwaps = self.conf.getint('Parameters','numColSwaps')
             self.percNoiseDistrMax = self.conf.getfloat('Parameters','percNoiseDistrMax')
             self.excludeZeroFeatures = self.conf.getboolean('Parameters','excludeZeroFeatures')
             self.removeSpurious = self.conf.getboolean('Parameters','removeSpurious')
@@ -141,7 +145,11 @@ def main():
     for i in range(dP.numAdditions):
         if dP.shuffle:
             np.random.shuffle(A)
-        noisy_A, new_A = createNoisyData(dP, A)
+        if dP.colSwaps:
+            noisy_A, new_A = swapValuesColumn(dP, A)
+        else:
+            noisy_A, new_A = createNoisyData(dP, A)
+            
         dae, val_loss = trainAutoencoder(dP, noisy_A, new_A, sys.argv[1])
         if val_loss < dP.min_loss_dae:
             A_tmp = generateData(dP, dae, En, A, M, norm)
@@ -154,12 +162,14 @@ def main():
             print("  Skip this denoising autoencoder. Added so far:",str(success),"\n")
         
     if success !=0:
+        if dP.colSwaps:
+            tag = "_swap"
+        else:
+            tag = "_rand"
         if dP.removeSpurious:
             newA = removeSpurious(A, newA, norm, dP)
             print("  Spurious data removed.")
-            tag = '_noSpur'
-        else:
-            tag = ''
+            tag += '_noSpur'
         newTrain = np.vstack([En, newA])
         print("\n  Added",str(success*A.shape[0]),"new data")
         newFile = rootFile + '_numAdded' + str(success*A.shape[0]) + tag
@@ -218,6 +228,27 @@ def createNoisyData(dP, A):
     #np.savetxt("test_noisyA.csv", noisyA, delimiter=",")
     #plotAugmData([2,4], newA, "test_newA_plots.pdf")
     #plotAugmData([2,4], noisyA, "test_noisyA_plots.pdf")
+    return noisyA, newA
+    
+def swapValuesColumn(dP, A):
+    import random
+    rows, cols = A.shape
+    if rows < 2:
+        print("Warning: The array has less than 2 rows. No swaps can be performed.")
+        return A, A
+    noisyA = np.zeros((0, A.shape[1]))
+    newA = np.zeros((0, A.shape[1]))
+    for h in range(int(dP.numAddedNoisyDataBlocks)):
+        A_tmp = A
+        noisyA_tmp = A
+        for _ in range(int(dP.numColSwaps)):
+            # Choose a random column index
+            col_index = random.randint(0, cols - 1)
+            # Choose two distinct random row indices within that column
+            row_index1, row_index2 = random.sample(range(rows), 2)
+            noisyA_tmp[row_index1, col_index], noisyA_tmp[row_index2, col_index] = A_tmp[row_index2, col_index], A_tmp[row_index1, col_index]
+        noisyA = np.vstack([noisyA, noisyA_tmp])
+        newA = np.vstack([newA, A_tmp])
     return noisyA, newA
 
 #************************************
