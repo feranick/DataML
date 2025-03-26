@@ -191,8 +191,7 @@ def main():
         print("  No new training data created. Try to increse numAdditions or/and min_loss_dae.\n")
 
 #******************************************************
-# Create new Training data by adding a percentage of the max
-# for that feature
+# Noise generation
 #******************************************************
 def getAmin(A):
     A_min = []
@@ -201,7 +200,12 @@ def getAmin(A):
         A_min = np.hstack([A_min,A_min_single])
     A_min = np.asarray(A_min)
     return A_min
-        
+
+---------------------------------
+# Create new Training data
+# by adding a prandom percentage
+# of the mean for that feature
+---------------------------------
 def createNoisyData(dP, A):
     import random
     
@@ -239,7 +243,12 @@ def createNoisyData(dP, A):
     #plotAugmData([2,4], newA, "test_newA_plots.pdf")
     #plotAugmData([2,4], noisyA, "test_noisyA_plots.pdf")
     return noisyA, newA
-    
+
+---------------------------------
+# Create new Training data
+# by swapping 2 values
+# within the same column
+---------------------------------
 def swapValuesColumn(dP, A):
     import random
     rows, cols = A.shape
