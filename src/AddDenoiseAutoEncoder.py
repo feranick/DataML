@@ -202,11 +202,11 @@ def getAmin(A):
     A_min = np.asarray(A_min)
     return A_min
 
----------------------------------
+# ---------------------------------
 # Create new Training data
 # by adding a prandom percentage
 # of the mean for that feature
----------------------------------
+# ---------------------------------
 def createNoisyData(dP, A):
     import random
     
@@ -245,11 +245,11 @@ def createNoisyData(dP, A):
     #plotAugmData([2,4], noisyA, "test_noisyA_plots.pdf")
     return noisyA, newA
 
----------------------------------
+# ---------------------------------
 # Create new Training data
 # by swapping 2 values
 # within the same column
----------------------------------
+# ---------------------------------
 def swapValuesColumn(dP, A):
     import random
     rows, cols = A.shape
