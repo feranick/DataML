@@ -423,10 +423,10 @@ def plotAugmData(shape, newA, plotFile):
     pdf = PdfPages(plotFile)
     
     for i in range(1, shape[1]):
-        x = newA[:shape[0],0]
-        y = newA[:shape[0]:,i]
-        xA = newA[shape[0]:,0]
-        yA = newA[shape[0]:,i]
+        x = newA[:shape[0],i]
+        y = newA[:shape[0]:,0]
+        xA = newA[shape[0]:,i]
+        yA = newA[shape[0]:,0]
         plt.plot(xA,yA, 'bo', markersize=3)
         plt.plot(x,y, 'ro', markersize=3)
         plt.xlabel("col "+str(i))
