@@ -210,7 +210,7 @@ def getAmin(A):
 
 # ---------------------------------
 # Create new Training data
-# by adding a prandom percentage
+# by adding a random percentage
 # of the mean for that feature
 # ---------------------------------
 def createNoisyData(dP, A):
@@ -249,8 +249,8 @@ def createNoisyData(dP, A):
 
 # ---------------------------------
 # Create new Training data
-# by adding a prandom percentage
-# of the mean for that feature
+# by adding a random percentage
+# to the fitted initial data
 # ---------------------------------
 def createFitNoisyData(dP, A):
     import random
@@ -291,9 +291,7 @@ def swapValuesColumn(dP, A):
         print("Warning: The array has less than 2 rows. No swaps can be performed.")
         return A, A
     noisyA = np.zeros((0, A.shape[1]))
-    newA = np.zeros((0, A.shape[1]))
     for h in range(int(dP.numAddedNoisyDataBlocks)):
-        A_tmp = A
         noisyA_tmp = A
         for _ in range(int(dP.numColSwaps)):
             # Choose a random column index
@@ -302,8 +300,7 @@ def swapValuesColumn(dP, A):
             row_index1, row_index2 = random.sample(range(rows), 2)
             noisyA_tmp[row_index1, col_index], noisyA_tmp[row_index2, col_index] = A_tmp[row_index2, col_index], A_tmp[row_index1, col_index]
         noisyA = np.vstack([noisyA, noisyA_tmp])
-        newA = np.vstack([newA, A_tmp])
-    return noisyA, newA
+    return noisyA, A
 
 #************************************
 # Train Autoencoder
