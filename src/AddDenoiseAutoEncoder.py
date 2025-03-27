@@ -464,8 +464,8 @@ def plotAugmData(dP, shape, newA, plotFile):
         
         plt.plot(xA,yA, 'bo', markersize=3)
         plt.plot(x,y, 'ro', markersize=3)
-        plt.xlabel("col "+str(i))
-        plt.ylabel("col 0")
+        plt.xlabel("col "+str(i)+" - feature parameter")
+        plt.ylabel("col 0 - predicted parameter")
         plt.plot(np.unique(x), P.fit(x, y, dP.fitPolyDegree)(np.unique(x)))
         pdf.savefig()
         plt.close()
