@@ -4,7 +4,7 @@
 ***********************************************
 * AddDenoiseAutoEncoder
 * Data Augmentation via Denoising Autoencoder
-* version: 2025.03.25.1
+* version: 2025.03.27.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -30,6 +30,7 @@ class Conf():
         ### Types of noise:
         ### Set using: typeNoise
         ### - Random (default)
+        ### - RandomFit
         ### - ColumnValueSwap
         #################################
         
@@ -68,6 +69,7 @@ class Conf():
             'numAdditions' : 100,
             'numAddedNoisyDataBlocks' : 100,
             'typeNoise' : 'Random',
+            'fitPolyDegree' : 3,
             'numColSwaps' : 10,
             'percNoiseDistrMax' : 0.025,
             'excludeZeroFeatures' : True,
@@ -99,6 +101,7 @@ class Conf():
             self.numAdditions = self.conf.getint('Parameters','numAdditions')
             self.numAddedNoisyDataBlocks = self.conf.getint('Parameters','numAddedNoisyDataBlocks')
             self.typeNoise = self.typeDF = self.conf.get('Parameters','typeNoise')
+            self.fitPolyDegree = self.conf.getint('Parameters','fitPolyDegree')
             self.numColSwaps = self.conf.getint('Parameters','numColSwaps')
             self.percNoiseDistrMax = self.conf.getfloat('Parameters','percNoiseDistrMax')
             self.excludeZeroFeatures = self.conf.getboolean('Parameters','excludeZeroFeatures')
@@ -148,7 +151,7 @@ def main():
         norm = 0
     
     if dP.plotAugmData:
-        plotAugmData(A.shape, A, rootFile+"_initial-plots.pdf")
+        plotAugmData(dP, A.shape, A, rootFile+"_initial-plots.pdf")
     
     success = 0
     for i in range(dP.numAdditions):
@@ -157,6 +160,9 @@ def main():
         if dP.typeNoise == 'Random':
             print("  Creating random noise. \n")
             noisy_A, new_A = createNoisyData(dP, A)
+        elif dP.typeNoise == 'RandomFit':
+            print("  Creating random noise from fitted initial data. \n")
+            noisy_A, new_A = createFitNoisyData(dP, A)
         elif dP.typeNoise == 'ColumnValueSwap':
             print("  Creating noise via random swapping of values within columns. \n")
             noisy_A, new_A = swapValuesColumn(dP, A)
@@ -170,7 +176,7 @@ def main():
             newA = np.vstack([newA, A_tmp])
             success += 1
             print("\n  Successful. Added so far:",str(success),"\n")
-            #plotAugmData(A.shape, newA, rootFile+"_"+str(i)+"_plots.pdf")
+            #plotAugmData(dP, A.shape, newA, rootFile+"_"+str(i)+"_plots.pdf")
         else:
             #A_tmp = generateData(dP, dae, En, A, M, norm)
             print("  Skip this denoising autoencoder. Added so far:",str(success),"\n")
@@ -187,7 +193,7 @@ def main():
         saveLearnFile(dP, newA, newFile, "")
         
         if dP.plotAugmData:
-            plotAugmData(A.shape, newA, newFile+"_plots.pdf")
+            plotAugmData(dP, A.shape, newA, newFile+"_plots.pdf")
     else:
         print("  No new training data created. Try to increse numAdditions or/and min_loss_dae.\n")
 
@@ -239,11 +245,39 @@ def createNoisyData(dP, A):
                     noisyA = np.vstack([noisyA, noisyA_tmp])
                     newA = np.vstack([newA, A_tmp])
 
-    #np.savetxt("test_newA.csv", newA, delimiter=",")
-    #np.savetxt("test_noisyA.csv", noisyA, delimiter=",")
-    #plotAugmData([2,4], newA, "test_newA_plots.pdf")
-    #plotAugmData([2,4], noisyA, "test_noisyA_plots.pdf")
     return noisyA, newA
+
+# ---------------------------------
+# Create new Training data
+# by adding a prandom percentage
+# of the mean for that feature
+# ---------------------------------
+def createFitNoisyData(dP, A):
+    import random
+    from numpy.polynomial.polynomial import polyval as polyval
+    
+    poly = fitInitialData(dP, A.shape, A)
+    
+    for h in range(int(dP.numAddedNoisyDataBlocks)):
+        noisyA = np.zeros((A.shape[0],0))
+        for j in range(A.shape[1]):
+            tmp = (polyval(A[:,j], poly[j]) * np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, A.shape[0])).reshape(-1,1)
+            if all(tmp) != 0 and all(A[:,j]) != 0:
+                noisyA = np.hstack([noisyA, tmp])
+    return noisyA, A
+    
+# ---------------------------------
+# Fit initial data to be used for
+# generatiging rando data around
+# fitted curve.
+# ---------------------------------
+def fitInitialData(dP, shape, A):
+    from numpy.polynomial.polynomial import Polynomial as P
+    poly = np.zeros((0, int(dP.fitPolyDegree)+1))
+    for i in range(0, A.shape[1]):
+        tmp = P.fit(A[:shape[0],i], A[:shape[0],0], dP.fitPolyDegree).coef
+        poly = np.vstack([poly, tmp])
+    return poly
 
 # ---------------------------------
 # Create new Training data
@@ -416,21 +450,26 @@ def readLearnFile(dP, learnFile, newNorm):
 #************************************
 # Plot augmented training data
 #************************************
-def plotAugmData(shape, newA, plotFile):
+def plotAugmData(dP, shape, newA, plotFile):
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_pdf import PdfPages
+    from numpy.polynomial.polynomial import Polynomial as P
     
     pdf = PdfPages(plotFile)
+    
+    fitInitialData(dP, shape, newA)
     
     for i in range(1, shape[1]):
         x = newA[:shape[0],i]
         y = newA[:shape[0]:,0]
         xA = newA[shape[0]:,i]
         yA = newA[shape[0]:,0]
+        
         plt.plot(xA,yA, 'bo', markersize=3)
         plt.plot(x,y, 'ro', markersize=3)
         plt.xlabel("col "+str(i))
         plt.ylabel("col 0")
+        plt.plot(np.unique(x), P.fit(x, y, dP.fitPolyDegree)(np.unique(x)))
         pdf.savefig()
         plt.close()
     pdf.close()
