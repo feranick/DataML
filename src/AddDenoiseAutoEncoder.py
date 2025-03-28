@@ -141,7 +141,10 @@ def main():
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
 
-    En, A, M = readLearnFile(dP, sys.argv[1], True)
+    try:
+        En, A, M = readLearnFile(dP, sys.argv[1], True)
+    except:
+        return 0
     
     rootFile = dP.model_directory + os.path.splitext(os.path.basename(sys.argv[1]))[0] + \
             '_numDataTrainDae' + str(dP.numAddedNoisyDataBlocks * A.shape[0])
