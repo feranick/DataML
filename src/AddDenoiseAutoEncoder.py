@@ -4,7 +4,7 @@
 ***********************************************
 * AddDenoiseAutoEncoder
 * Data Augmentation via Denoising Autoencoder
-* version: 2025.03.27.1
+* version: 2025.03.28.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -12,6 +12,9 @@ print(__doc__)
 
 import numpy as np
 import sys, os.path, h5py, pickle, configparser
+from numpy.polynomial.polynomial import Polynomial as polyfit
+from numpy.polynomial.polynomial import polyval as polyval
+
 from libDataML import *
 
 #***************************************************
@@ -152,8 +155,8 @@ def main():
         norm = 0
     
     if dP.plotAugmData:
-        plotAugmData(dP, A.shape, A, True, rootFile+"_initial-featured-plots.pdf")
-        plotAugmData(dP, A.shape, A, False, rootFile+"_initial-predicted-plots.pdf")
+        plotAugmData(dP, A.shape, A, True, "Initial (X-F) Data", rootFile+"_initial_X-F_plots.pdf")
+        plotAugmData(dP, A.shape, A, False, "Initial (Y-P) Data", rootFile+"_initial_Y-P_plots.pdf")
     
     success = 0
     plotFeatType = True
@@ -183,7 +186,7 @@ def main():
             newA = np.vstack([newA, A_tmp])
             success += 1
             print("\n  Successful. Added so far:",str(success),"\n")
-            #plotAugmData(dP, A.shape, newA, plotFeatType, rootFile+"_"+str(i)+"_plots.pdf")
+            #plotAugmData(dP, A.shape, newA, plotFeatType, "test", rootFile+"_"+str(i)+"_plots.pdf")
         else:
             #A_tmp = generateData(dP, dae, En, A, M, norm)
             print("  Skip this denoising autoencoder. Added so far:",str(success),"\n")
@@ -200,7 +203,7 @@ def main():
         saveLearnFile(dP, newA, newFile, "")
         
         if dP.plotAugmData:
-            plotAugmData(dP, A.shape, newA, plotFeatType, newFile+"_plots.pdf")
+            plotAugmData(dP, A.shape, newA, plotFeatType, "Augmmented data", newFile+"_plots.pdf")
     else:
         print("  No new training data created. Try to increse numAdditions or/and min_loss_dae.\n")
 
@@ -261,10 +264,7 @@ def createNoisyData(dP, A):
 # ------------------------------------
 def createYFitNoisyData(dP, A):
     import random
-    from numpy.polynomial.polynomial import polyval as polyval
-    
     poly = fitReverseInitialData(dP, A.shape, A)
-    print(poly)
     for h in range(int(dP.numAddedNoisyDataBlocks)):
         #noisyA = np.zeros((A.shape[0],0))
         noisyA = A[:,0].reshape(-1,1)
@@ -274,11 +274,19 @@ def createYFitNoisyData(dP, A):
             #tmp = A[:,0].reshape(-1,1)
             if all(tmp) != 0 and all(A[:,j]) != 0:
                 noisyA = np.hstack([noisyA, tmp])
-    plotAugmData(dP, A.shape, A, True, "A.pdf")
-    plotAugmData(dP, A.shape, noisyA, True, "noisy.pdf")
+    plotAugmData(dP, A.shape, noisyA, False, "noisyY", "noisyY.pdf")
 
-    print(noisyA)
+    #print(noisyA)
     return noisyA, A
+    
+# Fit initial data from prediction vs features
+def fitReverseInitialData(dP, shape, A):
+    poly = np.zeros((0, int(dP.fitPolyDegree)+1))
+    for i in range(0, A.shape[1]):
+        #tmp = np.polyfit(A[:shape[0],0], A[:shape[0],i], dP.fitPolyDegree)
+        tmp = polyfit.fit(A[:shape[0],0], A[:shape[0],i], dP.fitPolyDegree).coef
+        poly = np.vstack([poly, tmp])
+    return poly
 
 # --------------------------------------
 # Create new Training data
@@ -287,50 +295,27 @@ def createYFitNoisyData(dP, A):
 # --------------------------------------
 def createXFitNoisyData(dP, A):
     import random
-    from numpy.polynomial.polynomial import polyval as polyval
-    
     poly = fitInitialData(dP, A.shape, A)
-
     for h in range(int(dP.numAddedNoisyDataBlocks)):
         noisyA = np.zeros((A.shape[0],0))
         y_tmp = np.zeros((A.shape[0],0))
         for j in range(1,A.shape[1]):
-            #x_tmp = A[:,j] + np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, A.shape[0])
-            x_tmp = A[:,j].reshape(-1,1)
+            x_tmp = (A[:,j] + np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, A.shape[0])).reshape(-1,1)
+            #x_tmp = A[:,j].reshape(-1,1)
             y_tmp = np.hstack([y_tmp, (polyval(x_tmp, poly[j])).reshape(-1,1)])
 
             if all(x_tmp) != 0 and all(A[:,j]) != 0:
                 noisyA = np.hstack([noisyA, x_tmp])
         noisyA = np.hstack([np.mean(y_tmp, axis=1).reshape(-1,1), noisyA])
         
-    plotAugmData(dP, A.shape, A, False, "A.pdf")
-    plotAugmData(dP, A.shape, noisyA, False, "noisy.pdf")
-
-    print(noisyA)
+    plotAugmData(dP, A.shape, noisyA, True, "noisyX", "noisyX.pdf")
     return noisyA, A
     
-# ---------------------------------
-# Fit initial data to be used for
-# generatiging rando data around
-# fitted curve.
-# ---------------------------------
+# Fit initial data from features vs prediction
 def fitInitialData(dP, shape, A):
-    from numpy.polynomial.polynomial import Polynomial as P
     poly = np.zeros((0, int(dP.fitPolyDegree)+1))
     for i in range(0, A.shape[1]):
-        tmp = P.fit(A[:shape[0],i], A[:shape[0],0], dP.fitPolyDegree).coef
-        poly = np.vstack([poly, tmp])
-    return poly
-    
-def fitReverseInitialData(dP, shape, A):
-    #from numpy.polynomial.polynomial import Polynomial as P
-    from numpy.polynomial.polynomial import polyfit as polyfit
-    from numpy.polynomial.polynomial import polyval as polyval
-    poly = np.zeros((0, int(dP.fitPolyDegree)+1))
-    print(A[:shape[0],0])
-    for i in range(0, A.shape[1]):
-        #tmp = P.fit(A[:shape[0],0], A[:shape[0],i], dP.fitPolyDegree).coef
-        tmp = polyfit(A[:shape[0],0], A[:shape[0],i], dP.fitPolyDegree)
+        tmp = polyfit.fit(A[:shape[0],i], A[:shape[0],0], dP.fitPolyDegree).coef
         poly = np.vstack([poly, tmp])
     return poly
 
@@ -402,10 +387,10 @@ def trainAutoencoder(dP, noisyA, A, file):
             print("\n  Training Deep Autoencoder with linear architecture\n   Hidden layers:",A.shape[1]-dP.encoded_dim,
                 "\n   Encoded dimension:",dP.encoded_dim,"\n")
         else:
-            print("  Training Deep Autoencoder with discrete architecture\n   Hidden layers:",dP.net_arch,
+            print("\n  Training Deep Autoencoder with discrete architecture\n   Hidden layers:",dP.net_arch,
                 "\n   Encoded dimension:",dP.encoded_dim,"\n")
     else:
-        print("  Training shallow Autoencoder \n   Encoded dimension:",dP.encoded_dim,"\n")
+        print("\n  Training shallow Autoencoder \n   Encoded dimension:",dP.encoded_dim,"\n")
 
     lr_schedule = keras.optimizers.schedules.ExponentialDecay(
             initial_learning_rate=dP.l_rate,
@@ -502,10 +487,10 @@ def readLearnFile(dP, learnFile, newNorm):
 #************************************
 # Plot augmented training data
 #************************************
-def plotAugmData(dP, shape, newA, feat, plotFile):
+def plotAugmData(dP, shape, newA, feat, title, plotFile):
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_pdf import PdfPages
-    from numpy.polynomial.polynomial import Polynomial as P
+    from sklearn.metrics import r2_score
     
     pdf = PdfPages(plotFile)
         
@@ -527,7 +512,9 @@ def plotAugmData(dP, shape, newA, feat, plotFile):
         
         plt.plot(xA,yA, 'bo', markersize=3)
         plt.plot(x,y, 'ro', markersize=3)
-        plt.plot(np.unique(x), P.fit(x, y, dP.fitPolyDegree)(np.unique(x)))
+        poly = polyfit.fit(x, y, dP.fitPolyDegree)
+        plt.plot(np.unique(x), poly(np.unique(x)))
+        plt.title(title+" - $R^2={0:.3f}$".format(r2_score(y, poly(x))))
         pdf.savefig()
         plt.close()
     pdf.close()
