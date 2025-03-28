@@ -4,7 +4,7 @@
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
 * pyscript version
-* v2025.3.21.1
+* v2025.3.28.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -163,7 +163,7 @@ async def main(event):
     
     R = []
     for i in range(len(features.split(','))):
-        R.append(int(document.querySelector("#Entry"+str(i)).value))
+        R.append(document.querySelector("#Entry"+str(i)).value)
     
     output = '============================\n '
     if dP.regressor:
