@@ -30,7 +30,8 @@ class Conf():
         ### Types of noise:
         ### Set using: typeNoise
         ### - Random (default)
-        ### - RandomFit
+        ### - RandomYFit
+        ### - RandomXFit
         ### - ColumnValueSwap
         #################################
         
@@ -65,12 +66,12 @@ class Conf():
             'regL1' : 1e-5,
             'l_rate' : 0.1,
             'l_rdecay' : 0.01,
-            'min_loss_dae' : 0.025,
-            'numAdditions' : 100,
-            'numAddedNoisyDataBlocks' : 100,
             'typeNoise' : 'Random',
             'fitPolyDegree' : 3,
             'numColSwaps' : 10,
+            'min_loss_dae' : 0.025,
+            'numAdditions' : 100,
+            'numAddedNoisyDataBlocks' : 100,
             'percNoiseDistrMax' : 0.025,
             'excludeZeroFeatures' : True,
             'removeSpurious' : True,
@@ -97,12 +98,12 @@ class Conf():
             self.regL1 = self.conf.getfloat('Parameters','regL1')
             self.l_rate = self.conf.getfloat('Parameters','l_rate')
             self.l_rdecay = self.conf.getfloat('Parameters','l_rdecay')
-            self.min_loss_dae = self.conf.getfloat('Parameters','min_loss_dae')
-            self.numAdditions = self.conf.getint('Parameters','numAdditions')
-            self.numAddedNoisyDataBlocks = self.conf.getint('Parameters','numAddedNoisyDataBlocks')
             self.typeNoise = self.typeDF = self.conf.get('Parameters','typeNoise')
             self.fitPolyDegree = self.conf.getint('Parameters','fitPolyDegree')
             self.numColSwaps = self.conf.getint('Parameters','numColSwaps')
+            self.min_loss_dae = self.conf.getfloat('Parameters','min_loss_dae')
+            self.numAdditions = self.conf.getint('Parameters','numAdditions')
+            self.numAddedNoisyDataBlocks = self.conf.getint('Parameters','numAddedNoisyDataBlocks')
             self.percNoiseDistrMax = self.conf.getfloat('Parameters','percNoiseDistrMax')
             self.excludeZeroFeatures = self.conf.getboolean('Parameters','excludeZeroFeatures')
             self.removeSpurious = self.conf.getboolean('Parameters','removeSpurious')
@@ -151,18 +152,24 @@ def main():
         norm = 0
     
     if dP.plotAugmData:
-        plotAugmData(dP, A.shape, A, rootFile+"_initial-plots.pdf")
+        plotAugmData(dP, A.shape, A, True, rootFile+"_initial-featured-plots.pdf")
+        plotAugmData(dP, A.shape, A, False, rootFile+"_initial-predicted-plots.pdf")
     
     success = 0
+    plotFeatType = True
     for i in range(dP.numAdditions):
         if dP.shuffle:
             np.random.shuffle(A)
         if dP.typeNoise == 'Random':
             print("  Creating random noise. \n")
             noisy_A, new_A = createNoisyData(dP, A)
-        elif dP.typeNoise == 'RandomFit':
-            print("  Creating random noise from fitted initial data. \n")
-            noisy_A, new_A = createFitNoisyData(dP, A)
+        elif dP.typeNoise == 'RandomYFit':
+            print("  Creating random noise from fitted initial feature data. \n")
+            noisy_A, new_A = createYFitNoisyData(dP, A)
+        elif dP.typeNoise == 'RandomXFit':
+            print("  Creating random noise from fitted initial predicted data. \n")
+            noisy_A, new_A = createXFitNoisyData(dP, A)
+            plotFeatType = False
         elif dP.typeNoise == 'ColumnValueSwap':
             print("  Creating noise via random swapping of values within columns. \n")
             noisy_A, new_A = swapValuesColumn(dP, A)
@@ -176,7 +183,7 @@ def main():
             newA = np.vstack([newA, A_tmp])
             success += 1
             print("\n  Successful. Added so far:",str(success),"\n")
-            #plotAugmData(dP, A.shape, newA, rootFile+"_"+str(i)+"_plots.pdf")
+            #plotAugmData(dP, A.shape, newA, plotFeatType, rootFile+"_"+str(i)+"_plots.pdf")
         else:
             #A_tmp = generateData(dP, dae, En, A, M, norm)
             print("  Skip this denoising autoencoder. Added so far:",str(success),"\n")
@@ -193,7 +200,7 @@ def main():
         saveLearnFile(dP, newA, newFile, "")
         
         if dP.plotAugmData:
-            plotAugmData(dP, A.shape, newA, newFile+"_plots.pdf")
+            plotAugmData(dP, A.shape, newA, plotFeatType, newFile+"_plots.pdf")
     else:
         print("  No new training data created. Try to increse numAdditions or/and min_loss_dae.\n")
 
@@ -247,23 +254,59 @@ def createNoisyData(dP, A):
 
     return noisyA, newA
 
-# ---------------------------------
+# ------------------------------------
 # Create new Training data
 # by adding a random percentage
-# to the fitted initial data
-# ---------------------------------
-def createFitNoisyData(dP, A):
+# to the fitted featured initial data
+# ------------------------------------
+def createYFitNoisyData(dP, A):
+    import random
+    from numpy.polynomial.polynomial import polyval as polyval
+    
+    poly = fitReverseInitialData(dP, A.shape, A)
+    print(poly)
+    for h in range(int(dP.numAddedNoisyDataBlocks)):
+        #noisyA = np.zeros((A.shape[0],0))
+        noisyA = A[:,0].reshape(-1,1)
+        for j in range(1,A.shape[1]):
+            tmp = (polyval(A[:,0], poly[j]) + np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, A.shape[0])).reshape(-1,1)
+            #tmp = (polyval(A[:,0], poly[j])).reshape(-1,1)
+            #tmp = A[:,0].reshape(-1,1)
+            if all(tmp) != 0 and all(A[:,j]) != 0:
+                noisyA = np.hstack([noisyA, tmp])
+    plotAugmData(dP, A.shape, A, True, "A.pdf")
+    plotAugmData(dP, A.shape, noisyA, True, "noisy.pdf")
+
+    print(noisyA)
+    return noisyA, A
+
+# --------------------------------------
+# Create new Training data
+# by adding a random percentage
+# to the fitted predictedd initial data
+# --------------------------------------
+def createXFitNoisyData(dP, A):
     import random
     from numpy.polynomial.polynomial import polyval as polyval
     
     poly = fitInitialData(dP, A.shape, A)
-    
+
     for h in range(int(dP.numAddedNoisyDataBlocks)):
         noisyA = np.zeros((A.shape[0],0))
-        for j in range(A.shape[1]):
-            tmp = (polyval(A[:,j], poly[j]) * np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, A.shape[0])).reshape(-1,1)
-            if all(tmp) != 0 and all(A[:,j]) != 0:
-                noisyA = np.hstack([noisyA, tmp])
+        y_tmp = np.zeros((A.shape[0],0))
+        for j in range(1,A.shape[1]):
+            #x_tmp = A[:,j] + np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, A.shape[0])
+            x_tmp = A[:,j].reshape(-1,1)
+            y_tmp = np.hstack([y_tmp, (polyval(x_tmp, poly[j])).reshape(-1,1)])
+
+            if all(x_tmp) != 0 and all(A[:,j]) != 0:
+                noisyA = np.hstack([noisyA, x_tmp])
+        noisyA = np.hstack([np.mean(y_tmp, axis=1).reshape(-1,1), noisyA])
+        
+    plotAugmData(dP, A.shape, A, False, "A.pdf")
+    plotAugmData(dP, A.shape, noisyA, False, "noisy.pdf")
+
+    print(noisyA)
     return noisyA, A
     
 # ---------------------------------
@@ -276,6 +319,18 @@ def fitInitialData(dP, shape, A):
     poly = np.zeros((0, int(dP.fitPolyDegree)+1))
     for i in range(0, A.shape[1]):
         tmp = P.fit(A[:shape[0],i], A[:shape[0],0], dP.fitPolyDegree).coef
+        poly = np.vstack([poly, tmp])
+    return poly
+    
+def fitReverseInitialData(dP, shape, A):
+    #from numpy.polynomial.polynomial import Polynomial as P
+    from numpy.polynomial.polynomial import polyfit as polyfit
+    from numpy.polynomial.polynomial import polyval as polyval
+    poly = np.zeros((0, int(dP.fitPolyDegree)+1))
+    print(A[:shape[0],0])
+    for i in range(0, A.shape[1]):
+        #tmp = P.fit(A[:shape[0],0], A[:shape[0],i], dP.fitPolyDegree).coef
+        tmp = polyfit(A[:shape[0],0], A[:shape[0],i], dP.fitPolyDegree)
         poly = np.vstack([poly, tmp])
     return poly
 
@@ -447,25 +502,31 @@ def readLearnFile(dP, learnFile, newNorm):
 #************************************
 # Plot augmented training data
 #************************************
-def plotAugmData(dP, shape, newA, plotFile):
+def plotAugmData(dP, shape, newA, feat, plotFile):
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_pdf import PdfPages
     from numpy.polynomial.polynomial import Polynomial as P
     
     pdf = PdfPages(plotFile)
-    
-    fitInitialData(dP, shape, newA)
-    
+        
     for i in range(1, shape[1]):
-        x = newA[:shape[0],i]
-        y = newA[:shape[0]:,0]
-        xA = newA[shape[0]:,i]
-        yA = newA[shape[0]:,0]
+        if feat:
+            x = newA[:shape[0],i]
+            y = newA[:shape[0]:,0]
+            xA = newA[shape[0]:,i]
+            yA = newA[shape[0]:,0]
+            plt.xlabel("col "+str(i)+" - feature parameter")
+            plt.ylabel("col 0 - predicted parameter")
+        else:
+            y = newA[:shape[0],i]
+            x = newA[:shape[0]:,0]
+            yA = newA[shape[0]:,i]
+            xA = newA[shape[0]:,0]
+            plt.xlabel("col 0 - predicted parameter")
+            plt.ylabel("col "+str(i)+" - feature parameter")
         
         plt.plot(xA,yA, 'bo', markersize=3)
         plt.plot(x,y, 'ro', markersize=3)
-        plt.xlabel("col "+str(i)+" - feature parameter")
-        plt.ylabel("col 0 - predicted parameter")
         plt.plot(np.unique(x), P.fit(x, y, dP.fitPolyDegree)(np.unique(x)))
         pdf.savefig()
         plt.close()
