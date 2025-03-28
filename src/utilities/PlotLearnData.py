@@ -4,7 +4,7 @@
 ***********************************************
 * PlotLearnData
 * Plot learning data
-* version: 2025.03.10.1
+* version: 2025.03.28.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -119,8 +119,8 @@ def plotAugmData(dP, shape, A1,A2,A3, plotFile):
             plt.xlabel("m"+str(dP.labels[i]))
             plt.ylabel("Perf"+str(dP.labels[0]))
         else:
-            plt.xlabel("col "+str(i))
-            plt.ylabel("col 0")
+            plt.xlabel("col "+str(i)+" - feature parameter")
+            plt.ylabel("col 0 - predicted parameter")
         pdf.savefig()
         plt.close()
     pdf.close()
