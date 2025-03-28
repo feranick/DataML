@@ -47,7 +47,7 @@ def main():
         A3 = None
     
     rootFile = os.path.splitext(os.path.basename(sys.argv[1]))[0]
-    plotAugmData(dP, A1.shape, A1, A2, A3, rootFile+"_plots.pdf")
+    plotAugmData(dP, A1.shape, A1, A2, A3, rootFile+"_learn-plots.pdf")
  
 #************************************
 # Open Learning Data
@@ -101,10 +101,10 @@ def plotAugmData(dP, shape, A1,A2,A3, plotFile):
     pdf = PdfPages(plotFile)
         
     for i in range(1, shape[1]):
-        xA1 = A1[:,0]
-        yA1 = A1[:,i]
-        xA2 = A2[:,0]
-        yA2 = A2[:,i]
+        xA1 = A1[:,i]
+        yA1 = A1[:,0]
+        xA2 = A2[:,i]
+        yA2 = A2[:,0]
         if A3 is not None:
             xA3 = A3[:,0]
             yA3 = A3[:,i]
