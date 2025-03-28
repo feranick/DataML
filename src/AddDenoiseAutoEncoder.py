@@ -164,20 +164,20 @@ def main():
         if dP.shuffle:
             np.random.shuffle(A)
         if dP.typeNoise == 'Random':
-            print("  Creating random noise. \n")
+            print("  Creating random noise. ")
             noisy_A, new_A = createNoisyData(dP, A)
         elif dP.typeNoise == 'RandomYFit':
-            print("  Creating random noise from fitted initial feature data. \n")
+            print("  Creating random noise from fitted initial feature data.")
             noisy_A, new_A = createYFitNoisyData(dP, A)
         elif dP.typeNoise == 'RandomXFit':
-            print("  Creating random noise from fitted initial predicted data. \n")
+            print("  Creating random noise from fitted initial predicted data.")
             noisy_A, new_A = createXFitNoisyData(dP, A)
             plotFeatType = False
         elif dP.typeNoise == 'ColumnValueSwap':
-            print("  Creating noise via random swapping of values within columns. \n")
+            print("  Creating noise via random swapping of values within columns.")
             noisy_A, new_A = swapValuesColumn(dP, A)
         else:
-            print("  Check value of typeNoise in ini file. Aborting. \n")
+            print("  Check value of typeNoise in ini file. Aborting.")
             return 0;
             
         dae, val_loss = trainAutoencoder(dP, noisy_A, new_A, sys.argv[1])
@@ -351,27 +351,29 @@ def trainAutoencoder(dP, noisyA, A, file):
     ############
     # Encoder
     ############
-    if dP.deepAutoencoder and A.shape[1] > dP.encoded_dim+2:
-        encoded = keras.layers.Dense(A.shape[1]-1, activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(input)
+    encoded = keras.layers.Dense(A.shape[1]-1, activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(input)
+    if dP.deepAutoencoder:
         if dP.linear_net:
-            for i in range(A.shape[1]-1,dP.encoded_dim+1,-1):
-                encoded = keras.layers.Dense(i-1,  activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
+            if A.shape[1] > dP.encoded_dim+2:
+                for i in range(A.shape[1]-1,dP.encoded_dim+1,-1):
+                    encoded = keras.layers.Dense(i-1,  activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
+                encoded = keras.layers.Dense(dP.encoded_dim,activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
         else:
             for i in range(len(dP.net_arch)):
                 encoded = keras.layers.Dense(dP.net_arch[i],  activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
-        
-        encoded = keras.layers.Dense(dP.encoded_dim,activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
-    else:
-        encoded = keras.layers.Dense(dP.encoded_dim,activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(input)
+            encoded = keras.layers.Dense(dP.encoded_dim,activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
     
     ############
     # Decoder
     ############
-    if dP.deepAutoencoder and A.shape[1] > dP.encoded_dim+2:
+    if dP.deepAutoencoder:
         decoded = keras.layers.Dense(dP.encoded_dim+1,  activation='relu')(encoded)
         if dP.linear_net:
-            for i in range(dP.encoded_dim+2,A.shape[1],1):
-                decoded = keras.layers.Dense(i, activation='relu')(decoded)
+            if A.shape[1] > dP.encoded_dim+2:
+                for i in range(dP.encoded_dim+2,A.shape[1],1):
+                    decoded = keras.layers.Dense(i, activation='relu')(decoded)
+            else:
+                decoded = keras.layers.Dense(A.shape[1], activation='sigmoid')(encoded)
         else:
             for i in range(len(dP.net_arch)-1,-1,-1):
                 decoded = keras.layers.Dense(dP.net_arch[i], activation='relu')(decoded)
@@ -382,10 +384,13 @@ def trainAutoencoder(dP, noisyA, A, file):
     ###############
     # Autoencoder
     ###############
-    if dP.deepAutoencoder and A.shape[1] > dP.encoded_dim+2:
+    if dP.deepAutoencoder:
         if dP.linear_net:
-            print("\n  Training Deep Autoencoder with linear architecture\n   Hidden layers:",A.shape[1]-dP.encoded_dim,
-                "\n   Encoded dimension:",dP.encoded_dim,"\n")
+            if A.shape[1] > dP.encoded_dim+2:
+                print("\n  Training Deep Autoencoder with linear architecture\n   Hidden layers:",A.shape[1]-dP.encoded_dim,
+                    "\n   Encoded dimension:",dP.encoded_dim,"\n")
+            else:
+                print("\n  Training shallow Autoencoder \n   Encoded dimension:",dP.encoded_dim,"\n")
         else:
             print("\n  Training Deep Autoencoder with discrete architecture\n   Hidden layers:",dP.net_arch,
                 "\n   Encoded dimension:",dP.encoded_dim,"\n")
