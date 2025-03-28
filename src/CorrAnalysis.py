@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: 2025.03.27.1
+* version: 2025.03.28.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -22,6 +22,7 @@ from scipy.stats import pearsonr, spearmanr
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
+from numpy.polynomial.polynomial import Polynomial as polyfit
 
 #***************************************************
 # This is needed for installation through pip
@@ -421,7 +422,8 @@ def plotGraphThreshold(dfP, dfL, dfC, validRows, title, pdf, sumFile, dP):
                 try:
                     slope, intercept, r_value, p_value, std_err = stats.linregress(x,y)
                     plt.text(min(x), max(y),"{0:s} = {2:.3f}*{1:s} + {3:.3f}".format(ind, col, slope, intercept))
-                    plt.plot(np.unique(x), np.poly1d(np.polyfit(x, y, dP.polyDegree))(np.unique(x)))
+                    #plt.plot(np.unique(x), np.poly1d(np.polyfit(x, y, dP.polyDegree))(np.unique(x)))
+                    plt.plot(np.unique(x), polyfit.fit(x, y, dP.polyDegree)(np.unique(x)))
                 except:
                     pass
             #plt.legend(loc='upper left')
@@ -470,7 +472,8 @@ def plotSelectedGraphs(dfP, dfL, dfC, X, Y, validRows, title, pdf, dP):
                 try:
                     slope, intercept, r_value, p_value, std_err = stats.linregress(P,V)
                     plt.text(min(P), max(V),"{0:s} = {2:.3f}*{1:s} + {3:.3f}".format(dfP.columns.values[j], dfP.columns.values[i], slope, intercept))
-                    plt.plot(np.unique(P), np.poly1d(np.polyfit(P, V, dP.polyDegree))(np.unique(P)))
+                    #plt.plot(np.unique(P), np.poly1d(np.polyfit(P, V, dP.polyDegree))(np.unique(P)))
+                    plt.plot(np.unique(P), polyfit.fit(P, V, dP.polyDegree)(np.unique(P)))
                 except:
                     pass
             
