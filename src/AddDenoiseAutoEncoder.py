@@ -206,7 +206,7 @@ def main():
         saveLearnFile(dP, newA, newFile, "")
         
         if dP.plotAugmData:
-            plotAugmData(dP, A.shape, newA, plotFeatType, "Augmmented data", newFile+"_plots.pdf")
+            plotAugmData(dP, A.shape, newA, plotFeatType, "Augmented data", newFile+"_plots.pdf")
     else:
         print("  No new training data created. Try to increse numAdditions or/and min_loss_dae.\n")
 
