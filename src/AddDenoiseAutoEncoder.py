@@ -362,6 +362,131 @@ def swapValuesColumn(dP, A):
     newA = np.vstack(newA_list)
     return noisyA, newA
 
+'''
+# ---------------------------------
+# Create new Training data
+# by adding a random percentage
+# of the mean for that feature
+# ---------------------------------
+def createNoisyData(dP, A):
+    import random
+    
+    noisyA = np.zeros((0, A.shape[1]))
+    newA = np.zeros((0, A.shape[1]))
+    
+    #A_min = A.min(axis=0)
+    A_min = getAmin(A)
+    A_max = A.max(axis=0)
+    A_mean = np.mean(A, axis=0)
+    A_std = A.std(axis=0)
+
+    for h in range(int(dP.numAddedNoisyDataBlocks)):
+        for i in range(A.shape[0]):
+            noisyA_tmp = []
+            A_tmp = []
+            if any(A[i][1:]) != 0:
+                for j in range(A.shape[1]):
+                    if A[i][j] == 0 and dP.excludeZeroFeatures:
+                        tmp = A[i][j]
+                    else:
+                        tmp =  A[i][j] + A_mean[j]*(np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, 1))
+                        if tmp<0:
+                            tmp=-tmp
+                        if tmp<A_min[j]:
+                            tmp=0
+                    noisyA_tmp = np.hstack([noisyA_tmp, tmp])
+                    A_tmp = np.hstack([A_tmp, A[i][j]])
+                if all(A_tmp) != 0 and all(noisyA_tmp) != 0:
+                    noisyA = np.vstack([noisyA, noisyA_tmp])
+                    newA = np.vstack([newA, A_tmp])
+
+    return noisyA, newA
+
+# ------------------------------------
+# Create new Training data
+# by adding a random percentage
+# to the fitted featured initial data
+# ------------------------------------
+def createYFitNoisyData(dP, A):
+    import random
+    poly = fitReverseInitialData(dP, A.shape, A)
+    for h in range(int(dP.numAddedNoisyDataBlocks)):
+        #noisyA = np.zeros((A.shape[0],0))
+        noisyA = A[:,0].reshape(-1,1)
+        for j in range(1,A.shape[1]):
+            tmp = (polyval(A[:,0], poly[j]) + np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, A.shape[0])).reshape(-1,1)
+            #tmp = (polyval(A[:,0], poly[j])).reshape(-1,1)
+            #tmp = A[:,0].reshape(-1,1)
+            if all(tmp) != 0 and all(A[:,j]) != 0:
+                noisyA = np.hstack([noisyA, tmp])
+    plotAugmData(dP, A.shape, noisyA, False, "noisyY", "noisyY.pdf")
+
+    #print(noisyA)
+    return noisyA, A
+    
+# Fit initial data from prediction vs features
+def fitReverseInitialData(dP, shape, A):
+    poly = np.zeros((0, int(dP.fitPolyDegree)+1))
+    for i in range(0, A.shape[1]):
+        #tmp = np.polyfit(A[:shape[0],0], A[:shape[0],i], dP.fitPolyDegree)
+        tmp = polyfit.fit(A[:shape[0],0], A[:shape[0],i], dP.fitPolyDegree).coef
+        poly = np.vstack([poly, tmp])
+    return poly
+
+# --------------------------------------
+# Create new Training data
+# by adding a random percentage
+# to the fitted predictedd initial data
+# --------------------------------------
+def createXFitNoisyData(dP, A):
+    import random
+    poly = fitInitialData(dP, A.shape, A)
+    for h in range(int(dP.numAddedNoisyDataBlocks)):
+        noisyA = np.zeros((A.shape[0],0))
+        y_tmp = np.zeros((A.shape[0],0))
+        for j in range(1,A.shape[1]):
+            x_tmp = (A[:,j] + np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, A.shape[0])).reshape(-1,1)
+            #x_tmp = A[:,j].reshape(-1,1)
+            y_tmp = np.hstack([y_tmp, (polyval(x_tmp, poly[j])).reshape(-1,1)])
+
+            if all(x_tmp) != 0 and all(A[:,j]) != 0:
+                noisyA = np.hstack([noisyA, x_tmp])
+        noisyA = np.hstack([np.mean(y_tmp, axis=1).reshape(-1,1), noisyA])
+        
+    plotAugmData(dP, A.shape, noisyA, True, "noisyX", "noisyX.pdf")
+    return noisyA, A
+    
+# Fit initial data from features vs prediction
+def fitInitialData(dP, shape, A):
+    poly = np.zeros((0, int(dP.fitPolyDegree)+1))
+    for i in range(0, A.shape[1]):
+        tmp = polyfit.fit(A[:shape[0],i], A[:shape[0],0], dP.fitPolyDegree).coef
+        poly = np.vstack([poly, tmp])
+    return poly
+
+# ---------------------------------
+# Create new Training data
+# by swapping 2 values
+# within the same column
+# ---------------------------------
+def swapValuesColumn(dP, A):
+    import random
+    rows, cols = A.shape
+    if rows < 2:
+        print("Warning: The array has less than 2 rows. No swaps can be performed.")
+        return A, A
+    noisyA = np.zeros((0, A.shape[1]))
+    for h in range(int(dP.numAddedNoisyDataBlocks)):
+        noisyA_tmp = A
+        for _ in range(int(dP.numColSwaps)):
+            # Choose a random column index
+            col_index = random.randint(0, cols - 1)
+            # Choose two distinct random row indices within that column
+            row_index1, row_index2 = random.sample(range(rows), 2)
+            noisyA_tmp[row_index1, col_index], noisyA_tmp[row_index2, col_index] = A_tmp[row_index2, col_index], A_tmp[row_index1, col_index]
+        noisyA = np.vstack([noisyA, noisyA_tmp])
+    return noisyA, A
+'''
 
 #************************************
 # Train Autoencoder
