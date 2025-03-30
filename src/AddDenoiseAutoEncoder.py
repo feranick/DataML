@@ -260,6 +260,8 @@ def createNoisyData(dP, A):
 
     noisyA = np.vstack(noisyA_list) if noisyA_list else np.empty((0, A.shape[1]))
     newA = np.vstack(newA_list) if newA_list else np.empty((0, A.shape[1]))
+    
+    plotAugmData(dP, A.shape, noisyA, True, "noisy", "noisy.pdf")
 
     return noisyA, newA
 
@@ -274,9 +276,10 @@ def createYFitNoisyData(dP, A):
     noisyA_list = []
     newA_list = []
     for h in range(int(dP.numAddedNoisyDataBlocks)):
-        nA_tmp = [A[:,0].reshape(-1,1)]
+        x_tmp = A[:,0] + np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, A.shape[0])
+        nA_tmp = [x_tmp.reshape(-1,1)]
         for j in range(1,A.shape[1]):
-            tmp = (polyval(A[:,0], poly[j]) + np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, A.shape[0])).reshape(-1,1)
+            tmp = (polyval(x_tmp, poly[j]) + np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, A.shape[0])).reshape(-1,1)
             #tmp = (polyval(A[:,0], poly[j])).reshape(-1,1)
             #tmp = A[:,0].reshape(-1,1)
             if not (np.any(tmp == 0) or np.any(A[:, j] == 0)):
