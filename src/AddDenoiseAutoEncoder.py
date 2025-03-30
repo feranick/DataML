@@ -335,14 +335,14 @@ def swapValuesColumn(dP, A):
         return A, A
     noisyA = np.zeros((0, A.shape[1]))
     for h in range(int(dP.numAddedNoisyDataBlocks)):
-        noisyA_tmp = A
+        A_tmp = np.copy(A)
         for _ in range(int(dP.numColSwaps)):
             # Choose a random column index
             col_index = random.randint(0, cols - 1)
             # Choose two distinct random row indices within that column
             row_index1, row_index2 = random.sample(range(rows), 2)
-            noisyA_tmp[row_index1, col_index], noisyA_tmp[row_index2, col_index] = A_tmp[row_index2, col_index], A_tmp[row_index1, col_index]
-        noisyA = np.vstack([noisyA, noisyA_tmp])
+            A_tmp[row_index1, col_index], A_tmp[row_index2, col_index] = A_tmp[row_index2, col_index], A_tmp[row_index1, col_index]
+        noisyA = np.vstack([noisyA, A_tmp])
     return noisyA, A
 
 #************************************
