@@ -167,17 +167,17 @@ def main():
         if dP.shuffle:
             np.random.shuffle(A)
         if dP.typeNoise == 'Random':
-            print("  Creating random noise. ")
+            print("  Creating random noise. \n")
             noisy_A, new_A = createNoisyData(dP, A)
         elif dP.typeNoise == 'RandomYFit':
-            print("  Creating random noise from fitted initial feature data.")
+            print("  Creating random noise from fitted initial feature data.\n")
             noisy_A, new_A = createYFitNoisyData(dP, A)
         elif dP.typeNoise == 'RandomXFit':
-            print("  Creating random noise from fitted initial predicted data.")
+            print("  Creating random noise from fitted initial predicted data.\n")
             noisy_A, new_A = createXFitNoisyData(dP, A)
             plotFeatType = False
         elif dP.typeNoise == 'ColumnValueSwap':
-            print("  Creating noise via random swapping of values within columns.")
+            print("  Creating noise via random swapping of values within columns.\n")
             noisy_A, new_A = swapValuesColumn(dP, A)
         else:
             print("  Check value of typeNoise in ini file. Aborting.")
@@ -272,7 +272,7 @@ def createNoisyData(dP, A):
 # ------------------------------------
 def createYFitNoisyData(dP, A):
     import random
-    poly = fitReverseInitialData(dP, A.shape, A)
+    poly = fitReverseInitialData(dP, A)
     noisyA_list = []
     newA_list = []
     for h in range(int(dP.numAddedNoisyDataBlocks)):
@@ -281,9 +281,7 @@ def createYFitNoisyData(dP, A):
         for j in range(1,A.shape[1]):
             tmp = (polyval(x_tmp, poly[j]) + np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, A.shape[0])).reshape(-1,1)
             #tmp = (polyval(A[:,0], poly[j])).reshape(-1,1)
-            #tmp = A[:,0].reshape(-1,1)
-            if not (np.any(tmp == 0) or np.any(A[:, j] == 0)):
-                nA_tmp.append(tmp)
+            nA_tmp.append(tmp)
         noisyA_list.append(np.hstack(nA_tmp))
         newA_list.append(A)
         
@@ -294,10 +292,10 @@ def createYFitNoisyData(dP, A):
     return noisyA, newA
     
 # Fit initial data from prediction vs features
-def fitReverseInitialData(dP, shape, A):
+def fitReverseInitialData(dP, A):
     poly = np.zeros((A.shape[1], int(dP.fitPolyDegree)+1))
     for i in range(A.shape[1]):
-        poly[i, :] = polyfit.fit(A[:shape[0], 0], A[:shape[0], i], int(dP.fitPolyDegree)).coef
+        poly[i, :] = polyfit.fit(A[:, 0], A[:, i], int(dP.fitPolyDegree)).coef
     return poly
 
 # --------------------------------------
@@ -307,7 +305,7 @@ def fitReverseInitialData(dP, shape, A):
 # --------------------------------------
 def createXFitNoisyData(dP, A):
     import random
-    poly = fitInitialData(dP, A.shape, A)
+    poly = fitInitialData(dP, A)
     noisyA_list = []
     newA_list = []
     for h in range(int(dP.numAddedNoisyDataBlocks)):
@@ -317,9 +315,7 @@ def createXFitNoisyData(dP, A):
         for j in range(1, A.shape[1]):
             x_tmp = (A[:, j] + np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, A.shape[0])).reshape(-1, 1)
             y_tmp_list.append((polyval(x_tmp, poly[j])).reshape(-1, 1))
-
-            if not (np.any(x_tmp == 0) or np.any(A[:, j] == 0)):
-                x_tmp_list.append(x_tmp)
+            x_tmp_list.append(x_tmp)
 
         y_tmp = np.hstack(y_tmp_list)
         noisyA_list.append(np.hstack([np.mean(y_tmp, axis=1).reshape(-1, 1), np.hstack(x_tmp_list)]))
@@ -328,14 +324,13 @@ def createXFitNoisyData(dP, A):
     noisyA = np.vstack(noisyA_list)
     newA = np.vstack(newA_list)
     plotAugmData(dP, A.shape, noisyA, True, "noisyX", "noisyX.pdf")
-    print(newA)
     return noisyA, newA
     
 # Fit initial data from features vs prediction
-def fitInitialData(dP, shape, A):
+def fitInitialData(dP, A):
     poly = np.zeros((A.shape[1], int(dP.fitPolyDegree) + 1))
-    for i in range(A.shape[1], A.shape[1]):
-        poly[i, :] = polyfit.fit(A[:shape[0], i], A[:shape[0], 0], int(dP.fitPolyDegree)).coef
+    for i in range(A.shape[1]):
+        poly[i, :] = polyfit.fit(A[:, i], A[:, 0], int(dP.fitPolyDegree)).coef
     return poly
 
 # ---------------------------------
