@@ -158,8 +158,8 @@ def main():
         norm = 0
     
     if dP.plotAugmData:
-        plotAugmData(dP, A.shape, A, True, "Initial (X-F) Data", rootFile+"_initial_X-F_plots.pdf")
-        plotAugmData(dP, A.shape, A, False, "Initial (Y-P) Data", rootFile+"_initial_Y-P_plots.pdf")
+        plotAugmData(dP, A.shape, A, True, True, "Initial (X-F) Data", rootFile+"_initial_X-F_plots.pdf")
+        plotAugmData(dP, A.shape, A, False, True, "Initial (Y-P) Data", rootFile+"_initial_Y-P_plots.pdf")
     
     success = 0
     plotFeatType = True
@@ -189,7 +189,7 @@ def main():
             newA = np.vstack([newA, A_tmp])
             success += 1
             print("\n  Successful. Added so far:",str(success),"\n")
-            #plotAugmData(dP, A.shape, newA, plotFeatType, "test", rootFile+"_"+str(i)+"_plots.pdf")
+            #plotAugmData(dP, A.shape, newA, plotFeatType, "test", True, rootFile+"_"+str(i)+"_plots.pdf")
         else:
             #A_tmp = generateData(dP, dae, En, A, M, norm)
             print("  Skip this denoising autoencoder. Added so far:",str(success),"\n")
@@ -206,7 +206,7 @@ def main():
         saveLearnFile(dP, newA, newFile, "")
         
         if dP.plotAugmData:
-            plotAugmData(dP, A.shape, newA, plotFeatType, "Augmented data", newFile+"_plots.pdf")
+            plotAugmData(dP, A.shape, newA, plotFeatType, False, "Augmented data", newFile+"_plots.pdf")
     else:
         print("  No new training data created. Try to increse numAdditions or/and min_loss_dae.\n")
 
@@ -261,7 +261,7 @@ def createNoisyData(dP, A):
     noisyA = np.vstack(noisyA_list) if noisyA_list else np.empty((0, A.shape[1]))
     newA = np.vstack(newA_list) if newA_list else np.empty((0, A.shape[1]))
     
-    plotAugmData(dP, A.shape, noisyA, True, "Noisy", "Noisy.pdf")
+    plotAugmData(dP, A.shape, noisyA, True, True, "Noisy", "Noisy.pdf")
 
     return noisyA, newA
 
@@ -288,7 +288,7 @@ def createYFitNoisyData(dP, A):
     noisyA = np.vstack(noisyA_list)
     newA = np.vstack(newA_list)
         
-    plotAugmData(dP, A.shape, noisyA, False, "NoisyY", "NoisyY.pdf")
+    plotAugmData(dP, A.shape, noisyA, False, True, "NoisyY", "NoisyY.pdf")
     return noisyA, newA
     
 # Fit initial data from prediction vs features
@@ -323,7 +323,7 @@ def createXFitNoisyData(dP, A):
 
     noisyA = np.vstack(noisyA_list)
     newA = np.vstack(newA_list)
-    plotAugmData(dP, A.shape, noisyA, True, "NoisyX", "NoisyX.pdf")
+    plotAugmData(dP, A.shape, noisyA, True, True, "NoisyX", "NoisyX.pdf")
     return noisyA, newA
     
 # Fit initial data from features vs prediction
@@ -358,7 +358,7 @@ def swapValuesColumn(dP, A):
         newA_list.append(A)
     noisyA = np.vstack(noisyA_list)
     newA = np.vstack(newA_list)
-    plotAugmData(dP, A.shape, noisyA, True, "Swap", "Swap.pdf")
+    plotAugmData(dP, A.shape, noisyA, True, True, "Swap", "Swap.pdf")
     return noisyA, newA
     
 
@@ -512,12 +512,17 @@ def readLearnFile(dP, learnFile, newNorm):
 #************************************
 # Plot augmented training data
 #************************************
-def plotAugmData(dP, shape, newA, feat, title, plotFile):
+def plotAugmData(dP, shape, newA, feat, normFlag, title, plotFile):
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_pdf import PdfPages
     from sklearn.metrics import r2_score
     
     pdf = PdfPages(plotFile)
+    
+    if dP.normalize and normFlag:
+        with open(dP.norm_file, "rb") as f:
+            norm = pickle.load(f)
+        newA = norm.transform_inverse(newA)
         
     for i in range(1, shape[1]):
         if feat:
