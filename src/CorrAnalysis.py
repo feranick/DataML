@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: 2025.03.30.1
+* version: 2025.04.01.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -52,10 +52,14 @@ class Conf():
             self.trainCol = [item for item in range(self.trainCol[0]+self.skipHeadColumns, self.trainCol[1]+1+self.skipHeadColumns)]
             if len(self.predCol)!=1:
                 self.predCol = [item for item in range(self.predCol[0]+self.skipHeadColumns, self.predCol[1]+1+self.skipHeadColumns)]
+            else:
+                self.predCol = [self.predCol[0] + self.skipHeadColumns]
         else:
             self.trainCol = [x + self.skipHeadColumns for x in self.trainCol]
             if len(self.predCol)!=1:
                 self.predCol = [x + self.skipHeadColumns for x in self.predCol]
+            else:
+                self.predCol = [self.predCol[0] + self.skipHeadColumns]
     
         if self.includeAdditionalCol == True:
             self.inTrainCol=self.trainCol[-1]
