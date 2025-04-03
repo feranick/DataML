@@ -4,7 +4,7 @@
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
 * pyscript version
-* v2025.3.28.1
+* v2025.04.03.2
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -166,8 +166,17 @@ async def main(event):
         R.append(document.querySelector("#Entry"+str(i)).value)
     
     output = '============================\n '
+    
+    if dP.normalize:
+        normPkl = await getFile("", norm_file, True)
+        norm = pickle.loads(normPkl)
+        R = norm.transform_valid_data(R)
+    
     if dP.regressor:
-        pred = df.predict([R])
+         if dP.normalize:
+            pred = norm.transform_inverse_single(df.predict(R))
+        else:
+            pred = df.predict(R)
         proba = ""
         output += folder[:5] +" = " + str(pred[0])[:5]
     else:

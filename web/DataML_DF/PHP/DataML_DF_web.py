@@ -3,7 +3,7 @@
 '''
 ***************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2025.03.05.1
+* v2025.04.03.2
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***************************************************
@@ -172,8 +172,22 @@ def main():
 # Prediction - backend
 #************************************
 def getPrediction(dP, df, R, le):
+    if dP.normalize:
+        try:
+            with open(dP.norm_file, "rb") as f:
+                norm = pickle.load(f)
+            print("  Opening pkl file with normalization data:",dP.norm_file)
+            print("  Normalizing validation file for prediction...\n")
+            R = norm.transform_valid_data(R)
+        except:
+            print("\033[1m pkl file not found \033[0m")
+            return
+            
     if dP.regressor:
-        pred = df.predict(R)
+        if dP.normalize:
+            pred = norm.transform_inverse_single(df.predict(R))
+        else:
+            pred = df.predict(R)
         pred_classes = None
         proba = None
     else:

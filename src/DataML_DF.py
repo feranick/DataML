@@ -501,9 +501,7 @@ def getPrediction(dP, df, R, le):
         proba = None
     else:
         pred = le.inverse_transform_bulk(df.predict(R))
-        print(pred)
         pred_classes = le.inverse_transform_bulk(df.classes_)
-        print(pred_classes)
         proba = df.predict_proba(R)
     
     return pred, pred_classes, proba
