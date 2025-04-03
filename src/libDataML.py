@@ -2,7 +2,7 @@
 '''
 **************************************************
 * libDataML - Library for DataML/DataML_DF
-* version: 2025.04.01.1
+* version: 2025.04.03.1
 * Uses: Keras, TensorFlow, scikit-learn
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
@@ -781,18 +781,12 @@ def usage(name):
     print('  ',name,'-t <learningFile> <validationFile> \n')
     print(' Train (with external validation, with labels normalized with pkl file):')
     print('  ',name,'-t <learningFile> <validationFile> <pkl normalization file>\n')
-    print(' Predict (no label normalization used):')
+    print(' Predict:')
     print('  ',name,'-p <testFile>\n')
-    print(' Predict (labels normalized with pkl file):')
-    print('  ',name,'-p <testFile> <pkl normalization file>\n')
-    print(' Batch predict (no label normalization used):')
+    print(' Batch predict:')
     print('  ',name,'-b <folder>\n')
-    print(' Batch predict (labels normalized with pkl file):')
-    print('  ',name,'-b <folder> <pkl normalization file>\n')
-    print(' Batch predict on validation data in single file (no label normalization used):')
+    print(' Batch predict on validation data in single file:')
     print('  ',name,'-v <singleValidationFile>\n')
-    print(' Batch predict on validation data in single file (labels normalized with pkl file):')
-    print('  ',name,'-v <singleValidationFile> <pkl normalization file>\n')
     if name == 'DataML':
         print(' Convert model to quantized tflite:')
         print('  ',name,'-l <learningFile>\n')

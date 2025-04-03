@@ -19,7 +19,7 @@ Installation
 ## Installation from available wheel package
 If available from the main site, you can install SpectraKeras by running:
 
-    python3 -m pip install --upgrade dataml-2025.04.01.1-py3-none-any.whl
+    python3 -m pip install --upgrade dataml-2025.04.03.1-py3-none-any.whl
     
 SpectraKeras_CNN and Spectrakeras_MLP are available directly from the command line.
 NOTE: The Utilities in the `Utilities` folder are not included in the package, and can be run locally as needed.
@@ -121,23 +121,14 @@ Train (Random cross validation):
  Train (with external validation, with labels normalized with pkl file):
   `DataML_DF -t <learningFile> <validationFile> <pkl normalization file>`
 
- Predict (no label normalization used):
+ Predict:
   `DataML_DF -p <testFile>`
 
- Predict (labels normalized with pkl file):
-  `DataML_DF -p <testFile> <pkl normalization file>`
-
- Batch predict (no label normalization used):
+ Batch predict:
   `DataML_DF -b <folder>`
 
- Batch predict (labels normalized with pkl file):
-  `DataML_DF -b <folder> <pkl normalization file>`
-
- Batch predict on validation data in single file (no label normalization used):
+ Batch predict on validation data in single file:
   `DataML_DF -v <singleValidationFile>`
-
- Batch predict on validation data in single file (labels normalized with pkl file):
-  `DataML_DF -v <singleValidationFile> <pkl normalization file>`
   
  Generate new training set using normal or diffused randomization on each feature:
   `DataML_DF -g <learningFile> <pkl normalization file>`

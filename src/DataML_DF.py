@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2025.04.01.1
+* version: 2025.04.03.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -196,30 +196,21 @@ def main():
 
         if o in ("-p" , "--predict"):
             try:
-                if len(sys.argv)<4:
-                    predict(sys.argv[2], None)
-                else:
-                    predict(sys.argv[2], sys.argv[3])
+                predict(sys.argv[2])
             except:
                 usage(dP.appName)
                 sys.exit(2)
 
         if o in ("-b" , "--batch"):
             try:
-                if len(sys.argv)<4:
-                    batchPredict(sys.argv[2], None)
-                else:
-                    batchPredict(sys.argv[2], sys.argv[3])
+                batchPredict(sys.argv[2])
             except:
                 usage(dP.appName)
                 sys.exit(2)
             
         if o in ("-v" , "--validbatch"):
             try:
-                if len(sys.argv)<4:
-                    validBatchPredict(sys.argv[2], None)
-                else:
-                    validBatchPredict(sys.argv[2], sys.argv[3])
+                validBatchPredict(sys.argv[2])
             except:
                 usage(dP.appName)
                 sys.exit(2)
@@ -473,37 +464,43 @@ def train(learnFile, testFile, normFile):
 # Prediction - backend
 #************************************
 def getPrediction(dP, df, R, le):
-    if dP.regressor:
-        pred = df.predict(R)
-        pred_classes = None
-        proba = None
-    else:
-        pred = le.inverse_transform_bulk(df.predict(R))
-        pred_classes = le.inverse_transform_bulk(df.classes_)
-        proba = df.predict_proba(R)
-    return pred, pred_classes, proba
-    
-#************************************
-# Prediction - frontend
-#************************************
-def predict(testFile, normFile):
-    dP = Conf()
-    import sklearn
-    R, _ = readTestFile(testFile)
-
-    if normFile is not None:
+    if dP.normalize:
         try:
-            with open(normFile, "rb") as f:
+            with open(dP.norm_file, "rb") as f:
                 norm = pickle.load(f)
-            print("  Opening pkl file with normalization data:",normFile)
+            print("  Opening pkl file with normalization data:",dP.norm_file)
             print("  Normalizing validation file for prediction...\n")
             R = norm.transform_valid_data(R)
         except:
             print("\033[1m pkl file not found \033[0m")
             return
-     
+            
     if dP.runDimRedFlag:
         R = runPCAValid(R, dP)
+            
+    if dP.regressor:
+        if dP.normalize:
+            pred = norm.transform_inverse_single(df.predict(R))
+        else:
+            pred = df.predict(R)
+        pred_classes = None
+        proba = None
+    else:
+        pred = le.inverse_transform_bulk(df.predict(R))
+        print(pred)
+        pred_classes = le.inverse_transform_bulk(df.classes_)
+        print(pred_classes)
+        proba = df.predict_proba(R)
+    
+    return pred, pred_classes, proba
+    
+#************************************
+# Prediction - frontend
+#************************************
+def predict(testFile):
+    dP = Conf()
+    import sklearn
+    R, _ = readTestFile(testFile)
             
     with open(dP.modelName, "rb") as f:
         df = pickle.load(f)
@@ -536,19 +533,9 @@ def predict(testFile, normFile):
 #************************************
 # Batch Prediction
 #************************************
-def batchPredict(folder, normFile):
+def batchPredict(folder):
     dP = Conf()
     import sklearn
-    
-    if normFile is not None:
-        try:
-            with open(normFile, "rb") as f:
-                norm = pickle.load(f)
-            print("  Opening pkl file with normalization data:",normFile)
-            print("  Normalizing validation file for prediction...\n")
-        except:
-            print("\033[1m pkl file not found \033[0m")
-            return
             
     with open(dP.modelName, "rb") as f:
         df = pickle.load(f)
@@ -568,11 +555,6 @@ def batchPredict(folder, normFile):
     proba = []
     for file in glob.glob(folder+'/*.txt'):
         R, good = readTestFile(file)
-        if  normFile is not None:
-            R = norm.transform_valid_data(R)
-            
-        if dP.runDimRedFlag:
-            R = runPCAValid(R, dP)
         
         if good:
             predtmp, pred_classes, probatmp = getPrediction(dP, df, R, le)
@@ -606,20 +588,10 @@ def batchPredict(folder, normFile):
 #************************************************************
 # Batch Prediction using validation data (with real values)
 #************************************************************
-def validBatchPredict(testFile, normFile):
+def validBatchPredict(testFile):
     dP = Conf()
     En_test, A_test, Cl_test, _ = readLearnFile(testFile, dP)
     import sklearn
-    
-    if normFile is not None:
-        try:
-            with open(normFile, "rb") as f:
-                norm = pickle.load(f)
-            print("  Opening pkl file with normalization data:",normFile)
-            print("  Normalizing validation file for prediction...\n")
-        except:
-            print("\033[1m pkl file not found \033[0m")
-            return
             
     with open(dP.modelName, "rb") as f:
         df = pickle.load(f)
