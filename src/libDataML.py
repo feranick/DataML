@@ -76,11 +76,11 @@ class Normalizer(object):
         return vn
         
     def transform_inverse(self,V):
-        Vn = np.zeros([0,V.shape[1]])
+        Vnt = []
         for i in range (V.shape[0]):
-            vn = self.min + V[i,:]*(self.max - self.min)/self.YnormTo
-            Vn = np.vstack([Vn, vn])
-        return Vn
+            vn = self.min[0] + V[i]*(self.max[0] - self.min[0])/self.YnormTo
+            Vnt.append(vn)
+        return np.array(Vnt)
 
     def save(self):
         with open(self.norm_file, 'ab') as f:

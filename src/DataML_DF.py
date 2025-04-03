@@ -362,9 +362,23 @@ def train(learnFile, testFile, normFile):
     print("\n  ",dP.typeDF+dP.mode,"model saved in:", dP.modelName)
     with open(dP.modelName,'wb') as f:
         pickle.dump(df, f)
+        
+    if dP.normalize:
+        try:
+            with open(dP.norm_file, "rb") as f:
+                norm = pickle.load(f)
+            print("  Opening pkl file with normalization data:",dP.norm_file)
+            print("  Normalizing validation file for prediction...\n")
+        except:
+            print("\033[1m pkl file not found \033[0m")
+            return
 
     if dP.regressor:
-        pred = df.predict(A_test)
+        if dP.normalize:
+            pred = norm.transform_inverse(df.predict(A_test))
+            Cl_test = norm.transform_inverse(Cl_test)
+        else:
+            pred = df.predict(A_test)
         score = mean_absolute_error(pred, Cl_test)
     else:
         pred = le.inverse_transform_bulk(df.predict(A_test))
