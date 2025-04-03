@@ -2,7 +2,7 @@
 '''
 **************************************************
 * libDataML - Library for DataML/DataML_DF
-* version: 2025.04.03.1
+* version: 2025.04.03.2
 * Uses: Keras, TensorFlow, scikit-learn
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
@@ -313,7 +313,7 @@ def convertTflite(learnFile, dP):
 #************************************
 # Open Training Data
 #************************************
-def readLearnFile(learnFile, dP):
+def readLearnFile(learnFile, initNorm, dP):
     print("  Opening training file:\n  ",learnFile,"\n")
     try:
         if os.path.splitext(learnFile)[1] == ".npy":
@@ -330,10 +330,20 @@ def readLearnFile(learnFile, dP):
     
     if dP.normalize:
         print("\n  Normalization of feature matrix to 1")
-        print("  Normalization parameters saved in:", dP.norm_file,"\n")
-        norm = Normalizer(M, dP)
+        if initNorm:
+            print("  Normalization parameters saved in:", dP.norm_file,"\n")
+            norm = Normalizer(M, dP)
+            norm.save()
+        else:
+            try:
+                with open(dP.norm_file, "rb") as f:
+                    norm = pickle.load(f)
+                print("  Opening pkl file with normalization data:",dP.norm_file)
+            except:
+                print("\033[1m pkl file not found \033[0m")
+                return
+        print("  Normalizing validation file for prediction...\n")
         M = norm.transform(M)
-        norm.save()
         
     En = M[0,dP.numLabels:]
     A = M[1:,dP.numLabels:]

@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2025.04.03.1
+* version: 2025.04.03.2
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -252,9 +252,9 @@ def train(learnFile, testFile, normFile):
     
     learnFileRoot = os.path.splitext(learnFile)[0]
 
-    En, A, Cl, _ = readLearnFile(learnFile, dP)
+    En, A, Cl, _ = readLearnFile(learnFile, True, dP)
     if testFile is not None:
-        En_test, A_test, Cl_test, _ = readLearnFile(testFile, dP)
+        En_test, A_test, Cl_test, _ = readLearnFile(testFile, False, dP)
         totA = np.vstack((A, A_test))
         totCl = np.append(Cl, Cl_test)
     else:
@@ -604,7 +604,7 @@ def batchPredict(folder):
 #************************************************************
 def validBatchPredict(testFile):
     dP = Conf()
-    En_test, A_test, Cl_test, _ = readLearnFile(testFile, dP)
+    En_test, A_test, Cl_test, _ = readLearnFile(testFile, False, dP)
     import sklearn
             
     with open(dP.modelName, "rb") as f:
