@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* version: 2025.04.03.2
+* version: 2025.04.04.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
