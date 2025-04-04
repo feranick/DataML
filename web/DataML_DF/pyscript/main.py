@@ -14,6 +14,7 @@ import numpy as np
 import sys, configparser
 from pyscript import fetch, document
 import _pickle as pickle
+from libDataML import *
 #import pickle
 
 class Conf():
@@ -164,25 +165,27 @@ async def main(event):
     R = []
     for i in range(len(features.split(','))):
         R.append(document.querySelector("#Entry"+str(i)).value)
-    
+    R = np.array([[float(char) for char in R]])
+    Rorig = np.copy(R)
+    print(R)
     output = '============================\n '
     
     if dP.normalize:
-        normPkl = await getFile("", norm_file, True)
+        normPkl = await getFile(folder, dP.norm_file, True)
         norm = pickle.loads(normPkl)
-        R = norm.transform_valid_data([R])
+        R = norm.transform_valid_data(R)
     
     if dP.regressor:
         if dP.normalize:
-            pred = norm.transform_inverse_single(df.predict([R]))
+            pred = norm.transform_inverse_single(df.predict(R))
         else:
-            pred = df.predict([R])
+            pred = df.predict(R)
         proba = ""
         output += folder[:5] +" = " + str(pred[0])[:5]
     else:
         lePkl = await getFile("", dP.model_le, True)
         le = pickle.loads(lePkl)
-        pred = le.inverse_transform_bulk(df.predict([R]))
+        pred = le.inverse_transform_bulk(df.predict(R))
         pred_classes = le.inverse_transform_bulk(df.classes_)
         proba = df.predict_proba([R])
         ind = np.where(proba[0]==np.max(proba[0]))[0]
@@ -193,8 +196,8 @@ async def main(event):
             output += "\n" + str(pred_classes[ind[j]]) + "\t\t|  " + str(100*proba[0][ind[j]])[:5]
             
     output += '\n============================'
-    for i in range(0,len(R)):
-        output += "\n "+ features.split(',')[i].strip() + " = " + str(R[i])
+    for i in range(0,len(Rorig[0])):
+        output += "\n "+ features.split(',')[i].strip() + " = " + str(Rorig[0][i])
     output += '\n============================'
     output += '\n'+dP.typeDF+" "+dP.mode
     output += '\n============================\n'
