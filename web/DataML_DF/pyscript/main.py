@@ -245,16 +245,6 @@ async def batchPredict(event):
         output_div.innerText = output 
         return 0
 
-    #R = []
-    #for i in range(len(features.split(','))):
-    #    R.append(document.querySelector("#Entry"+str(i)).value)
-    #R = np.array([[float(char) for char in R]])
-    #Rorig = np.copy(R)
-    #print(R)
-
-    R = np.array([dataDf.iloc[:,1].tolist()])
-    Rorig = np.copy(R)
-    #print(dataDf.columns)
     output = '======================================\n'
     output += ' Prediction for ' + folder[:5]
     output += '\n======================================'

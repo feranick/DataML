@@ -168,7 +168,7 @@ def main():
     
     try:
         opts, args = getopt.getopt(sys.argv[1:],
-            "tpbvoh:", ["train", "predict", "batch", "validbatch", "opt", "help"])
+            "tpcbvoh:", ["train", "predict", "csv", "batch", "validbatch", "opt", "help"])
     except:
         usage(dP.appName)
         sys.exit(2)
@@ -197,6 +197,13 @@ def main():
         if o in ("-p" , "--predict"):
             try:
                 predict(sys.argv[2])
+            except:
+                usage(dP.appName)
+                sys.exit(2)
+                
+        if o in ("-c" , "--csv"):
+            try:
+                csvPredict(sys.argv[2])
             except:
                 usage(dP.appName)
                 sys.exit(2)
@@ -381,11 +388,12 @@ def train(learnFile, testFile, normFile):
             pred = df.predict(A_test)
         score = mean_absolute_error(pred, Cl_test)
     else:
-        pred = le.inverse_transform_bulk(df.predict(A_test))
         if dP.normalize:
+            pred = norm.transform_inverse(np.asarray(le.inverse_transform_bulk(df.predict(A_test))))
             pred_classes = norm.transform_inverse(np.asarray(le.inverse_transform_bulk(df.classes_)))
             Cl_test = norm.transform_inverse(Cl_test)
         else:
+            pred = le.inverse_transform_bulk(df.predict(A_test))
             pred_classes = le.inverse_transform_bulk(df.classes_)
         proba = df.predict_proba(A_test)
         score = accuracy_score([int(round(x)) for x in pred], [int(round(x)) for x in Cl_test])
@@ -397,27 +405,22 @@ def train(learnFile, testFile, normFile):
     print('\n  ================================================================================')
     print('  \033[1m',dP.typeDF,dP.mode,'\033[0m- Results')
     print('  ================================================================================')
-    print('   Real class\t| Predicted class\t| Delta')
+    if dP.regressor:
+        print('   Real class\t| Predicted class\t| Delta')
+    else:
+        print('   Real class\t| Predicted class\t| Delta\t| Probability ')
     print('  --------------------------------------------------------------------------------')
     for i in range(len(pred)):
-        print("   {0:.2f}\t| {1:.2f}\t\t| {2:.2f}".format(Cl_test[i], pred[i], delta[i]))
+        if dP.regressor:
+            print("   {0:.2f}\t| {1:.2f}\t\t| {2:.2f}".format(Cl_test[i], pred[i], delta[i]))
+        else:
+            ind = np.where(proba[i]==np.max(proba[i]))[0]
+            print("   {0:.2f}\t| {1:.2f}\t\t| {2:.2f} \t\t| {3:.2f}%".format(Cl_test[i], pred[i], delta[i], 100*proba[i][ind[0]]))
     print('  --------------------------------------------------------------------------------')
     print('  ',dP.metric,'= {0:.4f}'.format(score))
     #print('   R^2 = {0:.4f}'.format(df.score(A_test, Cl2_test)))
     print('   R^2 = {0:.4f}'.format(r2_score(Cl_test, pred)))
     print('   StDev = {0:.2f}'.format(stdev(delta)))
-    
-    if not dP.regressor:
-        print('\n  ================================================================================')
-        print('   Real class\t| Predicted class\t| Probability')
-        print('  --------------------------------------------------------------------------------')
-    
-        for i in range(len(pred)):
-            ind = np.where(proba[i]==np.max(proba[i]))[0]
-            for j in range(len(ind)):
-                print("   {0:.2f}\t| {1:.2f}\t\t| {2:.2f} ".format(Cl_test[i], pred_classes[ind[j]], 100*proba[i][ind[j]]))
-            print("")
-    
     print('  ================================================================================\n')
     
     if dP.plotFeatImportance and (dP.typeDF == 'RandomForest' or dP.typeDF == 'GradientBoosting'):
@@ -481,17 +484,9 @@ def train(learnFile, testFile, normFile):
 #************************************
 # Prediction - backend
 #************************************
-def getPrediction(dP, df, R, le):
+def getPrediction(dP, df, R, le, norm):
     if dP.normalize:
-        try:
-            with open(dP.norm_file, "rb") as f:
-                norm = pickle.load(f)
-            print("  Opening pkl file with normalization data:",dP.norm_file)
-            print("  Normalizing validation file for prediction...\n")
-            R = norm.transform_valid_data(R)
-        except:
-            print("\033[1m pkl file not found \033[0m")
-            return
+        R = norm.transform_valid_data(R)
             
     if dP.runDimRedFlag:
         R = runPCAValid(R, dP)
@@ -504,12 +499,13 @@ def getPrediction(dP, df, R, le):
         pred_classes = None
         proba = None
     else:
-        pred = le.inverse_transform_bulk(df.predict(R))
-        
         if dP.normalize:
+            pred = norm.transform_inverse(np.asarray(le.inverse_transform_bulk(df.predict(R))))
             pred_classes = norm.transform_inverse(np.asarray(le.inverse_transform_bulk(df.classes_)))
         else:
+            pred = le.inverse_transform_bulk(df.predict(R))
             pred_classes = le.inverse_transform_bulk(df.classes_)
+            
         proba = df.predict_proba(R)
     
     return pred, pred_classes, proba
@@ -531,7 +527,18 @@ def predict(testFile):
         with open(dP.model_le, "rb") as f:
             le = pickle.load(f)
     
-    pred, pred_classes, proba = getPrediction(dP, df, R, le)
+    if dP.normalize:
+        try:
+            with open(dP.norm_file, "rb") as f:
+                norm = pickle.load(f)
+            print("  Opening pkl file with normalization data:",dP.norm_file)
+        except:
+            print("\033[1m pkl file not found \033[0m")
+            return
+    else:
+        norm = None
+    
+    pred, pred_classes, proba = getPrediction(dP, df, R, le, norm)
         
     print('\n  ================================================================================')
     print('  \033[1m',dP.typeDF,dP.mode,'\033[0m')
@@ -551,6 +558,55 @@ def predict(testFile):
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
 
 #************************************
+# Prediction from CSV table
+#************************************
+def csvPredict(csvFile):
+    dP = Conf()
+    import sklearn
+    import pandas as pd
+    
+    dataDf = pd.read_csv(csvFile)
+            
+    with open(dP.modelName, "rb") as f:
+        df = pickle.load(f)
+        
+    if dP.regressor:
+        le = None
+    else:
+        with open(dP.model_le, "rb") as f:
+            le = pickle.load(f)
+            
+    if dP.normalize:
+        try:
+            with open(dP.norm_file, "rb") as f:
+                norm = pickle.load(f)
+            print("  Opening pkl file with normalization data:",dP.norm_file)
+        except:
+            print("\033[1m pkl file not found \033[0m")
+            return
+    else:
+        norm = None
+    
+    print('\n  ==============================================================================')
+    print('  \033[1m',dP.typeDF,dP.mode,'\033[0m')
+    print('  ==============================================================================')
+    
+    for i in range(1,dataDf.shape[1]):
+        R = np.array([dataDf.iloc[:,i].tolist()])
+        Rorig = np.copy(R)
+    
+        pred, pred_classes, proba = getPrediction(dP, df, R, le, norm)
+
+        if dP.regressor:
+            print("   {0:s}\t = {1:s} ".format(dataDf.columns[i], str(pred[0])[:5]))
+        else:
+            ind = np.where(proba[0]==np.max(proba[0]))[0]
+            for j in range(len(ind)):
+                print("   {0:s}\t = {1:.2f}\t ({2:.2f}%) ".format(dataDf.columns[i], pred_classes[ind[j]], 100*proba[0][ind[j]]))
+    print('  ==============================================================================\n')
+    print('  Scikit-learn v.',str(sklearn.__version__),'\n')
+
+#************************************
 # Batch Prediction
 #************************************
 def batchPredict(folder):
@@ -559,6 +615,17 @@ def batchPredict(folder):
             
     with open(dP.modelName, "rb") as f:
         df = pickle.load(f)
+        
+    if dP.normalize:
+        try:
+            with open(dP.norm_file, "rb") as f:
+                norm = pickle.load(f)
+            print("  Opening pkl file with normalization data:",dP.norm_file)
+        except:
+            print("\033[1m pkl file not found \033[0m")
+            return
+    else:
+        norm = None
     
     summaryFile = np.array([['Folder:',folder,''],['DataML_DF',dP.typeDF,dP.mode]])
     
@@ -577,7 +644,7 @@ def batchPredict(folder):
         R, good = readTestFile(file)
         
         if good:
-            predtmp, pred_classes, probatmp = getPrediction(dP, df, R, le)
+            predtmp, pred_classes, probatmp = getPrediction(dP, df, R, le, norm)
             pred.append(predtmp)
             proba.append(probatmp)
             fileName.append(file)
