@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2025.04.03.2
+* version: 2025.04.04.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -382,7 +382,11 @@ def train(learnFile, testFile, normFile):
         score = mean_absolute_error(pred, Cl_test)
     else:
         pred = le.inverse_transform_bulk(df.predict(A_test))
-        pred_classes = le.inverse_transform_bulk(df.classes_)
+        if dP.normalize:
+            pred_classes = norm.transform_inverse(np.asarray(le.inverse_transform_bulk(df.classes_)))
+            Cl_test = norm.transform_inverse(Cl_test)
+        else:
+            pred_classes = le.inverse_transform_bulk(df.classes_)
         proba = df.predict_proba(A_test)
         score = accuracy_score([int(round(x)) for x in pred], [int(round(x)) for x in Cl_test])
 
@@ -491,7 +495,7 @@ def getPrediction(dP, df, R, le):
             
     if dP.runDimRedFlag:
         R = runPCAValid(R, dP)
-            
+    
     if dP.regressor:
         if dP.normalize:
             pred = norm.transform_inverse_single(df.predict(R))
@@ -501,7 +505,11 @@ def getPrediction(dP, df, R, le):
         proba = None
     else:
         pred = le.inverse_transform_bulk(df.predict(R))
-        pred_classes = le.inverse_transform_bulk(df.classes_)
+        
+        if dP.normalize:
+            pred_classes = norm.transform_inverse(np.asarray(le.inverse_transform_bulk(df.classes_)))
+        else:
+            pred_classes = le.inverse_transform_bulk(df.classes_)
         proba = df.predict_proba(R)
     
     return pred, pred_classes, proba
