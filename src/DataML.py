@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* version: 2025.04.04.1
+* version: 2025.04.04.2
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -321,8 +321,9 @@ def train(learnFile, testFile, normFile):
             Cl2_test = le.transform(Cl_test)
         '''
         
-        le = MultiClassReductor()
+        le = MultiClassReductor(dP)
         le.fit(np.unique(totCl, axis=0))
+        le.save()
         Cl2 = le.transform(Cl)
         
         print("  Number unique classes (training): ", np.unique(Cl).size)
@@ -331,10 +332,6 @@ def train(learnFile, testFile, normFile):
             Cl2_test = le.transform(Cl_test)
             print("  Number unique classes (validation):", np.unique(Cl_test).size)
             print("  Number unique classes (total): ", np.unique(totCl).size)
-            
-        print("\n  Label encoder saved in:", dP.model_le,"\n")
-        with open(dP.model_le, 'ab') as f:
-            pickle.dump(le, f)
         
         #totCl2 = keras.utils.to_categorical(totCl2, num_classes=np.unique(totCl).size)
         Cl2 = keras.utils.to_categorical(Cl2, num_classes=np.unique(totCl).size+1)

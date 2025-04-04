@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2025.04.04.1
+* version: 2025.04.04.2
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -303,9 +303,10 @@ def train(learnFile, testFile, normFile):
         if testFile is not None:
             Cl2_test = le.transform(Cl_test)
         '''
-        
-        le = MultiClassReductor()
+                
+        le = MultiClassReductor(dP)
         le.fit(np.unique(totCl, axis=0))
+        le.save()
         Cl2 = le.transform(Cl)
         
         print("  Number unique classes (training): ", np.unique(Cl).size)
@@ -314,10 +315,6 @@ def train(learnFile, testFile, normFile):
         Cl2_test = le.transform(Cl_test)
         print("  Number unique classes (validation):", np.unique(Cl_test).size)
         print("  Number unique classes (total): ", np.unique(totCl).size)
-            
-        print("\n  Label encoder saved in:", dP.model_le,"\n")
-        with open(dP.model_le, 'ab') as f:
-            pickle.dump(le, f)
 
     #************************************
     # Run PCA if needed.
@@ -499,12 +496,19 @@ def getPrediction(dP, df, R, le, norm):
         pred_classes = None
         proba = None
     else:
+        #print(df.predict(R))
+        #print(le.inverse_transform_bulk(df.predict(R)))
         if dP.normalize:
             pred = norm.transform_inverse(np.asarray(le.inverse_transform_bulk(df.predict(R))))
             pred_classes = norm.transform_inverse(np.asarray(le.inverse_transform_bulk(df.classes_)))
         else:
             pred = le.inverse_transform_bulk(df.predict(R))
             pred_classes = le.inverse_transform_bulk(df.classes_)
+        
+        #print("\nget_predictions")
+        #print(R)
+        #print(df.predict(R))
+        #print(pred)
             
         proba = df.predict_proba(R)
     
