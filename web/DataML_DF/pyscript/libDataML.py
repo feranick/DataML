@@ -2,7 +2,7 @@
 '''
 **************************************************
 * libDataML - Library for DataML/DataML_DF
-* v2025.04.04.1
+* v2025.04.04.2
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
@@ -81,16 +81,16 @@ class Normalizer(object):
         return np.array(Vnt)
 
     def save(self):
-        with open(self.norm_file, 'ab') as f:
+        with open(self.norm_file, 'wb') as f:
             pickle.dump(self, f)
 
 #************************************
 # MultiClassReductor
 #************************************
 class MultiClassReductor():
-    def __self__(self):
-        self.name = name
-    
+    def __init__(self,dP):
+        self.model_le = dP.model_le
+
     def fit(self,tc):
         self.totalClass = tc.tolist()
     
@@ -111,3 +111,7 @@ class MultiClassReductor():
 
     def classes_(self):
         return self.totalClass
+        
+    def save(self):
+        with open(self.model_le, 'wb') as f:
+            pickle.dump(self, f)

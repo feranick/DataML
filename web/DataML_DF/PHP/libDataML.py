@@ -2,7 +2,7 @@
 '''
 **************************************************
 * libDataML - Library for DataML/DataML_DF
-* version: 2025.04.04.1
+* version: 2025.04.04.2
 * Uses: Keras, TensorFlow, scikit-learn
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
@@ -83,7 +83,7 @@ class Normalizer(object):
         return np.array(Vnt)
 
     def save(self):
-        with open(self.norm_file, 'ab') as f:
+        with open(self.norm_file, 'wb') as f:
             pickle.dump(self, f)
 
 #************************************
@@ -112,6 +112,9 @@ class CustomRound:
 # MultiClassReductor
 #************************************
 class MultiClassReductor():
+    def __init__(self,dP):
+        self.model_le = dP.model_le
+
     def fit(self,tc):
         self.totalClass = tc.tolist()
     
@@ -132,6 +135,10 @@ class MultiClassReductor():
 
     def classes_(self):
         return self.totalClass
+        
+    def save(self):
+        with open(self.model_le, 'wb') as f:
+            pickle.dump(self, f)
 
 #************************************
 # Load saved models
@@ -793,8 +800,6 @@ def usage(name):
     print('  ',name,'-t <learningFile> <validationFile> <pkl normalization file>\n')
     print(' Predict:')
     print('  ',name,'-p <testFile>\n')
-    print(' Predict from CSV file for multiple samples (DataML_DF only):')
-    print('  DataML_DF -c <testFile.csv>\n')
     print(' Batch predict:')
     print('  ',name,'-b <folder>\n')
     print(' Batch predict on validation data in single file:')
