@@ -79,6 +79,9 @@ Train (Random cross validation):
 
  Predict (labels normalized with pkl file):
   `DataML -p <testFile> <pkl normalization file>`
+  
+ Predict from CSV file for multiple samples (DataML_DF only):
+   `DataML_DF -c <testFile.csv>`
 
  Batch predict (no label normalization used):
   `DataML -b <folder>`

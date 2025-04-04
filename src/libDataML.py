@@ -793,6 +793,8 @@ def usage(name):
     print('  ',name,'-t <learningFile> <validationFile> <pkl normalization file>\n')
     print(' Predict:')
     print('  ',name,'-p <testFile>\n')
+    print(' Predict from CSV file for multiple samples (DataML_DF only):')
+    print('  DataML_DF -c <testFile.csv>\n')
     print(' Batch predict:')
     print('  ',name,'-b <folder>\n')
     print(' Batch predict on validation data in single file:')
