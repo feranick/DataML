@@ -3,7 +3,7 @@
 '''
 ***************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2025.04.03.2
+* v2025.04.04.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***************************************************
@@ -55,36 +55,36 @@ class Conf():
             print(" Configuration file: \""+confFileName+"\" does not exist: Creating one.\n")
             self.createConfig()
         self.readConfig(self.configFile)
-        self.model_directory = "./"
+        self.model_directory = "/"
         if self.regressor:
             self.mode = "Regressor"
             self.metric = "MAE"
         else:
             self.mode = "Classifier"
             self.metric = "Accuracy"
-        
+
         self.modelNameRoot = "model_DF_"
         self.modelName = folder + "/" +self.modelNameRoot + self.typeDF + self.mode + ".pkl"
         self.summaryFileName = self.modelNameRoot + self.typeDF + self.mode + ".csv"
-        
+
         self.tb_directory = "model_DF"
         self.model_name = self.model_directory+self.modelNameRoot
-        
-        self.model_le = self.model_directory+"model_le.pkl"
+
+        self.model_le = folder + self.model_directory+"model_le.pkl"
         self.model_scaling = folder + self.model_directory+"model_scaling.pkl"
         self.model_pca = folder + self.model_directory+"model_encoder.pkl"
         self.norm_file = folder + self.model_directory+"norm_file.pkl"
-        
+
         self.optParFile = "opt_parameters.txt"
-                    
+
         self.rescaleForPCA = False
         if self.regressor:
             self.optScoring = self.optScoringR
         else:
             self.optScoring = self.optScoringC
-        
+
         self.verbose = 1
-                    
+
     def datamlDef(self):
         self.conf['Parameters'] = {
             'typeDF' : 'GradientBoosting',
@@ -163,10 +163,10 @@ class Conf():
 # Main
 #************************************
 def main():
-    try:
-         predict(sys.argv[1], sys.argv[2], sys.argv[3])
-    except:
-         print("Select model and run prediction.")
+    #try:
+    predict(sys.argv[1], sys.argv[2], sys.argv[3])
+    #except:
+    #     print("Select model and run prediction.")
 
 #************************************
 # Prediction - backend
@@ -176,13 +176,14 @@ def getPrediction(dP, df, R, le):
         try:
             with open(dP.norm_file, "rb") as f:
                 norm = pickle.load(f)
-            print("  Opening pkl file with normalization data:",dP.norm_file)
-            print("  Normalizing validation file for prediction...\n")
-            R = norm.transform_valid_data(R)
+                R = norm.transform_valid_data(R)
         except:
             print("\033[1m pkl file not found \033[0m")
             return
-            
+
+    if dP.runDimRedFlag:
+        R = runPCAValid(R, dP)
+
     if dP.regressor:
         if dP.normalize:
             pred = norm.transform_inverse_single(df.predict(R))
@@ -192,8 +193,13 @@ def getPrediction(dP, df, R, le):
         proba = None
     else:
         pred = le.inverse_transform_bulk(df.predict(R))
-        pred_classes = le.inverse_transform_bulk(df.classes_)
+
+        if dP.normalize:
+            pred_classes = norm.transform_inverse(np.asarray(le.inverse_transform_bulk(df.classes_)))
+        else:
+            pred_classes = le.inverse_transform_bulk(df.classes_)
         proba = df.predict_proba(R)
+
     return pred, pred_classes, proba
 
 #************************************
@@ -204,7 +210,7 @@ def predict(folder, testFile, features):
 
     #R, _ = readTestFile(testFile)
 
-    R = [testFile.split(',')]
+    R = np.array([testFile.split(',')], dtype=float)
     feat = features.split(',')
 
     if any(item == '' for item in R[0]):
@@ -216,7 +222,7 @@ def predict(folder, testFile, features):
 
     with open(dP.modelName, "rb") as f:
         df = pickle.load(f)
-        
+
     if dP.regressor:
         le = None
     else:
