@@ -170,13 +170,13 @@ async def main(event):
     if dP.normalize:
         normPkl = await getFile("", norm_file, True)
         norm = pickle.loads(normPkl)
-        R = norm.transform_valid_data(R)
+        R = norm.transform_valid_data([R])
     
     if dP.regressor:
-         if dP.normalize:
-            pred = norm.transform_inverse_single(df.predict(R))
+        if dP.normalize:
+            pred = norm.transform_inverse_single(df.predict([R]))
         else:
-            pred = df.predict(R)
+            pred = df.predict([R])
         proba = ""
         output += folder[:5] +" = " + str(pred[0])[:5]
     else:
