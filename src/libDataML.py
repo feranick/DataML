@@ -667,8 +667,7 @@ def runAutoencoder2(learnFile, testFile, dP):
     En, A, Cl, _ = readLearnFile(learnFile, dP)
             
     shape = A.shape[1:]
-    latent_dim = 4
-    autoencoder = Autoencoder(latent_dim, shape)
+    autoencoder = Autoencoder(dP.numDimRedComp, shape)
     autoencoder.compile(optimizer=keras.optimizers.Adam(), loss=keras.losses.MeanSquaredError())
     
     if testFile is None:
