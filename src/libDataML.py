@@ -35,8 +35,8 @@ class Normalizer(object):
             self.max[0] = np.nanmax(self.M[1:,0])
         
         for i in range(1,M.shape[1]):
-            self.min[i] = np.amin(self.M[1:,i])
-            self.max[i] = np.amax(self.M[1:,i])
+            self.min[i] = np.nanmin(self.M[1:,i])
+            self.max[i] = np.nanmax(self.M[1:,i])
     
     def transform(self,y):
         Mn = np.copy(y)
