@@ -217,8 +217,10 @@ def getPredictions(R, model, dP):
         
     else:
         predictions = model.predict(R)
-        
-    probabilities = scipy.special.softmax(predictions.astype('double'))
+    if dP.regressor = False:
+        probabilities = scipy.special.softmax(predictions.astype('double'))
+    else:
+        probabilities = ""
     return predictions, probabilities
 
 #************************************
