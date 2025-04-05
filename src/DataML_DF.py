@@ -249,16 +249,14 @@ def train(learnFile, testFile, normFile):
     learnFileRoot = os.path.splitext(learnFile)[0]
 
     En, A, Cl, _ = readLearnFile(learnFile, True, dP)
-    if testFile is not None:
-        En_test, A_test, Cl_test, _ = readLearnFile(testFile, False, dP)
-        totA = np.vstack((A, A_test))
-        totCl = np.append(Cl, Cl_test)
-        print("YES")
-    else:
+    if testFile is None:
         totA = A
         totCl = Cl
         A, Cl, A_test, Cl_test, _ = formatSubset(A, Cl, dP.cv_split)
-        print("NO")
+    else:
+        En_test, A_test, Cl_test, _ = readLearnFile(testFile, False, dP)
+        totA = np.vstack((A, A_test))
+        totCl = np.append(Cl, Cl_test)
         
     if dP.trainFullData:
         A = totA
