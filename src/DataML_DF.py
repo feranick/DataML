@@ -401,7 +401,9 @@ def train(learnFile, testFile, normFile):
             print("   {0:.2f}\t| {1:.2f}\t\t| {2:.2f}".format(Cl_test[i], pred[i], delta[i]))
         else:
             ind = np.where(proba[i]==np.max(proba[i]))[0]
-            print("   {0:.2f}\t| {1:.2f}\t\t| {2:.2f} \t\t| {3:.2f}%".format(Cl_test[i], pred[i], delta[i], 100*proba[i][ind[0]]))
+            for j in range(len(ind)):
+                print("   {0:.2f}\t| {1:.2f}\t\t| {2:.2f} \t\t| {3:.2f}%".format(Cl_test[i], pred[i], delta[i], 100*proba[i][ind[j]]))
+            
     print('  --------------------------------------------------------------------------------')
     print('  ',dP.metric,'= {0:.4f}'.format(score))
     #print('   R^2 = {0:.4f}'.format(df.score(A_test, Cl2_test)))
