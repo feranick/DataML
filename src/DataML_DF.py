@@ -180,8 +180,6 @@ def main():
     for o, a in opts:
         if o in ("-t" , "--train"):
             #try:
-            setTrain(sys.argv)
-            '''
             if len(sys.argv)<4:
                 train(sys.argv[2], None, None)
             else:
@@ -189,7 +187,7 @@ def main():
                     train(sys.argv[2], sys.argv[3], None)
                 else:
                     train(sys.argv[2], sys.argv[3], sys.argv[4])
-            '''
+            
             #except:
             #    usage(dP.appName)
             #    sys.exit(2)
@@ -239,15 +237,6 @@ def main():
 #************************************
 # Training
 #************************************
-def setTrain(sysargv):
-    if len(sysargv)<4:
-        train(sysargv[2], None, None)
-    else:
-        if len(sysargv)<5:
-            train(sysargv[2], sysargv[3], None)
-        else:
-            train(sysargv[2], sysargv[3], sysargv[4])
-
 def train(learnFile, testFile, normFile):
     dP = Conf()
    
@@ -264,10 +253,12 @@ def train(learnFile, testFile, normFile):
         En_test, A_test, Cl_test, _ = readLearnFile(testFile, False, dP)
         totA = np.vstack((A, A_test))
         totCl = np.append(Cl, Cl_test)
+        print("YES")
     else:
         totA = A
         totCl = Cl
         A, Cl, A_test, Cl_test, _ = formatSubset(A, Cl, dP.cv_split)
+        print("NO")
         
     if dP.trainFullData:
         A = totA
@@ -602,7 +593,7 @@ def csvPredict(csvFile):
         pred, pred_classes, proba = getPrediction(dP, df, R, le, norm)
 
         if dP.regressor:
-            print("   {0:s}\t = {1:s} ".format(dataDf.columns[i], str(pred[0])[:5]))
+            print("   {0:s}\t = {1:.1f} ".format(dataDf.columns[i], pred[0]))
         else:
             ind = np.where(proba[0]==np.max(proba[0]))[0]
             for j in range(len(ind)):
