@@ -49,8 +49,8 @@ class Normalizer(object):
                     Mn[i,0] = customData(Mn[i,0])
         if self.saveNormalized:
             for i in range(1,y.shape[1]):
-                if self.max[i] == 0:
-                    Mn[1:,i] = 0
+                if self.max[i] - self.min[i] == 0:
+                    Mn[1:,i] = (self.max[i] + self.min[i])/2
                 else:
                     Mn[1:,i] = np.multiply(y[1:,i] - self.min[i],
                         self.YnormTo/(self.max[i] - self.min[i]))
@@ -59,15 +59,21 @@ class Normalizer(object):
     def transform_valid(self,V):
         Vn = np.copy(V)
         for i in range(0,V.shape[0]):
-            Vn[i,1] = np.multiply(V[i,1] - self.min[i+1],
-                self.YnormTo/(self.max[i+1] - self.min[i+1]))
+            if self.max[i+1] - self.min[i+1] == 0:
+                Vn[i,1] = (self.max[i+1] + self.min[i+1])/2
+            else:
+                Vn[i,1] = np.multiply(V[i,1] - self.min[i+1],
+                    self.YnormTo/(self.max[i+1] - self.min[i+1]))
         return Vn
     
     def transform_valid_data(self,V):
         Vn = np.copy(V)
         if self.saveNormalized:
             for i in range(0,V.shape[1]):
-                Vn[0][i] = np.multiply(V[0][i] - self.min[i+1],
+                if self.max[i+1] - self.min[i+1] == 0:
+                    Vn[0][i] = (self.max[i+1] - self.min[i+1])/2
+                else:
+                    Vn[0][i] = np.multiply(V[0][i] - self.min[i+1],
                     self.YnormTo/(self.max[i+1] - self.min[i+1]))
         return Vn
     
@@ -217,10 +223,10 @@ def getPredictions(R, model, dP):
         
     else:
         predictions = model.predict(R)
-    if dP.regressor = False:
-        probabilities = scipy.special.softmax(predictions.astype('double'))
-    else:
+    if dP.regressor:
         probabilities = ""
+    else:
+        probabilities = scipy.special.softmax(predictions.astype('double'))
     return predictions, probabilities
 
 #************************************
