@@ -365,7 +365,7 @@ def readLearnFile(learnFile, initNorm, dP):
     if dP.numLabels == 1:
         Cl = M[1:,0]
     else:
-        Cl = M[1:,[0,dP.numLabels-1]]
+        Cl = M[1:,0:dP.numLabels]
 
     return En, A, Cl, M
     
