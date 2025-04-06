@@ -24,7 +24,7 @@ class Normalizer(object):
         self.YnormTo = 1
         self.stepNormLabel = 0.01
         self.saveNormalized = True
-        self.norm_file = dP.norm_file
+        self.norm_file = "norm_file.pkl"
         
         self.data = np.arange(0,1,self.stepNormLabel)
         self.min = np.zeros([self.M.shape[1]])
@@ -41,8 +41,11 @@ class Normalizer(object):
     def transform(self,y):
         Mn = np.copy(y)
         if self.normalizeLabel:
-            Mn[1:,0] = np.multiply(y[1:,0] - self.min[0],
-                self.YnormTo/(self.max[0] - self.min[0]))
+            if self.max[0] - self.min[0] == 0:
+                Mn[1:,0] = (self.max[0] + self.min[0])/2
+            else:
+                Mn[1:,0] = np.multiply(y[1:,0] - self.min[0],
+                    self.YnormTo/(self.max[0] - self.min[0]))
             if self.useCustomRound:
                 customData = CustomRound(self.data)
                 for i in range(1,y.shape[0]):
@@ -77,16 +80,26 @@ class Normalizer(object):
                     self.YnormTo/(self.max[i+1] - self.min[i+1]))
         return Vn
     
+    # Single sample, format [[0,1,2,3,4...]]
     def transform_inverse_single(self,v):
         vn = self.min[0] + v*(self.max[0] - self.min[0])/self.YnormTo
         return vn
-        
+
+    # Multiple samples, format as vertical stacks of singles
     def transform_inverse(self,V):
         Vnt = []
         for i in range (V.shape[0]):
             vn = self.min[0] + V[i]*(self.max[0] - self.min[0])/self.YnormTo
             Vnt.append(vn)
         return np.array(Vnt)
+
+    # format simular to original DataML file
+    def transform_inverse_features(self,V):
+        Vn = []
+        for i in range (V.shape[1]):
+            vn = (self.min[i] + + V[1:,i]*(self.max[i] - self.min[i])/self.YnormTo)
+            Vn.append(vn)
+        return np.vstack([V[0,:],np.vstack(Vn).T])
 
     def save(self):
         with open(self.norm_file, 'wb') as f:

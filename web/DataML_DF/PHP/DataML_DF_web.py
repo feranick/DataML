@@ -48,7 +48,7 @@ class Conf():
 
         self.appName = "DataML_DF"
         confFileName = "DataML_DF.ini"
-        self.configFile = os.getcwd()+"/"+folder+"/"+confFileName
+        self.configFile = os.path.join(os.getcwd(),confFileName)
         self.conf = configparser.ConfigParser()
         self.conf.optionxform = str
         if os.path.isfile(self.configFile) is False:
