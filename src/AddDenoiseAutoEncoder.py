@@ -11,7 +11,7 @@
 print(__doc__)
 
 import numpy as np
-import sys, os.path, h5py, pickle, configparser
+import sys, os.path, h5py, pickle, configparser, ast
 from numpy.polynomial.polynomial import Polynomial as polyfit
 from numpy.polynomial.polynomial import polyval as polyval
 
@@ -93,7 +93,7 @@ class Conf():
             self.reinforce = self.conf.getboolean('Parameters','reinforce')
             self.shuffle = self.conf.getboolean('Parameters','shuffle')
             self.linear_net = self.conf.getboolean('Parameters','linear_net')
-            self.net_arch = eval(self.denDaeDef['net_arch'])
+            self.net_arch = ast.literal_eval(self.denDaeDef['net_arch'])
             self.encoded_dim = self.conf.getint('Parameters','encoded_dim')
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.epochs = self.conf.getint('Parameters','epochs')

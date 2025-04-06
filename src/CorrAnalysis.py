@@ -14,7 +14,7 @@ print(__doc__)
 import numpy as np
 import pandas as pd
 from scipy import stats
-import sys, os.path, configparser
+import sys, os.path, configparser, ast
 from datetime import datetime, date
 from scipy.stats import pearsonr, spearmanr
 import matplotlib as mpl
@@ -119,15 +119,15 @@ class Conf():
             self.skipHeadColumns = self.conf.getint('Parameters','skipHeadColumns')
             self.skipEmptyColumns = self.conf.getboolean('Parameters','skipEmptyColumns')
             self.specifyColumns = self.conf.getboolean('Parameters','specifyColumns')
-            self.trainCol = eval(self.corrAnalysisDef['trainCol'])
-            self.predCol = eval(self.corrAnalysisDef['predCol'])
+            self.trainCol = ast.literal_eval(self.corrAnalysisDef['trainCol'])
+            self.predCol = ast.literal_eval(self.corrAnalysisDef['predCol'])
             
             self.includeAdditionalCol = self.conf.getboolean('Parameters','includeAdditionalCol')
             self.initialAdditionalCol = self.conf.getint('Parameters','initialAdditionalCol')
             self.finalAdditionalCol = self.conf.getint('Parameters','finalAdditionalCol')
     
             self.separateValidFile = self.conf.getboolean('Parameters','separateValidFile')
-            self.validRows = eval(self.corrAnalysisDef['validRows'])
+            self.validRows = ast.literal_eval(self.corrAnalysisDef['validRows'])
 
             self.valueForNan = self.conf.getint('Parameters','valueForNan')
             self.removeNaNfromCorr = self.conf.getboolean('Parameters','removeNaNfromCorr')
@@ -144,8 +144,8 @@ class Conf():
             self.addSampleTagPlot = self.conf.getboolean('Parameters','addSampleTagPlot')
             self.polyDegree = self.conf.getint('Parameters','polyDegree')
 
-            self.graphX = eval(self.corrAnalysisDef['graphX'])
-            self.graphY = eval(self.corrAnalysisDef['graphY'])
+            self.graphX = ast.literal_eval(self.corrAnalysisDef['graphX'])
+            self.graphY = ast.literal_eval(self.corrAnalysisDef['graphY'])
     
             self.plotSpectralCorr = self.conf.getboolean('Parameters','plotSpectralCorr')                # True: use for raw data (spectra, etc)
             self.stepXticksPlot = self.conf.getint('Parameters','stepXticksPlot')

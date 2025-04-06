@@ -113,7 +113,7 @@ class Conf():
             self.regressor = self.conf.getboolean('Parameters','regressor')
             self.l_rate = self.conf.getfloat('Parameters','l_rate')
             self.l_rdecay = self.conf.getfloat('Parameters','l_rdecay')
-            self.HL = eval(self.datamlDef['HL'])
+            self.HL = ast.literal_eval(self.datamlDef['HL'])
             self.drop = self.conf.getfloat('Parameters','drop')
             self.l2 = self.conf.getfloat('Parameters','l2')
             self.epochs = self.conf.getint('Parameters','epochs')

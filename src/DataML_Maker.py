@@ -13,9 +13,8 @@ print(__doc__)
 
 import numpy as np
 import pandas as pd
-import sys, os.path, h5py, pickle, configparser
+import sys, os.path, h5py, pickle, configparser, ast
 from random import uniform
-from bisect import bisect_left
 from libDataML import *
 
 #***************************************************
@@ -103,15 +102,15 @@ class Conf():
             
             self.minCCol = self.conf.getint('Parameters','minCCol')
             self.maxCCol = self.conf.getint('Parameters','maxCCol')
-            self.charCCols = eval(self.dataMLMakerDef['charCCols'])
-            self.predRCol = eval(self.dataMLMakerDef['predRCol'])
+            self.charCCols = ast.literal_eval(self.dataMLMakerDef['charCCols'])
+            self.predRCol = ast.literal_eval(self.dataMLMakerDef['predRCol'])
             
             self.purgeUndefRows = self.conf.getboolean('Parameters','purgeUndefRows')
             self.validFile = self.conf.getboolean('Parameters','validFile')
             self.createRandomValidSet = self.conf.getboolean('Parameters','createRandomValidSet')
             
             self.percentValid = self.conf.getfloat('Parameters','percentValid')
-            self.validRows = eval(self.dataMLMakerDef['validRows'])
+            self.validRows = ast.literal_eval(self.dataMLMakerDef['validRows'])
             self.precData = self.conf.getint('Parameters','precData')
             
             self.saveNormalized = self.conf.getboolean('Parameters','saveNormalized')            #
@@ -124,7 +123,7 @@ class Conf():
             self.fullRandomMatrix = self.conf.getboolean('Parameters','fullRandomMatrix')
             
             self.numRandomAdds = self.conf.getint('Parameters','numRandomAdds')
-            self.randomCols = eval(self.dataMLMakerDef['randomCols'])
+            self.randomCols = ast.literal_eval(self.dataMLMakerDef['randomCols'])
             self.minPercVariation = self.conf.getfloat('Parameters','minPercVariation')
             self.randomizeLabel = self.conf.getboolean('Parameters','randomizeLabel')
             self.useGeneralNormLabel = self.conf.getboolean('Parameters','useGeneralNormLabel')
