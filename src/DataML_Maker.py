@@ -239,9 +239,8 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
             
     if dP.saveNormalized or dP.normalizeLabel:
         norm = Normalizer(P, dP)
-        P = norm.transform(P)
-        V = norm.transform(V)
         saveLearnFile(V, validFile+"_norm", False, dP)
+        norm.save()
     else:
         norm = None
         saveLearnFile(V, validFile, False, dP)
