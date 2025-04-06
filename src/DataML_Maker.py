@@ -174,11 +174,15 @@ def main():
     rootFile += '_p' + str(predRColTag[0])
     learnFile = rootFile + '_train'
     
-    try:
-        P,V = readParamFile(sys.argv[1], predRCol, rootFile, dP)
-    except:
-        print("\033[1m" + " Something went wrong, maybe Param file not found\n" + "\033[0m")
-        return
+    #try:
+    P,V,norm = readParamFile(sys.argv[1], predRCol, rootFile, dP)
+    #except:
+    #    print("\033[1m" + " Something went wrong, maybe Param file not found\n" + "\033[0m")
+    #    return
+    
+    normTag = ""
+    if dP.saveNormalized or dP.normalizeLabel:
+        normTag += '_norm'
     
     #************************************
     # Creating training set
@@ -196,19 +200,9 @@ def main():
         
         if dP.randomizeLabel:
             learnRandomFile += '_rLab'
-        if dP.saveNormalized or dP.normalizeLabel:
-            norm = Normalizer(Pr, dP)
-            norm.save(rootFile +"_norm.pkl")
-            saveLearnFile(norm.transform_matrix(Pr), learnRandomFile+'_norm', True, dP)
-        else:
-            saveLearnFile(Pr, learnRandomFile, False, dP)
+            saveLearnFile(Pr, learnRandomFile+normTag, False, dP)
     else:
-        if dP.saveNormalized or dP.normalizeLabel:
-            norm = Normalizer(P, dP)
-            norm.save(rootFile+ "_norm.pkl")
-            saveLearnFile(norm.transform_matrix(P), learnFile +'_norm', True, dP)
-        else:
-            saveLearnFile(P, learnFile, False, dP)
+            saveLearnFile(P, learnFile+normTag, False, dP)
 
 #************************************
 # Open Learning Data
@@ -242,12 +236,17 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
             if dP.validRows != 0:
                 P = np.vstack([list(range(0,M.shape[1])),np.delete(M,dP.validRows,0)])
                 V = np.vstack([list(range(0,M.shape[1])),M[dP.validRows,:]])
-                
-        if dP.saveNormalized or dP.normalizeLabel:
-            saveLearnFile(norm.transform_matrix(V), validFile +'_norm', True, dP)
-        else:
-            saveLearnFile(V, validFile, False, dP)
-    return P,V
+            
+    if dP.saveNormalized or dP.normalizeLabel:
+        norm = Normalizer(P, dP)
+        P = norm.transform(P)
+        V = norm.transform(V)
+        saveLearnFile(V, validFile+"_norm", False, dP)
+    else:
+        norm = None
+        saveLearnFile(V, validFile, False, dP)
+
+    return P,V, norm
     
 #***************************************
 # Save new learning Data
