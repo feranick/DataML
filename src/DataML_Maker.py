@@ -255,7 +255,7 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
 def saveLearnFile(M, learnFile, saveNormFlag, dP):
     if dP.saveAsTxt == True:
         learnFile += '.txt'
-        with open(learnFile, 'ab') as f:
+        with open(learnFile, 'w') as f:
                  np.savetxt(f, M, delimiter='\t', fmt="%10.{0}f".format(dP.precData))
         if saveNormFlag == False:
             print(" Saving new training file (txt) in:", learnFile+"\n")
