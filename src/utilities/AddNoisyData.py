@@ -5,7 +5,7 @@
 * Add data with random noise on all colums or
 * on selected ones.
 * Noise is a random percentage multiplier
-* version: v2023.12.15.1
+* * version: 2025.04.05.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -93,7 +93,7 @@ def saveLearnFile(M, learnFile):
     if dP.saveAsTxt == True:
         learnFile += '.txt'
         print(" Saving new training file (txt) in:", learnFile+"\n")
-        with open(learnFile, 'ab') as f:
+        with open(learnFile, 'w') as f:
             np.savetxt(f, M, delimiter='\t', fmt='%10.6f')
     else:
         learnFile += '.h5'

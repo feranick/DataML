@@ -4,7 +4,7 @@
 **********************************************************
 * ValidFileMaker
 * Make Single Validation File
-* version: v2024.10.04.1
+* version: 2025.04.05.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 **********************************************************
 '''
@@ -82,7 +82,7 @@ def saveLearnFile(M, row, name, learnFile):
 
     if dP.saveAsTxt == True:
         learnFile += '.txt'
-        with open(learnFile, 'ab') as f:
+        with open(learnFile, 'w') as f:
                  np.savetxt(f, M1, delimiter='\t', fmt="%10.{0}f".format(dP.precData))
         print("\n Saving new validation file (txt) in:\n ", learnFile+"\n")
     else:

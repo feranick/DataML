@@ -5,7 +5,7 @@
 * RemoveSpurious
 * Remove spurious data from training set 
 * that have values below the minimum allowed
-* version: v2024.11.22.2
+* version: 2025.04.05.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 ************************************************
 '''
@@ -89,7 +89,7 @@ def saveLearnFile(dP, M, learnFile, tag):
     if dP.saveAsTxt == True:
         learnFileRoot += tag + '.txt'
         print(" Saving new training file (txt) in:", learnFileRoot+"\n")
-        with open(learnFileRoot, 'ab') as f:
+        with open(learnFileRoot, 'w') as f:
             np.savetxt(f, M, delimiter='\t', fmt='%10.6f')
     else:
         learnFileRoot += tag + '.h5'

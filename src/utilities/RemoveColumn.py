@@ -3,7 +3,7 @@
 '''
 *********************************************
 * Remove Column
-* version: v2023.12.15.1
+* version: 2025.04.05.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -64,7 +64,7 @@ def readLearnFile(learnFile):
 def saveLearnFile(M, learnFile):
     if dP.saveAsTxt:
         learnFile += '.txt'
-        with open(learnFile, 'ab') as f:
+        with open(learnFile, 'w') as f:
                  np.savetxt(f, M, delimiter='\t', fmt="%10.{0}f".format(dP.precData))
         print(" Saving new training file (txt) in:", learnFile+"\n")
     else:
