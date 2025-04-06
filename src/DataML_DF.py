@@ -48,7 +48,7 @@ class Conf():
 
         self.appName = "DataML_DF"
         confFileName = "DataML_DF.ini"
-        self.configFile = os.path.join(os.getcwd(),confFileName)
+        self.configFile = os.getcwd()+"/"+confFileName
         self.conf = configparser.ConfigParser()
         self.conf.optionxform = str
         if os.path.isfile(self.configFile) is False:
@@ -200,11 +200,11 @@ def main():
                 sys.exit(2)
                 
         if o in ("-c" , "--csv"):
-            try:
-                csvPredict(sys.argv[2])
-            except:
-                usage(dP.appName)
-                sys.exit(2)
+            #try:
+            csvPredict(sys.argv[2])
+            #except:
+            #    usage(dP.appName)
+            #    sys.exit(2)
 
         if o in ("-b" , "--batch"):
             try:
@@ -564,13 +564,17 @@ def csvPredict(csvFile):
             
     with open(dP.modelName, "rb") as f:
         df = pickle.load(f)
-        
+    
+    summaryFile = np.array([['File:',csvFile,''],['DataML_DF',dP.typeDF,dP.mode]])
+    
     if dP.regressor:
+        summaryFile = np.vstack((summaryFile,['Sample','Predicted Value','']))
         le = None
     else:
         with open(dP.model_le, "rb") as f:
             le = pickle.load(f)
-            
+        summaryFile = np.vstack((summaryFile,['Sample','Predicted Value','Probability %']))
+    
     if dP.normalize:
         try:
             with open(dP.norm_file, "rb") as f:
@@ -594,11 +598,14 @@ def csvPredict(csvFile):
 
         if dP.regressor:
             print("   {0:s}\t = {1:.1f} ".format(dataDf.columns[i], pred[0]))
+            summaryFile = np.vstack((summaryFile,[dataDf.columns[i],pred[0],'']))
         else:
             ind = np.where(proba[0]==np.max(proba[0]))[0]
             for j in range(len(ind)):
                 print("   {0:s}\t = {1:.2f}\t ({2:.2f}%) ".format(dataDf.columns[i], pred_classes[ind[j]], 100*proba[0][ind[j]]))
+                summaryFile = np.vstack((summaryFile,[dataDf.columns[i],pred_classes[ind[j]],round(100*proba[0][ind[j]],1)]))
     print('  ==============================================================================\n')
+    saveSummaryFile(summaryFile, dP)
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
 
 #************************************
