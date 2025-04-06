@@ -189,7 +189,7 @@ def main():
     #************************************
     if dP.randomize:
         print(" Creating randomized training set using",dP.minPercVariation*100, "% as max variation on parameters\n")
-        Pr = randomize(P)
+        Pr = randomize(P, dP)
         
         if dP.fullRandomMatrix:
             randTag = '_fullrand'
@@ -198,11 +198,10 @@ def main():
        
         learnRandomFile = learnFile + randTag + str(dP.numRandomAdds) + '_pcVar' + str(int(dP.minPercVariation*100))
         
-        if dP.randomizeLabel:
-            learnRandomFile += '_rLab'
-            saveLearnFile(Pr, learnRandomFile+normTag, False, dP)
+        learnRandomFile += '_rLab'
+        saveLearnFile(Pr, learnRandomFile+normTag, False, dP)
     else:
-            saveLearnFile(P, learnFile+normTag, False, dP)
+        saveLearnFile(P, learnFile+normTag, False, dP)
 
 #************************************
 # Open Learning Data
@@ -268,8 +267,8 @@ def saveLearnFile(M, learnFile, saveNormFlag, dP):
 #***************************************
 # Randomize initial set
 #***************************************
-def randomize(P):
-    Pr = np.copy(P)
+def randomize(P, dP):
+    Pr = np.copy(P).tolist()
 
     if not dP.fullRandomMatrix:
         cols = dP.randomCols
@@ -277,12 +276,13 @@ def randomize(P):
         cols = P[0,1:].astype(int)
         
     for j in range (0,dP.numRandomAdds):
-        rand = randomMatrix(P, cols)
+        rand = randomMatrix(P, cols, dP)
         temp = np.multiply(P[1:],rand)
-        Pr = np.vstack([Pr, temp])
+        Pr.append(temp)
+    Pr = np.vstack(Pr)
     return Pr
 
-def randomMatrix(P, cols):
+def randomMatrix(P, cols, dP):
     rand = np.ones(P[1:].shape)
     rand[:,cols] = np.random.uniform(1-dP.minPercVariation,1,rand[:,cols].shape)
     return rand
