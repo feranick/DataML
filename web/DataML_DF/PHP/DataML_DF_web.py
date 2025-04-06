@@ -11,7 +11,7 @@
 #print(__doc__)
 
 import numpy as np
-import sys, os.path, configparser
+import sys, os.path, configparser, ast
 import pickle
 #from libDataML import *
 
@@ -143,7 +143,7 @@ class Conf():
             self.optimizeParameters = self.conf.getboolean('Parameters','optimizeParameters')
             self.optScoringR = self.conf.get('Parameters','optScoringR')
             self.optScoringC = self.conf.get('Parameters','optScoringC')
-            self.random_state = eval(self.sysDef['random_state'])
+            self.random_state = ast.literal_eval(self.sysDef['random_state'])
             self.n_jobs = self.conf.getint('System','n_jobs')
             
         except:

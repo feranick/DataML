@@ -13,7 +13,7 @@
 import numpy as np
 import pandas as pd
 from io import BytesIO
-import sys, configparser
+import sys, configparser, ast
 from pyscript import fetch, document
 import _pickle as pickle
 from libDataML import *
@@ -118,7 +118,7 @@ class Conf():
             self.optimizeParameters = self.conf.getboolean('Parameters','optimizeParameters')
             self.optScoringR = self.conf.get('Parameters','optScoringR')
             self.optScoringC = self.conf.get('Parameters','optScoringC')
-            self.random_state = eval(self.sysDef['random_state'])
+            self.random_state = ast.literal_eval(self.sysDef['random_state'])
             self.n_jobs = self.conf.getint('System','n_jobs')
         except:
             print(" Error in reading configuration file. Please check it\n")
