@@ -14,9 +14,7 @@ print(__doc__)
 import numpy as np
 import pandas as pd
 from scipy import stats
-import sys, os.path, configparser, h5py
-from random import uniform
-from bisect import bisect_left
+import sys, os.path, configparser
 from datetime import datetime, date
 from scipy.stats import pearsonr, spearmanr
 import matplotlib as mpl
@@ -178,11 +176,14 @@ def main():
     dP = Conf()
         
     dfP,dfL = readParamFile(sys.argv[1], dP)
+    if dfP is None:
+        print("Exiting due to error reading parameter file.")
+        return 0
         
-    if dP.separateValidFile:
-        dfV, _ = readParamFile(sys.argv[2])
+    if dP.separateValidFile and len(sys.argv) > 2:
+        dfV, _ = readParamFile(sys.argv[2], dP)
         #dfP = dfP.append(dfV,ignore_index=True) # deprecated in Pandas v>2
-        dfP = dfP.concat([dfP, dfV], ignore_index=True)
+        dfP = pd.concat([dfP, dfV], ignore_index=True)
         dP.validRows = dfP.index.tolist()[-len(dfV.index.tolist()):]
     P,headP = processParamFile(dfP, dP.trainCol, dP)
     V,headV = processParamFile(dfP, dP.predCol, dP)
@@ -226,10 +227,12 @@ def main():
         plotSpectralCorrelations(dfPearson, P, "PearsonR_correlation", rootFile, pdf, dP)
         plotSpectralCorrelations(dfSpearman, P, "SpearmanR_correlation", rootFile, pdf, dP)
         if not dP.corrSpectraFull:
-            dfPearson[dfPearson<dP.corrSpectraMin] = 0
-            dfSpearman[dfSpearman<dP.corrSpectraMin] = 0
-            plotCorrelations(dfPearson, P, "PearsonR_correlation (Corr > "+ str(dP.corrSpectraMin)+")", rootFile, pdf)
-            plotCorrelations(dfSpearman, P, "SpearmanR_correlation", rootFile, pdf)
+            dfPearson_tmp = dfPearson.copy()
+            dfSpearman_tmp = dfSpearman.copy()
+            dfPearson_tmp[dfPearson_tmp < dP.corrSpectraMin] = 0
+            dfSpearman_tmp[dfSpearman_tmp<dP.corrSpectraMin] = 0
+            plotCorrelations(dfPearson_tmp, P, "PearsonR_correlation (Corr > "+ str(dP.corrSpectraMin)+")", rootFile, pdf)
+            plotCorrelations(dfSpearma_tmpn, P, "SpearmanR_correlation", rootFile, pdf)
 
     if dP.plotSelectedGraphs:
         num1 = plotSelectedGraphs(dfP, dfL, dfPearson, dP.graphX, dP.graphY, dP.validRows, "PearsonR_correlation", pdf, dP)
@@ -253,7 +256,8 @@ def readParamFile(paramFile, dP):
         if dP.skipHeadRows != 0 :
             with open(paramFile, 'r') as f:
                 dfL = pd.read_csv(f, delimiter = ",", nrows=dP.skipHeadRows)
-            dfL.columns = dfL.iloc[3]
+            #dfL.columns = dfL.iloc[3]
+            dfL.columns = dfL.iloc[dP.skipHeadColumns+1]
             print(dfL)
         else:
             dfL = pd.DataFrame([])
