@@ -267,8 +267,7 @@ def saveLearnFile(M, learnFile, saveNormFlag, dP):
 # Randomize initial set
 #***************************************
 def randomize(P, dP):
-    Pr = np.copy(P).tolist()
-
+    Pr = [P]
     if not dP.fullRandomMatrix:
         cols = dP.randomCols
     else:
@@ -278,8 +277,7 @@ def randomize(P, dP):
         rand = randomMatrix(P, cols, dP)
         temp = np.multiply(P[1:],rand)
         Pr.append(temp)
-    Pr = np.vstack(Pr)
-    return Pr
+    return np.vstack(Pr)
 
 def randomMatrix(P, cols, dP):
     rand = np.ones(P[1:].shape)
