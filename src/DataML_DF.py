@@ -26,7 +26,7 @@ def DataML_DF():
 #************************************
 class Conf():
     def __init__(self):
-    
+
         #################################
         ### Types of estimators:
         ### Set using: typeDF

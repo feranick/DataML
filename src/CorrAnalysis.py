@@ -517,7 +517,7 @@ def plotSpectralCorrelations(dfP, P, title, filename, pdf, dP):
         ax2.set_title(title)
         ax2.legend(loc='upper left')
         pdf.savefig()
-    plt.close
+    plt.close()
 
 #************************************
 # Format Labels
