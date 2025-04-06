@@ -302,7 +302,6 @@ def getCorrelations(V, P, dP):
             P2, V2, _ = purgeSparse(P[:,i], V[:,j], P[:,i], dP)
             pearsonR[j,i], _ = pearsonr(P2, V2)
             spearmanR[j,i], _ = spearmanr(P2, V2)
-    print(pearsonR.shape)
     return pearsonR, spearmanR
 
 def purgeSparse(P, V, label, dP):
