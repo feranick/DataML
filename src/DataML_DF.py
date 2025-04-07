@@ -382,7 +382,8 @@ def train(learnFile, testFile, normFile):
             pred = le.inverse_transform_bulk(df.predict(A_test))
             pred_classes = le.inverse_transform_bulk(df.classes_)
         proba = df.predict_proba(A_test)
-        score = accuracy_score([int(round(x)) for x in pred], [int(round(x)) for x in Cl_test])
+        
+        score = accuracy_score([int(x) for x in pred], Cl_test)
 
     delta = pred - Cl_test
     
