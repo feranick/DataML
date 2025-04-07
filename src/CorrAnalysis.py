@@ -41,9 +41,7 @@ class Conf():
         if os.path.isfile(self.configFile) is False:
             print(" Configuration file: \""+confFileName+"\" does not exist: Creating one.\n")
             self.createConfig()
-        self.readConfig(self.configFile)
-        self.model_directory = "./"
-        
+        self.readConfig(self.configFile)        
         self.skipHeadColumns = self.skipHeadColumns-1
         
         if self.specifyColumns == False:
@@ -278,7 +276,7 @@ def processParamFile(dfP, lims, dP):
         # Use this for only empty columns
         #cols_to_drop = P.columns[(P == 0).all()]
         
-        # Use this for columns with the same value
+        # Remove constant columns
         cols_to_drop = []
         for col in P.columns:
             if (P[col] == P[col].iloc[0]).all():
