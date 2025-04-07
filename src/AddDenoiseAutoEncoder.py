@@ -144,7 +144,7 @@ def main():
     try:
         En, A, M = readLearnFile(dP, sys.argv[1], True)
     except:
-        return 0
+        return 1
     
     rootFile = dP.model_directory + os.path.splitext(os.path.basename(sys.argv[1]))[0] + \
             '_numDataTrainDae' + str(dP.numAddedNoisyDataBlocks * A.shape[0])
@@ -217,10 +217,9 @@ def getAmin(A):
     A_min = []
     for i in range(A.shape[1]):
         A_min_single = min(x for x in A[:,i] if x != 0)
-        A_min = np.hstack([A_min,A_min_single])
-    A_min = np.asarray(A_min)
-    return A_min
-
+        A_min.append(A_min_single)
+    return np.hstack(A_min)
+    
 # ---------------------------------
 # Create new Training data
 # by adding a random percentage
