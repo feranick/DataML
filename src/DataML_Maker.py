@@ -40,19 +40,14 @@ class Conf():
         self.readConfig(self.configFile)
         self.model_directory = "./"
         
-        # Do not change
-        def rescaleList(list, value):
-            list = [x + value for x in list]
-            return list
-        
         if self.fullDataset:
             self.minCCol = self.minCCol + self.numHeadColumns-1
             self.maxCCol = self.maxCCol + self.numHeadColumns-1
         else:
-            self.charCCols = rescaleList(self.charCCols, self.numHeadColumns - 1)
+            self.charCCols = self.rescaleList(self.charCCols, self.numHeadColumns - 1)
         
         self.predRColTag = self.predRCol
-        self.predRCol = rescaleList(self.predRCol, self.numHeadColumns - 1)
+        self.predRCol = self.rescaleList(self.predRCol, self.numHeadColumns - 1)
         
         self.numLabels = len(self.predRCol)
         self.validRows = [x-1 for x in self.validRows]
@@ -141,8 +136,12 @@ class Conf():
                 self.conf.write(configfile)
         except:
             print("Error in creating configuration file")
+            
+    # Do not change
+    def rescaleList(self, list, value):
+        list = [x + value for x in list]
+        return list
     
-
 #************************************
 # Main
 #************************************
