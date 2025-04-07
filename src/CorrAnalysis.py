@@ -231,9 +231,9 @@ def main():
             dfPearson_tmp = dfPearson.copy()
             dfSpearman_tmp = dfSpearman.copy()
             dfPearson_tmp[dfPearson_tmp < dP.corrSpectraMin] = 0
-            dfSpearman_tmp[dfSpearman_tmp<dP.corrSpectraMin] = 0
+            dfSpearman_tmp[dfSpearman_tmp < dP.corrSpectraMin] = 0
             plotCorrelations(dfPearson_tmp, P, "PearsonR_correlation (Corr > "+ str(dP.corrSpectraMin)+")", rootFile, pdf)
-            plotCorrelations(dfSpearma_tmpn, P, "SpearmanR_correlation", rootFile, pdf)
+            plotCorrelations(dfSpearma_tmp, P, "SpearmanR_correlation", rootFile, pdf)
 
     if dP.plotSelectedGraphs:
         num1 = plotSelectedGraphs(dfP, dfL, dfPearson, dP.graphX, dP.graphY, dP.validRows, "PearsonR_correlation", pdf, dP)
