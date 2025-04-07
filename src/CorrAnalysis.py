@@ -113,21 +113,22 @@ class Conf():
     def readConfig(self,configFile):
         try:
             self.conf.read(configFile)
-            self.corrAnalysisDef = self.conf['Parameters']
+            #self.corrAnalysisDef = self.conf['Parameters']
+            self.corrAnalysisPar = self.conf['Parameters']
 
             self.skipHeadRows = self.conf.getint('Parameters','skipHeadRows')
             self.skipHeadColumns = self.conf.getint('Parameters','skipHeadColumns')
             self.skipEmptyColumns = self.conf.getboolean('Parameters','skipEmptyColumns')
             self.specifyColumns = self.conf.getboolean('Parameters','specifyColumns')
-            self.trainCol = ast.literal_eval(self.corrAnalysisDef['trainCol'])
-            self.predCol = ast.literal_eval(self.corrAnalysisDef['predCol'])
+            self.trainCol = ast.literal_eval(self.corrAnalysisPar['trainCol'])
+            self.predCol = ast.literal_eval(self.corrAnalysisPar['predCol'])
             
             self.includeAdditionalCol = self.conf.getboolean('Parameters','includeAdditionalCol')
             self.initialAdditionalCol = self.conf.getint('Parameters','initialAdditionalCol')
             self.finalAdditionalCol = self.conf.getint('Parameters','finalAdditionalCol')
     
             self.separateValidFile = self.conf.getboolean('Parameters','separateValidFile')
-            self.validRows = ast.literal_eval(self.corrAnalysisDef['validRows'])
+            self.validRows = ast.literal_eval(self.corrAnalysisPar['validRows'])
 
             self.valueForNan = self.conf.getint('Parameters','valueForNan')
             self.removeNaNfromCorr = self.conf.getboolean('Parameters','removeNaNfromCorr')
@@ -144,8 +145,8 @@ class Conf():
             self.addSampleTagPlot = self.conf.getboolean('Parameters','addSampleTagPlot')
             self.polyDegree = self.conf.getint('Parameters','polyDegree')
 
-            self.graphX = ast.literal_eval(self.corrAnalysisDef['graphX'])
-            self.graphY = ast.literal_eval(self.corrAnalysisDef['graphY'])
+            self.graphX = ast.literal_eval(self.corrAnalysisPar['graphX'])
+            self.graphY = ast.literal_eval(self.corrAnalysisPar['graphY'])
     
             self.plotSpectralCorr = self.conf.getboolean('Parameters','plotSpectralCorr')                # True: use for raw data (spectra, etc)
             self.stepXticksPlot = self.conf.getint('Parameters','stepXticksPlot')
