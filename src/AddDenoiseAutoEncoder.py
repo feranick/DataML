@@ -366,7 +366,8 @@ def swapValuesColumn(dP, A):
 #************************************
 def trainAutoencoder(dP, noisyA, A, file):
     import keras
-    input = keras.Input(shape=(A.shape[1],),sparse=True)
+    #input = keras.Input(shape=(A.shape[1],),sparse=True)
+    input = keras.Input(shape=(A.shape[1],))
     ############
     # Encoder
     ############
