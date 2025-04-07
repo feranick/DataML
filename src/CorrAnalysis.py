@@ -299,8 +299,18 @@ def getCorrelations(V, P, dP):
     for j in range(V.shape[1]):
         for i in range(P.shape[1]):
             P2, V2, _ = purgeSparse(P[:,i], V[:,j], P[:,i], dP)
-            pearsonR[j,i], _ = pearsonr(P2, V2)
-            spearmanR[j,i], _ = spearmanr(P2, V2)
+            try:
+                # Check size explicitly before calling, as correlation on < 2 points is undefined
+                if P2.size < 2 or V2.size < 2:
+                    pearsonR[j,i] = np.nan
+                    spearmanR[j,i] = np.nan
+                else:
+                    pearsonR[j,i], _ = pearsonr(P2, V2)
+                    spearmanR[j,i], _ = spearmanr(P2, V2)
+            except ValueError: # Catch error just in case size check isn't exhaustive
+                pearsonR[j,i] = np.nan
+                spearmanR[j,i] = np.nan
+
     return pearsonR, spearmanR
 
 def purgeSparse(P, V, label, dP):
@@ -377,19 +387,6 @@ def heatMapsCorrelations(dfP, title, pdf, dP):
     #plt.savefig(title+".png", dpi = 160, format = 'png')  # Save plot
     #plt.show()
     plt.close()
-
-def heatMapsCorrelations2(dfP):
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    cax = ax.matshow(dfP.corr(),cmap='coolwarm', vmin=-1, vmax=1)
-    fig.colorbar(cax)
-    ticks = np.arange(0,len(dfP.columns),1)
-    ax.set_xticks(ticks)
-    plt.xticks(rotation=90)
-    ax.set_yticks(ticks)
-    ax.set_xticklabels(dfP.columns)
-    ax.set_yticklabels(dfP.columns)
-    plt.show()
 
 #************************************
 # Plot Graphs based on threshold
