@@ -492,7 +492,7 @@ def runPCA(A, numDimRedComp, dP):
     return A_encoded
         
 #********************************************************************************
-# Convert matrix data to saved scaled/PCA - EXPERIMENTAL
+# Convert matrix data to saved scaled/PCA
 #********************************************************************************
 def runPCAValid(A, dP):
     import numpy as np
@@ -511,7 +511,7 @@ def runPCAValid(A, dP):
     return A_enc
 
 #********************************************************************************
-# Carry out statistics/plots for PCA analysis - EXPERIMENTAL
+# Carry out statistics/plots for PCA analysis
 #********************************************************************************
 def statsPCA(En, A_r, Cl, dP):
     showDimRedplots = True
