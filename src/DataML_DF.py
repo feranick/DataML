@@ -119,8 +119,8 @@ class Conf():
     def readConfig(self,configFile):
         try:
             self.conf.read(configFile)
-            self.datamlDef = self.conf['Parameters']
-            self.sysDef = self.conf['System']
+            self.datamlPar = self.conf['Parameters']
+            self.sysPar = self.conf['System']
     
             self.typeDF = self.conf.get('Parameters','typeDF')
             self.regressor = self.conf.getboolean('Parameters','regressor')
@@ -143,7 +143,7 @@ class Conf():
             self.optimizeParameters = self.conf.getboolean('Parameters','optimizeParameters')
             self.optScoringR = self.conf.get('Parameters','optScoringR')
             self.optScoringC = self.conf.get('Parameters','optScoringC')
-            self.random_state = ast.literal_eval(self.sysDef['random_state'])
+            self.random_state = ast.literal_eval(self.sysPar['random_state'])
             self.n_jobs = self.conf.getint('System','n_jobs')
             
         except:

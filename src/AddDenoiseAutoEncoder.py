@@ -86,14 +86,14 @@ class Conf():
     def readConfig(self,configFile):
         try:
             self.conf.read(configFile)
-            self.denDaeDef = self.conf['Parameters']
+            self.denDaePar = self.conf['Parameters']
         
             self.saveAsTxt = self.conf.getboolean('Parameters','saveAsTxt')
             self.deepAutoencoder = self.conf.getboolean('Parameters','deepAutoencoder')
             self.reinforce = self.conf.getboolean('Parameters','reinforce')
             self.shuffle = self.conf.getboolean('Parameters','shuffle')
             self.linear_net = self.conf.getboolean('Parameters','linear_net')
-            self.net_arch = ast.literal_eval(self.denDaeDef['net_arch'])
+            self.net_arch = ast.literal_eval(self.denDaePar['net_arch'])
             self.encoded_dim = self.conf.getint('Parameters','encoded_dim')
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.epochs = self.conf.getint('Parameters','epochs')
@@ -101,7 +101,7 @@ class Conf():
             self.regL1 = self.conf.getfloat('Parameters','regL1')
             self.l_rate = self.conf.getfloat('Parameters','l_rate')
             self.l_rdecay = self.conf.getfloat('Parameters','l_rdecay')
-            self.typeNoise = self.typeDF = self.conf.get('Parameters','typeNoise')
+            self.typeNoise = self.conf.get('Parameters','typeNoise')
             self.fitPolyDegree = self.conf.getint('Parameters','fitPolyDegree')
             self.numColSwaps = self.conf.getint('Parameters','numColSwaps')
             self.min_loss_dae = self.conf.getfloat('Parameters','min_loss_dae')

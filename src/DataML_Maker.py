@@ -88,7 +88,7 @@ class Conf():
     def readConfig(self,configFile):
         try:
             self.conf.read(configFile)
-            self.dataMLMakerDef = self.conf['Parameters']
+            self.dataMLMakerPar = self.conf['Parameters']
 
             self.saveAsTxt = self.conf.getboolean('Parameters','saveAsTxt')
             self.numHeadColumns = self.conf.getint('Parameters','numHeadColumns')
@@ -97,15 +97,15 @@ class Conf():
             
             self.minCCol = self.conf.getint('Parameters','minCCol')
             self.maxCCol = self.conf.getint('Parameters','maxCCol')
-            self.charCCols = ast.literal_eval(self.dataMLMakerDef['charCCols'])
-            self.predRCol = ast.literal_eval(self.dataMLMakerDef['predRCol'])
+            self.charCCols = ast.literal_eval(self.dataMLMakerPar['charCCols'])
+            self.predRCol = ast.literal_eval(self.dataMLMakerPar['predRCol'])
             
             self.purgeUndefRows = self.conf.getboolean('Parameters','purgeUndefRows')
             self.validFile = self.conf.getboolean('Parameters','validFile')
             self.createRandomValidSet = self.conf.getboolean('Parameters','createRandomValidSet')
             
             self.percentValid = self.conf.getfloat('Parameters','percentValid')
-            self.validRows = ast.literal_eval(self.dataMLMakerDef['validRows'])
+            self.validRows = ast.literal_eval(self.dataMLMakerPar['validRows'])
             self.precData = self.conf.getint('Parameters','precData')
             
             self.saveNormalized = self.conf.getboolean('Parameters','saveNormalized')            #
@@ -118,7 +118,7 @@ class Conf():
             self.fullRandomMatrix = self.conf.getboolean('Parameters','fullRandomMatrix')
             
             self.numRandomAdds = self.conf.getint('Parameters','numRandomAdds')
-            self.randomCols = ast.literal_eval(self.dataMLMakerDef['randomCols'])
+            self.randomCols = ast.literal_eval(self.dataMLMakerPar['randomCols'])
             self.minPercVariation = self.conf.getfloat('Parameters','minPercVariation')
             self.randomizeLabel = self.conf.getboolean('Parameters','randomizeLabel')
             self.useGeneralNormLabel = self.conf.getboolean('Parameters','useGeneralNormLabel')
