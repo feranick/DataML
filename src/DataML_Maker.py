@@ -230,7 +230,7 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
         if dP.createRandomValidSet:
             P, V = formatSubset(P, dP.percentValid)
         else:
-            if dP.validRows != 0:
+            if dP.validRows:
                 P = np.vstack([list(range(0,M.shape[1])),np.delete(M,dP.validRows,0)])
                 V = np.vstack([list(range(0,M.shape[1])),M[dP.validRows,:]])
             
