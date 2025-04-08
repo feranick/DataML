@@ -90,7 +90,7 @@ function setButtonLabel() {
 
 function init() {
   selIndex = getCookie("selectedIndex");
-  if(selIndex == -1) {
+  if(selIndex == -1 || document.IGC_ML.model.options.length < selIndex) {
     document.IGC_ML.model.selectedIndex = 0 }
   else {
     document.IGC_ML.model.selectedIndex = selIndex;}

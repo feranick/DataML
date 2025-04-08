@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width,initial-scale=1" />
+</head>
+  <body>
+
+<script>
+function setCookie(name, value, days) {
+  var e = new Date;
+  e.setDate(e.getDate() + (days || 365));
+  document.cookie = name + '=' + value + ';expires=' + e.toUTCString() + ';path=/;domain=.' + document.domain;
+}
+</script>
+
+<br><div name="Reset Cookies" id="reset_cookies"><br><button name="button" id="button" onclick="setCookie('selectedIndex', 0 ,1000);">Reset Cookies</button></div>
+
+ </body>
+</html>
+
+
