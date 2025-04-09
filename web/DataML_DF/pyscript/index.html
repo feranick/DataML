@@ -9,29 +9,31 @@
       
   </head>
   <body>
-  <b>DataML_DF Pyscript</b><br>
-  <!--<input type="text" name="english" id="english" placeholder="Type English here..." />
-  <button py-click="main">Translate</button>
-  <div id="output"></div> -->
-  <script type="py" src="./main.py" config="./pyscript.toml"></script>
+  <b>DataML - pyscript</b><br>
 
-  <script type="text/javascript" src="igc_ml.js" ></script>
   <form name = "IGC_ML" id="igc_ml">
   <br>Model: <select name="model" id="model" onchange="selectModel()" py-change="getModel">
   <option>Perf1_model1</option>
   <option>Perf3_model1</option>
   
   </select><br><br>
+  <div id="feature-entries-container">
+        </div>
 </form>
 
-<br><div name="predict" id="predict"><br><button name="button" id="button" py-click="singlePredict">Predict</button></div>
-<script>setButtonLabel();</script>
+<div name="predict" id="predict"><br><button name="button" id="button" py-click="singlePredict">Predict</button></div>
+<!--<script>setButtonLabel();</script>-->
 <br><input id="inputFile" type="file" name="file" py-change="batchPredict">
+<br><br><div id="download-area"></div>
 
-<br><br><a id="importance1">Parametric importance vs decrease in impurity</a><br>
+<br><a id="importance1">Parametric importance vs decrease in impurity</a><br>
 <a id="importance2">Parametric importance vs mean accuracy</a><br>
 <small><a id="log">Training log</a></small><br>
 <div id="out"><br><text_area id="output"><br></text_area></div>
+
+  <script type="py" src="./main.py" config="./pyscript.toml"></script>
+  <script type="text/javascript" src="igc_ml.js" ></script>
+  <script>setButtonLabel();</script>
   <script>
   init();
   selectModel();

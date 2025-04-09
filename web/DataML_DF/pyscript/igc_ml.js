@@ -44,41 +44,45 @@ async function selectModel() {
  }
 
 function createEntries(features) {
-  cleanup();
-  fv = [];
-  var br = document.createElement("break");
-  br.innerHTML = "<br>";
-  document.IGC_ML.appendChild(br);
-  
+  // 1. Get the dedicated container
+  const container = document.getElementById('feature-entries-container');
+  if (!container) {
+      console.error("Fatal Error: Could not find div with id='feature-entries-container'.");
+      return;
+  }
+
+  // 2. Clear only the container (replaces cleanup call)
+  container.innerHTML = '';
+
+  // 3. Create and append new entries inside the container
+  fv = []; // Assuming fv is needed for default values? Example: 0..N-1
+  var br = document.createElement("br"); // Create <br> once if needed between entries
+
   for (let i = 0; i < features.length; i++) {
-    fv.push(i);
-    var parent = document.createElement("div");
-    //parent.id="entries";
-    var l = document.createElement("label");
-    l.textContent = features[i]+" = ";
-    l.htmlFor = "Entry"+i;
-    l.id = "Label"+i;
+      fv.push(i); // Example default value based on index
+      var parent = document.createElement("div"); // Keep wrapping div if desired for styling/layout
+      parent.className = "feature-entry"; // Optional: Add class for styling
 
-    var p = document.createElement("input");
-    p.type = "text";
-    p.id = "Entry"+i;
-    p.setAttribute('value', fv[i]);
-    p.name = features[i];
+      var l = document.createElement("label");
+      l.textContent = features[i]+" = ";
+      l.htmlFor = "Entry"+i;
+      l.id = "Label"+i;
 
-    parent.appendChild(l);
-    parent.appendChild(p);
-    parent.appendChild(br);
-    document.IGC_ML.appendChild(parent);
-    }
-}
+      var p = document.createElement("input");
+      p.type = "text";
+      p.id = "Entry"+i;
+      p.setAttribute('value', fv[i]); // Set default value
+      p.name = features[i]; // Use feature name for the input name
 
-function cleanup() {
-  const elements = document.querySelectorAll("div");
-  elements.forEach(element => {
-    if (element.id != "out" && element.id != "predict") {
-        element.remove();
-        }
-  });
+      parent.appendChild(l);
+      parent.appendChild(p);
+      // parent.appendChild(br.cloneNode()); // Add <br> after each entry if needed
+
+      // Append the new parent div to the container
+      container.appendChild(parent);
+  }
+  // Add a final <br> after all entries if desired
+  container.appendChild(document.createElement("br"));
 }
 
 function setButtonLabel() {

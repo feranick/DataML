@@ -4,7 +4,7 @@
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
 * pyscript version
-* v2025.04.07.1
+* v2025.04.09.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -13,7 +13,8 @@
 import numpy as np
 import pandas as pd
 from io import BytesIO
-import sys, configparser, ast
+import sys, configparser, ast, io, csv
+from js import document, Blob, URL
 from pyscript import fetch, document
 import _pickle as pickle
 from libDataML import *
@@ -94,8 +95,8 @@ class Conf():
     def readConfig(self,configFile):
         try:
             self.conf.read_string(configFile)
-            self.datamlPar = self.conf['Parameters']
-            self.sysPar = self.conf['System']
+            self.datamlDef = self.conf['Parameters']
+            self.sysDef = self.conf['System']
 
             self.typeDF = self.conf.get('Parameters','typeDF')
             self.regressor = self.conf.getboolean('Parameters','regressor')
@@ -118,7 +119,7 @@ class Conf():
             self.optimizeParameters = self.conf.getboolean('Parameters','optimizeParameters')
             self.optScoringR = self.conf.get('Parameters','optScoringR')
             self.optScoringC = self.conf.get('Parameters','optScoringC')
-            self.random_state = ast.literal_eval(self.sysPar['random_state'])
+            self.random_state = ast.literal_eval(self.sysDef['random_state'])
             self.n_jobs = self.conf.getint('System','n_jobs')
         except:
             print(" Error in reading configuration file. Please check it\n")
@@ -249,6 +250,17 @@ async def batchPredict(event):
     output += ' Prediction for ' + folder[:5]
     output += '\n======================================'
 
+    summaryFile = np.array([['File:',inputFile.name,''],
+	['DataML_DF',dP.typeDF,dP.mode],
+	['Model',folder,'']])
+    if dP.regressor:
+        summaryFile = np.vstack((summaryFile,['Sample','Predicted Value','']))
+        le = None
+    else:
+        with open(dP.model_le, "rb") as f:
+            le = pickle.load(f)
+        summaryFile = np.vstack((summaryFile,['Sample','Predicted Value','Probability %']))
+
     for i in range(1,dataDf.shape[1]):
         R = np.array([dataDf.iloc[:,i].tolist()])
         Rorig = np.copy(R)
@@ -263,6 +275,7 @@ async def batchPredict(event):
                 pred = df.predict(R)
             proba = ""
             output += "\n " + dataDf.columns[i] + " = "  + str(pred[0])[:5]
+            summaryFile = np.vstack((summaryFile,[dataDf.columns[i],pred[0],'']))
         else:
             lePkl = await getFile(folder, dP.model_le, True)
             le = pickle.loads(lePkl)
@@ -277,8 +290,66 @@ async def batchPredict(event):
                 else:
                     p_class = str(round(pred_classes[ind[j]],2))
                 output += "\n " + dataDf.columns[i] + " = " + p_class + "\t\t|  " + str(100*proba[0][ind[j]])[:5] + "%)"
+                summaryFile = np.vstack((summaryFile,[dataDf.columns[i],pred_classes[ind[j]],round(100*proba[0][ind[j]],1)]))
 
     output += '\n======================================='
     output += '\n'+dP.typeDF+" "+dP.mode
     output += '\n=======================================\n'
     output_div.innerText = output
+    await create_csv_download(summaryFile,None,"Results_"+inputFile.name)
+
+
+async def create_csv_download(numpy_array, headers=None, filename="results.csv"):
+    # --- Try to get the target element FIRST ---
+    download_div = document.getElementById('download-area') # Use js.document if js is imported
+
+    # --- CRUCIAL CHECK ---
+    if download_div is None:
+        error_message = "FATAL ERROR: Cannot find HTML element with id='download-area'. Download link cannot be created. Please check the HTML file."
+        print(error_message)
+        # Try to display the error in the main output div if possible
+        output_div = document.querySelector("#output") # Assumes an element with id="output" exists
+        if output_div:
+            # Append error to existing content or set it
+            output_div.innerText += f"\n\n{error_message}"
+        return # Stop execution, cannot proceed
+
+    # --- Now proceed with the rest of the logic, knowing download_div exists ---
+    if numpy_array is None or numpy_array.size == 0:
+        print("Input NumPy array is empty or None.")
+        # Display the error message INSIDE the verified download_div
+        download_div.innerText = "Error: No data to process for download."
+        return
+
+    try:
+        # Use io.StringIO to act like an in-memory file
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        if headers:
+            if isinstance(headers, (list, tuple)):
+                 writer.writerow(headers)
+            else:
+                 print("Warning: Headers should be a list or tuple.")
+
+        writer.writerows(numpy_array)
+        csv_string = output.getvalue()
+        output.close()
+
+        # Create Blob, URL, and Link
+        blob = Blob.new([csv_string], {type: 'text/csv;charset=utf-8;'}) # Use js.Blob if js is imported
+        url = URL.createObjectURL(blob) # Use js.URL if js is imported
+        link = document.createElement('a') # Use js.document if js is imported
+        link.href = url
+        link.download = filename
+        link.textContent = f'Download {filename}'
+
+        # Add the link to the webpage (we know download_div exists)
+        download_div.innerHTML = '' # Clear previous content before adding link
+        download_div.appendChild(link)
+
+    except Exception as e:
+         error_message = f"An error occurred during CSV creation/linking: {e}"
+         print(error_message)
+         # Display error within the verified download_div
+         download_div.innerText = error_message
