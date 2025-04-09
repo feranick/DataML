@@ -240,7 +240,7 @@ async def batchPredict(event):
     dataDf = pd.read_csv(csv_file)
     document.getElementById('inputFile').value = ''
 
-    if len(features.split(',')) != dataDf.shape[1]-1:
+    if len(features.split(',')) != dataDf.shape[0]:
         output = ' Please choose the right model for this file. \n'
         output_div.innerText = output 
         return 0
