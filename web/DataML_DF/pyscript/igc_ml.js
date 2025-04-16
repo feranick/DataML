@@ -64,7 +64,7 @@ function createEntries(features) {
       parent.className = "feature-entry"; // Optional: Add class for styling
 
       var l = document.createElement("label");
-      l.textContent = features[i]+" = ";
+      l.textContent = features[i]+"\xA0";
       l.htmlFor = "Entry"+i;
       l.id = "Label"+i;
 
