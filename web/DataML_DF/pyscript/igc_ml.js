@@ -82,7 +82,7 @@ function createEntries(features) {
       container.appendChild(parent);
   }
   // Add a final <br> after all entries if desired
-  container.appendChild(document.createElement("br"));
+  //container.appendChild(document.createElement("br"));
 }
 
 function setButtonLabel() {
