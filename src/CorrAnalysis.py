@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: 2025.04.07.1
+* version: 2025.04.29.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -255,9 +255,8 @@ def readParamFile(paramFile, dP):
         if dP.skipHeadRows != 0 :
             with open(paramFile, 'r') as f:
                 dfL = pd.read_csv(f, delimiter = ",", nrows=dP.skipHeadRows)
-            #dfL.columns = dfL.iloc[3]
-            dfL.columns = dfL.iloc[dP.skipHeadColumns+1]
-            print(dfL)
+            dfL.columns = dfL.iloc[dP.skipHeadRows-1]
+            print(dfL.columns)
         else:
             dfL = pd.DataFrame([])
     except:
@@ -334,8 +333,8 @@ def purgeSparse(P, V, label, dP):
         ann = label
         
     if P2.size < 2 or V2.size <2:
-        P2 = [0,0]
-        V2 = [0,0]
+        P2 = np.array([0,0])
+        V2 = np.array([0,0])
     return P2, V2, ann
 
 def getCorrelationsExperimental(dfP):
