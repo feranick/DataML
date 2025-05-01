@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2025.04.29.1
+* version: 2025.05.01.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -399,11 +399,11 @@ def train(learnFile, testFile, normFile):
     print('  --------------------------------------------------------------------------------')
     for i in range(len(pred)):
         if dP.regressor:
-            print("   {0:.2f}\t| {1:.2f}\t\t| {2:.2f}".format(Cl_test[i], pred[i], delta[i]))
+            print("   {0:.4f}\t| {1:.4f}\t\t| {2:.4f}".format(Cl_test[i], pred[i], delta[i]))
         else:
             ind = np.where(proba[i]==np.max(proba[i]))[0]
             for j in range(len(ind)):
-                print("   {0:.2f}\t| {1:.2f}\t\t| {2:.2f} \t\t| {3:.2f}%".format(Cl_test[i], pred[i], delta[i], 100*proba[i][ind[j]]))
+                print("   {0:.4f}\t| {1:.4f}\t\t| {2:.4f} \t\t| {3:.4f}%".format(Cl_test[i], pred[i], delta[i], 100*proba[i][ind[j]]))
             
     print('  --------------------------------------------------------------------------------')
     print('  ',dP.metric,'= {0:.4f}'.format(score))
@@ -542,13 +542,13 @@ def predict(testFile):
     if dP.regressor:
         print('   Filename\t\t| Prediction')
         print('  --------------------------------------------------------------------------------')
-        print("   {0:s}\t| {1:.2f}  ".format(testFile, pred[0]))
+        print("   {0:s}\t| {1:.4f}  ".format(testFile, pred[0]))
     else:
         print('   Filename\t\t| Prediction\t| Probability')
         print('  --------------------------------------------------------------------------------')
         ind = np.where(proba[0]==np.max(proba[0]))[0]
         for j in range(len(ind)):
-            print("   {0:s}\t| {1:.2f}\t| {2:.2f} ".format(testFile, pred_classes[ind[j]], 100*proba[0][ind[j]]))
+            print("   {0:s}\t| {1:.4f}\t| {2:.4f} ".format(testFile, pred_classes[ind[j]], 100*proba[0][ind[j]]))
         print("")
     print('  ================================================================================\n')
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
@@ -598,12 +598,12 @@ def csvPredict(csvFile):
         pred, pred_classes, proba = getPrediction(dP, df, R, le, norm)
 
         if dP.regressor:
-            print("   {0:s}\t = {1:.1f} ".format(dataDf.columns[i], pred[0]))
+            print("   {0:s}\t = {1:.4f} ".format(dataDf.columns[i], pred[0]))
             summaryFile = np.vstack((summaryFile,[dataDf.columns[i],pred[0],'']))
         else:
             ind = np.where(proba[0]==np.max(proba[0]))[0]
             for j in range(len(ind)):
-                print("   {0:s}\t = {1:.2f}\t ({2:.2f}%) ".format(dataDf.columns[i], pred_classes[ind[j]], 100*proba[0][ind[j]]))
+                print("   {0:s}\t = {1:.4f}\t ({2:.4f}%) ".format(dataDf.columns[i], pred_classes[ind[j]], 100*proba[0][ind[j]]))
                 summaryFile = np.vstack((summaryFile,[dataDf.columns[i],pred_classes[ind[j]],round(100*proba[0][ind[j]],1)]))
     print('  ==============================================================================\n')
     saveSummaryFile(summaryFile, dP)
@@ -659,7 +659,7 @@ def batchPredict(folder):
         print('   Filename\t| Prediction')
         print('  --------------------------------------------------------------------------------')
         for i in range(0,len(pred)):
-            print("   {0:s}\t| {1:.2f}  ".format(fileName[i], pred[i][0]))
+            print("   {0:s}\t| {1:.4f}  ".format(fileName[i], pred[i][0]))
             summaryFile = np.vstack((summaryFile,[fileName[i],pred[i][0],'']))
     else:
         print('   Filename\t\t| Prediction\t| Probability')
@@ -667,7 +667,7 @@ def batchPredict(folder):
         for i in range(0,len(pred)):
             ind = np.where(proba[i][0]==np.max(proba[i][0]))[0]
             for j in range(len(ind)):
-                print("   {0:s}\t| {1:.2f}\t| {2:.2f} ".format(fileName[i], pred_classes[ind[j]], 100*proba[i][0][ind[j]]))
+                print("   {0:s}\t| {1:.4f}\t| {2:.4f} ".format(fileName[i], pred_classes[ind[j]], 100*proba[i][0][ind[j]]))
                 summaryFile = np.vstack((summaryFile,[fileName[i],pred_classes[ind[j]],100*proba[i][0][ind[j]]]))
         print("")
     print('  ================================================================================\n')
@@ -709,7 +709,7 @@ def validBatchPredict(testFile):
         print('   Prediction')
         print('  --------------------------------------------------------------------------------')
         for i in range(0,len(pred)):
-            print("   {0:.2f}  ".format(pred[i]))
+            print("   {0:.4f}  ".format(pred[i]))
             summaryFile = np.vstack((summaryFile,[pred[i],'','']))
     else:
         print('   Prediction\t| Probability')
@@ -717,7 +717,7 @@ def validBatchPredict(testFile):
         for i in range(0,len(pred)):
             ind = np.where(proba[i]==np.max(proba[i]))[0]
             for j in range(len(ind)):
-                print("   {0:.2f}\t| {1:.2f} ".format(pred_classes[ind[j]], 100*proba[i][ind[j]]))
+                print("   {0:.4f}\t| {1:.4f} ".format(pred_classes[ind[j]], 100*proba[i][ind[j]]))
                 summaryFile = np.vstack((summaryFile,[i, pred_classes[ind[j]],100*proba[i][ind[j]]]))
             print("")
         
