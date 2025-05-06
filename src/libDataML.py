@@ -2,7 +2,7 @@
 '''
 **************************************************
 * libDataML - Library for DataML/DataML_DF
-* version: 2025.05.01.1
+* version: 2025.05.06.1
 * Uses: Keras, TensorFlow, scikit-learn
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
@@ -822,6 +822,8 @@ def usage(name):
     print('  ',name,'-p <testFile>\n')
     print(' Batch predict:')
     print('  ',name,'-b <folder>\n')
+    print(' Batch predict from CSV file for multiple samples (DataML_DF only):')
+    print('  ',name,'-c <testfile.csv>\n')
     print(' Batch predict on validation data in single file:')
     print('  ',name,'-v <singleValidationFile>\n')
     if name == 'DataML':
