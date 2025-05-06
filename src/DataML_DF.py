@@ -592,7 +592,7 @@ def csvPredict(csvFile):
     print('  ==============================================================================')
     
     for i in range(1,dataDf.shape[1]):
-        R = np.array([dataDf.iloc[:,i].tolist()])
+        R = np.array([dataDf.iloc[:,i].tolist()], dtype=float)
         Rorig = np.copy(R)
     
         pred, pred_classes, proba = getPrediction(dP, df, R, le, norm)

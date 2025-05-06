@@ -4,7 +4,7 @@
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
 * pyscript version
-* v2025.04.09.1
+* v2025.05.06.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -262,7 +262,7 @@ async def batchPredict(event):
         summaryFile = np.vstack((summaryFile,['Sample','Predicted Value','Probability %']))
 
     for i in range(1,dataDf.shape[1]):
-        R = np.array([dataDf.iloc[:,i].tolist()])
+        R = np.array([dataDf.iloc[:,i].tolist()], dtype=float)
         Rorig = np.copy(R)
 
         if dP.normalize:
