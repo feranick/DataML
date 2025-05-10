@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2025.05.06.1
+* version: 2025.05.10.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -154,6 +154,15 @@ class Conf():
         try:
             self.datamlDef()
             self.sysDef()
+            with open(self.configFile, 'w') as configfile:
+                self.conf.write(configfile)
+        except:
+            print("Error in creating configuration file")
+            
+    # update configuration file
+    def updateConfig(self, section, par, value):
+        self.conf.set(section, par, value)
+        try:
             with open(self.configFile, 'w') as configfile:
                 self.conf.write(configfile)
         except:
@@ -466,8 +475,13 @@ def train(learnFile, testFile, normFile):
     
         #print(list(bestParams.values())[0])
         #dP.random_state=list(bestParams.values())[0]
- 
+    
+    if dP.optimizeParameters:
+        print(" Setting DataML_DF training in non-optimization mode. \n")
+        dP.updateConfig('Parameters','optimizeParameters','False')
+    
     print(' Scikit-learn v.',str(sklearn.__version__),'\n')
+    
     return r2_score(Cl_test, pred)
 
 #************************************
@@ -783,7 +797,10 @@ def makeOptParameters(dP, ind):
     print(" Grid:",grid)
     with open(dP.optParFile, 'w') as json_file:
         json.dump(grid, json_file)
-    print("\n Created: ",dP.optParFile,"\n")
+    print("\n Created: ",dP.optParFile)
+    print(" Rerunning training in DataML_DF will be done in optimization mode. \n")
+    
+    dP.updateConfig('Parameters','optimizeParameters','True')
 
 #************************************
 # Main initialization routine

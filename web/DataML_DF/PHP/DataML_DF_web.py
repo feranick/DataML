@@ -158,6 +158,15 @@ class Conf():
                 self.conf.write(configfile)
         except:
             print("Error in creating configuration file")
+            
+    # update configuration file
+    def updateConfig(self, section, par, value):
+        self.conf.set(section, par, value)
+        try:
+            with open(self.configFile, 'w') as configfile:
+                self.conf.write(configfile)
+        except:
+            print("Error in creating configuration file")
 
 #************************************
 # Main

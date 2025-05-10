@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* version: 2025.05.06.1
+* version: 2025.05.10.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -150,6 +150,15 @@ class Conf():
         try:
             self.datamlDef()
             self.sysDef()
+            with open(self.configFile, 'w') as configfile:
+                self.conf.write(configfile)
+        except:
+            print("Error in creating configuration file")
+            
+    # update configuration file
+    def updateConfig(self, section, par, value):
+        self.conf.set(section, par, value)
+        try:
             with open(self.configFile, 'w') as configfile:
                 self.conf.write(configfile)
         except:
