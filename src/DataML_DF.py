@@ -798,7 +798,7 @@ def makeOptParameters(dP, ind):
     with open(dP.optParFile, 'w') as json_file:
         json.dump(grid, json_file)
     print("\n Created: ",dP.optParFile)
-    print(" Rerunning training in DataML_DF will be done in optimization mode. \n")
+    print(" Next training wtih DataML_DF will be done in optimization mode. \n")
     
     dP.updateConfig('Parameters','optimizeParameters','True')
 
