@@ -61,7 +61,7 @@ Prediction can be carried out using the regular tensorflow, or using [tensorflow
 
 Usage
 ===================
-Two separate executables are available for Neural-Network-based ML (DataML) and Decision Tree/Random Forests (DataML_DT):
+Two separate executables are available for Neural-Network-based ML (DataML) and Decision Forests (DataML_DF):
 
 ## Neural Networks: DataML
 
