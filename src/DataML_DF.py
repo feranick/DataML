@@ -207,10 +207,12 @@ def main():
         if o in ("-r" , "--reduce"):
             #try:
             dP.updateConfig('Parameters','featureReduction','True')
-            if len(sys.argv) == 3:
-                train(sys.argv[2], None)
+            dP.updateConfig('Parameters','minNumFeatures',sys.argv[2])
+            
+            if len(sys.argv) == 4:
+                train(sys.argv[3], None)
             else:
-                train(sys.argv[2], sys.argv[3])
+                train(sys.argv[3], sys.argv[4])
             #except:
             #    usage(dP.appName)
             #    sys.exit(2)
@@ -497,12 +499,15 @@ def train(learnFile, testFile):
     # Automated feature selection and reduction
     ##################################################################
     if dP.featureReduction:
+        print('  ========================================================')
+        print('  \033[1m Feature Reduction \033[0m')
+        print('  ========================================================\n')
         from sklearn.feature_selection import RFE
         selector = RFE(df, n_features_to_select=min(dP.minNumFeatures, A.shape[1]), step=1, verbose=2, importance_getter='auto')
         selector = selector.fit(A, Cl2)
-
-        print(" Features selected:", selector.support_)
-        print(" Features selected:", En[np.array(selector.support_, dtype=bool)])
+        
+        #print("\n", len(selector.support_),"features selected:", En[np.array(selector.support_, dtype=bool)])
+        print(f"\n {len(selector.support_)} features selected: {En[np.array(selector.support_, dtype=bool)]}")
         
         saveRestrFeatLearnFile(dP, En, A, Cl2, selector.support_, learnFile)
         saveRestrFeatLearnFile(dP, En, A_test, Cl2_test, selector.support_, testFile)
@@ -510,7 +515,6 @@ def train(learnFile, testFile):
         
     print(' Scikit-learn v.',str(sklearn.__version__),'\n')
     return r2_score(Cl_test, pred)
-    
 
 #************************************
 # Prediction - backend

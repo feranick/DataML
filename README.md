@@ -122,10 +122,10 @@ Train (Random cross validation):
   `DataML_DF -t <learningFile> <validationFile>`
   
   Train and feature reduction (Random cross validation):
-  `DataML_DF -r <learningFile>`
+  `DataML_DF -r <num_features> <learningFile>`
 
   Train and feature reduction (with external validation):
-  `DataML_DF -=r <learningFile> <validationFile>` 
+  `DataML_DF -=r <num_features> <learningFile> <validationFile>` 
 
  Predict:
   `DataML_DF -p <testFile>`
