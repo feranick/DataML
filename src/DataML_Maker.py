@@ -5,7 +5,7 @@
 * DataML_Maker
 * Adds data from single file to Master Doc
 * File must be in ASCII
-* version: 2025.05.10.1
+* version: 2025.05.13.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -49,7 +49,7 @@ class Conf():
         self.predRColTag = self.predRCol
         self.predRCol = self.rescaleList(self.predRCol, self.numHeadColumns - 1)
         
-        self.numLabels = len(self.predRCol)
+        #self.numLabels = len(self.predRCol)
         self.validRows = [x-1 for x in self.validRows]
     
     def dataMLMakerDef(self):
@@ -209,17 +209,25 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
         usecols = range(dP.minCCol,dP.maxCCol)
     else:
         usecols = dP.charCCols
+        
+    print(usecols)
     
     with open(paramFile, 'r') as f:
-        P2 = pd.read_csv(f, delimiter = ",", header=dP.numHeadRows).to_numpy()
-    
+        df = pd.read_csv(f, delimiter = ",", header=dP.numHeadRows)
+    featNames = df.columns.to_list()[dP.numHeadColumns:]
+    P2 = df.to_numpy()
     M = np.hstack((P2[:,predRCol],P2[:,usecols]))
-
+    
+    featNum = np.insert(usecols, 0,0)
+    
     if dP.purgeUndefRows:
         M = purgeRows(M)
     
-    P = np.vstack([list(range(0,M.shape[1])),M])
-    V = np.array([list(range(0,M.shape[1]))])
+    P = np.vstack([featNum,M])
+    V = np.array([featNum])
+
+    #P = np.vstack([list(range(0,M.shape[1])),M])
+    #V = np.array([list(range(0,M.shape[1]))])
 
     #***************************************
     # Handle Validation File
@@ -231,8 +239,12 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
             P, V = formatSubset(P, dP.percentValid)
         else:
             if dP.validRows:
-                P = np.vstack([list(range(0,M.shape[1])),np.delete(M,dP.validRows,0)])
-                V = np.vstack([list(range(0,M.shape[1])),M[dP.validRows,:]])
+                P = np.vstack([featNum,np.delete(M,dP.validRows,0)])
+                V = np.vstack([featNum,M[dP.validRows,:]])
+                #P = np.vstack([list(range(0,M.shape[1])),np.delete(M,dP.validRows,0)])
+                #V = np.vstack([list(range(0,M.shape[1])),M[dP.validRows,:]])
+                print(P)
+                print(V)
             
     if dP.saveNormalized or dP.normalizeLabel:
         norm = Normalizer(P, dP)
