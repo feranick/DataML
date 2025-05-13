@@ -404,7 +404,6 @@ def saveRestrFeatLearnFile(dP, En, A, Cl2, listSel, learnFile):
     Ens = En[column_mask]
     As = np.concatenate((Cl2.reshape(-1,1), As), axis=1)
     As = np.concatenate(([np.insert(Ens,0,0)], As), axis=0)
-            
     saveLearnFile(dP, As, learnFile, "_"+str(As.shape[1]-1)+"-par")
 
 #************************************

@@ -3,7 +3,7 @@
 '''
 ***************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2025.04.07.1
+* v2025.05.13.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***************************************************
@@ -108,12 +108,15 @@ class Conf():
             'optimizeParameters' : False,
             'optScoringR' : 'neg_mean_absolute_error',
             'optScoringC' : 'accuracy',
+            'featureReduction' : False,
+            'minNumFeatures' : 4,
             }
     
     def sysDef(self):
         self.conf['System'] = {
             'random_state' : 1,
-            'n_jobs' : 1
+            'n_jobs' : 1,
+            'saveAsTxt' : True,
             }
     
     def readConfig(self,configFile):
@@ -143,8 +146,11 @@ class Conf():
             self.optimizeParameters = self.conf.getboolean('Parameters','optimizeParameters')
             self.optScoringR = self.conf.get('Parameters','optScoringR')
             self.optScoringC = self.conf.get('Parameters','optScoringC')
+            self.featureReduction = self.conf.getboolean('Parameters','featureReduction')
+            self.minNumFeatures = self.conf.getint('Parameters','minNumFeatures')
             self.random_state = ast.literal_eval(self.sysPar['random_state'])
             self.n_jobs = self.conf.getint('System','n_jobs')
+            self.saveAsTxt = self.conf.getboolean('System','saveAsTxt')
             
         except:
             print(" Error in reading configuration file. Please check it\n")

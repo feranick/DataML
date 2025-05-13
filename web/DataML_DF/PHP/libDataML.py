@@ -2,7 +2,7 @@
 '''
 **************************************************
 * libDataML - Library for DataML/DataML_DF
-* version: 2025.04.07.1
+* version: 2025.05.13.1
 * Uses: Keras, TensorFlow, scikit-learn
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
@@ -390,13 +390,21 @@ def saveLearnFile(dP, M, learnFile, tag):
     if dP.saveAsTxt == True:
         learnFileRoot += tag + '.txt'
         print("\n  Saving new training file (txt) in:\n  ", learnFileRoot+"\n")
-        with open(learnFileRoot, 'ab') as f:
+        with open(learnFileRoot, 'w') as f:
             np.savetxt(f, M, delimiter='\t', fmt='%10.6f')
     else:
         learnFileRoot += tag + '.h5'
         print("\n Saving new training file (hdf5) in:\n  "+learnFileRoot+"\n")
         with h5py.File(learnFileRoot, 'w') as hf:
             hf.create_dataset("M",  data=M)
+            
+def saveRestrFeatLearnFile(dP, En, A, Cl2, listSel, learnFile):
+    column_mask = np.array(listSel, dtype=bool)
+    As = A[:, column_mask]
+    Ens = En[column_mask]
+    As = np.concatenate((Cl2.reshape(-1,1), As), axis=1)
+    As = np.concatenate(([np.insert(Ens,0,0)], As), axis=0)
+    saveLearnFile(dP, As, learnFile, "_"+str(As.shape[1]-1)+"-par")
 
 #************************************
 # Open Testing Data
