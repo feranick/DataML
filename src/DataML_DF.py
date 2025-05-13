@@ -509,8 +509,8 @@ def train(learnFile, testFile):
         #print("\n", len(selector.support_),"features selected:", En[np.array(selector.support_, dtype=bool)])
         print(f"\n {len(selector.support_)} features selected: {En[np.array(selector.support_, dtype=bool)]}")
         
-        saveRestrFeatLearnFile(dP, En, A, Cl2, selector.support_, learnFile)
-        saveRestrFeatLearnFile(dP, En, A_test, Cl2_test, selector.support_, testFile)
+        saveRestrFeatLearnFile(dP, selector.support_, learnFile)
+        saveRestrFeatLearnFile(dP, selector.support_, testFile)
         dP.updateConfig('Parameters','featureReduction','False')
         
     print(' Scikit-learn v.',str(sklearn.__version__),'\n')

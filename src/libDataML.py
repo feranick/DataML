@@ -341,7 +341,7 @@ def convertTflite(learnFile, dP):
 #************************************
 # Open Training Data
 #************************************
-def readLearnFile(learnFile, initNorm, dP):
+def readFile(learnFile):
     print("  Opening training file:\n  ",learnFile,"\n")
     try:
         if os.path.splitext(learnFile)[1] == ".npy":
@@ -352,9 +352,13 @@ def readLearnFile(learnFile, initNorm, dP):
         else:
             with open(learnFile, 'r') as f:
                 M = np.loadtxt(f, unpack =False)
+        return M
     except:
         print("\033[1m Training file not found\033[0m")
-        return
+        return 0
+
+def readLearnFile(learnFile, initNorm, dP):
+    M = readFile(learnFile)
     
     if dP.normalize:
         print("\n  Normalization of feature matrix to 1")
@@ -398,14 +402,12 @@ def saveLearnFile(dP, M, learnFile, tag):
         with h5py.File(learnFileRoot, 'w') as hf:
             hf.create_dataset("M",  data=M)
             
-def saveRestrFeatLearnFile(dP, En, A, Cl2, listSel, learnFile):
-    column_mask = np.array(listSel, dtype=bool)
-    As = A[:, column_mask]
-    Ens = En[column_mask]
-    As = np.concatenate((Cl2.reshape(-1,1), As), axis=1)
-    As = np.concatenate(([np.insert(Ens,0,0)], As), axis=0)
-    saveLearnFile(dP, As, learnFile, "_"+str(As.shape[1]-1)+"-par")
-
+def saveRestrFeatLearnFile(dP, listSel, learnFile):
+    column_mask = np.insert(np.array(listSel, dtype=bool),0,True)
+    M = readFile(learnFile)
+    Mred = M[:,column_mask]
+    saveLearnFile(dP, M[:,column_mask], learnFile, "_"+str(Mred.shape[1]-1)+"-par")
+    
 #************************************
 # Open Testing Data
 #************************************
