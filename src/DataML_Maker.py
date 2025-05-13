@@ -209,16 +209,14 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
         usecols = range(dP.minCCol,dP.maxCCol)
     else:
         usecols = dP.charCCols
-        
-    print(usecols)
-    
+            
     with open(paramFile, 'r') as f:
         df = pd.read_csv(f, delimiter = ",", header=dP.numHeadRows)
     featNames = df.columns.to_list()[dP.numHeadColumns:]
     P2 = df.to_numpy()
     M = np.hstack((P2[:,predRCol],P2[:,usecols]))
     
-    featNum = np.insert(usecols, 0,0)
+    featNum = np.insert([x - 1 for x in usecols], 0,0)
     
     if dP.purgeUndefRows:
         M = purgeRows(M)
@@ -243,8 +241,6 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
                 V = np.vstack([featNum,M[dP.validRows,:]])
                 #P = np.vstack([list(range(0,M.shape[1])),np.delete(M,dP.validRows,0)])
                 #V = np.vstack([list(range(0,M.shape[1])),M[dP.validRows,:]])
-                print(P)
-                print(V)
             
     if dP.saveNormalized or dP.normalizeLabel:
         norm = Normalizer(P, dP)

@@ -490,7 +490,7 @@ def train(learnFile, testFile, normFile):
     ##################################################################
     if dP.featureReduction:
         from sklearn.feature_selection import RFE
-        selector = RFE(df, n_features_to_select=min(dP.minNumFeatures, A.shape[1]), step=1)
+        selector = RFE(df, n_features_to_select=min(dP.minNumFeatures, A.shape[1]), step=1, verbose=2, importance_getter='auto')
         selector = selector.fit(A, Cl2)
 
         print(" Features selected:", selector.support_)
