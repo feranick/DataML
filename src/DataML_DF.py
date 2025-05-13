@@ -183,7 +183,7 @@ def main():
     
     try:
         opts, args = getopt.getopt(sys.argv[1:],
-            "tpcbvoh:", ["train", "predict", "csv", "batch", "validbatch", "opt", "help"])
+            "trpcbvoh:", ["train", "reduce", "predict", "csv", "batch", "validbatch", "opt", "help"])
     except:
         usage(dP.appName)
         sys.exit(2)
@@ -195,14 +195,22 @@ def main():
     for o, a in opts:
         if o in ("-t" , "--train"):
             #try:
-            if len(sys.argv)<4:
-                train(sys.argv[2], None, None)
+            dP.updateConfig('Parameters','featureReduction','False')
+            if len(sys.argv) == 3:
+                train(sys.argv[2], None)
             else:
-                if len(sys.argv)<5:
-                    train(sys.argv[2], sys.argv[3], None)
-                else:
-                    train(sys.argv[2], sys.argv[3], sys.argv[4])
+                train(sys.argv[2], sys.argv[3])
+            #except:
+            #    usage(dP.appName)
+            #    sys.exit(2)
             
+        if o in ("-r" , "--reduce"):
+            #try:
+            dP.updateConfig('Parameters','featureReduction','True')
+            if len(sys.argv) == 3:
+                train(sys.argv[2], None)
+            else:
+                train(sys.argv[2], sys.argv[3])
             #except:
             #    usage(dP.appName)
             #    sys.exit(2)
@@ -252,7 +260,7 @@ def main():
 #************************************
 # Training
 #************************************
-def train(learnFile, testFile, normFile):
+def train(learnFile, testFile):
     dP = Conf()
    
     import sklearn
@@ -498,7 +506,8 @@ def train(learnFile, testFile, normFile):
         
         saveRestrFeatLearnFile(dP, En, A, Cl2, selector.support_, learnFile)
         saveRestrFeatLearnFile(dP, En, A_test, Cl2_test, selector.support_, testFile)
-            
+        dP.updateConfig('Parameters','featureReduction','False')
+        
     print(' Scikit-learn v.',str(sklearn.__version__),'\n')
     return r2_score(Cl_test, pred)
     

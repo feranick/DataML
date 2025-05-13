@@ -19,7 +19,7 @@ Installation
 ## Installation from available wheel package
 If available from the main site, you can install SpectraKeras by running:
 
-    python3 -m pip install --upgrade dataml-2025.05.10.1-py3-none-any.whl
+    python3 -m pip install --upgrade dataml-2025.05.13.1-py3-none-any.whl
     
 SpectraKeras_CNN and Spectrakeras_MLP are available directly from the command line.
 NOTE: The Utilities in the `Utilities` folder are not included in the package, and can be run locally as needed.
@@ -115,14 +115,17 @@ Train (Random cross validation):
 
 ## Decision Forests: DataML_DF
 
-Train (Random cross validation):
-  `DataML_DF -r <learningFile> <validFile-optional>` -t <learningFile>`
+ Train (Random cross validation):
+  `DataML_DF -t <learningFile>`
 
  Train (with external validation):
-  `DataML_DF -t <learningFile> <validationFile> `
+  `DataML_DF -t <learningFile> <validationFile>`
+  
+  Train and feature reduction (Random cross validation):
+  `DataML_DF -r <learningFile>`
 
- Train (with external validation, with labels normalized with pkl file):
-  `DataML_DF -t <learningFile> <validationFile> <pkl normalization file>`
+  Train and feature reduction (with external validation):
+  `DataML_DF -=r <learningFile> <validationFile>` 
 
  Predict:
   `DataML_DF -p <testFile>`
