@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2025.05.10.1
+* version: 2025.05.13.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -108,12 +108,15 @@ class Conf():
             'optimizeParameters' : False,
             'optScoringR' : 'neg_mean_absolute_error',
             'optScoringC' : 'accuracy',
+            'featureReduction' : False,
+            'minNumFeatures' : 4,
             }
     
     def sysDef(self):
         self.conf['System'] = {
             'random_state' : 1,
-            'n_jobs' : -1
+            'n_jobs' : -1,
+            'saveAsTxt' : True,
             }
     
     def readConfig(self,configFile):
@@ -143,8 +146,11 @@ class Conf():
             self.optimizeParameters = self.conf.getboolean('Parameters','optimizeParameters')
             self.optScoringR = self.conf.get('Parameters','optScoringR')
             self.optScoringC = self.conf.get('Parameters','optScoringC')
+            self.featureReduction = self.conf.getboolean('Parameters','featureReduction')
+            self.minNumFeatures = self.conf.getint('Parameters','minNumFeatures')
             self.random_state = ast.literal_eval(self.sysPar['random_state'])
             self.n_jobs = self.conf.getint('System','n_jobs')
+            self.saveAsTxt = self.conf.getboolean('System','saveAsTxt')
             
         except:
             print(" Error in reading configuration file. Please check it\n")
@@ -476,13 +482,26 @@ def train(learnFile, testFile, normFile):
         #print(list(bestParams.values())[0])
         #dP.random_state=list(bestParams.values())[0]
     
-    if dP.optimizeParameters:
         print(" Setting DataML_DF training in non-optimization mode. \n")
         dP.updateConfig('Parameters','optimizeParameters','False')
     
+    ##################################################################
+    # Automated feature selection and reduction
+    ##################################################################
+    if dP.featureReduction:
+        from sklearn.feature_selection import RFE
+        selector = RFE(df, n_features_to_select=min(dP.minNumFeatures, A.shape[1]), step=1)
+        selector = selector.fit(A, Cl2)
+
+        print(" Features selected:", selector.support_)
+        print(" Features selected:", En[np.array(selector.support_, dtype=bool)])
+        
+        saveRestrFeatLearnFile(dP, En, A, Cl2, selector.support_, learnFile)
+        saveRestrFeatLearnFile(dP, En, A_test, Cl2_test, selector.support_, testFile)
+            
     print(' Scikit-learn v.',str(sklearn.__version__),'\n')
-    
     return r2_score(Cl_test, pred)
+    
 
 #************************************
 # Prediction - backend
