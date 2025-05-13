@@ -390,7 +390,7 @@ def saveLearnFile(dP, M, learnFile, tag):
     if dP.saveAsTxt == True:
         learnFileRoot += tag + '.txt'
         print("\n  Saving new training file (txt) in:\n  ", learnFileRoot+"\n")
-        with open(learnFileRoot, 'ab') as f:
+        with open(learnFileRoot, 'w') as f:
             np.savetxt(f, M, delimiter='\t', fmt='%10.6f')
     else:
         learnFileRoot += tag + '.h5'
