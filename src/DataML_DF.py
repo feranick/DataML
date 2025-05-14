@@ -440,7 +440,7 @@ def train(learnFile, testFile):
     print('  ================================================================================\n')
     
     if dP.plotFeatImportance and (dP.typeDF == 'RandomForest' or dP.typeDF == 'GradientBoosting'):
-        plotImportances(df, A_test, Cl2_test, dP)
+        plotImportances(df, En, A_test, Cl2_test, dP)
     
     ##################################################################
     # Hyperparameter optimization
@@ -777,12 +777,13 @@ def validBatchPredict(testFile):
 #***********************************************************
 # Save Plots with the model importance
 #************************************************************
-def plotImportances(df, A_test, Cl_test, dP):
+def plotImportances(df, En, A_test, Cl_test, dP):
     import matplotlib.pyplot as plt
     import pandas as pd
     from sklearn.inspection import permutation_importance
 
-    feature_names = [f"feature {i}" for i in range(A_test.shape[1])]
+    #feature_names = [f"feature {i}" for i in range(A_test.shape[1])]
+    feature_names = ["m" + str(x) for x in En.astype(int)]
     importances = df.feature_importances_
     forest_importances1 = pd.Series(importances, index=feature_names)
     
