@@ -2,7 +2,7 @@
 '''
 **************************************************
 * libDataML - Library for DataML/DataML_DF
-* version: 2025.05.13.1
+* version: 2025.05.14.1
 * Uses: Keras, TensorFlow, scikit-learn
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
@@ -816,49 +816,3 @@ def printParamDF(dP):
         print('   Number of dimensionality reduction components:', dP.numDimRedComp)
     
     #print('  ================================================\n')
-
-#************************************
-# Lists the program usage
-#************************************
-def usage(name):
-    print('\n Usage:\n')
-    print(' Train (Random cross validation):')
-    print('  ',name,'-t <learningFile>\n')
-    print(' Train (with external validation):')
-    print('  ',name,'-t <learningFile> <validationFile> \n')
-    print(' Train (with external validation, with labels normalized with pkl file):')
-    print('  ',name,'-t <learningFile> <validationFile> <pkl normalization file>\n')
-    print(' Predict:')
-    print('  ',name,'-p <testFile>\n')
-    print(' Batch predict:')
-    print('  ',name,'-b <folder>\n')
-    print(' Batch predict on validation data in single file:')
-    print('  ',name,'-v <singleValidationFile>\n')
-    if name == 'DataML':
-        print(' Convert model to quantized tflite:')
-        print('  ',name,'-l <learningFile>\n')
-        print(' Create parameter optimization file:')
-        print('  ',name,'-o\n')
-        print(' Preview: Run Random Forest Regressor/Classifier - EXPERIMENTAL:')
-        print('  ',name,'-r <learningFile> <validFile-optional>\n')
-    print(' Run principal component analysis (PCA) - EXPERIMENTAL:')
-    print('  ',name,'-c <learningFile>\n')
-    print(' Run Autoencoder - EXPERIMENTAL:')
-    print('  ',name,'-a <learningFile> <validFile-optional>\n')
-    
-    if name == 'DataML_DF':
-        print(' Generate new training set using normal or diffused randomization on each feature:')
-        print('  ',name,'-g <learningFile> <pkl normalization file>')
-        print('\n Types of estimators:')
-        print('  - RandomForest')
-        print('  - HistGradientBoosting')
-        print('  - GradientBoosting')
-        print('  - DecisionTree')
-        print('\n Create parameter optimization file:')
-        print('  ',name,'-o <type of optimization>')
-        print('\n Types of optimization:')
-        print('  1 - random_state, max_depth')
-        print('  2 - n_estimators, max_features')
-        print('  else - random_state, max_depth, n_estimators, max_features\n')
-    
-    print(' Requires python 3.x. Not compatible with python 2.x\n')

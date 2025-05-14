@@ -3,7 +3,7 @@
 '''
 ***************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2025.05.13.1
+* v2025.05.14.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***************************************************
@@ -178,10 +178,10 @@ class Conf():
 # Main
 #************************************
 def main():
-    #try:
-    predict(sys.argv[1], sys.argv[2], sys.argv[3])
-    #except:
-    #     print("Select model and run prediction.")
+    try:
+        predict(sys.argv[1], sys.argv[2], sys.argv[3])
+    except:
+        print("Select model and run prediction.")
 
 #************************************
 # Prediction - backend

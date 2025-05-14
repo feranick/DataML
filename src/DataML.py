@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* version: 2025.05.13.1
+* version: 2025.05.14.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -175,11 +175,11 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:],
             "tpbvlocah:", ["train", "predict", "batch", "validbatch","lite", "opt", "comp", "autoencoder", "help"])
     except:
-        usage(dP.appName)
+        usage()
         sys.exit(2)
 
     if opts == []:
-        usage(dP.appName)
+        usage()
         sys.exit(2)
 
     for o, a in opts:
@@ -193,18 +193,18 @@ def main():
                     else:
                         train(sys.argv[2], sys.argv[3], sys.argv[4])
             except:
-                usage(dP.appName)
+                usage()
                 sys.exit(2)
 
         if o in ("-p" , "--predict"):
-            #try:
-            if len(sys.argv)<4:
-                predict(sys.argv[2], None)
-            else:
-                predict(sys.argv[2], sys.argv[3])
-            #except:
-            #    usage(dP.appName)
-            #    sys.exit(2)
+            try:
+                if len(sys.argv)<4:
+                    predict(sys.argv[2], None)
+                else:
+                    predict(sys.argv[2], sys.argv[3])
+            except:
+                usage()
+                sys.exit(2)
 
         if o in ("-b" , "--batch"):
             try:
@@ -213,7 +213,7 @@ def main():
                 else:
                     batchPredict(sys.argv[2], sys.argv[3])
             except:
-                usage(dP.appName)
+                usage()
                 sys.exit(2)
             
         if o in ("-v" , "--validbatch"):
@@ -223,21 +223,21 @@ def main():
                 else:
                     validBatchPredict(sys.argv[2], sys.argv[3])
             except:
-                usage(dP.appName)
+                usage()
                 sys.exit(2)
                 
         if o in ("-l" , "--lite"):
             try:
                 convertTflite(sys.argv[2])
             except:
-                usage(dP.appName)
+                usage()
                 sys.exit(2)
                 
         if o in ["-o" , "--opt"]:
             try:
                 makeOptParameters(dP)
             except:
-                usage(dP.appName)
+                usage()
                 sys.exit(2)
                 
         if o in ["-c" , "--comp"]:
@@ -247,7 +247,7 @@ def main():
                 else:
                     prePCA(sys.argv[2], sys.argv[3], dP)
             except:
-                usage(dP.appName)
+                usage()
                 sys.exit(2)
             
         if o in ["-a" , "--autoencoder"]:
@@ -257,7 +257,7 @@ def main():
                 else:
                     preAutoencoder(sys.argv[2], sys.argv[3], dP)
             except:
-                usage(dP.appName)
+                usage()
                 sys.exit(2)
 
     total_time = time.perf_counter() - start_time
@@ -891,6 +891,34 @@ def makeOptParameters(dP):
     with open(dP.optParFile, 'w') as json_file:
         json.dump(grid, json_file)
     print(" Created: ",dP.optParFile,"\n")
+    
+#************************************
+# Lists the program usage
+#************************************
+def usage():
+    print('\n Usage:\n')
+    print(' Train (Random cross validation):')
+    print('  DataML -t <learningFile>\n')
+    print(' Train (with external validation):')
+    print('  DataML -t <learningFile> <validationFile> \n')
+    print(' Predict:')
+    print('  DataML -p <testFile>\n')
+    print(' Batch predict:')
+    print('  DataML -b <folder>\n')
+    print(' Batch predict on validation data in single file:')
+    print('  DataML v <singleValidationFile>\n')
+    print(' Convert model to quantized tflite:')
+    print('  DataML -l <learningFile>\n')
+    print(' Create parameter optimization file:')
+    print('  DataML -o\n')
+    print(' Preview: Run Random Forest Regressor/Classifier - EXPERIMENTAL:')
+    print('  DataML -r <learningFile> <validFile-optional>\n')
+    print(' Run principal component analysis (PCA) - EXPERIMENTAL:')
+    print('  DataML -c <learningFile>\n')
+    print(' Run Autoencoder - EXPERIMENTAL:')
+    print('  DataML -a <learningFile> <validFile-optional>\n')
+    
+    print(' Requires python 3.x. Not compatible with python 2.x\n')
 
 #************************************
 # Main initialization routine

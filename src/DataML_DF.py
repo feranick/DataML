@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2025.05.13.1
+* version: 2025.05.14.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -185,11 +185,11 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:],
             "trpcbvoh:", ["train", "reduce", "predict", "csv", "batch", "validbatch", "opt", "help"])
     except:
-        usage(dP.appName)
+        usage()
         sys.exit(2)
 
     if opts == []:
-        usage(dP.appName)
+        usage()
         sys.exit(2)
 
     for o, a in opts:
@@ -201,7 +201,7 @@ def main():
                 else:
                     train(sys.argv[2], sys.argv[3])
             except:
-                usage(dP.appName)
+                usage()
                 sys.exit(2)
             
         if o in ("-r" , "--reduce"):
@@ -209,50 +209,52 @@ def main():
                 dP.updateConfig('Parameters','featureReduction','True')
                 dP.updateConfig('Parameters','minNumFeatures',sys.argv[2])
             
-            if len(sys.argv) == 4:
-                train(sys.argv[3], None)
-            else:
-                train(sys.argv[3], sys.argv[4])
+                if len(sys.argv) == 4:
+                    train(sys.argv[3], None)
+                else:
+                    train(sys.argv[3], sys.argv[4])
             except:
-                usage(dP.appName)
+                usage()
                 sys.exit(2)
 
         if o in ("-p" , "--predict"):
             try:
                 predict(sys.argv[2])
             except:
-                usage(dP.appName)
+                usage()
                 sys.exit(2)
                 
         if o in ("-c" , "--csv"):
             try:
                 csvPredict(sys.argv[2])
             except:
-                usage(dP.appName)
+                usage()
                 sys.exit(2)
 
         if o in ("-b" , "--batch"):
             try:
                 batchPredict(sys.argv[2])
             except:
-                usage(dP.appName)
+                usage()
                 sys.exit(2)
             
         if o in ("-v" , "--validbatch"):
             try:
                 validBatchPredict(sys.argv[2])
             except:
-                usage(dP.appName)
+                usage()
                 sys.exit(2)
             
         if o in ["-o" , "--opt"]:
             try:
-                if len(sys.argv) > 2:
-                    makeOptParameters(dP, sys.argv[2])
+                dP.updateConfig('Parameters','optimizeParameters','True')
+                makeOptParameters(dP, sys.argv[2])
+                if len(sys.argv) == 4:
+                    train(sys.argv[3], None)
                 else:
-                    makeOptParameters(dP, "1")
+                    train(sys.argv[3], sys.argv[4])
             except:
-                usage(dP.appName)
+                usage()
                 sys.exit(2)
 
     total_time = time.perf_counter() - start_time
@@ -833,6 +835,46 @@ def makeOptParameters(dP, ind):
     print(" Next training wtih DataML_DF will be done in optimization mode. \n")
     
     dP.updateConfig('Parameters','optimizeParameters','True')
+    
+#************************************
+# Lists the program usage
+#************************************
+def usage():
+    print('\n Usage:\n')
+    print(' Train (Random cross validation):')
+    print('  DataML_DF -t <learningFile>\n')
+    print(' Train (with external validation):')
+    print('  DataML_DF -t <learningFile> <validationFile> \n')
+    print(' Train and feature reduce (Random cross validation):')
+    print('  DataML_DF -r <num features> <learningFile>\n')
+    print(' Train and feature reduce (with external validation):')
+    print('  DataML_DF -r <num features> <learningFile> <validationFile> \n')
+    print(' Predict:')
+    print('  DataML_DF -p <testFile>\n')
+    print(' Batch predict:')
+    print('  DataML_DF -b <folder>\n')
+    print(' Batch predict from CSV file for multiple samples (DataML_DF only):')
+    print('  DataML_DF -c <testfile.csv>\n')
+    print(' Batch predict on validation data in single file:')
+    print('  DataML_DF -v <singleValidationFile>\n')
+    
+    print(' Generate new training set using normal or diffused randomization on each feature:')
+    print('  DataML_DF -g <learningFile> <pkl normalization file>')
+    print('\n Types of estimators:')
+    print('  - RandomForest')
+    print('  - HistGradientBoosting')
+    print('  - GradientBoosting')
+    print('  - DecisionTree')
+    print('\n Run hyperparameter optimization (Random cross validation):')
+    print('  DataML_DF -o <type of optimization> <learningFile>')
+    print('\n Run hyperparameter optimization (with external validation):')
+    print('  DataML_DF -o <type of optimization> <learningFile> <validFile>')
+    print('\n Types of optimization:')
+    print('  1 - random_state, max_depth')
+    print('  2 - n_estimators, max_features')
+    print('  else - random_state, max_depth, n_estimators, max_features\n')
+    
+    print(' Requires python 3.x. Not compatible with python 2.x\n')
 
 #************************************
 # Main initialization routine

@@ -19,7 +19,7 @@ Installation
 ## Installation from available wheel package
 If available from the main site, you can install SpectraKeras by running:
 
-    python3 -m pip install --upgrade dataml-2025.05.13.1-py3-none-any.whl
+    python3 -m pip install --upgrade dataml-2025.05.14.1-py3-none-any.whl
     
 SpectraKeras_CNN and Spectrakeras_MLP are available directly from the command line.
 NOTE: The Utilities in the `Utilities` folder are not included in the package, and can be run locally as needed.
@@ -79,9 +79,6 @@ Train (Random cross validation):
 
  Predict (labels normalized with pkl file):
   `DataML -p <testFile> <pkl normalization file>`
-  
- Predict from CSV file for multiple samples (DataML_DF only):
-   `DataML_DF -c <testFile.csv>`
 
  Batch predict (no label normalization used):
   `DataML -b <folder>`
@@ -109,10 +106,6 @@ Train (Random cross validation):
   `DataML -a <learningFile>`
   `DataML -a <learningFile> <validFile-optional>`
 
- Preview: Run Random Forest Regressor/Classifier with validation- EXPERIMENTAL:
-  `DataML-r <learningFile>`
-  `DataML-r <learningFile> <validFile-optional>`
-
 ## Decision Forests: DataML_DF
 
  Train (Random cross validation):
@@ -121,11 +114,20 @@ Train (Random cross validation):
  Train (with external validation):
   `DataML_DF -t <learningFile> <validationFile>`
   
-  Train and feature reduction (Random cross validation):
-  `DataML_DF -r <num_features> <learningFile>`
+ Train and feature reduction (Random cross validation):
+  `DataML_DF -r <min_number_features> <learningFile>`
 
-  Train and feature reduction (with external validation):
-  `DataML_DF -=r <num_features> <learningFile> <validationFile>` 
+ Train and feature reduction (with external validation):
+  `DataML_DF -r <min_number_features> <learningFile> <validationFile>`
+  
+ Run hyperparameter optimization (Random cross validation):
+  `DataML_DF -o <type of optimization> <learningFile>`
+ 
+ Run hyperparameter optimization (with external validation):
+  `DataML_DF -o <type of optimization> <learningFile> <validFile>`
+
+ Predict from CSV file for multiple samples (DataML_DF only):
+   `DataML_DF -c <testFile.csv>`
 
  Predict:
   `DataML_DF -p <testFile>`
@@ -135,17 +137,6 @@ Train (Random cross validation):
 
  Batch predict on validation data in single file:
   `DataML_DF -v <singleValidationFile>`
-  
- Generate new training set using normal or diffused randomization on each feature:
-  `DataML_DF -g <learningFile> <pkl normalization file>`
-  
- Evaluate principal component analysis (PCA) - EXPERIMENTAL:
-  `DataML_DF -c <learningFile>`
-  `DataML_DF -c <learningFile> <validFile-optional>`
-  
- Evaluate Autoencoder - EXPERIMENTAL:
-  `DataML_DF -a <learningFile>`
-  `DataML_DF -a <learningFile> <validFile-optional>`
   
 ###Notes: 
 Available Decision forests estimators that can be set using the `typeDF` flag:
