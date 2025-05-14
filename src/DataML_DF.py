@@ -194,28 +194,28 @@ def main():
 
     for o, a in opts:
         if o in ("-t" , "--train"):
-            #try:
-            dP.updateConfig('Parameters','featureReduction','False')
-            if len(sys.argv) == 3:
-                train(sys.argv[2], None)
-            else:
-                train(sys.argv[2], sys.argv[3])
-            #except:
-            #    usage(dP.appName)
-            #    sys.exit(2)
+            try:
+                dP.updateConfig('Parameters','featureReduction','False')
+                if len(sys.argv) == 3:
+                    train(sys.argv[2], None)
+                else:
+                    train(sys.argv[2], sys.argv[3])
+            except:
+                usage(dP.appName)
+                sys.exit(2)
             
         if o in ("-r" , "--reduce"):
-            #try:
-            dP.updateConfig('Parameters','featureReduction','True')
-            dP.updateConfig('Parameters','minNumFeatures',sys.argv[2])
+            try:
+                dP.updateConfig('Parameters','featureReduction','True')
+                dP.updateConfig('Parameters','minNumFeatures',sys.argv[2])
             
             if len(sys.argv) == 4:
                 train(sys.argv[3], None)
             else:
                 train(sys.argv[3], sys.argv[4])
-            #except:
-            #    usage(dP.appName)
-            #    sys.exit(2)
+            except:
+                usage(dP.appName)
+                sys.exit(2)
 
         if o in ("-p" , "--predict"):
             try:
@@ -225,11 +225,11 @@ def main():
                 sys.exit(2)
                 
         if o in ("-c" , "--csv"):
-            #try:
-            csvPredict(sys.argv[2])
-            #except:
-            #    usage(dP.appName)
-            #    sys.exit(2)
+            try:
+                csvPredict(sys.argv[2])
+            except:
+                usage(dP.appName)
+                sys.exit(2)
 
         if o in ("-b" , "--batch"):
             try:

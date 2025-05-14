@@ -172,11 +172,11 @@ def main():
     rootFile += '_p' + str(predRColTag[0])
     learnFile = rootFile + '_train'
     
-    #try:
-    P,V,norm = readParamFile(sys.argv[1], predRCol, rootFile, dP)
-    #except:
-    #    print("\033[1m" + " Something went wrong, maybe Param file not found\n" + "\033[0m")
-    #    return
+    try:
+        P,V,norm = readParamFile(sys.argv[1], predRCol, rootFile, dP)
+    except:
+        print("\033[1m" + " Something went wrong, maybe Param file not found\n" + "\033[0m")
+        return
     
     normTag = ""
     if dP.saveNormalized or dP.normalizeLabel:
