@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2025.05.14.1
+* version: 2025.05.15.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -515,6 +515,8 @@ def train(learnFile, testFile):
         saveRestrFeatLearnFile(dP, selector.support_, testFile)
         dP.updateConfig('Parameters','featureReduction','False')
         
+    createConfigFileWeb(En)
+    
     print(' Scikit-learn v.',str(sklearn.__version__),'\n')
     return r2_score(Cl_test, pred)
 
@@ -783,7 +785,7 @@ def plotImportances(df, En, A_test, Cl_test, dP):
     from sklearn.inspection import permutation_importance
 
     #feature_names = [f"feature {i}" for i in range(A_test.shape[1])]
-    feature_names = ["m" + str(x) for x in En.astype(int)]
+    feature_names = En2Par(En)
     importances = df.feature_importances_
     forest_importances1 = pd.Series(importances, index=feature_names)
     
@@ -812,6 +814,18 @@ def plotImportances(df, En, A_test, Cl_test, dP):
     fig.savefig('model_'+dP.typeDF+dP.mode+'_importances_Perm' + '.png', dpi = 160, format = 'png')  # Save plot
     
     print("  Feature importances plots saved\n")
+
+# Transform En values into a sequence of m1,m2, etc parameters
+def En2Par(En):
+    return ["m" + str(x) for x in En.astype(int)]
+
+# Create config.txt for web version with relevant parameters to the model
+def createConfigFileWeb(En):
+    data = En2Par(En)
+    with open("config.txt", 'w', newline='') as csvfile:
+        csvwriter = csv.writer(csvfile)
+        csvwriter.writerow(data)
+    print("  List of used parameters saved in config.txt\n ")
 
 #************************************
 # Make Optimization Parameter File
