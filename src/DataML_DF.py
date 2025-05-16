@@ -246,16 +246,16 @@ def main():
                 sys.exit(2)
             
         if o in ["-o" , "--opt"]:
-            try:
-                dP.updateConfig('Parameters','optimizeParameters','True')
-                makeOptParameters(dP, sys.argv[2])
-                if len(sys.argv) == 4:
-                    train(sys.argv[3], None)
-                else:
-                    train(sys.argv[3], sys.argv[4])
-            except:
-                usage()
-                sys.exit(2)
+            #try:
+            dP.updateConfig('Parameters','optimizeParameters','True')
+            makeOptParameters(dP, sys.argv[2])
+            if len(sys.argv) == 4:
+                train(sys.argv[3], None)
+            else:
+                train(sys.argv[3], sys.argv[4])
+            #except:
+            #    usage()
+            #    sys.exit(2)
 
     total_time = time.perf_counter() - start_time
     print(" Total time: {0:.1f}s or {1:.1f}m or {2:.1f}h".format(total_time,
@@ -461,6 +461,8 @@ def train(learnFile, testFile):
             grid = json.load(f)
             
         if dP.trainFullData:
+            A_tot = A
+            Cl2_tot = Cl2
             cv = 5
         else:
             A_tot = np.append(A,A_test, axis=0)
