@@ -205,6 +205,7 @@ def main():
 # Open Learning Data
 #************************************
 def readParamFile(paramFile, predRCol, rootFile, dP):
+
     if dP.fullDataset:
         usecols = range(dP.minCCol,dP.maxCCol)
     else:
@@ -216,8 +217,8 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
     P2 = df.to_numpy()
     M = np.hstack((P2[:,predRCol],P2[:,usecols]))
     
-    featNum = np.insert([x - 1 for x in usecols], 0,0)
-    
+    featNum = np.insert([x -dP.numHeadColumns+1 for x in usecols], 0,0)
+        
     if dP.purgeUndefRows:
         M = purgeRows(M)
     
