@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: 2025.05.21.1
+* version: 2025.05.21.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -19,6 +19,8 @@ from datetime import datetime, date
 from scipy.stats import pearsonr, spearmanr
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import matplotlib.colors as colors
 from matplotlib.backends.backend_pdf import PdfPages
 from numpy.polynomial.polynomial import Polynomial as polyfit
 
@@ -100,6 +102,12 @@ class Conf():
             'plotLinRegression' : True,
             'addSampleTagPlot' : True,
             'polyDegree' : 1,
+            
+            ### Enable s[ecial coloring in plots
+            'plotSpecificColors' : False,
+            'columnSpecColors' : 89,
+            'customColors' : False,
+            'custColorsList' : ['blue','grey', 'black', 'red', 'yellow'],
     
             ### Plotting Spectral correlations
             'plotSpectralCorr' : False,                # True: use for raw data (spectra, etc)
@@ -111,7 +119,6 @@ class Conf():
     def readConfig(self,configFile):
         try:
             self.conf.read(configFile)
-            #self.corrAnalysisDef = self.conf['Parameters']
             self.corrAnalysisPar = self.conf['Parameters']
 
             self.skipHeadRows = self.conf.getint('Parameters','skipHeadRows')
@@ -142,6 +149,10 @@ class Conf():
             self.plotLinRegression = self.conf.getboolean('Parameters','plotLinRegression')
             self.addSampleTagPlot = self.conf.getboolean('Parameters','addSampleTagPlot')
             self.polyDegree = self.conf.getint('Parameters','polyDegree')
+            self.plotSpecificColors = self.conf.getboolean('Parameters','plotSpecificColors')
+            self.columnSpecColors = self.conf.getint('Parameters','columnSpecColors')
+            self.customColors = self.conf.getboolean('Parameters','customColors')
+            self.custColorsList = ast.literal_eval(self.corrAnalysisPar['custColorsList'])
 
             self.graphX = ast.literal_eval(self.corrAnalysisPar['graphX'])
             self.graphY = ast.literal_eval(self.corrAnalysisPar['graphY'])
@@ -150,6 +161,7 @@ class Conf():
             self.stepXticksPlot = self.conf.getint('Parameters','stepXticksPlot')
             self.corrSpectraFull = self.conf.getboolean('Parameters','corrSpectraFull')
             self.corrSpectraMin = self.conf.getfloat('Parameters','corrSpectraMin')
+            
         except:
             print(" Error in reading configuration file. Please check it\n")
 
@@ -297,7 +309,7 @@ def getCorrelations(V, P, dP):
     spearmanR=np.empty((V.shape[1],P.shape[1]))
     for j in range(V.shape[1]):
         for i in range(P.shape[1]):
-            P2, V2, _ = purgeSparse(P[:,i], V[:,j], P[:,i], dP)
+            P2, V2, _, indx = purgeSparse(P[:,i], V[:,j], P[:,i], dP)
             try:
                 # Check size explicitly before calling, as correlation on < 2 points is undefined
                 if P2.size < 2 or V2.size < 2:
@@ -317,6 +329,7 @@ def purgeSparse(P, V, label, dP):
         pt = []
         vt = []
         ann = []
+        ind = []
         for l in range (P.shape[0]):
             # EXPERIMENTAL: Use this to remove additional points.
             #if P[l] != dP.valueForNan and V[l] != dP.valueForNan and V[l] > 1:
@@ -325,17 +338,19 @@ def purgeSparse(P, V, label, dP):
                 pt.append(P[l])
                 vt.append(V[l])
                 ann.append(label[l])
+                ind.append(l)
         P2=np.array(pt)
         V2=np.array(vt)
     else:
         P2 = P
         V2 = V
         ann = label
+        ind = range (P.shape[0])
         
     if P2.size < 2 or V2.size <2:
         P2 = np.array([0,0])
         V2 = np.array([0,0])
-    return P2, V2, ann
+    return P2, V2, ann, ind
 
 def getCorrelationsExperimental(dfP):
     dfPearson = dfP.corr(method='pearson')
@@ -387,6 +402,19 @@ def heatMapsCorrelations(dfP, title, pdf, dP):
     #plt.show()
     plt.close()
 
+#*********************************************************************
+# Create custom palette based on values from a column in the dataset
+#*********************************************************************
+def createPalette(dP, dfP, indx):
+    sampleColors = dfP.iloc[:,dP.columnSpecColors+dP.skipHeadColumns].tolist()
+    purgedSampleColors = [sampleColors[i]-1 for i in indx]
+    if dP.customColors:
+        cmap = colors.ListedColormap(dP.custColorsList)
+        mapped = [cmap(val) for val in purgedSampleColors]
+    else:
+        mapped=cm.rainbow(np.array(purgedSampleColors)/np.mean(purgedSampleColors))
+    return purgedSampleColors, mapped
+
 #************************************
 # Plot Graphs based on threshold
 #************************************
@@ -395,8 +423,12 @@ def plotGraphThreshold(dfP, dfL, dfC, validRows, title, pdf, sumFile, dP):
     dfSummary = pd.DataFrame()
     for col in dfC.columns:
         for ind in dfC[dfC[col].between(dP.corrMin,dP.corrMax)].index:
-            x, y, ann = purgeSparse(dfP[col].to_numpy(), dfP[ind].to_numpy(), dfP.iloc[:,0], dP)
-            plt.plot(x,y, 'bo')
+            x, y, ann, indx = purgeSparse(dfP[col].to_numpy(), dfP[ind].to_numpy(), dfP.iloc[:,0], dP)
+            if dP.plotSpecificColors:
+                color, mapped= createPalette(dP, dfP, indx)
+                plt.scatter(x, y, marker='o', c=mapped)
+            else:
+                plt.plot(x,y, 'bo')
             
             if dfL.empty:
                 xlabel = col
@@ -409,9 +441,13 @@ def plotGraphThreshold(dfP, dfL, dfC, validRows, title, pdf, sumFile, dP):
         
             if dP.plotValidData:
                 print("\nValid datapoint:\n",dfP.loc[validRows,col])
-                xv, yv, ann = purgeSparse(dfP.loc[validRows,col].to_numpy(), dfP.loc[validRows, ind].to_numpy(), dfP.iloc[:,0], dP)
+                xv, yv, ann, indx = purgeSparse(dfP.loc[validRows,col].to_numpy(), dfP.loc[validRows, ind].to_numpy(), dfP.iloc[:,0], dP)
                 dfSummary = pd.concat([dfSummary, pd.DataFrame([{'PAR': xlabel, 'PERF': ylabel, 'Corr': dfC[col].loc[ind], 'Num_points': len(xv), 'Valid': 'YES'}])], ignore_index=True)
-                plt.plot(xv, yv, 'ro')
+                if dP.plotSpecificColors:
+                    color, mapped= createPalette(dP, dfP, indx)
+                    plt.scatter(xv, yv, marker='x', c=mapped)
+                else:
+                    plt.plot(xv, yv, 'ro')
                 
             plt.xlabel(xlabel)
             plt.ylabel(ylabel)
@@ -454,12 +490,21 @@ def plotSelectedGraphs(dfP, dfL, dfC, X, Y, validRows, title, pdf, dP):
                 xlabel = formatLabels(dfL, dfP.columns.values[i])
                 ylabel = formatLabels(dfL, dfP.columns.values[j])
             
-            P, V, ann = purgeSparse(dfP.iloc[:,i].to_numpy(), dfP.iloc[:,j].to_numpy(), dfP.iloc[:,0], dP)
-            plt.plot(P, V, 'bo')
+            P, V, ann, indx = purgeSparse(dfP.iloc[:,i].to_numpy(), dfP.iloc[:,j].to_numpy(), dfP.iloc[:,0], dP)
+            if dP.plotSpecificColors:
+                color, mapped= createPalette(dP, dfP, indx)
+                plt.scatter(P, V, marker='o', c=mapped)
+            else:
+                plt.plot(P,V, 'bo')
             
             if dP.plotValidData:
-                PV, VV, ann = purgeSparse(dfP.iloc[validRows,i].to_numpy(), dfP.iloc[validRows, j].to_numpy(), dfP.iloc[validRows, 0], dP)
-                plt.plot(PV, VV, 'ro')
+                PV, VV, ann, indx = purgeSparse(dfP.iloc[validRows,i].to_numpy(), dfP.iloc[validRows, j].to_numpy(), dfP.iloc[validRows, 0], dP)
+                if dP.plotSpecificColors:
+                    color, mapped= createPalette(dP, dfP, indx)
+                    plt.scatter(PV, VV, marker='x', c=mapped)
+                else:
+                    plt.plot(PV,VV, 'ro')
+                
                 
             plt.xlabel(xlabel)
             plt.ylabel(ylabel)
