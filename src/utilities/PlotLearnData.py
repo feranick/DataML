@@ -4,7 +4,7 @@
 ***********************************************
 * PlotLearnData
 * Plot learning data
-* version: 2025.05.16.1
+* version: 2025.03.28.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -25,6 +25,7 @@ def PlotLearnData():
 #************************************
 class Conf():
     excludeZeroFeatures = True
+    normalize = False
     useLabels = False
     labels = [8,4,5,35]  # First parameter is always the performance
     
@@ -66,6 +67,24 @@ def readLearnFile(dP, learnFile, newNorm):
         print("\033[1m" + " Learning file not found \n" + "\033[0m")
         return
 
+    if dP.normalize:
+        print("  Normalization of feature matrix to 1")
+        if newNorm:
+            print("  Normalization parameters saved in:", dP.norm_file,"\n")
+            norm = Normalizer(M, dP)
+        else:
+            print("  Normalization parameters from:", dP.norm_file,"\n")
+            with open(dP.norm_file, "rb") as f:
+                norm = pickle.load(f)
+        M = norm.transform(M)
+        norm.save()
+    
+    '''
+    if dP.excludeZeroFeatures:
+        ind = np.any(M == 0, axis=1)
+        ind[0] = False
+        M = M[~ind]
+    '''
     En = M[0,:]
     A = M[1:,:]
     Cl = M[1:,0]
@@ -107,14 +126,13 @@ def plotAugmData(dP, shape, A1,A2,A3, plotFile):
     pdf.close()
     print(" Plots saved in:", plotFile,"\n")
     
-def removeZeros(dP, X_in, Y_in):
+def removeZeros(dP, A,B):
     if dP.excludeZeroFeatures:
-        X = np.asarray(X_in) # Ensure numpy array for boolean indexing
-        Y = np.asarray(Y_in)
-        # Create a mask for elements to keep: X != 0 AND Y != 0
-        keep_mask = (X != 0) & (Y != 0)
-        return X[keep_mask], Y[keep_mask]
-    return X_in, Y_in # Return original if not excluding
+        A = A[~(B==0)]
+        B = B[~(B==0)]
+        B = B[~(A==0)]
+        A = A[~(A==0)]
+    return A, B
     
 #************************************
 # Main initialization routine

@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2025.05.16.1
+* version: 2025.05.21.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -246,16 +246,16 @@ def main():
                 sys.exit(2)
             
         if o in ["-o" , "--opt"]:
-            #try:
-            dP.updateConfig('Parameters','optimizeParameters','True')
-            makeOptParameters(dP, sys.argv[2])
-            if len(sys.argv) == 4:
-                train(sys.argv[3], None)
-            else:
-                train(sys.argv[3], sys.argv[4])
-            #except:
-            #    usage()
-            #    sys.exit(2)
+            try:
+                dP.updateConfig('Parameters','optimizeParameters','True')
+                makeOptParameters(dP, sys.argv[2])
+                if len(sys.argv) == 4:
+                    train(sys.argv[3], None)
+                else:
+                    train(sys.argv[3], sys.argv[4])
+            except:
+                usage()
+                sys.exit(2)
 
     total_time = time.perf_counter() - start_time
     print(" Total time: {0:.1f}s or {1:.1f}m or {2:.1f}h".format(total_time,
