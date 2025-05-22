@@ -409,9 +409,6 @@ def createPalette(dP, dfP, indx):
     sampleColors = dfP.iloc[:,dP.columnSpecColors+dP.skipHeadColumns].tolist()
     purgedSampleColors = [sampleColors[i]-1 for i in indx]
     if dP.customColors:
-        if max(purgedSampleColors) > len(dP.custColorsList):
-            print(" The requested color is not on the custom palette. \n Check custColorsList in the ini file and retry.\n")
-            sys.exit()
         cmap = colors.ListedColormap(dP.custColorsList)
         mapped = [cmap(val) for val in purgedSampleColors]
     else:
