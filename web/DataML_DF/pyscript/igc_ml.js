@@ -1,4 +1,5 @@
 var modelPkl = 0;
+var nameSelIndex = "selectedIndex_custom"
 
 function showLog() {
   const url="./";
@@ -15,7 +16,7 @@ function showLog() {
 async function selectModel() {
   document.getElementById("output").innerHTML = "";
   selIndex = document.IGC_ML.model.selectedIndex;
-  setCookie("selectedIndex", selIndex ,1000);
+  setCookie(nameSelIndex, selIndex ,1000);
   folder = (document.IGC_ML.model[selIndex].text);
   console.log(folder);
   showLog();
@@ -93,7 +94,7 @@ function setButtonLabel() {
 }
 
 function init() {
-  selIndex = getCookie("selectedIndex");
+  selIndex = getCookie(nameSelIndex);
   if(selIndex == -1 || document.IGC_ML.model.options.length < selIndex) {
     document.IGC_ML.model.selectedIndex = 0 }
   else {
