@@ -1,6 +1,6 @@
 var modelPkl = 0;
-var nameSelIndex = "selectedIndex_custom"
-//var nameSelIndex="selIndex_"+window.location.pathname.split('/').slice(-2)[0];
+//var nameSelIndex = "selectedIndex_custom"
+var nameSelIndex="selIndex_"+window.location.pathname.split('/').slice(-2)[0];
 
 function showLog() {
   const url="./";
@@ -95,12 +95,23 @@ function setButtonLabel() {
 }
 
 function init() {
-  selIndex = getCookie(nameSelIndex);
-  if(selIndex == -1 || document.IGC_ML.model.options.length < selIndex) {
-    document.IGC_ML.model.selectedIndex = 0 }
-  else {
-    document.IGC_ML.model.selectedIndex = selIndex;}
-  showLog();
+  const modelDropdown = document.IGC_ML.model;
+  if (!modelDropdown) {
+      console.error("Fatal Error: Could not find model dropdown.");
+      return;
+  }
+
+  let indexToSet = 0; // Default to the first option
+  const cookieValue = getCookie(nameSelIndex);
+
+  if (cookieValue !== null) {
+    const parsedIndex = parseInt(cookieValue, 10);
+    if (!isNaN(parsedIndex) && parsedIndex >= 0 && parsedIndex < modelDropdown.options.length) {
+      indexToSet = parsedIndex;
+    }
+  }
+  modelDropdown.selectedIndex = indexToSet;
+  showLog(); // Call after selectedIndex is definitively set
 }
 
 //window.onload = init();
