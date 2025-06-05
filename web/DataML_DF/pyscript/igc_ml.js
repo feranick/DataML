@@ -1,5 +1,6 @@
 var modelPkl = 0;
-var nameSelIndex="selIndex_"+window.location.pathname.split('/').slice(-2)[0];
+var nameSelIndex = "selectedIndex_custom"
+//var nameSelIndex="selIndex_"+window.location.pathname.split('/').slice(-2)[0];
 
 function showLog() {
   const url="./";
