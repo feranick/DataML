@@ -148,10 +148,26 @@ async def getModel(event):
     output_div = document.querySelector("#output")
     output_div.innerHTML = "Loading ML model..."
     folder = document.querySelector("#model").value
-    ini = await getFile(folder, "DataML_DF.ini", False)
-    dP = Conf(ini)
-    modelPkl = await getFile(folder, dP.modelName, True)
-    df = pickle.loads(modelPkl)
+    try:
+        ini = await getFile(folder, "DataML_DF.ini", False)
+        dP = Conf(ini)
+        modelPkl = await getFile(folder, dP.modelName, True)
+        df = pickle.loads(modelPkl)
+    except pickle.UnpicklingError as e:
+        error_msg = f"Error unpickling model '{folder}': {e}"
+        print(error_msg)
+        if output_div: output_div.innerHTML = error_msg
+        return # Stop further execution for this model load
+    except MemoryError as e:
+        error_msg = f"MemoryError loading model '{folder}': {e}"
+        print(error_msg)
+        if output_div: output_div.innerHTML = error_msg
+        return
+    except Exception as e:
+        error_msg = f"Generic error loading model '{folder}': {type(e).__name__} - {e}"
+        print(error_msg)
+        if output_div: output_div.innerHTML = error_msg
+        return
     output_div.innerHTML = ""
     document.querySelector("#button").disabled = False
     document.querySelector("#model").disabled = False
