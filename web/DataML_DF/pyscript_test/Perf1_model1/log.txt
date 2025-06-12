@@ -1,0 +1,108 @@
+*****************************************************
+* DataML Decision Forests - Classifier and Regressor
+* version: 2025.03.11.1
+* Uses: sklearn
+* By: Nicola Ferralis <feranick@hotmail.com>
+*****************************************************
+
+  Opening training file:
+   IGC_MIT_20250225_grouped_partialDataSet_p43_train.txt 
+
+  Opening training file:
+   IGC_MIT_20250225_grouped_partialDataSet_p43_test.txt 
+
+  Data size: (74, 3)
+  Number of learning labels: 1
+  Total number of points per data: 3
+
+  Testing set file: IGC_MIT_20250225_grouped_partialDataSet_p43_test.txt
+  Training set file datapoints: 74
+  Testing set file datapoints: 3
+      Iter       Train Loss   Remaining Time 
+         1       11408.5426            0.41s
+         2        9240.9195            0.25s
+         3        7485.1448            0.20s
+         4        6063.7927            0.17s
+         5        4911.6721            0.15s
+         6        3978.4544            0.14s
+         7        3223.1122            0.13s
+         8        2610.7209            0.12s
+         9        2114.6839            0.11s
+        10        1712.8940            0.11s
+        20         208.5475            0.09s
+        30          25.3668            0.08s
+        40           3.0860            0.07s
+        50           0.3755            0.07s
+        60           0.0457            0.06s
+        70           0.0056            0.06s
+        80           0.0007            0.06s
+        90           0.0001            0.06s
+       100           0.0000            0.06s
+       200           0.0000            0.04s
+       300           0.0000            0.02s
+       400           0.0000            0.01s
+       500           0.0000            0.00s
+
+   GradientBoostingRegressor model saved in: model_DF_GradientBoostingRegressor.pkl
+
+  ================================================
+   GradientBoosting Regressor  - Parameters
+  ================================================
+   Number of estimators: 20 
+   Max depth: 16 
+   Max features: 0.3 
+   Epochs/Max number of iterations: 500 
+   Cross validation split: 5.0%
+   Batch size: 4
+   Train on full dataset: False
+   Number of labels: 1
+   Random state: 14
+   Normalize: False
+
+  ================================================================================
+   GradientBoosting Regressor - Results
+  ================================================================================
+   Real class	| Predicted class	| Delta
+  --------------------------------------------------------------------------------
+   261.00	| 235.15		| -25.85
+   157.00	| 125.16		| -31.84
+   158.00	| 182.09		| 24.09
+  --------------------------------------------------------------------------------
+   MAE = 27.2577
+   R^2 = 0.6833
+   StDev = 30.71
+  ================================================================================
+
+  Feature importances plots saved
+
+ Scikit-learn v. 1.6.1 
+
+ Total time: 1.6s or 0.0m or 0.0h 
+
+mb14:3_params feranick$ cat DataML_DF.ini 
+[Parameters]
+typeDF = GradientBoosting
+regressor = True
+n_estimators = 20
+max_depth = 16
+max_features = 0.3
+l_rate = 0.1
+epochs = 500
+cv_split = 0.05
+trainFullData = False
+fullSizeBatch = False
+batch_size = 4
+numLabels = 1
+normalize = False
+normalizeLabel = False
+runDimRedFlag = False
+typeDimRed = SparsePCA
+numDimRedComp = 3
+plotFeatImportance = True
+optimizeParameters = False
+optScoringR = r2
+optScoringC = accuracy
+
+[System]
+random_state = 14
+n_jobs = 10
