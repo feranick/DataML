@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: 2025.05.21.2
+* version: 2025.08.21.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -298,6 +298,8 @@ def processParamFile(dfP, lims, dP):
     headP = P.columns.values
     P = P.to_numpy()
     
+    checkBadTypesDataset(P)
+    
     P[np.isnan(P)] = dP.valueForNan
     return P, headP
     
@@ -571,6 +573,22 @@ def formatLabels(dfL, ind):
         if str(dfL[ind][l]) != "nan":
             label += " " + str(dfL[ind][l])
     return label.replace('\n',' ')
+    
+#*************************************************************
+# Check and identify where are badly typed entries in dataset
+#*************************************************************
+def checkBadTypesDataset(P):
+    def is_not_numeric(x):
+        return not isinstance(x, (int, float))
+        
+    vectorized_checker = np.vectorize(is_not_numeric)
+    problematic_indices = np.where(vectorized_checker(P))
+    if P.dtype == 'object':
+        print(f"\n Type issue: {P.dtype}")
+        print(f" Problematic entries are at indices: {problematic_indices}")
+        print(f" The problematic values are: {P[problematic_indices]}\n")
+    else:
+        print("\n No type issues detected.\n")
 
 #************************************
 # Main initialization routine
