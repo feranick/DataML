@@ -196,8 +196,12 @@ def main():
         #dfP = dfP.append(dfV,ignore_index=True) # deprecated in Pandas v>2
         dfP = pd.concat([dfP, dfV], ignore_index=True)
         dP.validRows = dfP.index.tolist()[-len(dfV.index.tolist()):]
-    P,headP = processParamFile(dfP, dP.trainCol, dP)
-    V,headV = processParamFile(dfP, dP.predCol, dP)
+    P,headP,flagP = processParamFile(dfP, dP.trainCol, dP)
+    V,headV,flagV = processParamFile(dfP, dP.predCol, dP)
+        
+    if flagP is False or flagV is False:
+        print(" Errors in dataset, please check and retry\n")
+        return 0
     
     #rootFile = os.path.splitext(sys.argv[1])[0]
     rootFile = os.path.splitext((os.path.basename(sys.argv[1])))[0]
@@ -298,10 +302,11 @@ def processParamFile(dfP, lims, dP):
     headP = P.columns.values
     P = P.to_numpy()
     
-    checkBadTypesDataset(P)
+    flag = checkBadTypesDataset(P)
     
-    P[np.isnan(P)] = dP.valueForNan
-    return P, headP
+    if flag is not False:
+        P[np.isnan(P)] = dP.valueForNan
+    return P, headP, flag
     
 #************************************
 # Calculate Correlations
@@ -583,12 +588,15 @@ def checkBadTypesDataset(P):
         
     vectorized_checker = np.vectorize(is_not_numeric)
     problematic_indices = np.where(vectorized_checker(P))
+
     if P.dtype == 'object':
         print(f"\n Type issue: {P.dtype}")
         print(f" Problematic entries are at indices: {problematic_indices}")
         print(f" The problematic values are: {P[problematic_indices]}\n")
+        return False
     else:
         print("\n No type issues detected.\n")
+        return True
 
 #************************************
 # Main initialization routine
