@@ -4,7 +4,7 @@
 ***********************************************
 * AddDenoiseAutoEncoder
 * Data Augmentation via Denoising Autoencoder
-* version: 2025.05.21.2
+* version: 2025.08.25.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''

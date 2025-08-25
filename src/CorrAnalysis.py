@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation analysis
-* version: 2025.08.21.1
+* version: 2025.08.25.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -196,12 +196,8 @@ def main():
         #dfP = dfP.append(dfV,ignore_index=True) # deprecated in Pandas v>2
         dfP = pd.concat([dfP, dfV], ignore_index=True)
         dP.validRows = dfP.index.tolist()[-len(dfV.index.tolist()):]
-    P,headP,flagP = processParamFile(dfP, dP.trainCol, dP)
-    V,headV,flagV = processParamFile(dfP, dP.predCol, dP)
-        
-    if flagP is False or flagV is False:
-        print(" Errors in dataset, please check and retry\n")
-        return 0
+    P,headP = processParamFile(dfP, dP.trainCol, dP)
+    V,headV = processParamFile(dfP, dP.predCol, dP)
     
     #rootFile = os.path.splitext(sys.argv[1])[0]
     rootFile = os.path.splitext((os.path.basename(sys.argv[1])))[0]
@@ -302,11 +298,8 @@ def processParamFile(dfP, lims, dP):
     headP = P.columns.values
     P = P.to_numpy()
     
-    flag = checkBadTypesDataset(P)
-    
-    if flag is not False:
-        P[np.isnan(P)] = dP.valueForNan
-    return P, headP, flag
+    P[np.isnan(P)] = dP.valueForNan
+    return P, headP
     
 #************************************
 # Calculate Correlations
