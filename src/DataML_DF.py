@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2025.08.25.1
+* version: 2025.08.26.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -391,7 +391,7 @@ def train(learnFile, testFile):
             print("  Normalizing validation file for prediction...\n")
         except:
             print("\033[1m pkl file not found \033[0m")
-            return
+            sys.exit()
 
     if dP.regressor:
         if dP.normalize:
@@ -582,7 +582,7 @@ def predict(testFile):
             print("  Opening pkl file with normalization data:",dP.norm_file)
         except:
             print("\033[1m pkl file not found \033[0m")
-            return
+            sys.exit()
     else:
         norm = None
     
@@ -635,7 +635,7 @@ def csvPredict(csvFile):
             print("  Opening pkl file with normalization data:",dP.norm_file)
         except:
             print("\033[1m pkl file not found \033[0m")
-            return
+            sys.exit()
     else:
         norm = None
     
@@ -678,7 +678,7 @@ def batchPredict(folder):
             print("  Opening pkl file with normalization data:",dP.norm_file)
         except:
             print("\033[1m pkl file not found \033[0m")
-            return
+            sys.exit()
     else:
         norm = None
     

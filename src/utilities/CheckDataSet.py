@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * CheckDataSet
-* version: 2025.08.25.1
+* version: 2025.08.26.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -67,8 +67,8 @@ def readParamFile(paramFile, dP):
             dfP = dfPorig.iloc[dP.skipHeadRows:].iloc[:, (dP.skipHeadColumns):]
             print(dfP)
     except:
-        print("\033[1m Param file:",paramFile," not found/broken \n\033[0m")
-        return 0
+        print("\033[1m Param file:",paramFile,"not found/broken \n\033[0m")
+        sys.exit()
     return dfP, dfL
     
 #*************************************************************

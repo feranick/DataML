@@ -2,14 +2,14 @@
 '''
 **************************************************
 * libDataML - Library for DataML/DataML_DF
-* version: 2025.08.25.1
+* version: 2025.08.26.1
 * Uses: Keras, TensorFlow, scikit-learn
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
 '''
 import numpy as np
 import scipy
-import os.path, pickle, h5py
+import sys, os.path, pickle, h5py
 
 #************************************
 # Normalizer
@@ -355,7 +355,7 @@ def readFile(learnFile):
         return M
     except:
         print("\033[1m Training file not found\033[0m")
-        return -1
+        sys.exit()
 
 def readLearnFile(learnFile, initNorm, dP):
     M = readFile(learnFile)

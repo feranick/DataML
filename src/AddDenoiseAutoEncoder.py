@@ -4,7 +4,7 @@
 ***********************************************
 * AddDenoiseAutoEncoder
 * Data Augmentation via Denoising Autoencoder
-* version: 2025.08.25.1
+* version: 2025.08.26.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -484,7 +484,7 @@ def readLearnFile(dP, learnFile, newNorm):
                 M = np.loadtxt(f, unpack =False)
     except:
         print("\033[1m" + " Learning file not found \n" + "\033[0m")
-        return
+        sys.exit()
 
     if dP.normalize:
         print("  Normalization of feature matrix to 1")

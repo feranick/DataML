@@ -482,7 +482,7 @@ def train(learnFile, testFile, normFile):
             print(" Normalizing validation file for prediction...")
         except:
             print("\033[1m pkl file not found \033[0m")
-            return
+            sys.exit()
 
     if dP.regressor:
         mae = np.asarray(log.history['mae'])
@@ -661,7 +661,7 @@ def predict(testFile, normFile):
             R = norm.transform_valid_data(R)
         except:
             print("\033[1m pkl file not found \033[0m")
-            return
+            sys.exit()
      
     if dP.runDimRedFlag:
         R = runPCAValid(R, dP)
@@ -734,7 +734,7 @@ def batchPredict(folder, normFile):
             print("  Opening pkl file with normalization data:",normFile,"\n")
         except:
             print("\033[1m" + " pkl file not found \n" + "\033[0m")
-            return
+            sys.exit()
             
     fileName = []
     for file in glob.glob(folder+'/*.txt'):
@@ -807,7 +807,7 @@ def validBatchPredict(testFile, normFile):
             print("  Opening pkl file with normalization data:",normFile,"\n")
         except:
             print("\033[1m" + " pkl file not found \n" + "\033[0m")
-            return
+            sys.exit()
     
     if dP.runDimRedFlag:
         A_test = runPCAValid(A_test, dP)

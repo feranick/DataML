@@ -3,7 +3,7 @@
 '''
 ***************************************************
 * DataML Decision Forests - Classifier and Regressor
-* v2025.05.21.2
+* v2025.08.26.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***************************************************
@@ -194,7 +194,7 @@ def getPrediction(dP, df, R, le):
                 R = norm.transform_valid_data(R)
         except:
             print("\033[1m pkl file not found \033[0m")
-            return
+            sys.exit()
 
     if dP.runDimRedFlag:
         R = runPCAValid(R, dP)

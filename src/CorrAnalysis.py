@@ -3,8 +3,8 @@
 '''
 ***********************************************
 * CorrAnalysis
-* Correlation analysis
-* version: 2025.08.25.1
+* Correlation Analysis
+* version: 2025.08.26.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -275,8 +275,8 @@ def readParamFile(paramFile, dP):
         else:
             dfL = pd.DataFrame([])
     except:
-        print("\033[1m Param file:",paramFile," not found/broken \n\033[0m")
-        return
+        print("\033[1m Param file:",paramFile,"not found/broken. \n\033[0m")
+        sys.exit()
     return dfP, dfL
 
 def processParamFile(dfP, lims, dP):
