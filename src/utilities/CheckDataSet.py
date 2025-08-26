@@ -75,12 +75,14 @@ def readParamFile(paramFile, dP):
 # Check and identify where are badly typed entries in dataset
 #*************************************************************
 def checkBadTypesDataset(dfP, dfL):
-    non_numeric_cols = dfP.select_dtypes(exclude=np.number).columns
+    #cols = dfP.select_dtypes(exclude=np.number).columns
+    cols = dfP.columns.tolist()
+    
     numDetected = 0
     
-    for i in range(1,len(non_numeric_cols),1):
-        non_numeric_mask = pd.to_numeric(dfP[non_numeric_cols[i]], errors='coerce').isnull()
-        non_numeric_members = dfP.loc[non_numeric_mask, non_numeric_cols[i]]
+    for i in range(1,len(cols),1):
+        non_numeric_mask = pd.to_numeric(dfP[cols[i]], errors='coerce').isnull()
+        non_numeric_members = dfP.loc[non_numeric_mask, cols[i]]
         if len(non_numeric_members) > 0:
             print("\n---------------------------------")
             print(f"Column: {dfL[i]}")
@@ -93,7 +95,7 @@ def checkBadTypesDataset(dfP, dfL):
         print(" No non-numerical values found. All good.\n")
     else:
         print("\n")
-
+    
 #************************************
 # Main initialization routine
 #************************************
