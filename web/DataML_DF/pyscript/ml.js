@@ -1,6 +1,6 @@
 var modelPkl = 0;
-//var nameSelIndex = "selectedIndex_custom"
-var nameSelIndex="selIndex_"+window.location.pathname.split('/').slice(-2)[0];
+var nameSelIndex="selIndex"+transformString(window.location.pathname);
+//var nameSelIndex="selIndex_"+window.location.pathname.split('/').slice(-2)[0];
 
 function showLog() {
   const url="./";
@@ -16,9 +16,9 @@ function showLog() {
 
 async function selectModel() {
   document.getElementById("output").innerHTML = "";
-  selIndex = document.IGC_ML.model.selectedIndex;
+  selIndex = document.MIT_ML.model.selectedIndex;
   setCookie(nameSelIndex, selIndex ,1000);
-  folder = (document.IGC_ML.model[selIndex].text);
+  folder = (document.MIT_ML.model[selIndex].text);
   console.log(folder);
   showLog();
 
@@ -88,14 +88,14 @@ function createEntries(features) {
 }
 
 function setButtonLabel() {
-  selIndex = document.IGC_ML.model.selectedIndex;
-  folder = (document.IGC_ML.model[selIndex].text);
+  selIndex = document.MIT_ML.model.selectedIndex;
+  folder = (document.MIT_ML.model[selIndex].text);
   const button = document.getElementById("button");
   button.innerHTML = "Predict "+folder.slice(0,5);
 }
 
 function init() {
-  const modelDropdown = document.IGC_ML.model;
+  const modelDropdown = document.MIT_ML.model;
   if (!modelDropdown) {
       console.error("Fatal Error: Could not find model dropdown.");
       return;
@@ -126,4 +126,12 @@ function setCookie(name, value, days) {
   e.setDate(e.getDate() + (days || 365));
   document.cookie = name + '=' + value + ';expires=' + e.toUTCString() + ';path=/;domain=.' + document.domain;
 }
+
+function transformString(input) {
+ let result = input;
+ if (result.endsWith('/')) {
+    result = result.slice(0, -1);
+    }
+ return result.replace(/\//g, '-');
+ };
 // ########################################################

@@ -4,14 +4,14 @@
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width,initial-scale=1" />
       <title>IGC_ML - pyscript version</title>
-      <link rel="stylesheet" href="https://pyscript.net/releases/2025.5.1/core.css">
-      <script type="module" src="https://pyscript.net/releases/2025.5.1/core.js"></script>
+      <link rel="stylesheet" href="https://pyscript.net/releases/2025.8.1/core.css">
+      <script type="module" src="https://pyscript.net/releases/2025.8.1/core.js"></script>
       <link rel="stylesheet" href="style.css">
   </head>
   <body>
   <b>DataML - pyscript</b><br>
 
-  <br><form name = "IGC_ML" id="igc_ml">
+  <br><form name = "MIT_ML" id="mit_ml">
   Model: <select name="model" id="model" onchange="selectModel()" py-change="on_model_select">
   <option>Perf1_model1</option>
   <option>Perf3_model1</option>
@@ -32,6 +32,6 @@
 <div id="out"><br><text_area id="output"><br></text_area></div>
 
   <script type="py" src="./main.py" config="./pyscript.toml"></script>
-  <script type="text/javascript" src="igc_ml.js" ></script>
+  <script type="text/javascript" src="ml.js" ></script>
   </body>
 </html>
