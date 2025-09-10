@@ -1,8 +1,10 @@
 # DataML
 DataML Regression and Classification of sparse data using Neural Networks of Decision Forests.
 - Currently supported ML architectures:
-    - Classifier/Regressor (TensorFlow, TensorFlow-Lite)
-- Required libraries for prediction:
+    - Classifier/Regressor (`Scikit-learn`, `TensorFlow`, `TensorFlow-Lite`)
+- Required libraries for prediction using SciKit-Learn (`DataML_DF`):
+    - `scikit-learn`: version 1.7.0.
+- Required libraries for prediction using Tensorflow (`DataML`):
     - tensorflow (version >= 2.13.x, >= 2.16.2 recommended)
     - Optional: [ai_edge_litert (v=> 1.1.4)] (https://ai.google.dev/edge/litert)
     - Optional - soon to be deprecated: [tensorflow-lite runtime](https://www.tensorflow.org/lite/guide/python) 
@@ -19,7 +21,7 @@ Installation
 ## Installation from available wheel package
 If available from the main site, you can install SpectraKeras by running:
 
-    python3 -m pip install --upgrade dataml-2025.05.21.2-py3-none-any.whl
+    python3 -m pip install --upgrade dataml-2025.09.10.1-py3-none-any.whl
     
 SpectraKeras_CNN and Spectrakeras_MLP are available directly from the command line.
 NOTE: The Utilities in the `Utilities` folder are not included in the package, and can be run locally as needed.
@@ -39,7 +41,7 @@ A wheel package is available in the subfolder `dir`. You can install it followin
 This software requires Python (3.9 or higher). It has been tested with Python 3.10 or higher which is the recommended platform. It is not compatible with python 2.x. Additional required packages:
 
     numpy
-    scikit-learn (>=1.6.1)
+    scikit-learn (==1.7.0)
     scipy
     matplotlib
     pandas
@@ -62,49 +64,6 @@ Prediction can be carried out using the regular tensorflow, or using [tensorflow
 Usage
 ===================
 Two separate executables are available for Neural-Network-based ML (DataML) and Decision Forests (DataML_DF):
-
-## Neural Networks: DataML
-
-Train (Random cross validation):
-  `python3 DataML.py -t <learningFile>`
-
- Train (with external validation):
-  `DataML -t <learningFile> <validationFile> `
-
- Train (with external validation, with labels normalized with pkl file):
-  `DataML -t <learningFile> <validationFile> <pkl normalization file>`
-
- Predict (no label normalization used):
-  `DataML -p <testFile>`
-
- Predict (labels normalized with pkl file):
-  `DataML -p <testFile> <pkl normalization file>`
-
- Batch predict (no label normalization used):
-  `DataML -b <folder>`
-
- Batch predict (labels normalized with pkl file):
-  `DataML -b <folder> <pkl normalization file>`
-
- Batch predict on validation data in single file (no label normalization used):
-  `DataML -v <singleValidationFile>`
-
- Batch predict on validation data in single file (labels normalized with pkl file):
-  `DataML -v <singleValidationFile> <pkl normalization file>`
-  
- Convert model to quantized tflite:
-  `DataML -l <learningFile>`
-  
- Create parameter optimization file:
-  `DataML -o`
-  
- Evaluate principal component analysis (PCA) - EXPERIMENTAL:
-  `DataML -c <learningFile>`
-  `DataML -c <learningFile> <validFile-optional>`
-  
- Evaluate Autoencoder - EXPERIMENTAL:
-  `DataML -a <learningFile>`
-  `DataML -a <learningFile> <validFile-optional>`
 
 ## Decision Forests: DataML_DF
 
@@ -154,6 +113,49 @@ Available dimension reduction methods that can be selected using the `typeDimRed
 - `PCA`
 - `TruncatedSVD`
 - `Autoencoder`
+
+## Neural Networks: DataML
+
+Train (Random cross validation):
+  `python3 DataML.py -t <learningFile>`
+
+ Train (with external validation):
+  `DataML -t <learningFile> <validationFile> `
+
+ Train (with external validation, with labels normalized with pkl file):
+  `DataML -t <learningFile> <validationFile> <pkl normalization file>`
+
+ Predict (no label normalization used):
+  `DataML -p <testFile>`
+
+ Predict (labels normalized with pkl file):
+  `DataML -p <testFile> <pkl normalization file>`
+
+ Batch predict (no label normalization used):
+  `DataML -b <folder>`
+
+ Batch predict (labels normalized with pkl file):
+  `DataML -b <folder> <pkl normalization file>`
+
+ Batch predict on validation data in single file (no label normalization used):
+  `DataML -v <singleValidationFile>`
+
+ Batch predict on validation data in single file (labels normalized with pkl file):
+  `DataML -v <singleValidationFile> <pkl normalization file>`
+  
+ Convert model to quantized tflite:
+  `DataML -l <learningFile>`
+  
+ Create parameter optimization file:
+  `DataML -o`
+  
+ Evaluate principal component analysis (PCA) - EXPERIMENTAL:
+  `DataML -c <learningFile>`
+  `DataML -c <learningFile> <validFile-optional>`
+  
+ Evaluate Autoencoder - EXPERIMENTAL:
+  `DataML -a <learningFile>`
+  `DataML -a <learningFile> <validFile-optional>`
     
 Formatting input file for training
 ===================================
