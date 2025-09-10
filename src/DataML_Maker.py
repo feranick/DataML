@@ -5,7 +5,7 @@
 * DataML_Maker
 * Adds data from single file to Master Doc
 * File must be in ASCII
-* version: 2025.08.26.1
+* version: 2025.09.10.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -172,11 +172,11 @@ def main():
     rootFile += '_p' + str(predRColTag[0])
     learnFile = rootFile + '_train'
     
-    try:
-        P,V,norm = readParamFile(sys.argv[1], predRCol, rootFile, dP)
-    except:
-        print("\033[1m" + " Something went wrong, maybe Param file not found\n" + "\033[0m")
-        return
+    #try:
+    P,V,norm = readParamFile(sys.argv[1], predRCol, rootFile, dP)
+    #except:
+    #    print("\033[1m" + " Something went wrong, maybe Param file not found\n" + "\033[0m")
+    #    return
     
     normTag = ""
     if dP.saveNormalized or dP.normalizeLabel:
@@ -218,9 +218,6 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
     M = np.hstack((P2[:,predRCol],P2[:,usecols]))
     
     featNum = np.insert([x -dP.numHeadColumns+1 for x in usecols], 0,0)
-        
-    if dP.purgeUndefRows:
-        M = purgeRows(M)
     
     P = np.vstack([featNum,M])
     V = np.array([featNum])
@@ -242,6 +239,9 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
                 V = np.vstack([featNum,M[dP.validRows,:]])
                 #P = np.vstack([list(range(0,M.shape[1])),np.delete(M,dP.validRows,0)])
                 #V = np.vstack([list(range(0,M.shape[1])),M[dP.validRows,:]])
+                
+    if dP.purgeUndefRows:
+        P = purgeRows(P)
             
     if dP.saveNormalized or dP.normalizeLabel:
         norm = Normalizer(P, dP)
