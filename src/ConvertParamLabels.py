@@ -11,10 +11,8 @@
 '''
 print(__doc__)
 
-import numpy as np
 import pandas as pd
-import sys, os.path, h5py, pickle, configparser, ast, csv
-from random import uniform
+import os, sys, os.path, h5py, pickle, configparser, ast, csv
 from libDataML import *
 
 #***************************************************
@@ -146,7 +144,9 @@ def main():
         print('  Requires python 3.x. Not compatible with python 2.x\n')
         return
     
-    convConfigFile = "config_label.txt"
+    rootFile = os.path.splitext((os.path.basename(sys.argv[2])))[0]
+    oldConfigFile = rootFile+"_numeric.txt"
+    newConfigFile = sys.argv[2]
     
     try:
         featNames = readParamFile(sys.argv[1], dP)
@@ -160,8 +160,11 @@ def main():
     print(" Config.ini:",configData)
     print(" Converted labels from onfig.ini",label_list)
     
-    saveConfFile(convConfigFile, label_list)
-    print(" New converted config file:", convConfigFile,"\n")
+    os.rename(sys.argv[2], oldConfigFile)
+    print("\n Old",sys.argv[2],"renamed:", oldConfigFile)
+    
+    saveConfFile(newConfigFile, label_list)
+    print(" New converted config file:", newConfigFile,"\n")
         
 #************************************
 # Open Learning Data
