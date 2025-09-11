@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 '''
 ************************************************
-* ConvertLabel
+* ConvertNormLabels
 * Convert normalized labels into actual labels
 * version: 2025.09.11.1
 * By: Nicola Ferralis <feranick@hotmail.com>
@@ -18,7 +18,7 @@ from libDataML import Normalizer
 #***************************************************
 ''' This is needed for installation through pip '''
 #***************************************************
-def ConvertLabel():
+def ConvertNormLabels():
     main()
 
 #************************************

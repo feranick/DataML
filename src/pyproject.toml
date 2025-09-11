@@ -45,7 +45,8 @@ classifiers = [
 [project.scripts]
 DataML = "DataML:DataML"
 DataML_DF = "DataML_DF:DataML_DF"
-ConvertLabel = "ConvertLabel:ConvertLabel"
+ConvertNormLabels = "ConvertNormLabels:ConvertNormLabels"
+ConverParamLabels = "ConverParamLabels:ConverParamLabels"
 GetClasses = "GetClasses:GetClasses"
 AddDenoiseAutoEncoder = "AddDenoiseAutoEncoder:AddDenoiseAutoEncoder"
 CorrAnalysis = "CorrAnalysis:CorrAnalysis"
