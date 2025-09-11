@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2025.09.10.1
+* version: 2025.09.11.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -167,12 +167,13 @@ class Conf():
             
     # update configuration file
     def updateConfig(self, section, par, value):
-        self.conf.set(section, par, value)
-        try:
-            with open(self.configFile, 'w') as configfile:
-                self.conf.write(configfile)
-        except:
-            print("Error in creating configuration file")
+        if self.conf.has_option(section, par) is True:
+            self.conf.set(section, par, value)
+            try:
+                with open(self.configFile, 'w') as configfile:
+                    self.conf.write(configfile)
+            except:
+                print("Error in creating configuration file")
 
 #************************************
 # Main
@@ -490,12 +491,18 @@ def train(learnFile, testFile):
             print("\n Using scoring:", dP.optScoringC)
         
         bestParams = searchResults.best_params_
-        print("\n Optimal parameter for best model:", )
-        print(" ",searchResults.best_params_,"\n")
+        print("\n Optimal parameters for best model:", )
+        print(" ",bestParams,"\n")
     
         #print(list(bestParams.values())[0])
         #dP.random_state=list(bestParams.values())[0]
-    
+        
+        for i in range(len(bestParams)):
+            dP.updateConfig('Parameters',list(bestParams.keys())[i],str(list(bestParams.values())[i]))
+            dP.updateConfig('System',list(bestParams.keys())[i],str(list(bestParams.values())[i]))
+        
+        print(" Updated parameters for best model in Data_DF.ini.")
+        
         print(" Setting DataML_DF training in non-optimization mode. \n")
         dP.updateConfig('Parameters','optimizeParameters','False')
     
