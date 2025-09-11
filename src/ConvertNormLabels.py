@@ -28,7 +28,7 @@ def main():
 
     if len(sys.argv) < 2:
         print(__doc__)
-        print(' Usage:\n  python3 ConvertLabel.py <pkl file> <number to convert>')
+        print(' Usage:\n  python3 ConvertNormLabels.py <pkl file> <number to convert>')
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
     

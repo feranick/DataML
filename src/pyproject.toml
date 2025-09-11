@@ -45,12 +45,12 @@ classifiers = [
 [project.scripts]
 DataML = "DataML:DataML"
 DataML_DF = "DataML_DF:DataML_DF"
+CorrAnalysis = "CorrAnalysis:CorrAnalysis"
+DataML_Maker = "DataML_Maker:DataML_Maker"
+AddDenoiseAutoEncoder = "AddDenoiseAutoEncoder:AddDenoiseAutoEncoder"
 ConvertNormLabels = "ConvertNormLabels:ConvertNormLabels"
 ConvertParamLabels = "ConvertParamLabels:ConvertParamLabels"
 GetClasses = "GetClasses:GetClasses"
-AddDenoiseAutoEncoder = "AddDenoiseAutoEncoder:AddDenoiseAutoEncoder"
-CorrAnalysis = "CorrAnalysis:CorrAnalysis"
-DataML_Maker = "DataML_Maker:DataML_Maker"
 
 [project.urls]
 Homepage = "https://github.com/feranick/DataML"
