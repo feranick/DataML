@@ -4,7 +4,7 @@
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
 * pyscript version
-* v2025.09.11.1
+* v2025.09.10.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -183,8 +183,8 @@ async def singlePredict(event):
     dP = Conf(ini)
 
     # Use this when opening modelPkl here.
-    #modelPkl = await getFile(folder, dP.modelName, True)
-    #df = pickle.loads(modelPkl)
+    modelPkl = await getFile(folder, dP.modelName, True)
+    df = pickle.loads(modelPkl)
 
     # Use this when opening modelPkl in JS
     #import js
