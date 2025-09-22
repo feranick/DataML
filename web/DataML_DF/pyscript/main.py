@@ -261,12 +261,27 @@ async def batchPredict(event):
     array_buf = await inputFile.arrayBuffer()
     file_bytes = array_buf.to_bytes()
     csv_file = BytesIO(file_bytes)
-    dataDf = pd.read_csv(csv_file)
+    #dataDf = pd.read_csv(csv_file)
+    try:
+        dataDf = pd.read_csv(csv_file)
+    except pd.errors.ParserError:
+        output = "File: \""+inputFile.name+"\" is not a valid CSV or has parsing errors."
+        output_div.innerText = output
+        return False
+    except pd.errors.EmptyDataError:
+        output = "\""+inputFile.name+"\" is an empty CSV file"
+        output_div.innerText = output
+        return False
+    except Exception as e:
+        output = "This is not a valid CSV file - see error in log"
+        print(f"An unexpected error occurred while checking '{inputFile.name}': {e}")
+        output_div.innerText = output
+        return False
     document.getElementById('inputFile').value = ''
 
     if len(features.split(',')) != dataDf.shape[0]:
         output = ' Please choose the right model for this file. \n'
-        output_div.innerText = output 
+        output_div.innerText = output
         return 0
 
     output = '======================================\n'
@@ -292,10 +307,15 @@ async def batchPredict(event):
             R = norm.transform_valid_data(R)
 
         if dP.regressor:
-            if dP.normalize:
-                pred = norm.transform_inverse_single(df.predict(R))
-            else:
-                pred = df.predict(R)
+            try:
+                if dP.normalize:
+                    pred = norm.transform_inverse_single(df.predict(R))
+                else:
+                    pred = df.predict(R)
+            except ValueError as e:
+                output = "Check \""+inputFile.name+"\" for errors or missing values"
+                output_div.innerText = output
+                return False
             proba = ""
             output += "\n " + dataDf.columns[i] + " = "  + str(pred[0])[:5]
             summaryFile = np.vstack((summaryFile,[dataDf.columns[i],pred[0],'']))
