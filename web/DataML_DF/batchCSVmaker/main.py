@@ -13,7 +13,10 @@ from io import BytesIO
 import sys, io, csv, os
 from js import document, Blob, URL
 from pyscript import fetch, document
-#import pickle
+
+def rescaleList(list, value):
+    list = [x + value for x in list]
+    return list
 
 async def batchCSV(event):
     output_div = document.querySelector("#output")
@@ -64,6 +67,9 @@ async def batchCSV(event):
     validRowsList = [int(item) for item in validRows.split(',')]
     charCColsList = [int(item) for item in charCCols.split(',')]
     
+    charCColsList = rescaleList(charCColsList, int(numHeadColumns) - 1)
+    validRowsList = rescaleList(validRowsList, int(numHeadRows)-1)
+
     print(f"Valid rows: {validRowsList}")
     df = dataDf.iloc[validRowsList]
     
