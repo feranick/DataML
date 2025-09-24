@@ -148,7 +148,7 @@ class Conf():
 def main():
     dP = Conf()
     if len(sys.argv) < 2:
-        print(' Usage:\n  python3 DataMaker.py <paramFile> <pred column - optional>')
+        print(' Usage:\n  python3 DataML_Maker.py <paramFile> <pred column - optional>')
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
     
