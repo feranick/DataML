@@ -1,0 +1,6 @@
+name = "DataML BatchMaker"
+description = "DataML Batch CSV Generator"
+packages = ["pandas"]
+[[fetch]]
+files = []
+

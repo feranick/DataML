@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" href="icon.png">
+    <link rel="apple-touch-icon" href="icon180.png">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://pyscript.net/releases/2025.8.1/core.css">
+    <script type="module" src="https://pyscript.net/releases/2025.8.1/core.js"></script>
+    <title>Batch CSV file generator</title>
+  </head>
+  <body>
+  <b>Batch CSV file generator for ML predictions</b>
+  <br><small>Input file must be in CSV format</small><br>
+
+  <br><form name = "BatchMaker" id="batchmaker">
+    <div>
+        <label for="numHeadColumnsLabel">Number of head columns:</label>
+        <input type="number" id="numHeadColumns" name="numHeadColumns" value="2" min="0">
+    </div>
+    <br>
+    <div>
+        <label for="numHeadRowsLabel">Number of head rows:</label>
+        <input id="numHeadRows" name="numHeadRows" value="0" min="0">
+    </div>
+    <br>
+    <div>
+        <label for="charCColsLabels">List of features:</label>
+        <input id="charCCols" name="charCCols" value="15,27" min="0">
+    </div>
+    <br>
+    <div>
+        <label for="sampleLabelColLabel">Column with sample labels:</label>
+        <input type="number" id="sampleLabelCol" name="sampleLabelCol" value="0" min="0">
+    </div>
+    <br>
+    <div>
+        <label for="validRowsLabel">Rows with samples to extract:</label>
+        <input id="validRows" name="validRows" value="27,28,29" min="0">
+    </div>
+  </form>
+  
+<br><input id="inputFile" type="file" name="file" py-change="batchCSV" accept=".csv">
+<br><br><div id="download-area"></div>
+
+<div id="out"><br><text_area id="output"><br></text_area></div>
+
+  <script type="py" src="./main.py" config="./pyscript.toml"></script>
+  </body>
+</html>
