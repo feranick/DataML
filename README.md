@@ -5,10 +5,9 @@ DataML Regression and Classification of sparse data using Neural Networks of Dec
 - Required libraries for prediction using SciKit-Learn (`DataML_DF`):
     - `scikit-learn`: version `1.7.0`.
 - Required libraries for prediction using Tensorflow (`DataML`):
-    - tensorflow (version >= `2.13.x`, >= `2.16.2` recommended)
-    - Optional: [`ai_edge_litert` (v=> `1.1.4`)] (https://ai.google.dev/edge/litert)
-    - Optional - soon to be deprecated: [`tensorflow-lite` runtime](https://www.tensorflow.org/lite/guide/python) 
-    - Optional: `tensorflow-lite` runtime with [Coral EdgeTPU](https://coral.ai/docs/accelerator/get-started/)
+    - tensorflow (version >= `2.16.2` - `v2.19.1` recommended)
+    - Optional: [`ai_edge_litert` (v=> `1.1.4`)] (https://ai.google.dev/edge/litert) (alternatively yet soon to be deprecated: [`tensorflow-lite` runtime](https://www.tensorflow.org/lite/guide/python))
+    - Optional: `ai_edge_litert` runtime with [Coral EdgeTPU](https://coral.ai/docs/accelerator/get-started/)
    
 - Currently supported Decision Forests estimators:
     - [GradientBoosting](https://scikit-learn.org/stable/modules/ensemble.html#gradient-boosted-trees) (default)
