@@ -46,6 +46,37 @@ button {
   margin-bottom: 10px;
 }
 
+/* This hides the original file input element */
+.hidden-button {
+  display: none;
+}
+
+.custom-button {
+    display: inline-block;
+    padding: 12px 24px;
+    cursor: pointer;
+    background-color: #007bff; /* The button's main color */
+    color: white;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.custom-button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+    transform: translateY(-2px);
+}
+
+.custom-button:active {
+    transform: translateY(0);
+}
+
 /* Output Area Styling */
 /*#out {
   margin-top: 20px;

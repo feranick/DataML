@@ -16,6 +16,10 @@
   </head>
   <body>
   <b>DataML - pyscript</b><br>
+  <br><a id="log">Training log</a>
+  <br>Validation: samples 28,29,30
+  <br><br><small><a id="importance1">Parametric importance vs decrease in impurity</a><br>
+  <a id="importance2">Parametric importance vs mean accuracy</a></small><br>
 
   <br><form name = "MIT_ML" id="mit_ml">
   Model: <select name="model" id="model" onchange="selectModel()" py-change="on_model_select">
@@ -25,16 +29,16 @@
   </select>
   <div id="feature-entries-container">
         </div>
+  <div name="predict" id="predict"><br><button name="button" id="button" py-click="singlePredict" class="hidden-button">Predict</button>
+  <label for="predict" class="custom-button">Predict</label>
+  </div>
+</form>
+<br><form name = "fileUpload" id="fileUpload">
+<br><input id="inputFile" type="file" name="file" py-change="batchPredict" accept=".csv" class="hidden-button">
+<label for="inputFile" class="custom-button">Select a CSV File to predict</label>
+<br><br><div id="download-area"></div>
 </form>
 
-<div name="predict" id="predict"><br><button name="button" id="button" py-click="singlePredict">Predict</button></div>
-<!--<script>setButtonLabel();</script>-->
-<br><input id="inputFile" type="file" name="file" py-change="batchPredict" accept=".csv">
-<br><br><div id="download-area"></div>
-
-<br><a id="importance1">Parametric importance vs decrease in impurity</a><br>
-<a id="importance2">Parametric importance vs mean accuracy</a><br>
-<small><a id="log">Training log</a></small><br>
 <div id="out"><br><text_area id="output"><br></text_area></div>
 
   <script type="py" src="./main.py" config="./pyscript.toml"></script>
