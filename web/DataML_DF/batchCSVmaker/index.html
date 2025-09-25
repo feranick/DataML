@@ -15,9 +15,10 @@
   </head>
   <body>
   <b>Batch CSV file generator for ML predictions</b>
-  <br><small>Input file must be in CSV format</small><br>
+  <br><small>Input file must be in CSV format</small><br><br>
 
-  <br><form name = "BatchMaker" id="batchmaker">
+  <fieldset>
+  <form name = "BatchMaker" id="batchmaker">
     <div>
         <label for="numHeadColumnsLabel">Number of head columns:</label>
         <input type="text" id="numHeadColumns" name="numHeadColumns" value="7" min="0">
@@ -44,11 +45,11 @@
     </div>
   </form>
   
-<br><input id="inputFile" type="file" name="file" py-change="batchCSV" accept=".csv" class="hidden-file-input">
-<label for="inputFile" class="custom-file-upload">
-            Select a CSV File
-        </label>
+<br><input id="inputFile" type="file" name="file" py-change="batchCSV" accept=".csv" class="hidden-button">
+
+<label for="inputFile" class="button">Select a CSV parameter file</label>
 <br><br><div id="download-area"></div>
+</fieldset>
 
 <div id="out"><br><text_area id="output"><br></text_area></div>
 
