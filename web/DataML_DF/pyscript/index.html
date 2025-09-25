@@ -12,36 +12,48 @@
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://pyscript.net/releases/2025.8.1/core.css">
     <script type="module" src="https://pyscript.net/releases/2025.8.1/core.js"></script>
-    <title>IGC_ML - pyscript version</title>
+    <title>DataML - pyscript version</title>
   </head>
   <body>
   <b>DataML - pyscript</b><br>
   <br><a id="log">Training log</a>
   <br>Validation: samples 28,29,30
   <br><br><small><a id="importance1">Parametric importance vs decrease in impurity</a><br>
-  <a id="importance2">Parametric importance vs mean accuracy</a></small><br>
+  <a id="importance2">Parametric importance vs mean accuracy</a></small><br><br><br>
 
-  <br><form name = "MIT_ML" id="mit_ml">
+  <fieldset>
+  <legend>Manual prediction</legend>
+  <form name = "MIT_ML" id="mit_ml">
   Model: <select name="model" id="model" onchange="selectModel()" py-change="on_model_select">
   <option>Perf1_model1</option>
   <option>Perf3_model1</option>
-  
   </select>
   <div id="feature-entries-container">
         </div>
-  <div name="predict" id="predict"><br><button name="button" id="button" py-click="singlePredict" class="hidden-button">Predict</button>
-  <label for="predict" class="custom-button">Predict</label>
+  </form>
+  <div name="predict" id="predict"><br><button name="button" id="button" py-click="singlePredict" class="button">Predict</button>
   </div>
-</form>
-<br><form name = "fileUpload" id="fileUpload">
-<br><input id="inputFile" type="file" name="file" py-change="batchPredict" accept=".csv" class="hidden-button">
-<label for="inputFile" class="custom-button">Select a CSV File to predict</label>
+</fieldset>
+
+<br><br><fieldset><legend>Predict using CSV file</legend>
+<form name = "fileUpload" id="fileUpload">
+<input id="inputFile" type="file" name="file" py-change="batchPredict" accept=".csv" class="hidden-button">
+<label for="inputFile" class="button">Select a CSV File to predict</label>
 <br><br><div id="download-area"></div>
 </form>
+</fieldset>
 
 <div id="out"><br><text_area id="output"><br></text_area></div>
 
   <script type="py" src="./main.py" config="./pyscript.toml"></script>
   <script type="text/javascript" src="ml.js" ></script>
+  <script>setButtonLabel();</script>
+  <script>
+  init();
+  selectModel();
+  </script>
+  <py-script>
+  getModel("")
+  </pyscript>
   </body>
 </html>
