@@ -20,31 +20,34 @@
   <br><form name = "BatchMaker" id="batchmaker">
     <div>
         <label for="numHeadColumnsLabel">Number of head columns:</label>
-        <input type="number" id="numHeadColumns" name="numHeadColumns" value="7" min="0">
+        <input type="text" id="numHeadColumns" name="numHeadColumns" value="7" min="0">
     </div>
     <br>
     <div>
         <label for="numHeadRowsLabel">Number of head rows:</label>
-        <input id="numHeadRows" name="numHeadRows" value="4" min="0">
+        <input type="text" id="numHeadRows" name="numHeadRows" value="4" min="0">
     </div>
     <br>
     <div>
         <label for="charCColsLabels">List of features:</label>
-        <input id="charCCols" name="charCCols" value="15,21,41,51,78,79" min="0">
+        <input type="text" id="charCCols" name="charCCols" value="15,21,41,51,78,79" min="0">
     </div>
     <br>
     <div>
         <label for="sampleLabelColLabel">Column with sample labels:</label>
-        <input type="number" id="sampleLabelCol" name="sampleLabelCol" value="0" min="0">
+        <input type="text" id="sampleLabelCol" name="sampleLabelCol" value="0" min="0">
     </div>
     <br>
     <div>
         <label for="validRowsLabel">Rows with samples to extract:</label>
-        <input id="validRows" name="validRows" value="27,28,29" min="0">
+        <input type="text" id="validRows" name="validRows" value="27,28,29" min="0">
     </div>
   </form>
   
-<br><input id="inputFile" type="file" name="file" py-change="batchCSV" accept=".csv">
+<br><input id="inputFile" type="file" name="file" py-change="batchCSV" accept=".csv" class="hidden-file-input">
+<label for="inputFile" class="custom-file-upload">
+            Select a CSV File
+        </label>
 <br><br><div id="download-area"></div>
 
 <div id="out"><br><text_area id="output"><br></text_area></div>
