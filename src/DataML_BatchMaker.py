@@ -5,7 +5,7 @@
 * DataML_BatchMaker
 * Adds data from single file to Master Doc
 * File must be in ASCII
-* version: 2025.09.24.1
+* version: 2025.09.30.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -59,7 +59,7 @@ class Conf():
             'minCCol' : 1,
             'maxCCol' : 42,
             'charCCols' : [21,23,25,34],
-            'sampleLabelCol' : [0],
+            'sampleLabelCol' : 0,
             'validRows' : [1,2,3],
             }
             
@@ -75,7 +75,7 @@ class Conf():
             self.minCCol = self.conf.getint('Parameters','minCCol')
             self.maxCCol = self.conf.getint('Parameters','maxCCol')
             self.charCCols = ast.literal_eval(self.dataMLMakerPar['charCCols'])
-            self.sampleLabelCol = ast.literal_eval(self.dataMLMakerPar['sampleLabelCol'])
+            self.sampleLabelCol = self.conf.getint('Parameters','sampleLabelCol')
             self.validRows = ast.literal_eval(self.dataMLMakerPar['validRows'])
             
         except:
@@ -126,7 +126,7 @@ def makeBatchFile(paramFile, batchFile, dP):
     df = df_full.iloc[dP.validRows]
     
     paramNames = df.columns[dP.charCCols].tolist()
-    sampleNames = df[df.columns[0]].values
+    sampleNames = df[df.columns[dP.sampleLabelCol]].values
     
     batchFile += "_"+str(len(paramNames))+"params.csv"
     

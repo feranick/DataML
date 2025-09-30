@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML_BatchMaker
-* v2025.09.24.1
+* v2025.09.30.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
 '''
@@ -74,7 +74,7 @@ async def batchCSV(event):
     df = dataDf.iloc[validRowsList]
     
     paramNames = df.columns[charCColsList].tolist()
-    sampleNames = df[df.columns[0]].values
+    sampleNames = df[df.columns[int(sampleLabelCol)]].values
     
     batchFile = os.path.splitext(inputFile.name)[0]+"_"+str(len(paramNames))+"params.csv"
     
