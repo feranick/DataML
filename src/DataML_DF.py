@@ -184,7 +184,7 @@ def main():
     
     try:
         opts, args = getopt.getopt(sys.argv[1:],
-            "trpcbvoh:", ["train", "reduce", "predict", "csv", "batch", "validbatch", "opt", "help"])
+            "trpcbgvoh:", ["train", "reduce", "predict", "csv", "batch", "generate", "validbatch", "opt", "help"])
     except:
         usage()
         sys.exit(2)
@@ -238,6 +238,13 @@ def main():
             except:
                 usage()
                 sys.exit(2)
+                
+        if o in ("-g" , "--generate"):
+            #try:
+            genMissingData(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
+            #except:
+            #    usage()
+            #    sys.exit(2)
             
         if o in ("-v" , "--validbatch"):
             try:
@@ -698,6 +705,50 @@ def batchPredict(folder):
     saveSummaryFile(summaryFile, dP)
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
 
+#************************************
+# Generating missing parameters
+#************************************
+def genMissingData(testFile, param, min, max, step):
+    dP = Conf()
+    import sklearn
+    Rtot, _ = readTestFile(testFile)
+    perf = Rtot[0][-1]
+    currentPar = Rtot[0][int(param)]
+    R = Rtot[:,:-1]
+            
+    with open(dP.modelName, "rb") as f:
+        df = pickle.load(f)
+        
+    if dP.regressor:
+        le = None
+    else:
+        with open(dP.model_le, "rb") as f:
+            le = pickle.load(f)
+    
+    if dP.normalize:
+        try:
+            with open(dP.norm_file, "rb") as f:
+                norm = pickle.load(f)
+            print("  Opening pkl file with normalization data:",dP.norm_file)
+        except:
+            print("\033[1m pkl file not found \033[0m")
+            sys.exit()
+    else:
+        norm = None
+    
+    print('\n  ================================================================================')
+    print(f'  \033[1m Generating missing data for param #{param}; Curr. value: {currentPar}\033[0m')
+    print('  ================================================================================')
+    print(f'   New par #{param}\t| Pred value\t| Real value ')
+    print('  --------------------------------------------------------------------------------')
+    for i in np.arange(int(min), int(max), int(step)):
+        R[0][int(param)] = i
+        pred, pred_classes, proba = getPrediction(dP, df, R, le, norm)
+        print("   {0:.2f}\t| {1:.2f}\t| {2:.2f}  ".format(i, pred[0], perf))
+    print('  ================================================================================\n')
+    print('  Scikit-learn v.',str(sklearn.__version__),'\n')
+
+
 #************************************************************
 # Batch Prediction using validation data (with real values)
 #************************************************************
@@ -863,7 +914,7 @@ def usage():
     print('  else - random_state, max_depth, n_estimators, max_features\n')
     
     print(' Requires python 3.x. Not compatible with python 2.x\n')
-
+    
 #************************************
 # Main initialization routine
 #************************************
