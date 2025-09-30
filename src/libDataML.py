@@ -216,7 +216,7 @@ def loadModel(dP):
 #************************************
 # Make prediction based on framework
 #************************************
-def getPredictions(R, model, dP):
+def getPredictionTF(R, model, dP):
     if dP.useTFlitePred:
         interpreter = model  #needed to keep consistency with documentation
         # Get input and output tensors.
@@ -241,6 +241,39 @@ def getPredictions(R, model, dP):
     else:
         probabilities = scipy.special.softmax(predictions.astype('double'))
     return predictions, probabilities
+    
+def getPrediction(dP, df, R, le, norm):
+    if dP.normalize:
+        R = norm.transform_valid_data(R)
+            
+    if dP.runDimRedFlag:
+        R = runPCAValid(R, dP)
+    
+    if dP.regressor:
+        if dP.normalize:
+            pred = norm.transform_inverse_single(df.predict(R))
+        else:
+            pred = df.predict(R)
+        pred_classes = None
+        proba = None
+    else:
+        #print(df.predict(R))
+        #print(le.inverse_transform_bulk(df.predict(R)))
+        if dP.normalize:
+            pred = norm.transform_inverse(np.asarray(le.inverse_transform_bulk(df.predict(R))))
+            pred_classes = norm.transform_inverse(np.asarray(le.inverse_transform_bulk(df.classes_)))
+        else:
+            pred = le.inverse_transform_bulk(df.predict(R))
+            pred_classes = le.inverse_transform_bulk(df.classes_)
+        
+        #print("\nget_predictions")
+        #print(R)
+        #print(df.predict(R))
+        #print(pred)
+            
+        proba = df.predict_proba(R)
+    
+    return pred, pred_classes, proba
 
 #************************************
 ### Create Quantized tflite model

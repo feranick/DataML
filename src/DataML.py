@@ -667,7 +667,7 @@ def predict(testFile, normFile):
         R = runPCAValid(R, dP)
         
     if dP.regressor:
-        predictions, _ = getPredictions(R, loadModel(dP), dP)
+        predictions, _ = getPredictionTF(R, loadModel(dP), dP)
         #predictions = model.predict(R).flatten()[0]
         print('\n  ==========================================================')
         print('  \033[1m MLP - Regressor\033[0m - Prediction')
@@ -683,7 +683,7 @@ def predict(testFile, normFile):
     else:
         with open(dP.model_le, "rb") as f:
             le = pickle.load(f)
-        predictions, _ = getPredictions(R, loadModel(dP), dP)
+        predictions, _ = getPredictionTF(R, loadModel(dP), dP)
         pred_class = np.argmax(predictions)
         if dP.useTFlitePred:
             predProb = round(100*predictions[0][pred_class]/255,2)
@@ -747,9 +747,9 @@ def batchPredict(folder, normFile):
         
         if good:
             try:
-                predictions = np.vstack((predictions,getPredictions(R, model, dP)[0].flatten()))
+                predictions = np.vstack((predictions,getPredictionTF(R, model, dP)[0].flatten()))
             except:
-                predictions = np.array([getPredictions(R, model, dP)[0].flatten()])
+                predictions = np.array([getPredictionTF(R, model, dP)[0].flatten()])
             fileName.append(file)
     
     if dP.regressor:
@@ -770,7 +770,7 @@ def batchPredict(folder, normFile):
         summaryFile = np.array([['DataML','Classifier',''],['Real Class','Predicted Class', 'Probability']])
         with open(dP.model_le, "rb") as f:
             le = pickle.load(f)
-        #predictions, _ = getPredictions(A_test, model,dP)
+        #predictions, _ = getPredictionTF(A_test, model,dP)
         #predictions = model.predict(A_test)
         print('\n  ================================================================================')
         print('  \033[1m MLP - Classifier\033[0m - Batch Prediction')
@@ -816,7 +816,7 @@ def validBatchPredict(testFile, normFile):
     
     if dP.regressor:
         summaryFile = np.array([['DataML','Regressor','','',''],['Real Value','Prediction','val_loss','val_abs_mean_error','deviation %']])
-        predictions, _ = getPredictions(A_test, model, dP)
+        predictions, _ = getPredictionTF(A_test, model, dP)
         
         score = model.evaluate(A_test, Cl_test, batch_size=dP.batch_size, verbose = 0)
         print('  ==========================================================')
@@ -850,7 +850,7 @@ def validBatchPredict(testFile, normFile):
         
         with open(dP.model_le, "rb") as f:
             le = pickle.load(f)
-        predictions, _ = getPredictions(A_test, model,dP)
+        predictions, _ = getPredictionTF(A_test, model,dP)
         #predictions = model.predict(A_test)
         print('  ========================================================')
         print('  \033[1m MLP - Classifier\033[0m - Batch Prediction')
