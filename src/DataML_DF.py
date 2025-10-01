@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2025.09.30.1
+* version: 2025.10.01.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -705,50 +705,6 @@ def batchPredict(folder):
     saveSummaryFile(summaryFile, dP)
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
 
-#************************************
-# Generating missing parameters
-#************************************
-def genMissingData(testFile, param, min, max, step):
-    dP = Conf()
-    import sklearn
-    Rtot, _ = readTestFile(testFile)
-    perf = Rtot[0][-1]
-    currentPar = Rtot[0][int(param)]
-    R = Rtot[:,:-1]
-            
-    with open(dP.modelName, "rb") as f:
-        df = pickle.load(f)
-        
-    if dP.regressor:
-        le = None
-    else:
-        with open(dP.model_le, "rb") as f:
-            le = pickle.load(f)
-    
-    if dP.normalize:
-        try:
-            with open(dP.norm_file, "rb") as f:
-                norm = pickle.load(f)
-            print("  Opening pkl file with normalization data:",dP.norm_file)
-        except:
-            print("\033[1m pkl file not found \033[0m")
-            sys.exit()
-    else:
-        norm = None
-    
-    print('\n  ================================================================================')
-    print(f'  \033[1m Generating missing data for param #{param}; Curr. value: {currentPar}\033[0m')
-    print('  ================================================================================')
-    print(f'   New par #{param}\t| Pred value\t| Real value ')
-    print('  --------------------------------------------------------------------------------')
-    for i in np.arange(int(min), int(max), int(step)):
-        R[0][int(param)] = i
-        pred, pred_classes, proba = getPrediction(dP, df, R, le, norm)
-        print("   {0:.2f}\t| {1:.2f}\t| {2:.2f}  ".format(i, pred[0], perf))
-    print('  ================================================================================\n')
-    print('  Scikit-learn v.',str(sklearn.__version__),'\n')
-
-
 #************************************************************
 # Batch Prediction using validation data (with real values)
 #************************************************************
@@ -798,6 +754,86 @@ def validBatchPredict(testFile):
     print('  ================================================================================\n')
     
     saveSummaryFile(summaryFile, dP)
+    print('  Scikit-learn v.',str(sklearn.__version__),'\n')
+
+#************************************
+# Generating missing parameters
+#************************************
+def genMissingData(testFile, param, min, max, step):
+    from scipy.optimize import brentq
+    dP = Conf()
+    import sklearn
+    Rtot, _ = readTestFile(testFile)
+    perf = Rtot[0][-1]
+    currentPar = Rtot[0][int(param)]
+    R = Rtot[:,:-1]
+            
+    with open(dP.modelName, "rb") as f:
+        df = pickle.load(f)
+        
+    if dP.regressor:
+        le = None
+    else:
+        with open(dP.model_le, "rb") as f:
+            le = pickle.load(f)
+    
+    if dP.normalize:
+        try:
+            with open(dP.norm_file, "rb") as f:
+                norm = pickle.load(f)
+            print("  Opening pkl file with normalization data:",dP.norm_file)
+        except:
+            print("\033[1m pkl file not found \033[0m")
+            sys.exit()
+    else:
+        norm = None
+    
+    def f(x):
+        R_tmp = R.copy()
+        R_tmp[0][int(param)] = x
+        pred, pred_classes, proba = getPrediction(dP, df, R_tmp, le, norm)
+        return pred[0], pred[0] - perf
+            
+    print('\n  ================================================================================')
+    print(f'  \033[1m Generating missing data for param #{param}; Curr. value: {currentPar}\033[0m')
+    print('  ================================================================================')
+    print(f'   New par #{param}\t| Pred value\t| Real value \t| Difference')
+    print('  --------------------------------------------------------------------------------')
+    
+    minFlag = True
+    for i in np.arange(int(min), int(max), int(step)):
+        resid = f(i)
+        if abs(resid[1]) < 1e-3:
+            if minFlag is True:
+                a = i-5
+                minFlag = False
+            print("   {0:.2f}\t| {1:.2f}\t| {2:.2f}\t| {3:.2e}".format(i, resid[0], perf, resid[1]))
+        if abs(resid[1]) > 1e-3 and minFlag is False:
+            b = i+5
+            break
+            
+    #print('  ================================================================================\n')
+    
+    ## Using Brentq method in scipy.
+    g = lambda x: f(x)[1]
+    try:
+        print('\n  ================================================================================')
+        print(f'  \033[1m Running Brentq search for parameter #{param} from {a} to {b}\033[0m ')
+        print('  ================================================================================')
+        x1 = brentq(g, a, b)
+    
+        # Verification
+        y_check = f(x1)[0]
+
+        print(f'   Found optimal parameter value for #{param}: \033[1m {x1:.6f}\033[0m ')
+        print(f'   Predicted value using the optimal parameter #{param}: {y_check:.6f}')
+        print(f'   Target real value: {perf}')
+        print(f'   Difference: {abs(y_check - perf):.2e}')
+        print('  ================================================================================\n')
+
+    except:
+        print('\n  No Automated search is possible. Try to broaden the min and max value in your search.\n\n')
+    
     print('  Scikit-learn v.',str(sklearn.__version__),'\n')
 
 #***********************************************************
@@ -895,6 +931,10 @@ def usage():
     print(' Batch predict from CSV file for multiple samples (DataML_DF only):')
     print('  DataML_DF -c <testfile.csv>\n')
     print(' Batch predict on validation data in single file:')
+    print('  DataML_DF -v <singleValidationFile>\n')
+    print(' Generate optimal values for a single parameter given the target value of the prediction:')
+    print('  DataML_DF -g <paramFile> <paramToSearch> <minValue> <maxValue> <step>\n')
+    
     print('  DataML_DF -v <singleValidationFile>\n')
     
     print(' Generate new training set using normal or diffused randomization on each feature:')
