@@ -892,23 +892,30 @@ def createConfigFileWeb(En):
 #************************************
 def makeOptParameters(dP, ind):
     import json
+    flag = True
     if ind == "1":
         grid = {"random_state": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
             "max_depth": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]}
     elif ind == "2":
         grid = {"n_estimators": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
             "max_features": [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]}
-    else:
+    elif ind == "3":
         grid = {"random_state": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
             "max_depth": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
             "n_estimators": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
             "max_features": [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]}
-    print(" Grid:",grid)
-    with open(dP.optParFile, 'w') as json_file:
-        json.dump(grid, json_file)
-    print("\n Created: ",dP.optParFile)
-    print(" Next training wtih DataML_DF will be done in optimization mode. \n")
+    else:
+        flag = False
     
+    if flag:
+        print(" Grid:",grid)
+        with open(dP.optParFile, 'w') as json_file:
+            json.dump(grid, json_file)
+        print("\n Created: ",dP.optParFile)
+    else:
+        print("\n using existing file: ",dP.optParFile)
+        
+    print(" Next training wtih DataML_DF will be done in optimization mode. \n")
     dP.updateConfig('Parameters','optimizeParameters','True')
     
 #************************************
@@ -951,7 +958,8 @@ def usage():
     print('\n Types of optimization:')
     print('  1 - random_state, max_depth')
     print('  2 - n_estimators, max_features')
-    print('  else - random_state, max_depth, n_estimators, max_features\n')
+    print('  3 - random_state, max_depth, n_estimators, max_features\n'
+    print('  else - custom file'))
     
     print(' Requires python 3.x. Not compatible with python 2.x\n')
     

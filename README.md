@@ -194,11 +194,3 @@ Once models are trained trained, prediction on individual files can be made usin
 Web Versions
 ========================
 More details soon. 
-
-To run any of the web versions locally, run this command:
-
-```python3 -m http.server```
-
-and then open the browser:
-
-`http://localhost:8000`
