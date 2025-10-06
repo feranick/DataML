@@ -958,7 +958,7 @@ def usage():
     print('\n Types of optimization:')
     print('  1 - random_state, max_depth')
     print('  2 - n_estimators, max_features')
-    print('  3 - random_state, max_depth, n_estimators, max_features\n'
+    print('  3 - random_state, max_depth, n_estimators, max_features\n')
     print('  else - custom file'))
     
     print(' Requires python 3.x. Not compatible with python 2.x\n')
