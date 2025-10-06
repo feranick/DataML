@@ -450,7 +450,7 @@ def plotGraphThreshold(dfP, dfL, dfC, validRows, title, pdf, sumFile, dP):
         
             if dP.plotValidData:
                 print("\nValid datapoint:\n",dfP.loc[validRows,col])
-                xv, yv, ann, indx = purgeSparse(dfP.loc[validRows,col].to_numpy(), dfP.loc[validRows, ind].to_numpy(), dfP.iloc[:,0], dP)
+                xv, yv, ann2, indx = purgeSparse(dfP.loc[validRows,col].to_numpy(), dfP.loc[validRows, ind].to_numpy(), dfP.iloc[:,0], dP)
                 dfSummary = pd.concat([dfSummary, pd.DataFrame([{'PAR': xlabel, 'PERF': ylabel, 'Corr': dfC[col].loc[ind], 'Num_points': len(xv), 'Valid': 'YES'}])], ignore_index=True)
                 if dP.plotSpecificColors:
                     if dP.customColors:
@@ -519,7 +519,7 @@ def plotSelectedGraphs(dfP, dfL, dfC, X, Y, validRows, title, pdf, dP):
                 plt.plot(P,V, 'bo')
             
             if dP.plotValidData:
-                PV, VV, ann, indx = purgeSparse(dfP.iloc[validRows,i].to_numpy(), dfP.iloc[validRows, j].to_numpy(), dfP.iloc[validRows, 0], dP)
+                PV, VV, ann2, indx = purgeSparse(dfP.iloc[validRows,i].to_numpy(), dfP.iloc[validRows, j].to_numpy(), dfP.iloc[validRows, 0], dP)
                 if dP.plotSpecificColors:
                     if dP.customColors:
                         color, mapped = createPalette(dP, dfP, indx)
