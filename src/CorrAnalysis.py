@@ -455,14 +455,14 @@ def plotGraphThreshold(dfP, dfL, dfC, validRows, title, pdf, sumFile, dP):
                 if dP.plotSpecificColors:
                     if dP.customColors:
                         color, mapped = createPalette(dP, dfP, indx)
-                        plt.scatter(xv, yv, marker='x', c=mapped)
+                        plt.scatter(xv, yv, marker='x', c=mapped, s=150)
                     else:
                         mapped = np.random.randint(0, len(dfP[dfL.columns[dP.columnSpecColors]].unique().tolist()), len(x))
-                        scatter = plt.scatter(xv, yv, marker='x', c=mapped, cmap=dP.cmap)
+                        scatter = plt.scatter(xv, yv, marker='x', c=mapped, cmap=dP.cmap, s=150)
                         handles, labels = scatter.legend_elements()
                         plt.legend(handles=handles, labels=labels, title=dfL.columns[dP.columnSpecColors])
                 else:
-                    plt.plot(xv, yv, 'ro')
+                    plt.plot(xv, yv, 'rx', ms=10)
                 
             plt.xlabel(xlabel)
             plt.ylabel(ylabel)
@@ -509,7 +509,7 @@ def plotSelectedGraphs(dfP, dfL, dfC, X, Y, validRows, title, pdf, dP):
             if dP.plotSpecificColors:
                 if dP.customColors:
                     color, mapped = createPalette(dP, dfP, indx)
-                    plt.scatter(P, V, marker='o', c=mapped)
+                    plt.scatter(P, V, marker='o', c=mapped, s=150)
                 else:
                     mapped = np.random.randint(0, len(dfP[dfL.columns[dP.columnSpecColors]].unique().tolist()), len(x))
                     scatter = plt.scatter(P, V, marker='o', c=mapped, cmap=dP.cmap)
@@ -523,14 +523,14 @@ def plotSelectedGraphs(dfP, dfL, dfC, X, Y, validRows, title, pdf, dP):
                 if dP.plotSpecificColors:
                     if dP.customColors:
                         color, mapped = createPalette(dP, dfP, indx)
-                        plt.scatter(PP, VV, marker='x', c=mapped)
+                        plt.scatter(PP, VV, marker='x', c=mapped, s=150)
                     else:
                         mapped = np.random.randint(0, len(dfP[dfL.columns[dP.columnSpecColors]].unique().tolist()), len(x))
                         scatter = plt.scatter(PP, VV, marker='x', c=mapped, cmap=dP.cmap)
                         handles, labels = scatter.legend_elements()
                         plt.legend(handles=handles, labels=labels, title=dfL.columns[dP.columnSpecColors])
                 else:
-                    plt.plot(PV,VV, 'ro')
+                    plt.plot(PV,VV, 'rx', ms=10)
                 
             plt.xlabel(xlabel)
             plt.ylabel(ylabel)
