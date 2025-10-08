@@ -2,16 +2,16 @@
 # -*- coding: utf-8 -*-
 '''
 ***********************************************
-* Augment_DAE
-* Data Augmentation via Denoising Autoencoder
-* version: 2025.10.01.1
+* DataML_DAE
+* Generative AI via Denoising Autoencoder
+* version: 2025.10.08.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
 print(__doc__)
 
 import numpy as np
-import sys, os.path, h5py, pickle, configparser, ast
+import sys, os.path, h5py, pickle, configparser, ast, getopt
 from numpy.polynomial.polynomial import Polynomial as polyfit
 from numpy.polynomial.polynomial import polyval as polyval
 
@@ -20,7 +20,7 @@ from libDataML import *
 #***************************************************
 # This is needed for installation through pip
 #***************************************************
-def Augment_DAE():
+def DataML_DAE():
     main()
 
 #************************************
@@ -38,8 +38,8 @@ class Conf():
         ### - ColumnValueSwap
         #################################
         
-        self.appName = "Augment_DAE"
-        confFileName = "Augment_DAE.ini"
+        self.appName = "DataML_DAE"
+        confFileName = "DataML_DAE.ini"
         self.configFile = os.path.join(os.getcwd(),confFileName)
         self.conf = configparser.ConfigParser()
         self.conf.optionxform = str
@@ -125,6 +125,16 @@ class Conf():
         except:
             print("Error in creating configuration file")
     
+    # update configuration file
+    def updateConfig(self, section, par, value):
+        if self.conf.has_option(section, par) is True:
+            self.conf.set(section, par, value)
+            try:
+                with open(self.configFile, 'w') as configfile:
+                    self.conf.write(configfile)
+            except:
+                print("Error in creating configuration file")
+    
     '''
     import tensorflow as tf
     seed_value = 10  # Choose any integer
@@ -135,18 +145,125 @@ class Conf():
 # Main
 #************************************
 def main():
-    dP = Conf()
-    if len(sys.argv) < 2:
-        print(' Usage:\n  python3 AddDenoiseAutoEncoder.py <learnData>')
-        print(' Requires python 3.x. Not compatible with python 2.x\n')
-        return
-
     try:
-        En, A, M = readLearnFile(dP, sys.argv[1], True)
+        opts, args = getopt.getopt(sys.argv[1:],
+            "tag:", ["train", "augment", "generate"])
+    except:
+        usage()
+        sys.exit(2)
+    
+    if opts == []:
+        usage()
+        sys.exit(2)
+        
+    for o, a in opts:
+        if o in ("-t" , "--train"):
+            try:
+                train(sys.argv[2])
+            except:
+                usage()
+                sys.exit(2)
+                
+        if o in ("-a" , "--augment"):
+            try:
+                augment(sys.argv[2], True)
+            except:
+                usage()
+                sys.exit(2)
+        
+        if o in ("-g" , "--generate"):
+            try:
+                generate(sys.argv[2])
+            except:
+                usage()
+                sys.exit(2)
+        
+#***********************************************
+# Train DAE via final learning file
+#***********************************************
+def train(learnFile):
+    dP = Conf()
+    dP.updateConfig('Parameters','reinforce','True')
+    old_numAdditions = dP.numAdditions
+    dP.updateConfig('Parameters','numAdditions','1')
+    augment(learnFile, False)
+    dP.updateConfig('Parameters','reinforce','False')
+    dP.updateConfig('Parameters','numAdditions',str(old_numAdditions))
+    
+#***********************************************
+# Generate new sample based on prompt
+#***********************************************
+def generate(csvFile):
+    import keras
+    import pandas as pd
+    from datetime import datetime, date
+    dP = Conf()
+    
+    print(f"  Opening file with prompt samples: {csvFile}")
+    dataDf = pd.read_csv(csvFile)
+    
+    
+    newDataDf = pd.DataFrame(dataDf[dataDf.columns[0]])
+        
+    print("  Loading existing DAE model:",dP.modelName,"\n")
+    autoencoder = keras.saving.load_model(dP.modelName)
+    
+    if dP.normalize:
+        try:
+            with open(dP.norm_file, "rb") as f:
+                norm = pickle.load(f)
+            print("  Opening pkl file with normalization data:",dP.norm_file)
+        except:
+            print("\033[1m pkl file not found \033[0m")
+            sys.exit()
+    else:
+        norm = None
+    
+    for i in range(1,dataDf.shape[1]):
+        R = np.array([dataDf.iloc[:,i].tolist()], dtype=float)
+        Rorig = np.copy(R)
+        
+        if dP.normalize:
+            R = norm.transform_valid_data(R)
+        
+        newR = autoencoder.predict(R)
+        #print("\nThis is the predicted R:",newR)
+        if dP.normalize:
+            newR = norm.transform_inverse(newR)
+        newDataDf[dataDf.columns[i]] = newR.flatten()
+    
+    print('\n  ==============================================================================')
+    print('  \033[1m Generated data\033[0m')
+    print('  ==============================================================================')
+    for i in range(1,dataDf.shape[1]):
+        tmp = pd.DataFrame(dataDf[dataDf.columns[0]])
+        tmp.rename(columns={ dataDf.columns[0]: dataDf.columns[i]}, inplace=True)
+        print('  --------------------------------------------------------------------------------')
+        tmp["input"] = dataDf[dataDf.columns[i]]
+        tmp["output"] = newDataDf[newDataDf.columns[i]]
+        print(tmp)
+    print('  --------------------------------------------------------------------------------\n')
+    
+    summaryCSVFileRoot = os.path.splitext(csvFile)[0]
+    summaryCSVFile = summaryCSVFileRoot+"_DAE_output"+str(datetime.now().strftime('_%Y-%m-%d_%H-%M-%S.csv'))
+    
+    newDataDf.rename(columns={ dataDf.columns[0]: "DAE output"}, inplace=True)
+    newDataDf.to_csv(summaryCSVFile, index=False, sep=',')
+    
+    print(f" DAE generated samples saved in: {summaryCSVFile}\n")
+        
+#***********************************************
+# Augment learning data via DAE
+# Create a new learning file with added data
+#***********************************************
+def augment(learnFile,augFlag):
+    dP = Conf()
+    try:
+        En, A, M = readLearnFile(dP, learnFile, True)
     except:
         return 1
     
-    rootFile = dP.model_directory + os.path.splitext(os.path.basename(sys.argv[1]))[0] + \
+    rootFile = dP.model_directory + os.path.splitext(os.path.basename(learnFile))[0] + \
             '_numDataTrainDae' + str(dP.numAddedNoisyDataBlocks * A.shape[0])
     
     if dP.normalize:
@@ -184,15 +301,20 @@ def main():
             return 0;
             
         dae, val_loss = trainAutoencoder(dP, noisy_A, new_A, sys.argv[1])
-        if val_loss < dP.min_loss_dae:
-            A_tmp = generateData(dP, dae, En, A, M, norm)
-            newA = np.vstack([newA, A_tmp])
-            success += 1
-            print("\n  Successful. Added so far:",str(success),"\n")
-            #plotAugmData(dP, A.shape, newA, plotFeatType, "test", True, rootFile+"_"+str(i)+"_plots.pdf")
+        
+        if augFlag:
+            if val_loss < dP.min_loss_dae:
+                A_tmp = generateData(dP, dae, En, A, M, norm)
+                newA = np.vstack([newA, A_tmp])
+                success += 1
+                print("\n  Successful. Added so far:",str(success),"\n")
+                #plotAugmData(dP, A.shape, newA, plotFeatType, "test", True, rootFile+"_"+str(i)+"_plots.pdf")
+            else:
+                #A_tmp = generateData(dP, dae, En, A, M, norm)
+                print("  Skip this denoising autoencoder. Added so far:",str(success),"\n")
         else:
-            #A_tmp = generateData(dP, dae, En, A, M, norm)
-            print("  Skip this denoising autoencoder. Added so far:",str(success),"\n")
+            print("  Trained DAE model\n")
+            return
         
     if success !=0:
         tag = "_"+dP.typeNoise
@@ -360,7 +482,7 @@ def swapValuesColumn(dP, A):
     plotAugmData(dP, A.shape, noisyA, True, True, "Swap", "Swap.pdf")
     return noisyA, newA
     
-'''
+
 #************************************
 # Train Autoencoder
 #************************************
@@ -444,7 +566,7 @@ def trainAutoencoder(dP, noisyA, A, file):
     autoencoder.save(dP.modelName)
     
     return autoencoder, final_val_loss
-'''
+
 #************************************
 # Generate data from Autoencoder
 #************************************
@@ -548,7 +670,21 @@ def plotAugmData(dP, shape, newA, feat, normFlag, title, plotFile):
         pdf.savefig()
         plt.close()
     pdf.close()
+
+#************************************
+# Lists the program usage
+#************************************
+def usage():
+    print('\n Usage:\n')
+    print(' Train DAE:')
+    print('  DataML_DAE -t <learningFile>\n')
+    print(' Augment data from <learningFile> using DAE:')
+    print('  DataML_DAE -a <learningFile>\n')
+    print(' Generate new DAE samples from csv of incomplete samples')
+    print('  DataML_DAE -g <csvlist>\n')
     
+    print(' Requires python 3.x. Not compatible with python 2.x\n')
+
 #************************************
 # Main initialization routine
 #************************************
