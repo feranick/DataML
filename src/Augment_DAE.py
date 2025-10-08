@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 '''
 ***********************************************
-* AddDenoiseAutoEncoder
+* Augment_DAE
 * Data Augmentation via Denoising Autoencoder
 * version: 2025.10.01.1
 * By: Nicola Ferralis <feranick@hotmail.com>
@@ -20,7 +20,7 @@ from libDataML import *
 #***************************************************
 # This is needed for installation through pip
 #***************************************************
-def AddDenoiseAutoEncoder():
+def Augment_DAE():
     main()
 
 #************************************
@@ -38,8 +38,8 @@ class Conf():
         ### - ColumnValueSwap
         #################################
         
-        self.appName = "AddDenoiseAutoEncoder"
-        confFileName = "AddDenoiseAutoEncoder.ini"
+        self.appName = "Augment_DAE"
+        confFileName = "Augment_DAE.ini"
         self.configFile = os.path.join(os.getcwd(),confFileName)
         self.conf = configparser.ConfigParser()
         self.conf.optionxform = str
