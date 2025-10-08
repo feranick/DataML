@@ -360,7 +360,7 @@ def swapValuesColumn(dP, A):
     plotAugmData(dP, A.shape, noisyA, True, True, "Swap", "Swap.pdf")
     return noisyA, newA
     
-
+'''
 #************************************
 # Train Autoencoder
 #************************************
@@ -444,7 +444,7 @@ def trainAutoencoder(dP, noisyA, A, file):
     autoencoder.save(dP.modelName)
     
     return autoencoder, final_val_loss
-
+'''
 #************************************
 # Generate data from Autoencoder
 #************************************
