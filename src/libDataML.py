@@ -79,6 +79,17 @@ class Normalizer(object):
                     Vn[0][i] = np.multiply(V[0][i] - self.min[i+1],
                     self.YnormTo/(self.max[i+1] - self.min[i+1]))
         return Vn
+        
+    def transform_valid_data_DAE(self,V):
+        Vn = np.copy(V)
+        if self.saveNormalized:
+            for i in range(0,V.shape[1]):
+                if self.max[i] - self.min[i] == 0:
+                    Vn[0][i] = (self.max[i] - self.min[i])/2
+                else:
+                    Vn[0][i] = np.multiply(V[0][i] - self.min[i],
+                    self.YnormTo/(self.max[i] - self.min[i]))
+        return Vn
     
     # Single sample, format [[0,1,2,3,4...]]
     def transform_inverse_single(self,v):

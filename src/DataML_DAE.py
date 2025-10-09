@@ -51,7 +51,7 @@ class Conf():
         
         self.modelName = "model_DAE.keras"
         
-        self.norm_file = self.model_directory+"norm_file.pkl"
+        self.norm_file = self.model_directory+"norm_file_DAE.pkl"
         self.numLabels = 1
             
     def denDaeDef(self):
@@ -224,7 +224,7 @@ def generate(csvFile):
         Rorig = np.copy(R)
         
         if dP.normalize:
-            R = norm.transform_valid_data(R)
+            R = norm.transform_valid_data_DAE(R)
         
         newR = autoencoder.predict(R)
         #print("\nThis is the predicted R:",newR)
