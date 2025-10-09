@@ -259,7 +259,7 @@ def generate(csvFile):
 def augment(learnFile,augFlag):
     dP = Conf()
     try:
-        En, A, M = readLearnFile(dP, learnFile, True)
+        En, A, M = readLearnFileDAE(learnFile, True, dP)
     except:
         return 1
     
@@ -593,32 +593,21 @@ def generateData(dP, autoencoder, En, A, M, norm):
 #************************************
 # Open Learning Data
 #************************************
-def readLearnFile(dP, learnFile, newNorm):
-    print(" Opening learning file: "+learnFile+"\n")
-    try:
-        if os.path.splitext(learnFile)[1] == ".npy":
-            M = np.load(learnFile)
-        elif os.path.splitext(learnFile)[1] == ".h5":
-            with h5py.File(learnFile, 'r') as hf:
-                M = hf["M"][:]
-        else:
-            with open(learnFile, 'r') as f:
-                M = np.loadtxt(f, unpack =False)
-    except:
-        print("\033[1m" + " Learning file not found \n" + "\033[0m")
-        sys.exit()
-
+def readLearnFileDAE(learnFile, newNorm, dP):
+    M = readFile(learnFile)
+    
     if dP.normalize:
         print("  Normalization of feature matrix to 1")
         if newNorm:
             print("  Normalization parameters saved in:", dP.norm_file,"\n")
             norm = Normalizer(M, dP)
+            norm.save()
         else:
             print("  Normalization parameters from:", dP.norm_file,"\n")
             with open(dP.norm_file, "rb") as f:
                 norm = pickle.load(f)
         M = norm.transform(M)
-        norm.save()
+
 
     if dP.excludeZeroFeatures:
         ind = np.any(M == 0, axis=1)
