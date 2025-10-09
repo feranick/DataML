@@ -24,7 +24,7 @@ class Normalizer(object):
         self.YnormTo = 1
         self.stepNormLabel = 0.01
         self.saveNormalized = True
-        self.norm_file = "norm_file.pkl"
+        self.norm_file = dP.norm_file
         
         self.data = np.arange(0,1,self.stepNormLabel)
         self.min = np.zeros([self.M.shape[1]])
