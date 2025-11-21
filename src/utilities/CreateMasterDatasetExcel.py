@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 '''
 **************************************************
+* Create Master Dataset from provided xlsx
+* This version includes: 
 * Split Columns wth "AA-BB" codes into two colums
 * version: v2025.11.21.2
 * By: Nicola Ferralis <feranick@hotmail.com>
@@ -28,7 +30,7 @@ class Conf:
 #************************************
 def main():
     if len(sys.argv) < 2:
-        print(' Usage:\n  python3 SplitColumnCodesExcel.py <Excel File>')
+        print(' Usage:\n  python3 CreateMasterDatasetExcel.py <Excel File>')
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
     
