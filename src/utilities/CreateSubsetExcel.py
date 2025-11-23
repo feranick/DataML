@@ -18,6 +18,7 @@ class Conf:
     sheet_name = "analysis"
     rows_to_skip = 4
     row_with_name = 3
+    
 #************************************
 # Main
 #************************************

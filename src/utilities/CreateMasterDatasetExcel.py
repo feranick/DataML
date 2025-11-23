@@ -4,7 +4,7 @@
 * Create Master Dataset from provided xlsx
 * This version includes: 
 * Split Columns wth "AA-BB" codes into two colums
-* version: v2025.11.21.2
+* version: v2025.11.22.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
 '''
@@ -19,8 +19,9 @@ class Conf:
     sheet_name_original = "as_received"
     sheet_name_new = "analysis"
     row_with_name = 3
-    replaceNaN = True
+    replace_NaN = True
     value_for_NaN = 0
+    skip_NaN_rows = True
     rows_to_skip = 3
     cols_to_skip = 2
     drop_first_column = True
@@ -73,7 +74,10 @@ def main():
         df_result = df_temp.copy()
     
     if success:
-        if conf.replaceNaN:
+        if conf.skip_NaN_rows:
+            df_result = df_result.dropna(how='all', axis=0)
+    
+        if conf.replace_NaN:
             df_result.iloc[conf.rows_to_skip:,conf.cols_to_skip:] = df_result.iloc[conf.rows_to_skip:, conf.cols_to_skip:].fillna(conf.value_for_NaN)
             
         if conf.drop_first_column:
