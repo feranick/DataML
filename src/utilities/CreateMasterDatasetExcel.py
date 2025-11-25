@@ -2,9 +2,8 @@
 '''
 **************************************************
 * Create Master Dataset from provided xlsx
-* This version includes: 
-* Split Columns wth "AA-BB" codes into two colums
-* version: v2025.11.22.1
+* 
+* version: v2025.11.26.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
 '''
@@ -24,6 +23,10 @@ class Conf:
     skip_NaN_rows = True
     rows_to_skip = 3
     cols_to_skip = 2
+    drop_cols_with_code = True
+    autofind_cols_with_code = False
+    manual_cols_with_code = [2,9]
+    
     drop_first_column = True
 
 #************************************
@@ -39,8 +42,7 @@ def main():
     
     print(" Opening Excel File:",sys.argv[1],"...\n")
     
-    xls = pd.ExcelFile(sys.argv[1])
-    
+    '''
     if conf.sheet_name_new in xls.sheet_names:
         sheet_name = conf.sheet_name_new
         print(f" Sheet name '{conf.sheet_name_new}' found.\n")
@@ -50,76 +52,51 @@ def main():
     else:
         sheet_name = xls.sheet_names[0]
         print(f" Sheet name '{conf.sheet_name_new}' NOT found, first sheet in file.\n")
+    '''
     
-    df_original = pd.read_excel(sys.argv[1], sheet_name=sheet_name, header=None)
+    '''
+    xls = pd.ExcelFile(sys.argv[1])
+    sheet_name = xls.sheet_names[0]
+    print(sheet_name)
+    xls.close()
+    '''
+    
+    df_original = pd.read_excel(sys.argv[1], header=None)
 
     print(" Original table:\n", df_original)
     
-    if len(find_formatted_columns(df_original)) == 0:
-        print(f"\n No columns with 'AA-BB' codes found.\n")
-        return
-        
-    print(f"\n Columns with 'AA-BB' codes: {find_formatted_columns(df_original)}")
-    offset = 0
-    df_temp = df_original.copy()
+    df = df_original.copy()
     
-    for col in find_formatted_columns(df_original):
-        print(f"\n Processing column {col}")
-        df_temp, success = split_column(
-            df=df_temp,
-            #column_identifier = int(sys.argv[2]),
-            column_identifier = col + offset
-            )
-        offset += 1
-        df_result = df_temp.copy()
+    print(df[df.columns[[2,3,4]]])
+
+    formatted_cols_to_drop = find_formatted_columns(df)
     
-    if success:
-        if conf.skip_NaN_rows:
-            df_result = df_result.dropna(how='all', axis=0)
+    if conf.drop_cols_with_code:
+        if conf.autofind_cols_with_code:
+            print(f"\n Dropping columns with 'AA-BB' - autofind: {formatted_cols_to_drop}")
+            df = df.drop(columns=df.columns[formatted_cols_to_drop], axis=1)
+        else:
+            print(f"\n Dropping columns with 'AA-BB' - manual: {conf.manual_cols_with_code}")
+            df = df.drop(columns=df.columns[conf.manual_cols_with_code], axis=1)
+
+    if conf.skip_NaN_rows:
+        df = df.dropna(how='all', axis=0)
     
-        if conf.replace_NaN:
-            df_result.iloc[conf.rows_to_skip:,conf.cols_to_skip:] = df_result.iloc[conf.rows_to_skip:, conf.cols_to_skip:].fillna(conf.value_for_NaN)
+    if conf.replace_NaN:
+        df_slice = df.iloc[conf.rows_to_skip:, conf.cols_to_skip:]
+        df_slice = df_slice.fillna(conf.value_for_NaN).infer_objects(copy=False)
+        df.iloc[conf.rows_to_skip:, conf.cols_to_skip:] = df_slice
             
-        if conf.drop_first_column:
-            print("\n Dropping first column")
-            df_result = df_result.drop(df_result.columns[0], axis=1)
+    if conf.drop_first_column:
+        print("\n Dropping first column")
+        df = df.drop(df.columns[0], axis=1)
             
-        print("\n Modified table:\n", df_result)
+    print(f"\n Modified table: {df}\n",)
     
-        with pd.ExcelWriter(sys.argv[1], mode='a', engine='openpyxl', if_sheet_exists='replace') as writer:
-            df_result.to_excel(writer, sheet_name=conf.sheet_name_new, index=False, header=False)
+    with pd.ExcelWriter(sys.argv[1], mode='a', engine='openpyxl', if_sheet_exists='replace') as writer:
+        df.to_excel(writer, sheet_name=conf.sheet_name_new, index=False, header=False)
     
-        print(f"\n Table saved in: {sys.argv[1]}\n")
-    else:
-        print(f"\n Table not saved. Check that you are coverting the right column\n")
-    
-    
-#************************************
-# Split individual column with codes
-# into two separate columns
-#************************************
-def split_column(df: pd.DataFrame, column_identifier: int) -> pd.DataFrame:
-    conf = Conf()
-    try:
-        column_name = df.columns[column_identifier]
-        # Create new split columns
-        new_cols = df[column_name].str.split('-', expand=True)
-    
-        # If the target column does not have AA-BB codes, exit
-        if len(new_cols.columns) == 1:
-            return df, False
-    
-        # Provide correct naming to new columns
-        new_col_name = new_cols.iloc[conf.row_with_name,0].rsplit(' ',1)[0] + " type"
-        new_cols.iat[conf.row_with_name,1] = new_col_name
-    
-        df.insert(loc=column_identifier, column=str(column_identifier)+'a', value=new_cols.iloc[:,1])
-        df.insert(loc=column_identifier, column=str(column_identifier)+'b', value=new_cols.iloc[:,0])
-        df = df.drop(columns = [column_name])
-    except IndexError as e:
-        print(f"Error: {e}")
-        return df, False
-    return df, True
+    print(f"\n Table saved in: {sys.argv[1]}\n")
 
 #************************************
 # Identify columns with AA-BB codes

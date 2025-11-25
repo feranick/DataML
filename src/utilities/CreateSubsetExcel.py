@@ -3,7 +3,7 @@
 **************************************************
 * Create Subset based on sample/material code 
 * from provided xlsx
-* version: v2025.11.21.2
+* version: v2025.11.25.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
 '''
@@ -18,6 +18,7 @@ class Conf:
     sheet_name = "analysis"
     rows_to_skip = 4
     row_with_name = 3
+    codes_as_strings = False
     
 #************************************
 # Main
@@ -44,8 +45,10 @@ def main():
     df_orig = pd.read_excel(sys.argv[1], sheet_name=sheet_name, header=None)
     
     rootFile = os.path.splitext(sys.argv[1])[0]
-    column_name = df_orig.iloc[3,int(sys.argv[2])].replace(' ','-')
-    newFile = rootFile + "_" + column_name + "_" + sys.argv[3] + ".csv"
+    print(df_orig.iloc[3,int(sys.argv[2])])
+    #column_name = df_orig.iloc[3,int(sys.argv[2])].replace(' ','-')
+    #newFile = rootFile + "_" + column_name + "_" + sys.argv[3] + ".csv"
+    newFile = rootFile + "_" + str(sys.argv[2]) + "_" + sys.argv[3] + ".csv"
     
     print(" Original table:\n", df_orig)
     
@@ -59,10 +62,15 @@ def main():
 #******************************************************************
 # create Dataframe with only data with specific condition
 #******************************************************************
-def create_subset_df(df, col, string):
+def create_subset_df(df, col, value):
     conf = Conf()
     
-    mask = df[df.columns[col]] == string
+    if conf.codes_as_strings:
+        # Use this for string-like codes, i.e. 01, 02...
+        mask = df[df.columns[col]] == value
+    else:
+        # Use this for int-like codes, i.e. 1, 2...
+        mask = df[df.columns[col]] == int(value)
     mask.iloc[:conf.rows_to_skip] = True
     df_new = df[mask]
     return df_new
