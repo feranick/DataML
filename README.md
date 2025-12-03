@@ -20,7 +20,7 @@ Installation
 ## Installation from available wheel package
 If available from the main site, you can install SpectraKeras by running:
 
-    python3 -m pip install --upgrade dataml-2025.10.09.1-py3-none-any.whl
+    python3 -m pip install --upgrade dataml-2025.12.03.1-py3-none-any.whl
     
 SpectraKeras_CNN and Spectrakeras_MLP are available directly from the command line.
 NOTE: The Utilities in the `Utilities` folder are not included in the package, and can be run locally as needed.
@@ -48,6 +48,7 @@ This software requires Python (3.9 or higher). It has been tested with Python 3.
     graphviz
     h5py
     tensorflow (>= 2.16.2)
+    tabpfn (experimental, if using TabPFN transformer model)
     
 In addition, these packages may be needed depending on your platform (via ```apt-get``` in debian/ubuntu or ```port``` in OSX):
     
@@ -194,3 +195,10 @@ Once models are trained trained, prediction on individual files can be made usin
 Web Versions
 ========================
 More details soon. 
+
+
+Known Issues
+========================
+TabPFN support is highly experimental and largely untested. When installing DataML, TabPFN will NOT be installed, as that will need to be done manually following the directions here:
+
+https://docs.priorlabs.ai/overview

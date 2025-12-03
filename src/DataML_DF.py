@@ -3,8 +3,8 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2025.10.09.1
-* Uses: sklearn
+* version: 2025.12.03.01
+* Uses: sklearn, tabpfn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
 '''
@@ -34,6 +34,7 @@ class Conf():
         ### - RandomForest
         ### - HistGradientBoosting
         ### - DecisionTree
+        ### - TabPFN (experimental)
         #################################
         
         ###################################
@@ -371,6 +372,10 @@ def train(learnFile, testFile):
             if dP.max_features == 0:
                 dP.max_features = None
             df = DecisionTreeRegressor(max_depth=dP.max_depth, max_features = dP.max_features, random_state=dP.random_state)
+        if dP.typeDF == 'TabPFN':
+            from tabpfn import TabPFNRegressor
+            df = TabPFNRegressor()
+            
     else:
         if dP.typeDF == 'RandomForest':
             df = RandomForestClassifier(max_depth=dP.max_depth, n_estimators = dP.n_estimators, max_features = dP.max_features, verbose=dP.verbose, n_jobs=dP.n_jobs, oob_score=False, random_state=dP.random_state)
@@ -384,6 +389,9 @@ def train(learnFile, testFile):
             if dP.max_features == 0:
                 dP.max_features = None
             df = DecisionTreeClassifier(max_depth=dP.max_depth, max_features = dP.max_features, random_state=dP.random_state)
+        if dP.typeDF == 'TabPFN':
+            from tabpfn import TabPFNClassifier
+            df = TabPFNClassifier()
     
     df.fit(A, Cl2)
             
