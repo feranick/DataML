@@ -608,7 +608,6 @@ def readLearnFileDAE(learnFile, newNorm, dP):
                 norm = pickle.load(f)
         M = norm.transform(M)
 
-
     if dP.excludeZeroFeatures:
         ind = np.any(M == 0, axis=1)
         ind[0] = False
@@ -655,7 +654,7 @@ def plotData(dP, A, newA, feat, normFlag, title, plotFile):
             plt.xlabel("col 0 - predicted parameter")
             plt.ylabel("col "+str(i)+" - feature parameter")
         
-        plt.plot(x,y, 'ro', markersize=3)
+        plt.plot(x,y, 'ro', markersize=5)
         if newA is not None:
             plt.plot(xA,yA, 'bo', markersize=3)
         poly = polyfit.fit(x, y, dP.fitPolyDegree)
