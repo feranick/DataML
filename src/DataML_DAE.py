@@ -654,11 +654,11 @@ def plotData(dP, A, newA, feat, normFlag, title, plotFile):
             plt.xlabel("col 0 - predicted parameter")
             plt.ylabel("col "+str(i)+" - feature parameter")
         
-        plt.plot(x,y, 'ro', markersize=5)
         if newA is not None:
             plt.plot(xA,yA, 'bo', markersize=3)
         poly = polyfit.fit(x, y, dP.fitPolyDegree)
         plt.plot(np.unique(x), poly(np.unique(x)))
+        plt.plot(x,y, 'ro', markersize=5)
         plt.title(title+" - $R^2={0:.3f}$".format(r2_score(y, poly(x))))
         pdf.savefig()
         plt.close()
