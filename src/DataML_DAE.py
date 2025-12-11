@@ -630,11 +630,12 @@ def plotData(dP, A, newA, feat, normFlag, title, plotFile):
     
     pdf = PdfPages(plotFile)
         
-    if dP.normalize and normFlag and newA is not None:
+    if dP.normalize and normFlag:
         with open(dP.norm_file, "rb") as f:
             norm = pickle.load(f)
-        newA = norm.transform_inverse(newA)
         A = norm.transform_inverse(A)
+        if newA is not None:
+            newA = norm.transform_inverse(newA)
         
     for i in range(1, A.shape[1]):
         if feat:
