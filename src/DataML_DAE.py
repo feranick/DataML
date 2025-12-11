@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
-* version: 2025.12.03.01
+* version: 2025.12.11.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -275,8 +275,8 @@ def augment(learnFile,augFlag):
         norm = 0
     
     if dP.plotAugmData:
-        plotAugmData(dP, A.shape, A, True, True, "Initial (X-F) Data", rootFile+"_initial_X-F_plots.pdf")
-        plotAugmData(dP, A.shape, A, False, True, "Initial (Y-P) Data", rootFile+"_initial_Y-P_plots.pdf")
+        plotData(dP, A, None, True, True, "Initial (X-F) Data", rootFile+"_initial_X-F_plots.pdf")
+        plotData(dP, A, None, False, True, "Initial (Y-P) Data", rootFile+"_initial_Y-P_plots.pdf")
     
     success = 0
     plotFeatType = True
@@ -308,7 +308,7 @@ def augment(learnFile,augFlag):
                 newA = np.vstack([newA, A_tmp])
                 success += 1
                 print("\n  Successful. Added so far:",str(success),"\n")
-                #plotAugmData(dP, A.shape, newA, plotFeatType, "test", True, rootFile+"_"+str(i)+"_plots.pdf")
+                #plotData(dP, A, newA, plotFeatType, "test", True, rootFile+"_"+str(i)+"_plots.pdf")
             else:
                 #A_tmp = generateData(dP, dae, En, A, M, norm)
                 print("  Skip this denoising autoencoder. Added so far:",str(success),"\n")
@@ -328,7 +328,7 @@ def augment(learnFile,augFlag):
         saveLearnFile(dP, newA, newFile, "")
         
         if dP.plotAugmData:
-            plotAugmData(dP, A.shape, newA, plotFeatType, False, "Augmented data", newFile+"_plots.pdf")
+            plotData(dP, A, newA, plotFeatType, False, "Augmented data", newFile+"_plots.pdf")
     else:
         print("  No new training data created. Try to increse numAdditions or/and min_loss_dae.\n")
 
@@ -382,8 +382,7 @@ def createNoisyData(dP, A):
     noisyA = np.vstack(noisyA_list) if noisyA_list else np.empty((0, A.shape[1]))
     newA = np.vstack(newA_list) if newA_list else np.empty((0, A.shape[1]))
     
-    plotAugmData(dP, A.shape, noisyA, True, True, "Noisy", "Noisy.pdf")
-
+    plotData(dP, A, noisyA, True, True, "Noisy", "Noisy.pdf")
     return noisyA, newA
 
 # ------------------------------------
@@ -409,7 +408,7 @@ def createYFitNoisyData(dP, A):
     noisyA = np.vstack(noisyA_list)
     newA = np.vstack(newA_list)
         
-    plotAugmData(dP, A.shape, noisyA, False, True, "NoisyY", "NoisyY.pdf")
+    plotData(dP, A, noisyA, False, True, "NoisyY", "NoisyY.pdf")
     return noisyA, newA
     
 # Fit initial data from prediction vs features
@@ -444,7 +443,8 @@ def createXFitNoisyData(dP, A):
 
     noisyA = np.vstack(noisyA_list)
     newA = np.vstack(newA_list)
-    plotAugmData(dP, A.shape, noisyA, True, True, "NoisyX", "NoisyX.pdf")
+
+    plotAugmData(dP, A, noisyA, True, True, "NoisyX", "NoisyX.pdf")
     return noisyA, newA
     
 # Fit initial data from features vs prediction
@@ -623,36 +623,40 @@ def readLearnFileDAE(learnFile, newNorm, dP):
 #************************************
 # Plot augmented training data
 #************************************
-def plotAugmData(dP, shape, newA, feat, normFlag, title, plotFile):
+def plotData(dP, A, newA, feat, normFlag, title, plotFile):
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_pdf import PdfPages
     from sklearn.metrics import r2_score
     
     pdf = PdfPages(plotFile)
-    
-    if dP.normalize and normFlag:
+        
+    if dP.normalize and normFlag and newA is not None:
         with open(dP.norm_file, "rb") as f:
             norm = pickle.load(f)
         newA = norm.transform_inverse(newA)
+        A = norm.transform_inverse(A)
         
-    for i in range(1, shape[1]):
+    for i in range(1, A.shape[1]):
         if feat:
-            x = newA[:shape[0],i]
-            y = newA[:shape[0]:,0]
-            xA = newA[shape[0]:,i]
-            yA = newA[shape[0]:,0]
+            x = A[:,i]
+            y = A[:,0]
+            if newA is not None:
+                xA = newA[:,i]
+                yA = newA[:,0]
             plt.xlabel("col "+str(i)+" - feature parameter")
             plt.ylabel("col 0 - predicted parameter")
         else:
-            y = newA[:shape[0],i]
-            x = newA[:shape[0]:,0]
-            yA = newA[shape[0]:,i]
-            xA = newA[shape[0]:,0]
+            y = A[:,i]
+            x = A[:,0]
+            if newA is not None:
+                yA = newA[:,i]
+                xA = newA[:,0]
             plt.xlabel("col 0 - predicted parameter")
             plt.ylabel("col "+str(i)+" - feature parameter")
         
-        plt.plot(xA,yA, 'bo', markersize=3)
         plt.plot(x,y, 'ro', markersize=3)
+        if newA is not None:
+            plt.plot(xA,yA, 'bo', markersize=3)
         poly = polyfit.fit(x, y, dP.fitPolyDegree)
         plt.plot(np.unique(x), poly(np.unique(x)))
         plt.title(title+" - $R^2={0:.3f}$".format(r2_score(y, poly(x))))

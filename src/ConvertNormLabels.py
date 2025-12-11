@@ -4,7 +4,7 @@
 ************************************************
 * ConvertNormLabels
 * Convert normalized labels into actual labels
-* version: 2025.12.03.01
+* version: 2025.12.11.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ************************************************
 '''
