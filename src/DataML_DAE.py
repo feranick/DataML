@@ -444,7 +444,7 @@ def createXFitNoisyData(dP, A):
     noisyA = np.vstack(noisyA_list)
     newA = np.vstack(newA_list)
 
-    plotAugmData(dP, A, noisyA, True, True, "NoisyX", "NoisyX.pdf")
+    plotData(dP, A, noisyA, True, True, "NoisyX", "NoisyX.pdf")
     return noisyA, newA
     
 # Fit initial data from features vs prediction
