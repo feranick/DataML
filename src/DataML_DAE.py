@@ -433,12 +433,18 @@ def createXFitNoisyData(dP, A):
         y_tmp_list = []
 
         for j in range(1, A.shape[1]):
-            x_tmp = (A[:, j] + np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, A.shape[0])).reshape(-1, 1)
-            y_tmp_list.append((polyval(x_tmp, poly[j])).reshape(-1, 1))
-            x_tmp_list.append(x_tmp)
+            #x_tmp_single = A[:, j] + np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, A.shape[0]).reshape(-1, 1)
+            x_tmp_single = A[:, j].reshape(-1, 1)
+            y_tmp_single = polyval(x_tmp_single, poly[j]).reshape(-1, 1)
+            x_tmp_list.append(x_tmp_single)
+            y_tmp_list.append(y_tmp_single)
 
+        x_tmp = np.hstack(x_tmp_list)
         y_tmp = np.hstack(y_tmp_list)
-        noisyA_list.append(np.hstack([np.mean(y_tmp, axis=1).reshape(-1, 1), np.hstack(x_tmp_list)]))
+        
+        noisyA_tmp = np.hstack([np.mean(y_tmp, axis=1).reshape(-1, 1), x_tmp])
+        #noisyA_tmp = np.hstack([y_tmp[:,0].reshape(-1, 1),x_tmp])
+        noisyA_list.append(noisyA_tmp)
         newA_list.append(A)
 
     noisyA = np.vstack(noisyA_list)
