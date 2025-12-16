@@ -3,7 +3,7 @@
 '''
 *********************************************
 * MergeTrainTestDatasets
-* version: v2025.12.16.1
+* version: v2025.12.16.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -23,14 +23,18 @@ def main():
         print(' Requires python 3.x. Not compatible with python 2.x\n')
         return
 
-    
     #newFile = os.path.splitext(sys.argv[1])[0] + '_merged_' + os.path.splitext(sys.argv[2])[0]
     newFile = sys.argv[1].removesuffix("_train.txt") + "_full"
     
     learnFileExt = os.path.splitext(sys.argv[1])[1]
 
-    En, M1 = readLearnFile(sys.argv[1])
-    En2, M2 = readLearnFile(sys.argv[2])
+    try:
+        En, M1 = readLearnFile(sys.argv[1])
+        En2, M2 = readLearnFile(sys.argv[2])
+    except:
+        print("\033[1m" + " Learning file not found \n" + "\033[0m")
+        return 0
+    
     M = np.append([0], En)
 
     if En.shape[0] == En2.shape[0]:
@@ -61,18 +65,15 @@ def main():
 #************************************
 def readLearnFile(learnFile):
     print(" Opening learning file: "+learnFile+"\n")
-    try:
-        if os.path.splitext(learnFile)[1] == ".npy":
-            M = np.load(learnFile)
-        elif os.path.splitext(learnFile)[1] == ".h5":
-            with h5py.File(learnFile, 'r') as hf:
-                M = hf["M"][:]
-        else:
-            with open(learnFile, 'r') as f:
-                M = np.loadtxt(f, unpack =False)
-    except:
-        print("\033[1m" + " Learning file not found \n" + "\033[0m")
-        return
+
+    if os.path.splitext(learnFile)[1] == ".npy":
+        M = np.load(learnFile)
+    elif os.path.splitext(learnFile)[1] == ".h5":
+        with h5py.File(learnFile, 'r') as hf:
+            M = hf["M"][:]
+    else:
+        with open(learnFile, 'r') as f:
+            M = np.loadtxt(f, unpack =False)
 
     En = M[0,1:]
     A = M[1:,:]
