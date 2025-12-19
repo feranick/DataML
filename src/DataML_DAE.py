@@ -76,7 +76,8 @@ class Conf():
             'numAdditions' : 100,
             'numAddedNoisyDataBlocks' : 100,
             'percNoiseDistrMax' : 0.025,
-            'excludeZeroFeatures' : True,
+            'excludeZeroFeatures' : False,
+            'excludeZeroLabels' : True,
             'removeSpurious' : True,
             'normalize' : True,
             'normalizeLabel' : True,
@@ -109,6 +110,7 @@ class Conf():
             self.numAddedNoisyDataBlocks = self.conf.getint('Parameters','numAddedNoisyDataBlocks')
             self.percNoiseDistrMax = self.conf.getfloat('Parameters','percNoiseDistrMax')
             self.excludeZeroFeatures = self.conf.getboolean('Parameters','excludeZeroFeatures')
+            self.excludeZeroLabels = self.conf.getboolean('Parameters','excludeZeroLabels')
             self.removeSpurious = self.conf.getboolean('Parameters','removeSpurious')
             self.normalize = self.conf.getboolean('Parameters','normalize')
             self.normalizeLabel = self.conf.getboolean('Parameters','normalizeLabel')
@@ -202,7 +204,6 @@ def generate(csvFile):
     print(f"  Opening file with prompt samples: {csvFile}")
     dataDf = pd.read_csv(csvFile)
     
-    
     newDataDf = pd.DataFrame(dataDf[dataDf.columns[0]])
         
     print("  Loading existing DAE model:",dP.modelName,"\n")
@@ -263,7 +264,7 @@ def augment(learnFile,augFlag):
         if empty:
             return 1
     except Exception as e:
-        print(f" An error occurred: {e}\n")
+        print(f" An error occurred during augmentation: {e}\n")
         return 1
     
     rootFile = dP.model_directory + os.path.splitext(os.path.basename(learnFile))[0] + \
@@ -378,7 +379,11 @@ def createNoisyData(dP, A):
                         if noisyA_row[j] < A_min[j]:
                             noisyA_row[j] = 0
 
-                if np.all(newA_row != 0) and np.all(noisyA_row != 0):
+                if dP.excludeZeroFeatures:
+                    if np.all(newA_row != 0) and np.all(noisyA_row != 0):
+                        noisyA_list.append(noisyA_row)
+                        newA_list.append(newA_row)
+                else:
                     noisyA_list.append(noisyA_row)
                     newA_list.append(newA_row)
 
@@ -617,17 +622,31 @@ def readLearnFileDAE(learnFile, newNorm, dP):
             with open(dP.norm_file, "rb") as f:
                 norm = pickle.load(f)
         M = norm.transform(M)
-        
+    
+    # Filter out all rows in M where at least one member in that row is zero
     ind = np.any(M == 0, axis=1)
     ind[0] = False
-    M_no_zero = M[~ind]
+    M_no_zero_features = M[~ind]
     
-    if M_no_zero.shape[0] == 1:
+    # Filter out all rows in M where at the label is zero
+    ind_labels = (M[:, 0] != 0)
+    ind_labels[0] = True
+    M_no_zero_labels = M[ind_labels]
+    
+    if M_no_zero_features.shape[0] == 1:
         print("  Matrix with no zeros is empty\n")
+        
+    if M_no_zero_labels.shape[0] == 1:
+        print("  Labels in the matrix are all zero.\n")
         empty = True
         
+    if dP.excludeZeroLabels:
+        print("  Removing data with zero label.\n")
+        M = M_no_zero_labels
+    
     if dP.excludeZeroFeatures:
-        M = M_no_zero
+        print("  Removing data with zero features.\n")
+        M = M_no_zero_features
     
     En = M[0,:]
     A = M[1:,:]
