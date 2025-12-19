@@ -259,8 +259,11 @@ def generate(csvFile):
 def augment(learnFile,augFlag):
     dP = Conf()
     try:
-        En, A, M = readLearnFileDAE(learnFile, True, dP)
-    except:
+        En, A, M, empty = readLearnFileDAE(learnFile, True, dP)
+        if empty:
+            return 1
+    except Exception as e:
+        print(f" An error occurred: {e}\n")
         return 1
     
     rootFile = dP.model_directory + os.path.splitext(os.path.basename(learnFile))[0] + \
@@ -601,6 +604,7 @@ def generateData(dP, autoencoder, En, A, M, norm):
 #************************************
 def readLearnFileDAE(learnFile, newNorm, dP):
     M = readFile(learnFile)
+    empty = False
     
     if dP.normalize:
         print("  Normalization of feature matrix to 1")
@@ -613,17 +617,23 @@ def readLearnFileDAE(learnFile, newNorm, dP):
             with open(dP.norm_file, "rb") as f:
                 norm = pickle.load(f)
         M = norm.transform(M)
-
+        
+    ind = np.any(M == 0, axis=1)
+    ind[0] = False
+    M_no_zero = M[~ind]
+    
+    if M_no_zero.shape[0] == 1:
+        print("  Matrix with no zeros is empty\n")
+        empty = True
+        
     if dP.excludeZeroFeatures:
-        ind = np.any(M == 0, axis=1)
-        ind[0] = False
-        M = M[~ind]
-
+        M = M_no_zero
+    
     En = M[0,:]
     A = M[1:,:]
     Cl = M[1:,0]
-    
-    return En, A, M
+
+    return En, A, M, empty
 
 #************************************
 # Plot augmented training data
