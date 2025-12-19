@@ -485,7 +485,7 @@ def swapValuesColumn(dP, A):
         newA_list.append(A)
     noisyA = np.vstack(noisyA_list)
     newA = np.vstack(newA_list)
-    plotAugmData(dP, A.shape, noisyA, True, True, "Swap", "Swap.pdf")
+    plotData(dP, A, noisyA, True, True, "Swap", "Swap.pdf")
     return noisyA, newA
     
 
