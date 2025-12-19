@@ -285,6 +285,7 @@ def augment(learnFile,augFlag):
     success = 0
     plotFeatType = True
     for i in range(dP.numAdditions):
+        print(f"\n Augmentation in progress: step {i+1}/{dP.numAdditions}\n")
         if dP.shuffle:
             np.random.shuffle(A)
         if dP.typeNoise == 'Random':
