@@ -5,7 +5,7 @@
 * DataML_BatchMaker
 * Adds data from single file to Master Doc
 * File must be in ASCII
-* version: 2025.12.11.1
+* version: 2025.12.19.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -109,8 +109,8 @@ def main():
     
     try:
         makeBatchFile(sys.argv[1], batchFile, dP)
-    except:
-        print("\033[1m" + " Something went wrong, maybe Param file not found\n" + "\033[0m")
+    except Exception as e:
+        print(f" An error occurred: {e}\n")
         return
     
 

@@ -5,7 +5,7 @@
 * ConvertParamLabels
 * Convert progressive numeric labels with actual parameter names
 * Uses DataML_Datamaker.ini
-* version: 2025.12.11.1
+* version: 2025.12.19.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -151,8 +151,8 @@ def main():
     try:
         featNames = readParamFile(sys.argv[1], dP)
         configData = readConfigFile(sys.argv[2])
-    except:
-        print("\033[1m" + " Something went wrong, maybe Param file not found\n" + "\033[0m")
+    except Exception as e:
+        print(f" An error occurred: {e}\n")
         return
     
     label_list = convertNumLabel(featNames,configData)

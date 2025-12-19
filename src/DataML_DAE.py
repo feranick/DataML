@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
-* version: 2025.12.11.1
+* version: 2025.12.19.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -160,22 +160,22 @@ def main():
         if o in ("-t" , "--train"):
             try:
                 train(sys.argv[2])
-            except:
-                usage()
+            except Exception as e:
+                print(f" An error occurred: {e}\n")
                 sys.exit(2)
                 
         if o in ("-a" , "--augment"):
             try:
                 augment(sys.argv[2], True)
-            except:
-                usage()
+            except Exception as e:
+                print(f" An error occurred: {e}\n")
                 sys.exit(2)
         
         if o in ("-g" , "--generate"):
             try:
                 generate(sys.argv[2])
-            except:
-                usage()
+            except Exception as e:
+                print(f" An error occurred: {e}\n")
                 sys.exit(2)
         
 #***********************************************

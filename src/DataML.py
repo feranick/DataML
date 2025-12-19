@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* version: 2025.12.11.1
+* version: 2025.12.19.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -192,8 +192,8 @@ def main():
                         train(sys.argv[2], sys.argv[3], None)
                     else:
                         train(sys.argv[2], sys.argv[3], sys.argv[4])
-            except:
-                usage()
+            except Exception as e:
+                print(f" An error occurred: {e}\n")
                 sys.exit(2)
 
         if o in ("-p" , "--predict"):
@@ -202,8 +202,8 @@ def main():
                     predict(sys.argv[2], None)
                 else:
                     predict(sys.argv[2], sys.argv[3])
-            except:
-                usage()
+            except Exception as e:
+                print(f" An error occurred: {e}\n")
                 sys.exit(2)
 
         if o in ("-b" , "--batch"):
@@ -212,8 +212,8 @@ def main():
                     batchPredict(sys.argv[2], None)
                 else:
                     batchPredict(sys.argv[2], sys.argv[3])
-            except:
-                usage()
+            except Exception as e:
+                print(f" An error occurred: {e}\n")
                 sys.exit(2)
             
         if o in ("-v" , "--validbatch"):
@@ -222,22 +222,22 @@ def main():
                     validBatchPredict(sys.argv[2], None)
                 else:
                     validBatchPredict(sys.argv[2], sys.argv[3])
-            except:
-                usage()
+            except Exception as e:
+                print(f" An error occurred: {e}\n")
                 sys.exit(2)
                 
         if o in ("-l" , "--lite"):
             try:
                 convertTflite(sys.argv[2])
-            except:
-                usage()
+            except Exception as e:
+                print(f" An error occurred: {e}\n")
                 sys.exit(2)
                 
         if o in ["-o" , "--opt"]:
             try:
                 makeOptParameters(dP)
-            except:
-                usage()
+            except Exception as e:
+                print(f" An error occurred: {e}\n")
                 sys.exit(2)
                 
         if o in ["-c" , "--comp"]:
@@ -246,8 +246,8 @@ def main():
                     prePCA(sys.argv[2], None, dP)
                 else:
                     prePCA(sys.argv[2], sys.argv[3], dP)
-            except:
-                usage()
+            except Exception as e:
+                print(f" An error occurred: {e}\n")
                 sys.exit(2)
             
         if o in ["-a" , "--autoencoder"]:
@@ -256,8 +256,8 @@ def main():
                     preAutoencoder(sys.argv[2], None, dP)
                 else:
                     preAutoencoder(sys.argv[2], sys.argv[3], dP)
-            except:
-                usage()
+            except Exception as e:
+                print(f" An error occurred: {e}\n")
                 sys.exit(2)
 
     total_time = time.perf_counter() - start_time

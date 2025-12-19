@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2025.12.11.1
+* version: 2025.12.19.1
 * Uses: sklearn, tabpfn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -202,8 +202,8 @@ def main():
                     train(sys.argv[2], None)
                 else:
                     train(sys.argv[2], sys.argv[3])
-            except:
-                usage()
+            except Exception as e:
+                print(f" An error occurred: {e}\n")
                 sys.exit(2)
             
         if o in ("-r" , "--reduce"):
@@ -215,43 +215,43 @@ def main():
                     train(sys.argv[3], None)
                 else:
                     train(sys.argv[3], sys.argv[4])
-            except:
-                usage()
+            except Exception as e:
+                print(f" An error occurred: {e}\n")
                 sys.exit(2)
 
         if o in ("-p" , "--predict"):
             try:
                 predict(sys.argv[2])
-            except:
-                usage()
+            except Exception as e:
+                print(f" An error occurred: {e}\n")
                 sys.exit(2)
                 
         if o in ("-c" , "--csv"):
             try:
                 csvPredict(sys.argv[2])
-            except:
-                usage()
+            except Exception as e:
+                print(f" An error occurred: {e}\n")
                 sys.exit(2)
 
         if o in ("-b" , "--batch"):
             try:
                 batchPredict(sys.argv[2])
-            except:
-                usage()
+            except Exception as e:
+                print(f" An error occurred: {e}\n")
                 sys.exit(2)
                 
         if o in ("-g" , "--generate"):
-            #try:
-            genMissingData(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
-            #except:
-            #    usage()
-            #    sys.exit(2)
+            try:
+                genMissingData(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
+            except Exception as e:
+                print(f" An error occurred: {e}\n")
+                sys.exit(2)
             
         if o in ("-v" , "--validbatch"):
             try:
                 validBatchPredict(sys.argv[2])
-            except:
-                usage()
+            except Exception as e:
+                print(f" An error occurred: {e}\n")
                 sys.exit(2)
             
         if o in ["-o" , "--opt"]:
@@ -262,8 +262,8 @@ def main():
                     train(sys.argv[3], None)
                 else:
                     train(sys.argv[3], sys.argv[4])
-            except:
-                usage()
+            except Exception as e:
+                print(f" An error occurred: {e}\n")
                 sys.exit(2)
 
     total_time = time.perf_counter() - start_time
