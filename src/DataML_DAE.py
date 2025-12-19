@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
-* version: 2025.12.19.1
+* version: 2025.12.19.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -48,6 +48,7 @@ class Conf():
             self.createConfig()
         self.readConfig(self.configFile)
         self.model_directory = "./"
+        self.tb_directory = "tb_model"
         
         self.modelName = "model_DAE.keras"
         
@@ -82,6 +83,9 @@ class Conf():
             'normalize' : True,
             'normalizeLabel' : True,
             'plotAugmData' : False,
+            'stopAtBest' : False,
+            'saveBestModel' : False,
+            'metricBestModel' : 'val_mae',
             }
             
     def readConfig(self,configFile):
@@ -115,6 +119,9 @@ class Conf():
             self.normalize = self.conf.getboolean('Parameters','normalize')
             self.normalizeLabel = self.conf.getboolean('Parameters','normalizeLabel')
             self.plotAugmData = self.conf.getboolean('Parameters','plotAugmData')
+            self.stopAtBest = self.conf.getboolean('Parameters','stopAtBest')
+            self.saveBestModel = self.conf.getboolean('Parameters','saveBestModel')
+            self.metricBestModel = self.conf.get('Parameters','metricBestModel')
         except:
             print(" Error in reading configuration file. Please check it\n")
 
@@ -570,17 +577,38 @@ def trainAutoencoder(dP, noisyA, A, file):
         print("  Initializing new DAE model:",dP.modelName,"\n")
         autoencoder = keras.Model(input, decoded)
         autoencoder.compile(loss='mean_squared_error', optimizer = optim)
-    
-    log = autoencoder.fit(noisyA, A, batch_size=dP.batch_size, epochs=dP.epochs,
-        shuffle = True, verbose=1, validation_split=dP.validation_split)
-        #callbacks=[TensorBoard(log_dir='/tmp/autoencoder')])
         
-    final_val_loss = np.asarray(log.history['val_loss'])[-1]
-                
-    print("\n  Autoencoder saved in:", dP.modelName,"\n")
+    tbLog = keras.callbacks.TensorBoard(log_dir=dP.tb_directory, histogram_freq=120,
+            write_graph=True, write_images=False)
+    
+    tbLogs = [tbLog]
+    
+    if dP.stopAtBest == True:
+        es = keras.callbacks.EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=500)
+        tbLogs.append(es)
+    if dP.saveBestModel == True:
+        mc = keras.callbacks.ModelCheckpoint(dP.modelName, monitor=dP.metricBestModel, mode='min', verbose=1, save_best_only=True)
+        tbLogs.append(mc)
+    
+    log = autoencoder.fit(noisyA, A,
+            batch_size=dP.batch_size,
+            epochs=dP.epochs,
+            callbacks = tbLogs,
+            shuffle = True,
+            verbose=1,
+            validation_split=dP.validation_split)
+        
+    if dP.saveBestModel:
+        val_loss = np.min(np.asarray(log.history['val_loss']))
+        tag = "best"
+    else:
+        val_loss = np.asarray(log.history['val_loss'])[-1]
+        tag = "last"
+        
+    print(f"\n  Autoencoder with {tag} model (val_loss: {val_loss:.4f}) saved in: {dP.modelName}\n")
     autoencoder.save(dP.modelName)
     
-    return autoencoder, final_val_loss
+    return autoencoder, val_loss
 
 #************************************
 # Generate data from Autoencoder
