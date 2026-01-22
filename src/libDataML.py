@@ -398,7 +398,7 @@ def readFile(learnFile):
                 M = np.loadtxt(f, unpack =False)
         return M
     except:
-        print("\033[1m Training file not found\033[0m")
+        print("\033[1m Training file not found\033[0m\n")
         sys.exit()
 
 def readLearnFile(learnFile, initNorm, dP):
