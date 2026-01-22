@@ -5,7 +5,7 @@
 * DataML_Maker
 * Adds data from single file to Master Doc
 * File must be in ASCII
-* version: 2025.12.19.2
+* version: 2026.01.22.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
