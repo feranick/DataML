@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation Analysis
-* version: 2026.01.22.1
+* version: 2026.01.27.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -165,8 +165,9 @@ class Conf():
             self.corrSpectraFull = self.conf.getboolean('Parameters','corrSpectraFull')
             self.corrSpectraMin = self.conf.getfloat('Parameters','corrSpectraMin')
             
-        except:
-            print(" Error in reading configuration file. Please check it\n")
+        except Exception as e:
+            print(" Error in reading configuration file:")
+            print(f"  {e}\n")
 
     # Create configuration file
     def createConfig(self):

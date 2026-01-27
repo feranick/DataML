@@ -4,7 +4,7 @@
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
 * pyscript version
-* v2026.01.22.1
+* v2026.01.27.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -128,8 +128,9 @@ class Conf():
             self.n_jobs = self.conf.getint('System','n_jobs')
             self.saveAsTxt = self.conf.getboolean('System','saveAsTxt')
 
-        except:
-            print(" Error in reading configuration file. Please check it\n")
+        except Exception as e:
+            print(" Error in reading configuration file:")
+            print(f"  {e}\n")
 
 
 async def getFile(folder, file, bin):

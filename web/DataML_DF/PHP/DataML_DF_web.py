@@ -152,8 +152,9 @@ class Conf():
             self.n_jobs = self.conf.getint('System','n_jobs')
             self.saveAsTxt = self.conf.getboolean('System','saveAsTxt')
             
-        except:
-            print(" Error in reading configuration file. Please check it\n")
+        except Exception as e:
+            print(" Error in reading configuration file:")
+            print(f"  {e}\n")
 
     # Create configuration file
     def createConfig(self):

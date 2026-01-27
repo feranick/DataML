@@ -5,7 +5,7 @@
 * DataML_Maker
 * Adds data from single file to Master Doc
 * File must be in ASCII
-* version: 2026.01.22.1
+* version: 2026.01.27.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -125,8 +125,10 @@ class Conf():
             self.minGeneralLabel = self.conf.getint('Parameters','minGeneralLabel')
             self.maxGeneralLabel = self.conf.getint('Parameters','maxGeneralLabel')
             self.valueForNan = self.conf.getfloat('Parameters','valueForNan')
-        except:
-            print(" Error in reading configuration file. Please check it\n")
+            
+        except Exception as e:
+            print(" Error in reading configuration file:")
+            print(f"  {e}\n")
 
     # Create configuration file
     def createConfig(self):

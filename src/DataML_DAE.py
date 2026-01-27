@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
-* version: 2026.01.22.1
+* version: 2026.01.27.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -122,8 +122,10 @@ class Conf():
             self.stopAtBest = self.conf.getboolean('Parameters','stopAtBest')
             self.saveBestModel = self.conf.getboolean('Parameters','saveBestModel')
             self.metricBestModel = self.conf.get('Parameters','metricBestModel')
-        except:
-            print(" Error in reading configuration file. Please check it\n")
+        
+        except Exception as e:
+            print(" Error in reading configuration file:")
+            print(f"  {e}\n")
 
     # Create configuration file
     def createConfig(self):

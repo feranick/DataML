@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * DataML Classifier and Regressor
-* version: 2026.01.22.1
+* version: 2026.01.27.1
 * Uses: Keras, TensorFlow
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -142,8 +142,9 @@ class Conf():
             #self.setMaxMem = self.conf.getboolean('System','setMaxMem')     # TensorFlow 2.0
             #self.maxMem = self.conf.getint('System','maxMem')   # TensorFlow 2.0
                         
-        except:
-            print(" Error in reading configuration file. Please check it\n")
+        except Exception as e:
+            print(" Error in reading configuration file:")
+            print(f"  {e}\n")
 
     # Create configuration file
     def createConfig(self):
