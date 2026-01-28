@@ -4,7 +4,7 @@
 ***********************************************
 * CorrAnalysis
 * Correlation Analysis
-* version: 2026.01.27.1
+* version: 2026.01.28.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 * Licence: GPL 2 or newer
 ***********************************************
@@ -300,7 +300,7 @@ def processParamFile(dfP, lims, dP):
         P = P.drop(cols_to_drop, axis=1)
     
     headP = P.columns.values
-    P = P.to_numpy()
+    P = P.to_numpy().copy()
     
     P[np.isnan(P)] = dP.valueForNan
     return P, headP
