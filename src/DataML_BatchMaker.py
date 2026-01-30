@@ -5,7 +5,7 @@
 * DataML_BatchMaker
 * Adds data from single file to Master Doc
 * File must be in ASCII
-* version: 2026.01.28.1
+* version: 2026.01.30.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -87,8 +87,10 @@ class Conf():
             self.dataMLMakerDef()
             with open(self.configFile, 'w') as configfile:
                 self.conf.write(configfile)
-        except:
-            print("Error in creating configuration file")
+                
+        except Exception as e:
+            print("Error in creating configuration file:")
+            print(f"  {e}\n")
             
     # Do not change
     def rescaleList(self, list, value):

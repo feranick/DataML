@@ -5,7 +5,7 @@
 * ConvertParamLabels
 * Convert progressive numeric labels with actual parameter names
 * Uses DataML_Datamaker.ini
-* version: 2026.01.28.1
+* version: 2026.01.30.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''

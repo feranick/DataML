@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
-* version: 2026.01.28.1
+* version: 2026.01.30.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -133,8 +133,10 @@ class Conf():
             self.denDaeDef()
             with open(self.configFile, 'w') as configfile:
                 self.conf.write(configfile)
-        except:
-            print("Error in creating configuration file")
+                
+        except Exception as e:
+            print("Error in creating configuration file:")
+            print(f"  {e}\n")
     
     # update configuration file
     def updateConfig(self, section, par, value):
@@ -143,8 +145,10 @@ class Conf():
             try:
                 with open(self.configFile, 'w') as configfile:
                     self.conf.write(configfile)
-            except:
-                print("Error in creating configuration file")
+                    
+            except Exception as e:
+                print("Error in updating configuration file:")
+                print(f"  {e}\n")
     
     '''
     import tensorflow as tf
