@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
-* version: 2026.01.30.1
+* version: 2026.02.03.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -62,8 +62,8 @@ class Conf():
             'reinforce' : False,
             'shuffle' : True,
             'linear_net' : False,
-            'net_arch' : [12, 9, 6, 3],
-            'encoded_dim' : 2,
+            'net_arch' : [12, 10, 8, 6],
+            'encoded_dim' : 4,
             'batch_size' : 32,
             'epochs' : 200,
             'validation_split' : 0.1,
@@ -543,13 +543,16 @@ def trainAutoencoder(dP, noisyA, A, file):
                 for i in range(dP.encoded_dim+2,A.shape[1],1):
                     decoded = keras.layers.Dense(i, activation='relu')(decoded)
             else:
-                decoded = keras.layers.Dense(A.shape[1], activation='sigmoid')(encoded)
+                #decoded = keras.layers.Dense(A.shape[1], activation='sigmoid')(encoded)
+                decoded = keras.layers.Dense(A.shape[1], activation='linear')(encoded)
         else:
             for i in range(len(dP.net_arch)-1,-1,-1):
                 decoded = keras.layers.Dense(dP.net_arch[i], activation='relu')(decoded)
-        decoded = keras.layers.Dense(A.shape[1], activation='sigmoid')(decoded)
+        #decoded = keras.layers.Dense(A.shape[1], activation='sigmoid')(decoded)
+        decoded = keras.layers.Dense(A.shape[1], activation='linear')(decoded)
     else:
-        decoded = keras.layers.Dense(A.shape[1], activation='sigmoid')(encoded)
+        #decoded = keras.layers.Dense(A.shape[1], activation='sigmoid')(encoded)
+        decoded = keras.layers.Dense(A.shape[1], activation='linear')(encoded)
     
     ###############
     # Autoencoder
