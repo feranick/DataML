@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
-* version: 2026.02.03.1
+* version: 2026.02.03.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -77,6 +77,7 @@ class Conf():
             'numAdditions' : 100,
             'numAddedNoisyDataBlocks' : 100,
             'percNoiseDistrMax' : 0.025,
+            'postGenerationNoise' : True,
             'excludeZeroFeatures' : False,
             'excludeZeroLabels' : True,
             'removeSpurious' : True,
@@ -113,6 +114,7 @@ class Conf():
             self.numAdditions = self.conf.getint('Parameters','numAdditions')
             self.numAddedNoisyDataBlocks = self.conf.getint('Parameters','numAddedNoisyDataBlocks')
             self.percNoiseDistrMax = self.conf.getfloat('Parameters','percNoiseDistrMax')
+            self.postGenerationNoise = self.conf.getboolean('Parameters','postGenerationNoise')
             self.excludeZeroFeatures = self.conf.getboolean('Parameters','excludeZeroFeatures')
             self.excludeZeroLabels = self.conf.getboolean('Parameters','excludeZeroLabels')
             self.removeSpurious = self.conf.getboolean('Parameters','removeSpurious')
@@ -636,10 +638,15 @@ def removeSpurious(A, T, norm, dP):
 def generateData(dP, autoencoder, En, A, M, norm):
     #newTrain = np.vstack([En, norm.transform_inverse(M[1:,:])])
     normDea = autoencoder.predict(A)
+    
+    if dP.postGenerationNoise:
+        noise_magnitude = dP.percNoiseDistrMax  # Or multiply by a factor, e.g., 0.5
+        noise = np.random.normal(loc=0.0, scale=noise_magnitude, size=normDea.shape)
+        normDea = normDea + noise
+    
     if dP.normalize:
         normDea = norm.transform_inverse(normDea)
-    #print("normDea", normDea)
-    #print("invDea", invDea)
+
     return normDea
  
 #************************************
