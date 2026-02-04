@@ -31,7 +31,7 @@ for dir in */; do
         
         # 4. Run the sbatch command
         # Using "$INPUT_ARG" in quotes handles arguments with spaces correctly
-        sbatch ../../sub_DAE.sh "$INPUT_ARG"
+        sbatch ../../sub_DAE.sh "$BASE_DIR/$INPUT_ARG"
         
         # Return to the main folder
         cd "$BASE_DIR" || exit
