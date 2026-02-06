@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
-* version: 2026.02.05.1
+* version: 2026.02.06.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -578,10 +578,10 @@ def trainAutoencoder(dP, noisyA, A, file):
             initial_learning_rate=dP.l_rate,
             decay_steps=dP.epochs,
             decay_rate=dP.l_rdecay)
-    optim2 = keras.optimizers.Adam(learning_rate=lr_schedule, beta_1=0.9,
+    optim = keras.optimizers.Adam(learning_rate=lr_schedule, beta_1=0.9,
                 beta_2=0.999, epsilon=1e-08,
                 amsgrad=False)
-    optim = keras.optimizers.Adam()
+    #optim = keras.optimizers.Adam()
     
     if dP.reinforce and os.path.exists(dP.modelName):
         print("  Loading existing DAE model:",dP.modelName,"\n")
