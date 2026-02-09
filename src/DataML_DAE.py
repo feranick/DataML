@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
-* version: 2026.02.06.1
+* version: 2026.02.09.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -65,7 +65,7 @@ class Conf():
             'net_arch' : [20, 16, 12, 8],
             'encoded_dim' : 6,
             'batch_size' : 32,
-            'epochs' : 500,
+            'epochs' : 300,
             'validation_split' : 0.1,
             'regL1' : 0,
             'l_rate' : 0.001,
