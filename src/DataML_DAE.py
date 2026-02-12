@@ -73,6 +73,7 @@ class Conf():
             'epochs' : 200,
             'validation_split' : 0.1,
             'regL1' : 0,
+            'dropout' : 0,
             'l_rate' : 0.001,
             'l_rdecay' : 0.9,
             'activation' : 'linear',
@@ -112,6 +113,7 @@ class Conf():
             self.epochs = self.conf.getint('Parameters','epochs')
             self.validation_split = self.conf.getfloat('Parameters','validation_split')
             self.regL1 = self.conf.getfloat('Parameters','regL1')
+            self.dropout = self.conf.getfloat('Parameters','dropout')
             self.l_rate = self.conf.getfloat('Parameters','l_rate')
             self.l_rdecay = self.conf.getfloat('Parameters','l_rdecay')
             self.activation = self.conf.get('Parameters','activation')
@@ -538,12 +540,14 @@ def trainAutoencoder(dP, noisyA, A, file):
             if A.shape[1] > dP.encoded_dim+2:
                 for i in range(A.shape[1]-1,dP.encoded_dim+1,-1):
                     encoded = keras.layers.Dense(i-1,  activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
-                encoded = keras.layers.Dense(dP.encoded_dim,activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
+                    encoded = keras.layers.Dropout(dP.dropout)(encoded)
         else:
             for i in range(len(dP.net_arch)):
                 encoded = keras.layers.Dense(dP.net_arch[i],  activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
-            encoded = keras.layers.Dense(dP.encoded_dim,activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
-    
+                encoded = keras.layers.Dropout(dP.dropout)(encoded)
+        encoded = keras.layers.Dense(dP.encoded_dim,activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
+        encoded = keras.layers.Dropout(dP.dropout)(encoded)
+        
     ############
     # Decoder
     ############
@@ -553,8 +557,6 @@ def trainAutoencoder(dP, noisyA, A, file):
             if A.shape[1] > dP.encoded_dim+2:
                 for i in range(dP.encoded_dim+2,A.shape[1],1):
                     decoded = keras.layers.Dense(i, activation='relu')(decoded)
-            else:
-                decoded = keras.layers.Dense(A.shape[1], activation=dP.activation)(encoded)
         else:
             for i in range(len(dP.net_arch)-1,-1,-1):
                 decoded = keras.layers.Dense(dP.net_arch[i], activation='relu')(decoded)
