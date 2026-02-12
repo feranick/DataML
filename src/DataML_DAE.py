@@ -36,6 +36,11 @@ class Conf():
         ### - RandomYFit
         ### - RandomXFit
         ### - ColumnValueSwap
+        ###
+        ### Activation function:
+        ### Set using: activation
+        ### - linear
+        ### - sigmoid
         #################################
         
         self.appName = "DataML_DAE"
@@ -70,6 +75,7 @@ class Conf():
             'regL1' : 0,
             'l_rate' : 0.001,
             'l_rdecay' : 0.9,
+            'activation' : 'linear',
             'typeNoise' : 'Random',
             'fitPolyDegree' : 3,
             'numColSwaps' : 10,
@@ -108,6 +114,7 @@ class Conf():
             self.regL1 = self.conf.getfloat('Parameters','regL1')
             self.l_rate = self.conf.getfloat('Parameters','l_rate')
             self.l_rdecay = self.conf.getfloat('Parameters','l_rdecay')
+            self.activation = self.conf.get('Parameters','activation')
             self.typeNoise = self.conf.get('Parameters','typeNoise')
             self.fitPolyDegree = self.conf.getint('Parameters','fitPolyDegree')
             self.numColSwaps = self.conf.getint('Parameters','numColSwaps')
@@ -547,16 +554,13 @@ def trainAutoencoder(dP, noisyA, A, file):
                 for i in range(dP.encoded_dim+2,A.shape[1],1):
                     decoded = keras.layers.Dense(i, activation='relu')(decoded)
             else:
-                #decoded = keras.layers.Dense(A.shape[1], activation='sigmoid')(encoded)
-                decoded = keras.layers.Dense(A.shape[1], activation='linear')(encoded)
+                decoded = keras.layers.Dense(A.shape[1], activation=dP.activation)(encoded)
         else:
             for i in range(len(dP.net_arch)-1,-1,-1):
                 decoded = keras.layers.Dense(dP.net_arch[i], activation='relu')(decoded)
-        #decoded = keras.layers.Dense(A.shape[1], activation='sigmoid')(decoded)
-        decoded = keras.layers.Dense(A.shape[1], activation='linear')(decoded)
+        decoded = keras.layers.Dense(A.shape[1], activation=dP.activation)(decoded)
     else:
-        #decoded = keras.layers.Dense(A.shape[1], activation='sigmoid')(encoded)
-        decoded = keras.layers.Dense(A.shape[1], activation='linear')(encoded)
+        decoded = keras.layers.Dense(A.shape[1], activation=dP.activation)(encoded)
     
     ###############
     # Autoencoder
