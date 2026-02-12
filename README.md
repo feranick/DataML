@@ -61,6 +61,84 @@ These are found in Unix based systems using common repositories (apt-get for Deb
 
 Prediction can be carried out using the regular tensorflow, or using [tensorflow-lite](https://www.tensorflow.org/lite/) for [quantized models](https://www.tensorflow.org/lite/performance/post_training_quantization). Loading times of tflite (direct or via [ai_edge_litert](https://github.com/google-ai-edge/LiteRT) (or the previous [tflite-runtime](https://www.tensorflow.org/lite/guide/python)) are significantly faster than tensorflow with minimal loss in accuracy. SpectraKeras provides an option to convert tensorflow models to quantized tflite models. TFlite models have been tested in Linux x86-64, arm7 (including Raspberry Pi3) and aarm64, MacOS, Windows. For using quantized model (specifically when deployed on Coral EdgeTPU), TF 2.17 or higher is recommended. 
 
+INI configuration examples for DAE
+==================================
+
+## Under-complete DAE (><)
+```
+[Parameters]
+saveAsTxt = True
+deepAutoencoder = True
+reinforce = False
+shuffle = True
+linear_net = False
+net_arch = [20, 16, 12]
+encoded_dim = 8
+batch_size = 16
+epochs = 200
+validation_split = 0.1
+regL1 = 0
+dropout = 0
+l_rate = 0.001
+l_rdecay = 0.9
+activation = linear
+typeNoise = Random
+fitPolyDegree = 3
+numColSwaps = 10
+min_loss_dae = 0.02
+numAdditions = 20
+numAddedNoisyDataBlocks = 20
+percNoiseDistrMax = 0.1
+postGenerationNoise = True
+postGenerationNoiseMax = 0.075
+excludeZeroFeatures = False
+excludeZeroLabels = True
+removeSpurious = True
+normalize = True
+normalizeLabel = True
+plotAugmData = True
+stopAtBest = False
+saveBestModel = True
+metricBestModel = val_mae
+```
+## Over-complete DAE (<>)
+```
+[Parameters]
+saveAsTxt = True
+deepAutoencoder = True
+reinforce = False
+shuffle = True
+linear_net = False
+net_arch = [3, 4, 6]
+encoded_dim = 8
+batch_size = 16
+epochs = 200
+validation_split = 0.1
+regL1 = 0.0001
+dropout = 0.2
+l_rate = 0.001
+l_rdecay = 0.9
+activation = sigmoid
+typeNoise = Random
+fitPolyDegree = 3
+numColSwaps = 10
+min_loss_dae = 0.02
+numAdditions = 20
+numAddedNoisyDataBlocks = 20
+percNoiseDistrMax = 0.1
+postGenerationNoise = True
+postGenerationNoiseMax = 0.075
+excludeZeroFeatures = False
+excludeZeroLabels = True
+removeSpurious = True
+normalize = True
+normalizeLabel = True
+plotAugmData = True
+stopAtBest = False
+saveBestModel = True
+metricBestModel = val_mae
+```
+
 Usage
 ===================
 Two separate executables are available for Neural-Network-based ML (DataML) and Decision Forests (DataML_DF):
