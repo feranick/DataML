@@ -177,7 +177,7 @@ class Conf():
                 with open(self.configFile, 'w') as configfile:
                     self.conf.write(configfile)
                     
-            xcept Exception as e:
+            except Exception as e:
                 print("Error in updating configuration file:")
                 rint(f"  {e}\n")
 
