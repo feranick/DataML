@@ -218,25 +218,39 @@ Train (Random cross validation):
  Batch predict (labels normalized with pkl file):
   `DataML -b <folder> <pkl normalization file>`
 
- Batch predict on validation data in single file (no label normalization used):
-  `DataML -v <singleValidationFile>`
+ Batch predict from CSV file for multiple samples (DataML_DF only):
+  DataML_DF -c <testfile.csv>
 
- Batch predict on validation data in single file (labels normalized with pkl file):
-  `DataML -v <singleValidationFile> <pkl normalization file>`
-  
- Convert model to quantized tflite:
-  `DataML -l <learningFile>`
-  
- Create parameter optimization file:
-  `DataML -o`
-  
- Evaluate principal component analysis (PCA) - EXPERIMENTAL:
-  `DataML -c <learningFile>`
-  `DataML -c <learningFile> <validFile-optional>`
-  
- Evaluate Autoencoder - EXPERIMENTAL:
-  `DataML -a <learningFile>`
-  `DataML -a <learningFile> <validFile-optional>`
+ Batch predict on validation data in single file:
+  DataML_DF -v <singleValidationFile>
+
+ Generate optimal values for a single parameter given the target value of the prediction:
+  DataML_DF -g <paramFile> <paramToSearch> <minValue> <maxValue> <step>
+
+  DataML_DF -v <singleValidationFile>
+
+ Generate new training set using normal or diffused randomization on each feature:
+  DataML_DF -g <learningFile> <pkl normalization file>
+
+ Types of estimators:
+  - RandomForest
+  - HistGradientBoosting
+  - GradientBoosting
+  - DecisionTree
+
+ Run hyperparameter optimization (Random cross validation):
+  DataML_DF -o <type of optimization> <learningFile>
+
+ Run hyperparameter optimization (with external validation):
+  DataML_DF -o <type of optimization> <learningFile> <validFile>
+
+ Types of optimization:
+  1 - random_state, max_depth
+  2 - n_estimators [1-200]
+  3 - n_estimators [1-200], random_state, max_depth
+  4 - n_estimators [1-200], max_features
+  5 - n_estimators [1-200], max_depth, random_state, max_features
+  else - custom file
     
 Formatting input file for training
 ===================================

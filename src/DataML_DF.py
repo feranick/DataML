@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2026.02.13.1
+* version: 2026.02.25.1
 * Uses: sklearn, tabpfn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -976,8 +976,10 @@ def usage():
     print('  DataML_DF -o <type of optimization> <learningFile> <validFile>')
     print('\n Types of optimization:')
     print('  1 - random_state, max_depth')
-    print('  2 - n_estimators, max_features')
-    print('  3 - random_state, max_depth, n_estimators, max_features\n')
+    print('  2 - n_estimators [1-200]')
+    print('  3 - n_estimators [1-200], random_state, max_depth')
+    print('  4 - n_estimators [1-200], max_features')
+    print('  5 - n_estimators [1-200], max_depth, random_state, max_features')
     print('  else - custom file')
     
     print(' Requires python 3.x. Not compatible with python 2.x\n')
