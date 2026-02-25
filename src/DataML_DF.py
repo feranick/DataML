@@ -471,7 +471,7 @@ def train(learnFile, testFile):
         print('  \033[1m HyperParameters Optimization\033[0m')
         print('  ========================================================\n')
                 
-        from sklearn.model_selection import RandomizedSearchCV, GridSearchCV, PredefinedSplit
+        from sklearn.model_selection import RandomizedSearchCV, GridSearchCV, PredefinedSplit, RepeatedKFold, RepeatedStratifiedKFold
         import json
         import pandas as pd
         
@@ -484,15 +484,22 @@ def train(learnFile, testFile):
         if dP.trainFullData:
             A_tot = A
             Cl2_tot = Cl2
-            cv = 5
+            
+            # Use Repeated K-Fold / Stratified K-Fold to stabilize high variance
+            n_splits = 5
+            n_repeats = 3
+            if dP.regressor:
+                cv = RepeatedKFold(n_splits=n_splits, n_repeats=n_repeats, random_state=dP.random_state)
+                print(f"  Using RepeatedKFold ({n_splits} splits, {n_repeats} repeats)")
+            else:
+                cv = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats, random_state=dP.random_state)
+                print(f"  Using RepeatedStratifiedKFold ({n_splits} splits, {n_repeats} repeats)")
         else:
             A_tot = np.append(A,A_test, axis=0)
             Cl2_tot = np.append(Cl2,Cl2_test, axis=0)
             test_fold = [-1] * A.shape[0] + [0] * A_test.shape[0]
             cv = PredefinedSplit(test_fold=test_fold)
         
-        #searcher = RandomizedSearchCV(estimator=df, n_jobs=dP.n_jobs, cv=cv,
-        #    param_distributions=grid, scoring=dP.optScoring)
         searcher = GridSearchCV(estimator=df, n_jobs=dP.n_jobs, cv=cv,
             param_grid=grid, scoring=dP.optScoring, refit=True, verbose = 3)
         
@@ -514,9 +521,6 @@ def train(learnFile, testFile):
         print("\n Optimal parameters for best model:", )
         print(" ",bestParams,"\n")
     
-        #print(list(bestParams.values())[0])
-        #dP.random_state=list(bestParams.values())[0]
-        
         for i in range(len(bestParams)):
             dP.updateConfig('Parameters',list(bestParams.keys())[i],str(list(bestParams.values())[i]))
             dP.updateConfig('System',list(bestParams.keys())[i],str(list(bestParams.values())[i]))
