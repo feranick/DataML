@@ -509,11 +509,14 @@ def train(learnFile, testFile):
         print('  \033[1m HyperParameters Optimization: Results\033[0m')
         print('  ========================================================')
         
-        results = pd.DataFrame.from_dict(searchResults.cv_results_).sort_values(by='rank_test_score')
-        print(results)
+        results = pd.DataFrame.from_dict(searchResults.cv_results_)
+        cols_to_show = ['mean_test_score', 'std_test_score', 'rank_test_score']
+        results_to_show = results[cols_to_show].sort_values(by='rank_test_score')
+        print(results_to_show)
+        results_to_save = results.sort_values(by='rank_test_score')
         
         csv_filename = f"{dP.modelNameRoot}{dP.typeDF}_opt_results.csv"
-        results.to_csv(csv_filename, index=False)
+        results_to_save.to_csv(csv_filename, index=False)
         print(f"\n  Optimization results successfully saved to: {csv_filename}")
             
         if dP.regressor:
