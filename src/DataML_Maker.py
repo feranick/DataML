@@ -5,7 +5,7 @@
 * DataML_Maker
 * Adds data from single file to Master Doc
 * File must be in ASCII
-* version: 2026.02.25.1
+* version: 2026.02.26.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -49,7 +49,6 @@ class Conf():
         self.predRColTag = self.predRCol
         self.predRCol = self.rescaleList(self.predRCol, self.numHeadColumns - 1)
         
-        #self.numLabels = len(self.predRCol)
         self.validRows = [x-1 for x in self.validRows]
     
     def dataMLMakerDef(self):
@@ -83,7 +82,7 @@ class Conf():
             'useGeneralNormLabel' : False,
             'minGeneralLabel' : 10,
             'maxGeneralLabel' : 60,
-            'valueForNan' : -1,
+            'convertToNAN' : False,
             }
             
     def readConfig(self,configFile):
@@ -110,7 +109,7 @@ class Conf():
             self.validRows = ast.literal_eval(self.dataMLMakerPar['validRows'])
             self.precData = self.conf.getint('Parameters','precData')
             
-            self.saveNormalized = self.conf.getboolean('Parameters','saveNormalized')            #
+            self.saveNormalized = self.conf.getboolean('Parameters','saveNormalized')            
             self.normalizeLabel = self.conf.getboolean('Parameters','normalizeLabel')
             self.useCustomRound = self.conf.getboolean('Parameters','useCustomRound')
             
@@ -126,13 +125,12 @@ class Conf():
             self.useGeneralNormLabel = self.conf.getboolean('Parameters','useGeneralNormLabel')
             self.minGeneralLabel = self.conf.getint('Parameters','minGeneralLabel')
             self.maxGeneralLabel = self.conf.getint('Parameters','maxGeneralLabel')
-            self.valueForNan = self.conf.getfloat('Parameters','valueForNan')
+            self.convertToNAN = self.conf.getboolean('Parameters','convertToNAN')
             
         except Exception as e:
             print(" Error in reading configuration file:")
             print(f"  {e}\n")
 
-    # Create configuration file
     def createConfig(self):
         try:
             self.dataMLMakerDef()
@@ -143,7 +141,6 @@ class Conf():
             print("Error in creating configuration file:")
             print(f"  {e}\n")
             
-    # Do not change
     def rescaleList(self, list, value):
         list = [x + value for x in list]
         return list
@@ -180,8 +177,8 @@ def main():
     
     try:
         P,V,norm = readParamFile(sys.argv[1], predRCol, rootFile, dP)
-    except:
-        print("\033[1m" + " Something went wrong, maybe Param file not found\n" + "\033[0m")
+    except Exception as e:
+        print("\033[1m" + f" Something went wrong during parsing: {e}\n" + "\033[0m")
         return
     
     normTag = ""
@@ -221,15 +218,9 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
         df = pd.read_csv(f, delimiter = ",", header=dP.numHeadRows)
     featNames = df.columns.to_list()[dP.numHeadColumns:]
     P2 = df.to_numpy()
-    M = np.hstack((P2[:,predRCol],P2[:,usecols]))
+    M = np.hstack((P2[:,predRCol],P2[:,usecols])).astype(float)
     
     featNum = np.insert([x -dP.numHeadColumns+1 for x in usecols], 0,0)
-    
-    P = np.vstack([featNum,M])
-    V = np.array([featNum])
-
-    #P = np.vstack([list(range(0,M.shape[1])),M])
-    #V = np.array([list(range(0,M.shape[1]))])
 
     #***************************************
     # Handle Validation File
@@ -238,16 +229,70 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
         validFile = rootFile + '_test'
         
         if dP.createRandomValidSet:
+            # Global Clean for Random Split
+            initial_len = len(M)
+            M = np.unique(M, axis=0)
+            print(f" Removed {initial_len - len(M)} exact duplicate rows.")
+            
+            initial_len_2 = len(M)
+            non_zero_mask = np.sum(np.abs(M), axis=1) > 1e-6
+            M = M[non_zero_mask]
+            print(f" Removed {initial_len_2 - len(M)} completely empty/zero rows.\n")
+            
+            P = np.vstack([featNum, M])
             P, V = formatSubset(P, dP.percentValid, dP.numGroupCols)
+            
         else:
             if dP.validRows:
-                P = np.vstack([featNum,np.delete(M,dP.validRows,0)])
-                V = np.vstack([featNum,M[dP.validRows,:]])
-                #P = np.vstack([list(range(0,M.shape[1])),np.delete(M,dP.validRows,0)])
-                #V = np.vstack([list(range(0,M.shape[1])),M[dP.validRows,:]])
+                # 1. Extract manually specified rows based on original index
+                V_data = M[dP.validRows, :]
+                if V_data.ndim == 1:
+                    V_data = V_data.reshape(1, -1) 
+                    
+                P_data = np.delete(M, dP.validRows, 0)
+                
+                # 2. Clean the training set 
+                initial_len = len(P_data)
+                P_data = np.unique(P_data, axis=0)
+                print(f" Removed {initial_len - len(P_data)} exact duplicate rows from training set.")
+                
+                initial_len_2 = len(P_data)
+                non_zero_mask = np.sum(np.abs(P_data), axis=1) > 1e-6
+                P_data = P_data[non_zero_mask]
+                print(f" Removed {initial_len_2 - len(P_data)} completely empty/zero rows from training set.\n")
+                
+                # 3. Prevent Group Leakage 
+                v_base_features = V_data[:, :dP.numGroupCols].astype(float)
+                p_base_features = P_data[:, :dP.numGroupCols].astype(float)
+                
+                leakage_mask = np.zeros(P_data.shape[0], dtype=bool)
+                for v_base in v_base_features:
+                    match = np.all(np.isclose(p_base_features, v_base, atol=1e-6), axis=1)
+                    leakage_mask = leakage_mask | match
+                
+                P_data_clean = P_data[~leakage_mask]
+                
+                print(f" Manually extracted {len(dP.validRows)} validation rows.")
+                print(f" Removed {np.sum(leakage_mask)} overlapping rows from training to prevent group leakage.")
+                
+                P = np.vstack([featNum, P_data_clean])
+                V = np.vstack([featNum, V_data])
                 
     if dP.purgeUndefRows:
         P = purgeRows(P)
+    
+    if dP.convertToNAN:
+        # =========================================================
+        # MISSING DATA HANDLING: Convert 0.0 to np.nan in features
+        # (Applied to row index 1:end and column index 1:end)
+        # =========================================================
+        p_features = P[1:, 1:].astype(float)
+        p_features[p_features == 0.0] = np.nan
+        P[1:, 1:] = p_features
+    
+        v_features = V[1:, 1:].astype(float)
+        v_features[v_features == 0.0] = np.nan
+        V[1:, 1:] = v_features
             
     if dP.saveNormalized or dP.normalizeLabel:
         norm = Normalizer(P, dP)
@@ -268,12 +313,12 @@ def saveLearnFile(M, learnFile, saveNormFlag, dP):
         with open(learnFile, 'w') as f:
                 np.savetxt(f, M, delimiter='\t', fmt="%10.{0}f".format(dP.precData))
         if saveNormFlag == False:
-            print(" Saving new training file (txt) in:", learnFile+"\n")
+            print("\n Saving new file (txt) in:", learnFile+"\n")
         else:
-            print(" Saving new normalized training file (txt) in:", learnFile+"\n")
+            print(" Saving new normalized file (txt) in:", learnFile+"\n")
     else:
         learnFile += '.h5'
-        print(" Saving new training file (hdf5) in: "+learnFile+"\n")
+        print(" Saving new file (hdf5) in: "+learnFile+"\n")
         with h5py.File(learnFile, 'w') as hf:
             hf.create_dataset("M",  data=M.astype(np.float64))
 
@@ -305,48 +350,28 @@ def formatSubset(A, percent, num_group_cols):
     import numpy as np
     from sklearn.model_selection import GroupShuffleSplit
     
-    # Separate the header (parameter names) from the actual data
     header = A[0, :]
-    data = A[1:, :].astype(float)
+    data = A[1:, :].astype(float) # Data is already cleaned!
     
-    # This collapses identical sensor readings/artifacts into a single row.
-    initial_len = len(data)
-    data = np.unique(data, axis=0)
-    print(f" Removed {initial_len - len(data)} exact duplicate rows.")
-    
-    # 2. Clean the Data: Remove strictly zero/empty rows across ALL columns
-    non_zero_mask = np.sum(np.abs(data), axis=1) > 1e-6
-    clean_data = data[non_zero_mask]
-    print(f" Removed {len(data) - len(clean_data)} completely empty/zero rows.")
-    
-    # Column 0 is the label (Cl), and columns 1: are the features (A)
-    clean_labels = clean_data[:, 0]
-    clean_features = clean_data[:, 1:]
-    
-    # 3. Identify Groups based on static base features
-    # 'num_group_cols' defines how many columns from the left represent a unique physical sample.
-    #num_group_cols = 5
+    clean_labels = data[:, 0]
+    clean_features = data[:, 1:]
     
     base_features = clean_features[:, :num_group_cols]
     unique_samples, groups = np.unique(base_features, axis=0, return_inverse=True)
     
     print(f" Found {len(unique_samples)} unique physical samples.")
     
-    # 4. Perform the Group-Aware Split
     gss = GroupShuffleSplit(n_splits=1, test_size=percent, random_state=42)
-    
     train_idx, test_idx = next(gss.split(clean_features, clean_labels, groups=groups))
     
     A_train = clean_features[train_idx]
     Cl_train = clean_labels[train_idx]
-    
     A_cv = clean_features[test_idx]
     Cl_cv = clean_labels[test_idx]
     
     print(" Creating a training set with:", str(len(A_train)), "datapoints")
     print(" Creating a validation set with:", str(len(A_cv)), "datapoints\n")
     
-    # Reconstruct the arrays with the header row included for output saving
     Atrain = np.vstack((header, np.hstack((Cl_train.reshape(-1, 1), A_train))))
     Atest = np.vstack((header, np.hstack((Cl_cv.reshape(-1, 1), A_cv))))
     
