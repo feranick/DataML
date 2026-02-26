@@ -65,6 +65,7 @@ class Conf():
             'purgeUndefRows' : False,
             'validFile' : True,
             'createRandomValidSet' : False,
+            'numGroupCols' : 5,
             'percentValid' : 0.05,
             'validRows' : [1,2,3],
             'precData' : 3,
@@ -103,6 +104,7 @@ class Conf():
             self.purgeUndefRows = self.conf.getboolean('Parameters','purgeUndefRows')
             self.validFile = self.conf.getboolean('Parameters','validFile')
             self.createRandomValidSet = self.conf.getboolean('Parameters','createRandomValidSet')
+            self.numGroupCols = self.conf.getint('Parameters','numGroupCols')
             
             self.percentValid = self.conf.getfloat('Parameters','percentValid')
             self.validRows = ast.literal_eval(self.dataMLMakerPar['validRows'])
@@ -236,7 +238,7 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
         validFile = rootFile + '_test'
         
         if dP.createRandomValidSet:
-            P, V = formatSubset(P, dP.percentValid)
+            P, V = formatSubset(P, dP.percentValid, dP.numGroupCols)
         else:
             if dP.validRows:
                 P = np.vstack([featNum,np.delete(M,dP.validRows,0)])
@@ -299,7 +301,7 @@ def randomMatrix(P, cols, dP):
 #************************************
 # Create validation subset (Group-Aware)
 #************************************
-def formatSubset(A, percent):
+def formatSubset(A, percent, num_group_cols):
     import numpy as np
     from sklearn.model_selection import GroupShuffleSplit
     
@@ -307,7 +309,6 @@ def formatSubset(A, percent):
     header = A[0, :]
     data = A[1:, :].astype(float)
     
-    # 1. NEW: Explicitly remove 100% identical duplicate rows
     # This collapses identical sensor readings/artifacts into a single row.
     initial_len = len(data)
     data = np.unique(data, axis=0)
@@ -324,7 +325,7 @@ def formatSubset(A, percent):
     
     # 3. Identify Groups based on static base features
     # 'num_group_cols' defines how many columns from the left represent a unique physical sample.
-    num_group_cols = 5 
+    #num_group_cols = 5
     
     base_features = clean_features[:, :num_group_cols]
     unique_samples, groups = np.unique(base_features, axis=0, return_inverse=True)
