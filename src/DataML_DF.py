@@ -511,6 +511,10 @@ def train(learnFile, testFile):
         
         results = pd.DataFrame.from_dict(searchResults.cv_results_).sort_values(by='rank_test_score')
         print(results)
+        
+        csv_filename = f"{dP.modelNameRoot}{dP.typeDF}_opt_results.csv"
+        results.to_csv(csv_filename, index=False)
+        print(f"\n  Optimization results successfully saved to: {csv_filename}")
             
         if dP.regressor:
             print("\n Using scoring:", dP.optScoringR)
