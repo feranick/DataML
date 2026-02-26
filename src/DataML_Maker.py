@@ -197,7 +197,7 @@ def main():
             randTag = '_fullrand'
         else:
             randTag = '_partrand'
-       
+        
         learnRandomFile = learnFile + randTag + str(dP.numRandomAdds) + '_pcVar' + str(int(dP.minPercVariation*100))
         
         learnRandomFile += '_rLab'
@@ -264,7 +264,7 @@ def saveLearnFile(M, learnFile, saveNormFlag, dP):
     if dP.saveAsTxt == True:
         learnFile += '.txt'
         with open(learnFile, 'w') as f:
-                 np.savetxt(f, M, delimiter='\t', fmt="%10.{0}f".format(dP.precData))
+                np.savetxt(f, M, delimiter='\t', fmt="%10.{0}f".format(dP.precData))
         if saveNormFlag == False:
             print(" Saving new training file (txt) in:", learnFile+"\n")
         else:
@@ -297,31 +297,59 @@ def randomMatrix(P, cols, dP):
     return rand
     
 #************************************
-# Create validation subset
+# Create validation subset (Group-Aware)
 #************************************
 def formatSubset(A, percent):
-    from sklearn.model_selection import train_test_split
+    import numpy as np
+    from sklearn.model_selection import GroupShuffleSplit
     
-    numValid = round(A[1:,:].shape[0]*percent)
-    numTrain = round(A[1:,:].shape[0] - numValid)
-    print(" Creating a training set with:", str(numTrain), "datapoints")
-    print(" Creating a validation set with:", str(numValid), "datapoints\n")
+    # Separate the header (parameter names) from the actual data
+    header = A[0, :]
+    data = A[1:, :].astype(float)
     
-    A_train, A_cv, Cl_train, Cl_cv = \
-    train_test_split(A[1:,1:], A[1:,0], test_size=percent, random_state=42)
-    Atrain = np.vstack((A[0,:],np.hstack((Cl_train.reshape(1,-1).T, A_train))))
-    Atest = np.vstack((A[0,:],np.hstack((Cl_cv.reshape(1,-1).T, A_cv))))
+    # 1. NEW: Explicitly remove 100% identical duplicate rows
+    # This collapses identical sensor readings/artifacts into a single row.
+    initial_len = len(data)
+    data = np.unique(data, axis=0)
+    print(f" Removed {initial_len - len(data)} exact duplicate rows.")
+    
+    # 2. Clean the Data: Remove strictly zero/empty rows across ALL columns
+    non_zero_mask = np.sum(np.abs(data), axis=1) > 1e-6
+    clean_data = data[non_zero_mask]
+    print(f" Removed {len(data) - len(clean_data)} completely empty/zero rows.")
+    
+    # Column 0 is the label (Cl), and columns 1: are the features (A)
+    clean_labels = clean_data[:, 0]
+    clean_features = clean_data[:, 1:]
+    
+    # 3. Identify Groups based on static base features
+    # 'num_group_cols' defines how many columns from the left represent a unique physical sample.
+    num_group_cols = 5 
+    
+    base_features = clean_features[:, :num_group_cols]
+    unique_samples, groups = np.unique(base_features, axis=0, return_inverse=True)
+    
+    print(f" Found {len(unique_samples)} unique physical samples.")
+    
+    # 4. Perform the Group-Aware Split
+    gss = GroupShuffleSplit(n_splits=1, test_size=percent, random_state=42)
+    
+    train_idx, test_idx = next(gss.split(clean_features, clean_labels, groups=groups))
+    
+    A_train = clean_features[train_idx]
+    Cl_train = clean_labels[train_idx]
+    
+    A_cv = clean_features[test_idx]
+    Cl_cv = clean_labels[test_idx]
+    
+    print(" Creating a training set with:", str(len(A_train)), "datapoints")
+    print(" Creating a validation set with:", str(len(A_cv)), "datapoints\n")
+    
+    # Reconstruct the arrays with the header row included for output saving
+    Atrain = np.vstack((header, np.hstack((Cl_train.reshape(-1, 1), A_train))))
+    Atest = np.vstack((header, np.hstack((Cl_cv.reshape(-1, 1), A_cv))))
     
     return Atrain, Atest
-'''
-def formatSubset2(A, Cl, percent):
-    list = np.random.choice(range(len(Cl)), int(np.rint(percent*len(Cl))), replace=False)
-    A_train = np.delete(A,list,0)
-    Cl_train = np.delete(Cl,list)
-    A_cv = A[list]
-    Cl_cv = Cl[list]
-    return A_train, Cl_train, A_cv, Cl_cv
-'''
 
 #************************************
 # Purge rows with undefined Cl value
