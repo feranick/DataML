@@ -5,7 +5,7 @@
 * DataML_Maker
 * Adds data from single file to Master Doc
 * File must be in ASCII
-* version: 2026.02.26.2
+* version: 2026.02.27.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -66,6 +66,7 @@ class Conf():
             'createRandomValidSet' : False,
             'numGroupCols' : 5,
             'percentValid' : 0.05,
+            'strictNonZeroValid' : False,
             'validRows' : [1,2,3],
             'precData' : 3,
             'saveNormalized' : False,
@@ -106,6 +107,7 @@ class Conf():
             self.numGroupCols = self.conf.getint('Parameters','numGroupCols')
             
             self.percentValid = self.conf.getfloat('Parameters','percentValid')
+            self.strictNonZeroValid = self.conf.getboolean('Parameters','strictNonZeroValid', fallback=False)
             self.validRows = ast.literal_eval(self.dataMLMakerPar['validRows'])
             self.precData = self.conf.getint('Parameters','precData')
             
@@ -240,7 +242,7 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
             print(f" Removed {initial_len_2 - len(M)} completely empty/zero rows.\n")
             
             P = np.vstack([featNum, M])
-            P, V = formatSubset(P, dP.percentValid, dP.numGroupCols)
+            P, V = formatSubset(P, dP.percentValid, dP.numGroupCols, dP.strictNonZeroValid)
             
         else:
             if dP.validRows:
@@ -346,9 +348,8 @@ def randomMatrix(P, cols, dP):
 #************************************
 # Create validation subset (Group-Aware)
 #************************************
-def formatSubset(A, percent, num_group_cols):
+def formatSubset(A, percent, num_group_cols, strict_nonzero_valid=False):
     import numpy as np
-    from sklearn.model_selection import GroupShuffleSplit
     
     header = A[0, :]
     data = A[1:, :].astype(float) # Data is already cleaned!
@@ -359,16 +360,110 @@ def formatSubset(A, percent, num_group_cols):
     base_features = clean_features[:, :num_group_cols]
     unique_samples, groups = np.unique(base_features, axis=0, return_inverse=True)
     
-    print(f" Found {len(unique_samples)} unique physical samples.")
+    print(f" Found {len(unique_samples)} unique physical samples (groups).")
     
-    gss = GroupShuffleSplit(n_splits=1, test_size=percent, random_state=42)
-    train_idx, test_idx = next(gss.split(clean_features, clean_labels, groups=groups))
-    
-    A_train = clean_features[train_idx]
-    Cl_train = clean_labels[train_idx]
-    A_cv = clean_features[test_idx]
-    Cl_cv = clean_labels[test_idx]
-    
+    if strict_nonzero_valid:
+        # 1. Identify rows with ANY zero features
+        has_zero_mask = np.any(clean_features == 0, axis=1)
+        
+        # 2. Identify groups that contain AT LEAST one zero row
+        groups_with_zeros = np.unique(groups[has_zero_mask])
+        
+        total_groups = len(unique_samples)
+        ineligible_groups_count = len(groups_with_zeros)
+        eligible_groups_count = total_groups - ineligible_groups_count
+        
+        print(" Strict Non-Zero Validation enabled:")
+        print(f"  - {eligible_groups_count} groups eligible for validation (all non-zero).")
+        print(f"  - {ineligible_groups_count} groups forced to training (contains zeros).")
+        
+        # 3. Separate into eligible (Pool B) and ineligible (Pool A) for validation
+        eligible_mask = ~np.isin(groups, groups_with_zeros)
+        ineligible_mask = np.isin(groups, groups_with_zeros)
+        
+        pool_b_features = clean_features[eligible_mask]
+        pool_b_labels = clean_labels[eligible_mask]
+        pool_b_groups = groups[eligible_mask]
+        
+        pool_a_features = clean_features[ineligible_mask]
+        pool_a_labels = clean_labels[ineligible_mask]
+        
+        # Target validation size based on the ENTIRE dataset ROW count
+        target_val_rows = int(len(clean_features) * percent)
+        if target_val_rows == 0 and percent > 0:
+            target_val_rows = 1
+            
+        if len(pool_b_features) == 0:
+            print(" WARNING: 0 strictly non-zero samples available! Validation set will be empty.")
+            A_cv = np.empty((0, clean_features.shape[1]))
+            Cl_cv = np.empty((0,))
+            A_train = clean_features
+            Cl_train = clean_labels
+            
+        else:
+            # We explicitly pick groups until we hit the row target
+            unique_b_groups = np.unique(pool_b_groups)
+            
+            # Shuffle for randomness
+            np.random.seed(42)
+            np.random.shuffle(unique_b_groups)
+            
+            selected_groups_for_val = []
+            current_val_rows = 0
+            
+            for g in unique_b_groups:
+                g_size = np.sum(pool_b_groups == g)
+                selected_groups_for_val.append(g)
+                current_val_rows += g_size
+                
+                # Stop if we've reached or exceeded our row target
+                if current_val_rows >= target_val_rows:
+                    break
+            
+            # If target rows exceeded our whole available non-zero pool
+            if current_val_rows < target_val_rows:
+                print(f" WARNING: Requested validation size ({target_val_rows} rows) exceeds available non-zero data ({current_val_rows} rows). Using all eligible non-zero data.")
+            else:
+                print(f" Note: Targeted ~{target_val_rows} rows. Picked {len(selected_groups_for_val)} groups yielding {current_val_rows} rows to prevent group splitting.")
+            
+            val_mask = np.isin(pool_b_groups, selected_groups_for_val)
+            train_mask = ~val_mask
+            
+            A_cv = pool_b_features[val_mask]
+            Cl_cv = pool_b_labels[val_mask]
+            
+            # Training gets all ineligible data (Pool A) + the leftover eligible data
+            A_train = np.vstack((pool_a_features, pool_b_features[train_mask]))
+            Cl_train = np.concatenate((pool_a_labels, pool_b_labels[train_mask]))
+                
+    else:
+        # Standard Split logic (Iterative selection to match percentage closer)
+        target_val_rows = int(len(clean_features) * percent)
+        if target_val_rows == 0 and percent > 0:
+            target_val_rows = 1
+            
+        unique_groups = np.unique(groups)
+        np.random.seed(42)
+        np.random.shuffle(unique_groups)
+        
+        selected_groups_for_val = []
+        current_val_rows = 0
+        
+        for g in unique_groups:
+            g_size = np.sum(groups == g)
+            selected_groups_for_val.append(g)
+            current_val_rows += g_size
+            if current_val_rows >= target_val_rows:
+                break
+                
+        val_mask = np.isin(groups, selected_groups_for_val)
+        train_mask = ~val_mask
+        
+        A_cv = clean_features[val_mask]
+        Cl_cv = clean_labels[val_mask]
+        A_train = clean_features[train_mask]
+        Cl_train = clean_labels[train_mask]
+        
     print(" Creating a training set with:", str(len(A_train)), "datapoints")
     print(" Creating a validation set with:", str(len(A_cv)), "datapoints\n")
     
