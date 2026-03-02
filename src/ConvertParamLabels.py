@@ -157,8 +157,8 @@ def main():
     
     label_list = convertNumLabel(featNames,configData)
     
-    print(" Config.ini:",configData)
-    print(" Converted labels from onfig.ini",label_list)
+    print(" config.txt:",configData)
+    print(" Converted labels from config.txt",label_list)
     
     os.rename(sys.argv[2], oldConfigFile)
     print("\n Old",sys.argv[2],"renamed:", oldConfigFile)
