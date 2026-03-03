@@ -5,7 +5,7 @@
 * DataML_Maker
 * Adds data from single file to Master Doc
 * File must be in ASCII
-* version: 2026.02.27.1
+* version: 2026.03.03.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -50,17 +50,18 @@ class Conf():
         self.predRCol = self.rescaleList(self.predRCol, self.numHeadColumns - 1)
         
         self.validRows = [x-1 for x in self.validRows]
+        self.excludeRows = [x-1 for x in self.excludeRows] # <-- Converted to 0-based index
     
     def dataMLMakerDef(self):
         self.conf['Parameters'] = {
             'saveAsTxt' : True,
-            'numHeadColumns' : 2,
+            'numHeadColumns' : 1,
             'numHeadRows' : 0,
             'fullDataset' : False,
             'minCCol' : 1,
-            'maxCCol' : 42,
-            'charCCols' : [21,23,25,34],
-            'predRCol' : [43],
+            'maxCCol' : 28,
+            'charCCols' : [21,23,25,27],
+            'predRCol' : [29],
             'purgeUndefRows' : False,
             'validFile' : True,
             'createRandomValidSet' : False,
@@ -68,7 +69,8 @@ class Conf():
             'percentValid' : 0.05,
             'strictNonZeroValid' : False,
             'validRows' : [1,2,3],
-            'precData' : 3,
+            'excludeRows' : [],
+            'precData' : 4,
             'saveNormalized' : False,
             'normalizeLabel' : False,
             'useCustomRound' : True,
@@ -109,6 +111,7 @@ class Conf():
             self.percentValid = self.conf.getfloat('Parameters','percentValid')
             self.strictNonZeroValid = self.conf.getboolean('Parameters','strictNonZeroValid', fallback=False)
             self.validRows = ast.literal_eval(self.dataMLMakerPar['validRows'])
+            self.excludeRows = ast.literal_eval(self.dataMLMakerPar['excludeRows'])
             self.precData = self.conf.getint('Parameters','precData')
             
             self.saveNormalized = self.conf.getboolean('Parameters','saveNormalized')            
@@ -231,6 +234,12 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
         validFile = rootFile + '_test'
         
         if dP.createRandomValidSet:
+            
+            # <-- REMOVE EXCLUDE ROWS HERE FOR RANDOM SET
+            if dP.excludeRows:
+                M = np.delete(M, dP.excludeRows, 0)
+                print(f" Excluded {len(dP.excludeRows)} specific rows from dataset.")
+                
             # Global Clean for Random Split
             initial_len = len(M)
             M = np.unique(M, axis=0)
@@ -247,11 +256,19 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
         else:
             if dP.validRows:
                 # 1. Extract manually specified rows based on original index
-                V_data = M[dP.validRows, :]
+                # <-- ENSURE EXCLUDED ROWS AREN'T IN THE VALIDATION SET
+                valid_clean = [r for r in dP.validRows if r not in dP.excludeRows]
+                
+                V_data = M[valid_clean, :]
                 if V_data.ndim == 1:
                     V_data = V_data.reshape(1, -1) 
                     
-                P_data = np.delete(M, dP.validRows, 0)
+                # <-- DELETE BOTH VALID AND EXCLUDE ROWS FROM TRAINING SET
+                rows_to_drop = list(set(dP.validRows + dP.excludeRows))
+                P_data = np.delete(M, rows_to_drop, 0)
+                
+                if dP.excludeRows:
+                    print(f" Excluded {len(dP.excludeRows)} specific rows from dataset.")
                 
                 # 2. Clean the training set 
                 initial_len = len(P_data)
@@ -274,7 +291,7 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
                 
                 P_data_clean = P_data[~leakage_mask]
                 
-                print(f" Manually extracted {len(dP.validRows)} validation rows.")
+                print(f" Manually extracted {len(valid_clean)} validation rows.")
                 print(f" Removed {np.sum(leakage_mask)} overlapping rows from training to prevent group leakage.")
                 
                 P = np.vstack([featNum, P_data_clean])
