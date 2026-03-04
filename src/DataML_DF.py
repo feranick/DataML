@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2026.03.03.1
+* version: 2026.03.04.1
 * Uses: sklearn, tabpfn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -90,15 +90,15 @@ class Conf():
         self.conf['Parameters'] = {
             'typeDF' : 'GradientBoosting',
             'regressor' : False,
-            'n_estimators' : 4,
+            'n_estimators' : 20,
             'max_depth' : 7,
-            'max_features' : 0.5,
-            'epochs' : 100,
+            'max_features' : 1,
+            'epochs' : 1000,
             'l_rate' : 0.1,
-            'cv_split' : 0.05,
+            'cv_split' : 0.01,
             'trainFullData' : True,
             'fullSizeBatch' : False,
-            'batch_size' : 8,
+            'batch_size' : 4,
             'numLabels' : 1,
             'normalize' : False,
             'normalizeLabel' : False,
