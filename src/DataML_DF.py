@@ -89,7 +89,7 @@ class Conf():
     def datamlDef(self):
         self.conf['Parameters'] = {
             'typeDF' : 'GradientBoosting',
-            'regressor' : False,
+            'regressor' : True,
             'n_estimators' : 20,
             'max_depth' : 7,
             'max_features' : 1,
@@ -107,7 +107,7 @@ class Conf():
             'numDimRedComp' : 3,
             'plotFeatImportance' : False,
             'optimizeParameters' : False,
-            'optScoringR' : 'neg_mean_absolute_error',
+            'optScoringR' : 'r2',
             'optScoringC' : 'accuracy',
             'featureReduction' : False,
             'minNumFeatures' : 4,
