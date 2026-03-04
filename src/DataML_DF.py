@@ -934,6 +934,12 @@ def makeOptParameters(dP, ind):
             "max_depth": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
             "n_estimators": [1,5,10,15,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200],
             "max_features": [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]}
+    elif ind == "6":
+        grid = {"max_features": [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]}
+    elif ind == "7":
+        grid = {"random_state": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+            "max_depth": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+            "max_features": [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]}
     else:
         flag = False
     
@@ -990,7 +996,9 @@ def usage():
     print('  2 - n_estimators [1-200]')
     print('  3 - n_estimators [1-200], random_state, max_depth')
     print('  4 - n_estimators [1-200], max_features')
-    print('  5 - n_estimators [1-200], max_depth, random_state, max_features')
+    print('  5 - n_estimators [1-200], max_features')
+    print('  6 - max_features')
+    print('  7 - random_state, max_depth, max_features')
     print('  else - custom file')
     
     print(' Requires python 3.x. Not compatible with python 2.x\n')

@@ -250,6 +250,8 @@ Train (Random cross validation):
   3 - n_estimators [1-200], random_state, max_depth
   4 - n_estimators [1-200], max_features
   5 - n_estimators [1-200], max_depth, random_state, max_features
+  6 - max_features
+  7 - random_state, max_depth, max_features
   else - custom file
     
 Formatting input file for training
