@@ -999,7 +999,7 @@ def usage():
     print('  5 - n_estimators [1-200], max_features')
     print('  6 - max_features')
     print('  7 - random_state, max_depth, max_features')
-    print('  else - custom file')
+    print('  else - custom file\n')
     
     print(' Requires python 3.x. Not compatible with python 2.x\n')
     
