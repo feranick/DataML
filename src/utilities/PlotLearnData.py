@@ -4,7 +4,7 @@
 ***********************************************
 * PlotLearnData
 * Plot learning data
-* version: 2025.05.16.1
+* version: 2026.03.05.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -45,8 +45,9 @@ def main():
     else:
         A3 = None
     
-    rootFile = os.path.splitext(os.path.basename(sys.argv[1]))[0]
-    plotAugmData(dP, A1.shape, A1, A2, A3, rootFile+"_learn-plots.pdf")
+    #rootFile = os.path.splitext(os.path.basename(sys.argv[1]))[0]
+    rootFile = os.path.commonprefix([os.path.basename(sys.argv[1]), os.path.basename(sys.argv[2])])
+    plotAugmData(dP, A1.shape, A1, A2, A3, rootFile+"_train-valid-plots.pdf")
  
 #************************************
 # Open Learning Data
