@@ -501,6 +501,7 @@ def formatSubset(A, percent, num_group_cols, strict_nonzero_valid=False):
 #************************************
 def purgeRows(M):
     condition = M[:,0] == 0
+    condition[0] = False
     M2 = M[~condition]
     print(" Shape original dataset:", M.shape)
     print(" Purged from undefined values. \n Shape new dataset:",M2.shape,"\n")
