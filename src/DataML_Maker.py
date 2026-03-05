@@ -5,7 +5,7 @@
 * DataML_Maker
 * Adds data from single file to Master Doc
 * File must be in ASCII
-* version: 2026.03.04.1
+* version: 2026.03.05.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -255,13 +255,20 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
             
         else:
             if dP.validRows:
-                # 1. Extract manually specified rows based on original index
+            
+                # Extract manually specified rows based on original index
                 # <-- ENSURE EXCLUDED ROWS AREN'T IN THE VALIDATION SET
                 valid_clean = [r for r in dP.validRows if r not in dP.excludeRows]
                 
                 V_data = M[valid_clean, :]
                 if V_data.ndim == 1:
-                    V_data = V_data.reshape(1, -1) 
+                    V_data = V_data.reshape(1, -1)
+                
+                # <-- Check whether validation data has samples with with some parameters with zero values
+                validation_has_zero_values = np.any(V_data == 0, axis=1)
+                if(any(validation_has_zero_values)):
+                    indices = [dP.validRows[i] for i, x in enumerate(validation_has_zero_values) if x]
+                    print(f" WARNING: Validation data {dP.validRows} has sample(s) {indices} with some parameters with zero value.\n")
                     
                 # <-- DELETE BOTH VALID AND EXCLUDE ROWS FROM TRAINING SET
                 rows_to_drop = list(set(dP.validRows + dP.excludeRows))
@@ -270,7 +277,7 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
                 if dP.excludeRows:
                     print(f" Excluded {len(dP.excludeRows)} specific rows from dataset.")
                 
-                # 2. Clean the training set 
+                # Clean the training set
                 initial_len = len(P_data)
                 P_data = np.unique(P_data, axis=0)
                 print(f" Removed {initial_len - len(P_data)} exact duplicate rows from training set.")
