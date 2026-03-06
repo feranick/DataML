@@ -246,12 +246,12 @@ Train (Random cross validation):
 
  Types of optimization:
   1 - random_state, max_depth
-  2 - n_estimators [1-200]
-  3 - n_estimators [1-200], random_state, max_depth
-  4 - n_estimators [1-200], max_features
-  5 - n_estimators [1-200], max_depth, random_state, max_features
-  6 - max_features
-  7 - random_state, max_depth, max_features
+  2 - random_state, max_depth, max_features
+  3 - max_features
+  4 - n_estimators [1-200]
+  5 - n_estimators [1-200], random_state, max_depth
+  6 - n_estimators [1-200], max_features
+  7 - n_estimators [1-200], random_state, max_depth, max_features
   else - custom file
     
 Formatting input file for training
