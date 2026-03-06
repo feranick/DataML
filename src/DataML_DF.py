@@ -733,6 +733,8 @@ def batchPredict(folder):
 # Batch Prediction using validation data (with real values)
 #************************************************************
 def validBatchPredict(testFile):
+    from statistics import mean, stdev
+    from sklearn.metrics import accuracy_score, mean_absolute_error, r2_score
     dP = Conf()
     En_test, A_test, Cl_test, _ = readLearnFile(testFile, False, dP)
     import sklearn
@@ -747,6 +749,7 @@ def validBatchPredict(testFile):
     
     if dP.regressor:
         pred = df.predict(A_test)
+        score = mean_absolute_error(pred, Cl_test)
         summaryFile = np.vstack((summaryFile,['Index','Predicted Value','']))
     else:
         with open(dP.model_le, "rb") as f:
@@ -754,17 +757,25 @@ def validBatchPredict(testFile):
         pred = le.inverse_transform_bulk(df.predict(A_test))
         pred_classes = le.inverse_transform_bulk(df.classes_)
         proba = df.predict_proba(A_test)
+        score = accuracy_score([int(x) for x in pred], Cl_test)
         summaryFile = np.vstack((summaryFile,['Index','Predicted Value','Probability %']))
+        
+    delta = pred - Cl_test
     
     print('  ================================================================================')
     print('  \033[1m',dP.typeDF,dP.mode,'\033[0m')
     print('  ================================================================================')
     if dP.regressor:
-        print('   Prediction')
+        print('   Real \t| Predicted')
         print('  --------------------------------------------------------------------------------')
         for i in range(0,len(pred)):
-            print("   {0:.4f}  ".format(pred[i]))
+            print("   {0:.4f}\t| {1:.4f}".format(Cl_test[i], pred[i]))
+            #print("   {0:.4f}  ".format(pred[i]))
             summaryFile = np.vstack((summaryFile,[pred[i],'','']))
+        print('  --------------------------------------------------------------------------------')
+        print('  ',dP.metric,'= {0:.4f}'.format(score))
+        print('   R^2 = {0:.4f}'.format(r2_score(Cl_test, pred)))
+        print('   StDev = {0:.2f}'.format(stdev(delta)))
     else:
         print('   Prediction\t| Probability')
         print('  --------------------------------------------------------------------------------')
