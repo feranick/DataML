@@ -2,7 +2,7 @@
 '''
 **************************************************
 * libDataML - Library for DataML/DataML_DF
-* version: 2026.03.06.1
+* version: 2026.03.06.2
 * Uses: Keras, TensorFlow, scikit-learn
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
@@ -98,11 +98,7 @@ class Normalizer(object):
 
     # Multiple samples, format as vertical stacks of singles
     def transform_inverse(self,V):
-        Vnt = []
-        for i in range (V.shape[0]):
-            vn = self.min[0] + V[i]*(self.max[0] - self.min[0])/self.YnormTo
-            Vnt.append(vn)
-        return np.array(Vnt)
+        return self.min + V * (self.max - self.min) / self.YnormTo
 
     # format simular to original DataML file
     def transform_inverse_features(self,V):
