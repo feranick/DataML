@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
-* version: 2026.03.06.2
+* version: 2026.03.06.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -536,32 +536,32 @@ def trainAutoencoder(dP, noisyA, A, file):
     ############
     # Encoder
     ############
-    encoded = keras.layers.Dense(A.shape[1]-1, activation='elu',activity_regularizer=keras.regularizers.l1(dP.regL1))(input)
+    encoded = keras.layers.Dense(A.shape[1]-1, activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(input)
     if dP.deepAutoencoder:
         if dP.linear_net:
             if A.shape[1] > dP.encoded_dim+2:
                 for i in range(A.shape[1]-1,dP.encoded_dim+1,-1):
-                    encoded = keras.layers.Dense(i-1,  activation='elu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
+                    encoded = keras.layers.Dense(i-1,  activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
                     encoded = keras.layers.Dropout(dP.dropout)(encoded)
         else:
             for i in range(len(dP.net_arch)):
-                encoded = keras.layers.Dense(dP.net_arch[i],  activation='elu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
+                encoded = keras.layers.Dense(dP.net_arch[i],  activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
                 encoded = keras.layers.Dropout(dP.dropout)(encoded)
-        encoded = keras.layers.Dense(dP.encoded_dim,activation='elu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
+        encoded = keras.layers.Dense(dP.encoded_dim,activation='relu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
         encoded = keras.layers.Dropout(dP.dropout)(encoded)
         
     ############
     # Decoder
     ############
     if dP.deepAutoencoder:
-        decoded = keras.layers.Dense(dP.encoded_dim+1,  activation='elu')(encoded)
+        decoded = keras.layers.Dense(dP.encoded_dim+1,  activation='relu')(encoded)
         if dP.linear_net:
             if A.shape[1] > dP.encoded_dim+2:
                 for i in range(dP.encoded_dim+2,A.shape[1],1):
-                    decoded = keras.layers.Dense(i, activation='elu')(decoded)
+                    decoded = keras.layers.Dense(i, activation='relu')(decoded)
         else:
             for i in range(len(dP.net_arch)-1,-1,-1):
-                decoded = keras.layers.Dense(dP.net_arch[i], activation='elu')(decoded)
+                decoded = keras.layers.Dense(dP.net_arch[i], activation='relu')(decoded)
         decoded = keras.layers.Dense(A.shape[1], activation=dP.activation)(decoded)
     else:
         decoded = keras.layers.Dense(A.shape[1], activation=dP.activation)(encoded)
