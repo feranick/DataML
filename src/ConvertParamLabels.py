@@ -4,7 +4,7 @@
 ***********************************************
 * ConvertParamLabels
 * Convert progressive numeric labels with actual parameter names
-* Uses DataML_Datamaker.ini
+* Uses DataML_Maker.ini
 * version: 2026.03.06.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -33,8 +33,9 @@ class Conf():
         self.conf = configparser.ConfigParser()
         self.conf.optionxform = str
         if os.path.isfile(self.configFile) is False:
-            print(" Configuration file: \""+confFileName+"\" does not exist: Creating one.\n")
-            self.createConfig()
+            print(f" Configuration file: {confFileName} not found. Aborting.")
+            print(f" You should use {confFileName} from the initial training file generation.\n")
+            sys.exit(1)
         self.readConfig(self.configFile)
         self.model_directory = "./"
         
@@ -55,15 +56,6 @@ class Conf():
         except:
             print(" Error in reading configuration file. Please check it\n")
 
-    # Create configuration file
-    def createConfig(self):
-        try:
-            self.dataMLMakerDef()
-            with open(self.configFile, 'w') as configfile:
-                self.conf.write(configfile)
-        except:
-            print("Error in creating configuration file")
-            
     # Do not change
     def rescaleList(self, list, value):
         list = [x + value for x in list]
