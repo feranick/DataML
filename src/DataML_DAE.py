@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
-* version: 2026.03.04.1
+* version: 2026.03.06.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -309,6 +309,7 @@ def augment(learnFile,augFlag):
         plotData(dP, A, None, False, True, "Initial (Y-P) Data", rootFile+"_initial_Y-P_plots.pdf")
     
     success = 0
+    total_added_rows = 0  # Tracks the exact number of rows generated
     plotFeatType = True
     for i in range(dP.numAdditions):
         print(f"\n Augmentation in progress: step {i+1}/{dP.numAdditions}\n")
@@ -338,11 +339,10 @@ def augment(learnFile,augFlag):
                 A_tmp = generateData(dP, dae, En, A, M, norm)
                 newA = np.vstack([newA, A_tmp])
                 success += 1
-                print("\n  Successful. Added so far:",str(success),"\n")
-                #plotData(dP, A, newA, plotFeatType, "test", True, rootFile+"_"+str(i)+"_plots.pdf")
+                total_added_rows += A_tmp.shape[0]  # UPDATE TRACKER
+                print("\n  Successful. Added blocks so far:", str(success), "| Total new rows:", str(total_added_rows), "\n")
             else:
-                #A_tmp = generateData(dP, dae, En, A, M, norm)
-                print("  Skip this denoising autoencoder. Added so far:",str(success),"\n")
+                print("  Skip this denoising autoencoder. Added blocks so far:", str(success), "\n")
         else:
             print("  Trained DAE model\n")
             return
@@ -354,8 +354,10 @@ def augment(learnFile,augFlag):
             print("  Spurious data removed.")
             tag += '_noSpur'
         newTrain = np.vstack([En, newA])
-        print("\n  Added",str(success*A.shape[0]),"new data")
-        newFile = rootFile + '_numAdded' + str(success*A.shape[0]) + tag
+        
+        # USE total_added_rows FOR PRINTS AND FILENAMES
+        print("\n  Added", str(total_added_rows), "new data points")
+        newFile = rootFile + '_numAdded' + str(total_added_rows) + tag 
         saveLearnFile(dP, newA, newFile, "")
         
         if dP.plotAugmData:
@@ -644,11 +646,22 @@ def removeSpurious(A, T, norm, dP):
     return T
 
 def generateData(dP, autoencoder, En, A, M, norm):
-    #newTrain = np.vstack([En, norm.transform_inverse(M[1:,:])])
-    normDea = autoencoder.predict(A)
+    # Calculate the bounding box of the data space
+    low_bounds = 0.0 if dP.normalize else np.min(A, axis=0)
+    high_bounds = 1.0 if dP.normalize else np.max(A, axis=0)
+    
+    # Generate new uniform points (adding 50% more data to act as probes)
+    num_random = int(0.50 * A.shape[0])
+    random_seeds = np.random.uniform(low=low_bounds, high=high_bounds, size=(num_random, A.shape[1]))
+        
+    # APPEND the random seeds to the original dataset
+    seeds = np.vstack((A, random_seeds))
+    
+    # Project all seeds (original + random) onto the learned manifold
+    normDea = autoencoder.predict(seeds)
     
     if dP.postGenerationNoise:
-        noise_magnitude = dP.postGenerationNoiseMax  # Or multiply by a factor, e.g., 0.5
+        noise_magnitude = dP.postGenerationNoiseMax  
         noise = np.random.normal(loc=0.0, scale=noise_magnitude, size=normDea.shape)
         normDea = normDea + noise
     
