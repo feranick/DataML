@@ -361,7 +361,11 @@ def augment(learnFile,augFlag):
         saveLearnFile(dP, newA, newFile, "")
         
         if dP.plotAugmData:
-            plotData(dP, A, newA, plotFeatType, False, "Augmented data", newFile+"_plots.pdf")
+            if dP.normalize:
+                A_plot = norm.transform_inverse(A)
+            else:
+                A_plot = A
+            plotData(dP, A_plot, newA, plotFeatType, False, "Augmented data", newFile+"_plots.pdf")
     else:
         print("  No new training data created. Try to increse numAdditions or/and min_loss_dae.\n")
 
