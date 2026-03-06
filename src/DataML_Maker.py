@@ -339,7 +339,7 @@ def saveLearnFile(M, learnFile, saveNormFlag, dP):
         with open(learnFile, 'w') as f:
                 np.savetxt(f, M, delimiter='\t', fmt="%10.{0}f".format(dP.precData))
         if saveNormFlag == False:
-            print("\n Saving new file (txt) in:", learnFile+"\n")
+            print(" Saving new file (txt) in:", learnFile+"\n")
         else:
             print(" Saving new normalized file (txt) in:", learnFile+"\n")
     else:
