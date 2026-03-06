@@ -766,10 +766,10 @@ def validBatchPredict(testFile):
     print('  \033[1m',dP.typeDF,dP.mode,'\033[0m')
     print('  ================================================================================')
     if dP.regressor:
-        print('   Real \t| Predicted')
+        print('   Real \t| Predicted \t| Delta')
         print('  --------------------------------------------------------------------------------')
         for i in range(0,len(pred)):
-            print("   {0:.4f}\t| {1:.4f}".format(Cl_test[i], pred[i]))
+            print("   {0:.4f}\t| {1:.4f}\t| {2:.4f}".format(Cl_test[i], pred[i], delta[i]))
             #print("   {0:.4f}  ".format(pred[i]))
             summaryFile = np.vstack((summaryFile,[pred[i],'','']))
         print('  --------------------------------------------------------------------------------')
