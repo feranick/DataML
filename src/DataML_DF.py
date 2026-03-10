@@ -366,14 +366,27 @@ def train(learnFile, testFile):
     if dP.fullSizeBatch:
         dP.batch_size = A.shape[0]
     
-    # Applicability Domain Trainng
+    # -------------------------------------------------------------
+    # Applicability Domain Training (Isolation Forest)
+    # -------------------------------------------------------------
     from sklearn.ensemble import IsolationForest
-    print("  Training Applicability Domain model (Isolation Forest)...")
-    ad_model = IsolationForest(contamination='auto', random_state=dP.random_state)
+    print("\n  Training Applicability Domain model (Isolation Forest)...")
+    
+    # Dynamically select contamination based on mathematical limits
+    if A.shape[0] < 100:
+        contam_val = 'auto'
+        print(f"    -> Small dataset detected ({A.shape[0]} rows). Setting contamination to 'auto'.")
+    else:
+        contam_val = 0.01
+        print(f"    -> Augmented dataset detected ({A.shape[0]} rows). Setting contamination to 0.01.")
+        
+    ad_model = IsolationForest(contamination=contam_val, random_state=dP.random_state)
     ad_model.fit(A) # Train on the fully reduced/normalized feature set
+    
     with open(dP.model_ad, 'wb') as f:
         pickle.dump(ad_model, f)
     print("  AD model saved in:", dP.model_ad, "\n")
+    # -------------------------------------------------------------
         
     if dP.regressor:
         if dP.typeDF == 'RandomForest':
