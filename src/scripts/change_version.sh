@@ -4,7 +4,7 @@
 # Change version tag in any file
 #  contained in the specified folder
 # By Nicola Ferralis - 2026.03.06.3
-# ##################################
+####################################
 
 # Ensure both the old and new version arguments are provided
 if [ "$#" -lt 2 ]; then
@@ -28,7 +28,24 @@ else
     SED_INPLACE=(-i)
 fi
 
-# Find all regular files (excluding hidden directories) and perform the replacement
-find "$TARGET_DIR" -type f -not -path '*/\.*' -exec sed "${SED_INPLACE[@]}" "s/${ESCAPED_OLD}/${NEW_VERSION}/g" {} +
+# Set LC_ALL to C to prevent illegal byte sequence errors on macOS
+export LC_ALL=C
 
-echo "Successfully replaced '$OLD_VERSION' with '$NEW_VERSION' in '$TARGET_DIR'."
+# Initialize counter
+CHANGED_COUNT=0
+
+echo "Scanning '$TARGET_DIR' for files containing '$OLD_VERSION'..."
+echo "--------------------------------------------------------------"
+
+# Use process substitution to feed the loop, keeping CHANGED_COUNT in the current shell
+while IFS= read -r file; do
+    # Perform the replacement
+    sed "${SED_INPLACE[@]}" "s/${ESCAPED_OLD}/${NEW_VERSION}/g" "$file"
+    
+    # Print the updated file and increment the counter
+    echo "Updated: $file"
+    ((CHANGED_COUNT++))
+done < <(find "$TARGET_DIR" -type f -not -path '*/\.*' -exec grep -Il "$OLD_VERSION" {} +)
+
+echo "--------------------------------------------------------------"
+echo "Success: Replaced '$OLD_VERSION' with '$NEW_VERSION' in $CHANGED_COUNT file(s)."
