@@ -51,6 +51,8 @@ class Conf():
         self.model_scaling = self.model_directory+"model_scaling.pkl"
         self.model_pca = self.model_directory+"model_encoder.pkl"
         self.norm_file = self.model_directory+"norm_file.pkl"
+        
+        self.model_ad = self.model_directory+"model_ad.pkl"
 
         self.optParFile = "opt_parameters.txt"
 
@@ -203,6 +205,22 @@ async def singlePredict(event):
         normPkl = await getFile(folder, dP.norm_file, True)
         norm = pickle.loads(normPkl)
         R = norm.transform_valid_data(R)
+        
+    try:
+        model_ad = await getFile(folder, dP.model_ad, True)
+        ad_model = pickle.loads(model_ad)
+        print("ad_model loaded")
+    except:
+        ad_model = None
+        
+    if ad_model is not None:
+        safety_flags = ad_model.predict(R)
+        for i, flag in enumerate(safety_flags):
+            if flag == -1:
+                print("   WARNING: Sample features fall OUTSIDE the known Applicability Domain! Prediction may be unreliable.")
+                ad_tag = "\nWARNING: Sample features fall \nOUTSIDE the known Applicability Domain! \nPrediction may be unreliable."
+    else:
+        ad_tag = ""
 
     if dP.regressor:
         if dP.normalize:
@@ -234,6 +252,7 @@ async def singlePredict(event):
     output += '\n============================'
     output += '\n'+dP.typeDF+" "+dP.mode
     output += '\n============================\n'
+    output += ad_tag
     output_div.innerText = output
 
 
@@ -300,12 +319,30 @@ async def batchPredict(event):
             le = pickle.load(f)
         summaryFile = np.vstack((summaryFile,['Sample','Predicted Value','Probability %']))
 
+    try:
+        model_ad = await getFile(folder, dP.model_ad, True)
+        ad_model = pickle.loads(model_ad)
+        print("ad_model loaded")
+    except:
+        ad_model = None
+
     for i in range(1,dataDf.shape[1]):
         R = np.array([dataDf.iloc[:,i].tolist()], dtype=float)
         Rorig = np.copy(R)
 
         if dP.normalize:
             R = norm.transform_valid_data(R)
+
+        if ad_model is not None:
+            safety_flags = ad_model.predict(R)
+            for j, flag in enumerate(safety_flags):
+                if flag == -1:
+                    print("   WARNING: Sample features fall OUTSIDE the known Applicability Domain! Prediction may be unreliable.")
+                    ad_tag = "\nWARNING: Sample features fall \nOUTSIDE the known Applicability Domain! \nPrediction may be unreliable."
+                    ood_tag = "[OOD]"
+        else:
+            ad_tag = ""
+            ood_tag = ""
 
         if dP.regressor:
             try:
@@ -318,7 +355,7 @@ async def batchPredict(event):
                 output_div.innerText = output
                 return False
             proba = ""
-            output += "\n " + dataDf.columns[i] + " = "  + str(pred[0])[:5]
+            output += "\n " + dataDf.columns[i] + " = "  + str(pred[0])[:5] + " \t " + ood_tag
             summaryFile = np.vstack((summaryFile,[dataDf.columns[i],pred[0],'']))
         else:
             lePkl = await getFile(folder, dP.model_le, True)
@@ -339,6 +376,7 @@ async def batchPredict(event):
     output += '\n======================================='
     output += '\n'+dP.typeDF+" "+dP.mode
     output += '\n=======================================\n'
+    output += ad_tag
     output_div.innerText = output
     await create_csv_download(summaryFile,None,"Results_"+inputFile.name)
 

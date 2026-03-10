@@ -1,4 +1,4 @@
-name = "DataML pyscript"
+name = "DataML_pyscript"
 description = "DataML pyscript"
 packages = ["numpy", "scikit-learn==1.7.0", "pandas"]
 [[fetch]]
