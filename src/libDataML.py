@@ -249,13 +249,23 @@ def getPredictionTF(R, model, dP):
         probabilities = scipy.special.softmax(predictions.astype('double'))
     return predictions, probabilities
     
-def getPrediction(dP, df, R, le, norm):
+def getPrediction(dP, df, R, le, norm, ad_model=None):
     if dP.normalize:
         R = norm.transform_valid_data(R)
             
     if dP.runDimRedFlag:
         R = runPCAValid(R, dP)
     
+    # -------------------------------------------------------------
+    # Applicability Domain / Extrapolation Check
+    # -------------------------------------------------------------
+    if ad_model is not None:
+        safety_flags = ad_model.predict(R)
+        for i, flag in enumerate(safety_flags):
+            if flag == -1:
+                print("   \033[93m[!] WARNING: Sample features fall OUTSIDE the known Applicability Domain! Prediction may be unreliable.\033[0m")
+    # -------------------------------------------------------------
+
     if dP.regressor:
         if dP.normalize:
             pred = norm.transform_inverse_single(df.predict(R))
@@ -264,19 +274,12 @@ def getPrediction(dP, df, R, le, norm):
         pred_classes = None
         proba = None
     else:
-        #print(df.predict(R))
-        #print(le.inverse_transform_bulk(df.predict(R)))
         if dP.normalize:
             pred = norm.transform_inverse(np.asarray(le.inverse_transform_bulk(df.predict(R))))
             pred_classes = norm.transform_inverse(np.asarray(le.inverse_transform_bulk(df.classes_)))
         else:
             pred = le.inverse_transform_bulk(df.predict(R))
             pred_classes = le.inverse_transform_bulk(df.classes_)
-        
-        #print("\nget_predictions")
-        #print(R)
-        #print(df.predict(R))
-        #print(pred)
             
         proba = df.predict_proba(R)
     

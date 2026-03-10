@@ -76,6 +76,8 @@ class Conf():
         self.model_pca = self.model_directory+"model_encoder.pkl"
         self.norm_file = self.model_directory+"norm_file.pkl"
         
+        self.model_ad = self.model_directory+"model_ad.pkl"
+        
         self.optParFile = "opt_parameters.txt"
                     
         self.rescaleForPCA = False
@@ -363,6 +365,15 @@ def train(learnFile, testFile):
     #************************************
     if dP.fullSizeBatch:
         dP.batch_size = A.shape[0]
+    
+    # Applicability Domain Trainng
+    from sklearn.ensemble import IsolationForest
+    print("  Training Applicability Domain model (Isolation Forest)...")
+    ad_model = IsolationForest(contamination='auto', random_state=dP.random_state)
+    ad_model.fit(A) # Train on the fully reduced/normalized feature set
+    with open(dP.model_ad, 'wb') as f:
+        pickle.dump(ad_model, f)
+    print("  AD model saved in:", dP.model_ad, "\n")
         
     if dP.regressor:
         if dP.typeDF == 'RandomForest':
@@ -587,8 +598,14 @@ def predict(testFile):
             sys.exit()
     else:
         norm = None
+        
+    try:
+        with open(dP.model_ad, "rb") as f:
+            ad_model = pickle.load(f)
+    except:
+        ad_model = None
     
-    pred, pred_classes, proba = getPrediction(dP, df, R, le, norm)
+    pred, pred_classes, proba = getPrediction(dP, df, R, le, norm, ad_model)
         
     print('\n  ================================================================================')
     print('  \033[1m',dP.typeDF,dP.mode,'\033[0m')
@@ -640,6 +657,12 @@ def csvPredict(csvFile):
             sys.exit()
     else:
         norm = None
+        
+    try:
+        with open(dP.model_ad, "rb") as f:
+            ad_model = pickle.load(f)
+    except:
+        ad_model = None
     
     print('\n  ==============================================================================')
     print('  \033[1m',dP.typeDF,dP.mode,'\033[0m')
@@ -649,7 +672,7 @@ def csvPredict(csvFile):
         R = np.array([dataDf.iloc[:,i].tolist()], dtype=float)
         Rorig = np.copy(R)
     
-        pred, pred_classes, proba = getPrediction(dP, df, R, le, norm)
+        pred, pred_classes, proba = getPrediction(dP, df, R, le, norm, ad_model)
 
         if dP.regressor:
             print("   {0:s}\t = {1:.4f} ".format(dataDf.columns[i], pred[0]))
@@ -683,6 +706,12 @@ def batchPredict(folder):
             sys.exit()
     else:
         norm = None
+        
+    try:
+        with open(dP.model_ad, "rb") as f:
+            ad_model = pickle.load(f)
+    except:
+        ad_model = None
     
     summaryFile = np.array([['Folder:',folder,''],['DataML_DF',dP.typeDF,dP.mode]])
     
@@ -701,7 +730,7 @@ def batchPredict(folder):
         R, good = readTestFile(file)
         
         if good:
-            predtmp, pred_classes, probatmp = getPrediction(dP, df, R, le, norm)
+            predtmp, pred_classes, probatmp = getPrediction(dP, df, R, le, norm, ad_model)
             pred.append(predtmp)
             proba.append(probatmp)
             fileName.append(file)
@@ -744,7 +773,22 @@ def validBatchPredict(testFile):
         
     if dP.runDimRedFlag:
         A_test = runPCAValid(A_test, dP)
-    
+        
+    # -------------------------------------------------------------
+    # 1. Load Applicability Domain Model and predict safety flags
+    # -------------------------------------------------------------
+    try:
+        print("  Loading AD model...\n")
+        with open(dP.model_ad, "rb") as f:
+            ad_model = pickle.load(f)
+        # Returns array of 1 (Safe) and -1 (Out-of-Bounds)
+        safety_flags = ad_model.predict(A_test) 
+    except Exception as e:
+        print(f"  \033[93m[!] AD Model not loaded ({e}). Run training (-t) to generate it.\033[0m")
+        ad_model = None
+        safety_flags = [1] * len(A_test) # Default to 'safe' if no model exists
+    # -------------------------------------------------------------
+
     summaryFile = np.array([['File:',testFile,''],['DataML_DF',dP.typeDF,dP.mode]])
     
     if dP.regressor:
@@ -765,24 +809,34 @@ def validBatchPredict(testFile):
     print('  ================================================================================')
     print('  \033[1m',dP.typeDF,dP.mode,'\033[0m')
     print('  ================================================================================')
+    
+    # -------------------------------------------------------------
+    # 2. Add OOD visual warnings to the results tables
+    # -------------------------------------------------------------
     if dP.regressor:
         print('   Real \t| Predicted \t| Delta')
         print('  --------------------------------------------------------------------------------')
         for i in range(0,len(pred)):
-            print("   {0:.4f}\t| {1:.4f}\t| {2:.4f}".format(Cl_test[i], pred[i], delta[i]))
-            #print("   {0:.4f}  ".format(pred[i]))
+            # Create a yellow [OOD] tag if the sample triggered the AD model
+            ood_tag = "  \033[1m[OOD]\033[0m" if safety_flags[i] == -1 else ""
+            
+            print("   {0:.4f}\t| {1:.4f}\t| {2:.4f}{3}".format(Cl_test[i], pred[i], delta[i], ood_tag))
             summaryFile = np.vstack((summaryFile,[pred[i],'','']))
+            
         print('  --------------------------------------------------------------------------------')
         print('  ',dP.metric,'= {0:.4f}'.format(score))
         print('   R^2 = {0:.4f}'.format(r2_score(Cl_test, pred)))
         print('   StDev = {0:.2f}'.format(stdev(delta)))
+        
     else:
         print('   Prediction\t| Probability')
         print('  --------------------------------------------------------------------------------')
         for i in range(0,len(pred)):
+            ood_tag = "  \033[93m[OOD]\033[0m" if safety_flags[i] == -1 else ""
+            
             ind = np.where(proba[i]==np.max(proba[i]))[0]
             for j in range(len(ind)):
-                print("   {0:.4f}\t| {1:.4f} ".format(pred_classes[ind[j]], 100*proba[i][ind[j]]))
+                print("   {0:.4f}\t| {1:.4f} {2}".format(pred_classes[ind[j]], 100*proba[i][ind[j]], ood_tag))
                 summaryFile = np.vstack((summaryFile,[i, pred_classes[ind[j]],100*proba[i][ind[j]]]))
             print("")
         
@@ -826,7 +880,7 @@ def genMissingData(testFile, param, min, max, step):
     def f(x):
         R_tmp = R.copy()
         R_tmp[0][int(param)] = x
-        pred, pred_classes, proba = getPrediction(dP, df, R_tmp, le, norm)
+        pred, pred_classes, proba = getPrediction(dP, df, R_tmp, le, norm, ad_model)
         return pred[0], pred[0] - perf
             
     print('\n  ================================================================================')
