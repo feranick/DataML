@@ -29,7 +29,7 @@ def DataML_DAE():
 class Conf():
     def __init__(self):
     
-        #################################
+        ####################################
         ### Types of noise:
         ### Set using: typeNoise
         ### - Random (default)
@@ -39,13 +39,14 @@ class Conf():
         ###
         ### Activation functions:
         ### Outer layers
-        ### Set using: outerActivation
+        ### Set using: activation
         ### - linear
         ### - sigmoid
-        ### Inner activation
+        ### Inner activation (default: elu)
+        ### Set using: innerActivation
         ### - elu
         ### - relu
-        #################################
+        ####################################
         
         self.appName = "DataML_DAE"
         confFileName = "DataML_DAE.ini"
@@ -80,7 +81,7 @@ class Conf():
             'dropout' : 0,
             'l_rate' : 0.001,
             'l_rdecay' : 0.9,
-            'outerActivation' : 'linear',
+            'activation' : 'linear',
             'innerActivation' : 'elu',
             'typeNoise' : 'Random',
             'fitPolyDegree' : 3,
@@ -121,8 +122,8 @@ class Conf():
             self.dropout = self.conf.getfloat('Parameters','dropout')
             self.l_rate = self.conf.getfloat('Parameters','l_rate')
             self.l_rdecay = self.conf.getfloat('Parameters','l_rdecay')
-            self.outerActivation = self.conf.get('Parameters','outerActivation')
-            self.innerActivation = self.conf.get('Parameters','innerActivation')
+            self.activation = self.conf.get('Parameters','activation')
+            self.innerActivation = self.conf.get('Parameters','innerActivation', fallback='elu')
             self.typeNoise = self.conf.get('Parameters','typeNoise')
             self.fitPolyDegree = self.conf.getint('Parameters','fitPolyDegree')
             self.numColSwaps = self.conf.getint('Parameters','numColSwaps')
@@ -353,6 +354,8 @@ def augment(learnFile,augFlag):
             print("  Trained DAE model\n")
             return
         
+        
+    printParam(dP)
     if success !=0:
         tag = "_"+dP.typeNoise
         if dP.removeSpurious:
@@ -540,6 +543,7 @@ def swapValuesColumn(dP, A):
 # Train Autoencoder
 #************************************
 def trainAutoencoder(dP, noisyA, A, file):
+    printParam(dP)
     import keras
     #input = keras.Input(shape=(A.shape[1],),sparse=True)
     input = keras.Input(shape=(A.shape[1],))
@@ -572,9 +576,9 @@ def trainAutoencoder(dP, noisyA, A, file):
         else:
             for i in range(len(dP.net_arch)-1,-1,-1):
                 decoded = keras.layers.Dense(dP.net_arch[i], activation=dP.innerActivation)(decoded)
-        decoded = keras.layers.Dense(A.shape[1], activation=dP.outerActivation)(decoded)
+        decoded = keras.layers.Dense(A.shape[1], activation=dP.activation)(decoded)
     else:
-        decoded = keras.layers.Dense(A.shape[1], activation=dP.outerActivation)(encoded)
+        decoded = keras.layers.Dense(A.shape[1], activation=dP.activation)(encoded)
     
     ###############
     # Autoencoder
@@ -774,6 +778,42 @@ def plotData(dP, A, newA, feat, normFlag, title, plotFile):
         pdf.savefig()
         plt.close()
     pdf.close()
+    
+#************************************
+# Print NN Info
+#************************************
+def printParam(dP):
+    print('  ================================================')
+    print('  \033[1m DAE \033[0m - Parameters')
+    print('  ================================================')
+    print('  Linear Architecture:',dP.linear_net)
+    print('  Architecture:', dP.net_arch, '->', dP.encoded_dim)
+    print('  Outer Activation function:', dP.activation)
+    print('  Inner Activation function:', dP.innerActivation)
+    print('  Reg L1:',dP.regL1)
+    print('  Dropout:', dP.dropout)
+    print('  Learning rate:', dP.l_rate)
+    print('  Learning decay rate:', dP.l_rdecay)
+
+    print('  Batch size:', dP.batch_size)
+    print('  Epochs:',dP.epochs)
+    print('  Min loss dae:',dP.min_loss_dae)
+    print('  Num Additions:',dP.numAdditions)
+    print('  Num Added Noisy Data Blocks:', dP.numAddedNoisyDataBlocks)
+    print('  Max Perc Noise Distribution:', dP.percNoiseDistrMax)
+    print('  Post-Generation Noise:',dP.postGenerationNoise)
+    print('  Post-Generation Noise Max Perc:',dP.postGenerationNoiseMax)
+    
+    print('  Type Noise:',dP.typeNoise)
+    print('  Num Col Swaps:',dP.numColSwaps)
+    
+    print('  Remove Spurious:',dP.removeSpurious)
+    print('  Normalize:',dP.normalize)
+    print('  Normalize Label:',dP.normalizeLabel)
+
+    print('  Metric for Best Model:', dP.metricBestModel)
+    
+    print('  ================================================\n')
 
 #************************************
 # Lists the program usage
