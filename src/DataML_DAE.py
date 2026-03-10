@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
-* version: 2026.03.06.3
+* version: 2026.03.10.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -37,10 +37,14 @@ class Conf():
         ### - RandomXFit
         ### - ColumnValueSwap
         ###
-        ### Activation function:
-        ### Set using: activation
+        ### Activation functions:
+        ### Outer layers
+        ### Set using: outerActivation
         ### - linear
         ### - sigmoid
+        ### Inner activation
+        ### - elu
+        ### - relu
         #################################
         
         self.appName = "DataML_DAE"
@@ -76,7 +80,8 @@ class Conf():
             'dropout' : 0,
             'l_rate' : 0.001,
             'l_rdecay' : 0.9,
-            'activation' : 'linear',
+            'outerActivation' : 'linear',
+            'innerActivation' : 'elu',
             'typeNoise' : 'Random',
             'fitPolyDegree' : 3,
             'numColSwaps' : 10,
@@ -116,7 +121,8 @@ class Conf():
             self.dropout = self.conf.getfloat('Parameters','dropout')
             self.l_rate = self.conf.getfloat('Parameters','l_rate')
             self.l_rdecay = self.conf.getfloat('Parameters','l_rdecay')
-            self.activation = self.conf.get('Parameters','activation')
+            self.outerActivation = self.conf.get('Parameters','outerActivation')
+            self.innerActivation = self.conf.get('Parameters','innerActivation')
             self.typeNoise = self.conf.get('Parameters','typeNoise')
             self.fitPolyDegree = self.conf.getint('Parameters','fitPolyDegree')
             self.numColSwaps = self.conf.getint('Parameters','numColSwaps')
@@ -540,35 +546,35 @@ def trainAutoencoder(dP, noisyA, A, file):
     ############
     # Encoder
     ############
-    encoded = keras.layers.Dense(A.shape[1]-1, activation='elu',activity_regularizer=keras.regularizers.l1(dP.regL1))(input)
+    encoded = keras.layers.Dense(A.shape[1]-1, activation=dP.innerActivation,activity_regularizer=keras.regularizers.l1(dP.regL1))(input)
     if dP.deepAutoencoder:
         if dP.linear_net:
             if A.shape[1] > dP.encoded_dim+2:
                 for i in range(A.shape[1]-1,dP.encoded_dim+1,-1):
-                    encoded = keras.layers.Dense(i-1,  activation='elu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
+                    encoded = keras.layers.Dense(i-1,  activation=dP.innerActivation,activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
                     encoded = keras.layers.Dropout(dP.dropout)(encoded)
         else:
             for i in range(len(dP.net_arch)):
-                encoded = keras.layers.Dense(dP.net_arch[i],  activation='elu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
+                encoded = keras.layers.Dense(dP.net_arch[i],  activation=dP.innerActivation,activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
                 encoded = keras.layers.Dropout(dP.dropout)(encoded)
-        encoded = keras.layers.Dense(dP.encoded_dim,activation='elu',activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
+        encoded = keras.layers.Dense(dP.encoded_dim,activation=dP.innerActivation,activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
         encoded = keras.layers.Dropout(dP.dropout)(encoded)
         
     ############
     # Decoder
     ############
     if dP.deepAutoencoder:
-        decoded = keras.layers.Dense(dP.encoded_dim+1,  activation='elu')(encoded)
+        decoded = keras.layers.Dense(dP.encoded_dim+1,  activation=dP.innerActivation)(encoded)
         if dP.linear_net:
             if A.shape[1] > dP.encoded_dim+2:
                 for i in range(dP.encoded_dim+2,A.shape[1],1):
-                    decoded = keras.layers.Dense(i, activation='elu')(decoded)
+                    decoded = keras.layers.Dense(i, activation=dP.innerActivation)(decoded)
         else:
             for i in range(len(dP.net_arch)-1,-1,-1):
-                decoded = keras.layers.Dense(dP.net_arch[i], activation='elu')(decoded)
-        decoded = keras.layers.Dense(A.shape[1], activation=dP.activation)(decoded)
+                decoded = keras.layers.Dense(dP.net_arch[i], activation=dP.innerActivation)(decoded)
+        decoded = keras.layers.Dense(A.shape[1], activation=dP.outerActivation)(decoded)
     else:
-        decoded = keras.layers.Dense(A.shape[1], activation=dP.activation)(encoded)
+        decoded = keras.layers.Dense(A.shape[1], activation=dP.outerActivation)(encoded)
     
     ###############
     # Autoencoder
