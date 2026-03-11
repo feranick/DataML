@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
-* version: 2026.03.11.2
+* version: 2026.03.11.3
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -722,6 +722,16 @@ def generateData(dP, autoencoder, En, A, M, norm):
     # Generate new uniform points (adding 50% more data to act as probes)
     num_random = int(0.50 * A.shape[0])
     random_seeds = np.random.uniform(low=low_bounds, high=high_bounds, size=(num_random, A.shape[1]))
+    
+    # Prevent the DAE from hallucinating by ensuring the probes
+    # strictly belong to valid discrete pillars BEFORE prediction
+    # This only applies to discrete parameters
+    for i in range(A.shape[1]):
+        unique_vals = np.unique(A[:, i])
+        if len(unique_vals) <= dP.discreteThreshold:
+            # Replace the uniform random numbers with valid physical states
+            random_seeds[:, i] = np.random.choice(unique_vals, size=num_random)
+    # ---------------------------------------
         
     # APPEND the random seeds to the original dataset
     seeds = np.vstack((A, random_seeds))
