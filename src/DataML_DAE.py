@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
-* version: 2026.03.11.3
+* version: 2026.03.11.4
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -294,6 +294,11 @@ def generate(csvFile):
 #***********************************************
 def augment(learnFile,augFlag):
     dP = Conf()
+    
+    # Read the raw header before any normalization
+    M_raw = readFile(learnFile)
+    En_orig = M_raw[0, :]
+    
     try:
         En, A, M, empty = readLearnFileDAE(learnFile, True, dP)
         if empty:
@@ -347,9 +352,9 @@ def augment(learnFile,augFlag):
         
         if augFlag:
             if val_loss < dP.min_loss_dae:
-                A_tmp = generateData(dP, dae, En, A, M, norm)
+                A_tmp = generateData(dP, dae, A, M, norm)
                 
-                # Snap generated discrete data
+                # Snap generated discrete data & conditionally filter labels
                 A_tmp = snap_discrete_features(orig_physical_A, A_tmp, dP.discreteThreshold)
                 
                 newA = np.vstack([newA, A_tmp])
@@ -367,15 +372,19 @@ def augment(learnFile,augFlag):
     if success !=0:
         tag = "_"+dP.typeNoise
         if dP.removeSpurious:
-            newA = removeSpurious(A, newA, norm, dP)
+            # Pass physical space matrices directly to avoid floating point truncation issues
+            newA = removeSpurious(orig_physical_A, newA, dP)
             print("  Spurious data removed.")
             tag += '_noSpur'
-        newTrain = np.vstack([En, newA])
+            
+        newTrain = np.vstack([En_orig, newA])
         
         # USE total_added_rows FOR PRINTS AND FILENAMES
         print("\n  Added", str(total_added_rows), "new data points")
-        newFile = rootFile + '_numAdded' + str(total_added_rows) + tag 
-        saveLearnFile(dP, newA, newFile, "")
+        newFile = rootFile + '_numAdded' + str(total_added_rows) + tag  
+        
+        # Use newTrain to preserve header row for DataML_DF compatibility
+        saveLearnFile(dP, newTrain, newFile, "")
         
         if dP.plotAugmData:
             if dP.normalize:
@@ -386,15 +395,18 @@ def augment(learnFile,augFlag):
     else:
         print("  No new training data created. Try to increse numAdditions or/and min_loss_dae.\n")
 
+
 #******************************************************
 # Noise generation
 #******************************************************
 def getAmin(A):
     A_min = []
     for i in range(A.shape[1]):
-        A_min_single = min(x for x in A[:,i] if x != 0)
+        # Prevent crash if column is entirely zeros
+        non_zero = A[:, i][A[:, i] != 0]
+        A_min_single = non_zero.min() if non_zero.size > 0 else 0.0
         A_min.append(A_min_single)
-    return np.hstack(A_min)
+    return np.array(A_min)
     
 # ---------------------------------
 # Create new Training data
@@ -656,11 +668,9 @@ def trainAutoencoder(dP, noisyA, A, file):
 #************************************
 # Generate data from Autoencoder
 #************************************
-def removeSpurious(A, T, norm, dP):
-    if dP.normalize:
-        A_min = norm.transform_inverse(np.asarray([getAmin(A)]))[0]
-    else:
-        A_min = getAmin(A)
+def removeSpurious(A_physical, T, dP):
+    # Run purely on physical matrix to avoid norm/denorm floating point truncation
+    A_min = getAmin(A_physical)
     for i in range(T.shape[0]):
         for j in range(T.shape[1]):
             if T[i,j] < A_min[j]:
@@ -670,83 +680,94 @@ def removeSpurious(A, T, norm, dP):
 #**************************************************************************
 # Snaps generated data to discrete steps if they are close.
 #    PURGES the entire row if the generated data falls too far
-#     into the invalid 'void' between steps.
+#    into the invalid 'void' between steps.
 #**************************************************************************
 def snap_discrete_features(real_features, synthetic_features, discrete_threshold=10, tolerance=0.15):
     corrected_synthetic = np.copy(synthetic_features)
     num_features = real_features.shape[1]
-    
-    # A boolean mask to track which rows are physically valid
     valid_mask = np.ones(synthetic_features.shape[0], dtype=bool)
     
-    print("\n  ================================================================================")
-    print("   Physical Filter: Snapping and Purging Discrete Hallucinations")
-    print("  ================================================================================")
-    
-    for i in range(num_features):
-        real_col = real_features[:, i]
-        unique_vals = np.unique(real_col)
-        
+    # --- Identify discrete columns ---
+    discrete_cols = []
+    # Start at 1 to strictly protect the label column (Col 0)
+    for i in range(1, num_features):
+        unique_vals = np.unique(real_features[:, i])
         if len(unique_vals) <= discrete_threshold:
-            print(f"   [!] Col {i}: DISCRETE ({len(unique_vals)} steps). Applying strict tolerance ({tolerance})...")
+            discrete_cols.append(i)
             synth_col = synthetic_features[:, i]
-            
-            # Calculate distance to the nearest valid step
             distances = np.abs(synth_col[:, np.newaxis] - unique_vals)
             min_distances = distances.min(axis=1)
             closest_indices = distances.argmin(axis=1)
-            
-            # 1. PURGE: If distance is greater than tolerance, mark row as invalid
             valid_mask = valid_mask & (min_distances <= tolerance)
-            
-            # 2. SNAP: Force the remaining valid points cleanly onto the step
             corrected_synthetic[:, i] = unique_vals[closest_indices]
-            
         else:
             print(f"   [v] Col {i}: CONTINUOUS. Preserving variance.")
-            
-    # Apply the mask to drop the bad rows
+    
+    # --- Constrain label range per discrete combination ---
+    if discrete_cols:
+        # For each synthetic row, find the matching discrete combination
+        # in real data and constrain col 0 to the observed range
+        real_discrete = real_features[:, discrete_cols]
+        synth_discrete = corrected_synthetic[:, discrete_cols]
+        
+        label_col = 0  # The predicted parameter
+        # Calculate the global label range to ensure the margin scales correctly
+        global_label_range = real_features[:, label_col].max() - real_features[:, label_col].min()
+
+        for row_idx in range(corrected_synthetic.shape[0]):
+            if not valid_mask[row_idx]:
+                continue
+            # Find real rows with the same discrete combination
+            match_mask = np.all(real_discrete == synth_discrete[row_idx], axis=1)
+            if np.any(match_mask):
+                real_labels = real_features[match_mask, label_col]
+                label_min = real_labels.min()
+                label_max = real_labels.max()
+                label_range = label_max - label_min
+                # Allow some margin (e.g., 20% local, or 5% global if point is isolated)
+                margin = 0.2 * label_range if label_range > 0 else 0.05 * global_label_range
+                
+                if (corrected_synthetic[row_idx, label_col] < label_min - margin or
+                    corrected_synthetic[row_idx, label_col] > label_max + margin):
+                    valid_mask[row_idx] = False
+    
     purged_synthetic = corrected_synthetic[valid_mask]
     rows_removed = synthetic_features.shape[0] - purged_synthetic.shape[0]
-    
-    print(f"   [x] Purged {rows_removed} unphysical 'bridge' rows.")
-    print("  ================================================================================\n")
+    print(f"   [x] Purged {rows_removed} unphysical rows.")
     
     return purged_synthetic
 
-def generateData(dP, autoencoder, En, A, M, norm):
-    # Calculate the bounding box of the data space
-    low_bounds = 0.0 if dP.normalize else np.min(A, axis=0)
-    high_bounds = 1.0 if dP.normalize else np.max(A, axis=0)
-    
-    # Generate new uniform points (adding 50% more data to act as probes)
+def generateData(dP, autoencoder, A, M, norm):
     num_random = int(0.50 * A.shape[0])
-    random_seeds = np.random.uniform(low=low_bounds, high=high_bounds, size=(num_random, A.shape[1]))
     
-    # Prevent the DAE from hallucinating by ensuring the probes
-    # strictly belong to valid discrete pillars BEFORE prediction
-    # This only applies to discrete parameters
-    for i in range(A.shape[1]):
+    # Clone real rows to keep Labels and Discrete columns correlated
+    random_indices = np.random.choice(A.shape[0], size=num_random, replace=True)
+    random_seeds = np.copy(A[random_indices])
+    
+    # Jitter only the continuous columns
+    for i in range(1, A.shape[1]):
         unique_vals = np.unique(A[:, i])
-        if len(unique_vals) <= dP.discreteThreshold:
-            # Replace the uniform random numbers with valid physical states
-            random_seeds[:, i] = np.random.choice(unique_vals, size=num_random)
-    # ---------------------------------------
-        
-    # APPEND the random seeds to the original dataset
+        if len(unique_vals) > dP.discreteThreshold:
+            variance = dP.percNoiseDistrMax * np.std(A[:, i])
+            random_seeds[:, i] += np.random.uniform(-variance, variance, size=num_random)
+            
     seeds = np.vstack((A, random_seeds))
-    
-    # Project all seeds (original + random) onto the learned manifold
     normDea = autoencoder.predict(seeds)
     
     if dP.postGenerationNoise:
-        noise_magnitude = dP.postGenerationNoiseMax  
-        noise = np.random.normal(loc=0.0, scale=noise_magnitude, size=normDea.shape)
+        noise = np.random.normal(loc=0.0, scale=dP.postGenerationNoiseMax, size=normDea.shape)
+        # Protect Label and Discrete features from post-generation noise
+        noise[:, 0] = 0.0 
+        for i in range(1, A.shape[1]):
+            unique_vals = np.unique(A[:, i])
+            if len(unique_vals) <= dP.discreteThreshold:
+                noise[:, i] = 0.0
+                
         normDea = normDea + noise
     
     if dP.normalize:
         normDea = norm.transform_inverse(normDea)
-
+    
     return normDea
  
 #************************************
