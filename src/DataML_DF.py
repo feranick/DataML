@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2026.03.10.2
+* version: 2026.03.11.1
 * Uses: sklearn, tabpfn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -459,6 +459,19 @@ def train(learnFile, testFile):
 
     delta = pred - Cl_test
     
+    if dP.trainFullData and testFile is None:
+        from sklearn.model_selection import cross_val_score, RepeatedKFold, RepeatedStratifiedKFold
+        
+        if dP.regressor:
+            cv = RepeatedKFold(n_splits=5, n_repeats=3, random_state=dP.random_state)
+            scoring_metric = 'r2'
+        else:
+            cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=3, random_state=dP.random_state)
+            scoring_metric = 'accuracy'
+            
+        # Calculate the true out-of-bag generalization score
+        cv_scores = cross_val_score(df, A, Cl2, cv=cv, scoring=scoring_metric, n_jobs=dP.n_jobs)
+    
     printParamDF(dP)
     
     print('\n  ================================================================================')
@@ -479,8 +492,16 @@ def train(learnFile, testFile):
             
     print('  --------------------------------------------------------------------------------')
     print('  ',dP.metric,'= {0:.4f}'.format(score))
-    #print('   R^2 = {0:.4f}'.format(df.score(A_test, Cl2_test)))
-    print('   R^2 = {0:.4f}'.format(r2_score(Cl_test, pred)))
+    
+    if dP.trainFullData and testFile is None:
+        print('   Subset R^2 (Memorized) = {0:.4f}'.format(r2_score(Cl_test, pred)))
+        print('   \033[1mTrue CV R^2 (Generalization) = {0:.4f}\033[0m'.format(cv_scores.mean()))
+        final_score = cv_scores.mean()
+    else:
+        print('   R^2 = {0:.4f}'.format(r2_score(Cl_test, pred)))
+        final_score = r2_score(Cl_test, pred)
+    # ---------------------------------------
+    
     print('   StDev = {0:.2f}'.format(stdev(delta)))
     print('  ================================================================================\n')
     
@@ -582,7 +603,7 @@ def train(learnFile, testFile):
     createConfigFileWeb(En)
     
     print(' Scikit-learn v.',str(sklearn.__version__),'\n')
-    return r2_score(Cl_test, pred)
+    return final_score
     
 #************************************
 # Prediction - frontend
