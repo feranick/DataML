@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
-* version: 2026.03.10.2
+* version: 2026.03.11.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -97,6 +97,7 @@ class Conf():
             'removeSpurious' : True,
             'normalize' : True,
             'normalizeLabel' : True,
+            'discreteThreshold' : 5,
             'plotAugmData' : False,
             'stopAtBest' : False,
             'saveBestModel' : False,
@@ -138,6 +139,7 @@ class Conf():
             self.removeSpurious = self.conf.getboolean('Parameters','removeSpurious')
             self.normalize = self.conf.getboolean('Parameters','normalize')
             self.normalizeLabel = self.conf.getboolean('Parameters','normalizeLabel')
+            self.discreteThreshold = self.conf.getint('Parameters','discreteThreshold', fallback=5)
             self.plotAugmData = self.conf.getboolean('Parameters','plotAugmData')
             self.stopAtBest = self.conf.getboolean('Parameters','stopAtBest')
             self.saveBestModel = self.conf.getboolean('Parameters','saveBestModel')
@@ -307,8 +309,10 @@ def augment(learnFile,augFlag):
         with open(dP.norm_file, "rb") as f:
             norm = pickle.load(f)
         newA = norm.transform_inverse(M[1:,:])
+        orig_physical_A = norm.transform_inverse(A)
     else:
         newA = A
+        orig_physical_A = A
         norm = 0
     
     if dP.plotAugmData:
@@ -344,6 +348,10 @@ def augment(learnFile,augFlag):
         if augFlag:
             if val_loss < dP.min_loss_dae:
                 A_tmp = generateData(dP, dae, En, A, M, norm)
+                
+                # Snap generated discrete data
+                A_tmp = snap_discrete_features(orig_physical_A, A_tmp, dP.discreteThreshold)
+                
                 newA = np.vstack([newA, A_tmp])
                 success += 1
                 total_added_rows += A_tmp.shape[0]  # UPDATE TRACKER
@@ -658,6 +666,35 @@ def removeSpurious(A, T, norm, dP):
             if T[i,j] < A_min[j]:
                 T[i,j] = 0
     return T
+
+def snap_discrete_features(real_features, synthetic_features, discrete_threshold=5):
+    # Create a copy so we don't mutate the original synthetic matrix
+    corrected_synthetic = np.copy(synthetic_features)
+    num_features = real_features.shape[1]
+    
+    print("\n  ================================================================================")
+    print("   Detecting and Correcting Discrete Physical Parameters in Synthetic Data")
+    print("  ================================================================================")
+    
+    for i in range(num_features):
+        real_col = real_features[:, i]
+        unique_vals = np.unique(real_col)
+        
+        # Heuristic: If a column has very few unique values, it is discrete
+        if len(unique_vals) <= discrete_threshold:
+            print(f"   [!] Col {i}: DISCRETE detected ({len(unique_vals)} unique steps). Snapping synthetic data...")
+            synth_col = synthetic_features[:, i]
+            
+            # Vectorized Snapping
+            distances = np.abs(synth_col[:, np.newaxis] - unique_vals)
+            closest_indices = distances.argmin(axis=1)
+            corrected_synthetic[:, i] = unique_vals[closest_indices]
+            
+        else:
+            print(f"   [v] Col {i}: CONTINUOUS detected ({len(unique_vals)} unique values). Leaving variance intact.")
+            
+    print("  ================================================================================\n")
+    return corrected_synthetic
 
 def generateData(dP, autoencoder, En, A, M, norm):
     # Calculate the bounding box of the data space
