@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
-* version: 2026.03.11.1
+* version: 2026.03.11.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -667,34 +667,52 @@ def removeSpurious(A, T, norm, dP):
                 T[i,j] = 0
     return T
 
-def snap_discrete_features(real_features, synthetic_features, discrete_threshold=5):
-    # Create a copy so we don't mutate the original synthetic matrix
+#**************************************************************************
+# Snaps generated data to discrete steps if they are close.
+#    PURGES the entire row if the generated data falls too far
+#     into the invalid 'void' between steps.
+#**************************************************************************
+def snap_discrete_features(real_features, synthetic_features, discrete_threshold=10, tolerance=0.15):
     corrected_synthetic = np.copy(synthetic_features)
     num_features = real_features.shape[1]
     
+    # A boolean mask to track which rows are physically valid
+    valid_mask = np.ones(synthetic_features.shape[0], dtype=bool)
+    
     print("\n  ================================================================================")
-    print("   Detecting and Correcting Discrete Physical Parameters in Synthetic Data")
+    print("   Physical Filter: Snapping and Purging Discrete Hallucinations")
     print("  ================================================================================")
     
     for i in range(num_features):
         real_col = real_features[:, i]
         unique_vals = np.unique(real_col)
         
-        # Heuristic: If a column has very few unique values, it is discrete
         if len(unique_vals) <= discrete_threshold:
-            print(f"   [!] Col {i}: DISCRETE detected ({len(unique_vals)} unique steps). Snapping synthetic data...")
+            print(f"   [!] Col {i}: DISCRETE ({len(unique_vals)} steps). Applying strict tolerance ({tolerance})...")
             synth_col = synthetic_features[:, i]
             
-            # Vectorized Snapping
+            # Calculate distance to the nearest valid step
             distances = np.abs(synth_col[:, np.newaxis] - unique_vals)
+            min_distances = distances.min(axis=1)
             closest_indices = distances.argmin(axis=1)
+            
+            # 1. PURGE: If distance is greater than tolerance, mark row as invalid
+            valid_mask = valid_mask & (min_distances <= tolerance)
+            
+            # 2. SNAP: Force the remaining valid points cleanly onto the step
             corrected_synthetic[:, i] = unique_vals[closest_indices]
             
         else:
-            print(f"   [v] Col {i}: CONTINUOUS detected ({len(unique_vals)} unique values). Leaving variance intact.")
+            print(f"   [v] Col {i}: CONTINUOUS. Preserving variance.")
             
+    # Apply the mask to drop the bad rows
+    purged_synthetic = corrected_synthetic[valid_mask]
+    rows_removed = synthetic_features.shape[0] - purged_synthetic.shape[0]
+    
+    print(f"   [x] Purged {rows_removed} unphysical 'bridge' rows.")
     print("  ================================================================================\n")
-    return corrected_synthetic
+    
+    return purged_synthetic
 
 def generateData(dP, autoencoder, En, A, M, norm):
     # Calculate the bounding box of the data space
