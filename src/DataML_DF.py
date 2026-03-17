@@ -1050,7 +1050,7 @@ def makeOptParameters(dP, ind):
     else:
         print("\n using existing file: ",dP.optParFile)
         
-    print(" Next training wtih DataML_DF will be done in optimization mode. \n")
+    print(" Next training with DataML_DF will be done in optimization mode. \n")
     dP.updateConfig('Parameters','optimizeParameters','True')
     
 #************************************
