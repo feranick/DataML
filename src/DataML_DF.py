@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2026.03.18.2
+* version: 2026.03.18.3
 * Uses: sklearn, tabpfn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -1017,15 +1017,12 @@ def makeOptParameters(dP, ind):
     import json
     flag = True
     if ind == "1":
-        grid = {"random_state": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
-            "max_depth": [1,2,3,4,5,6,7,8]}
+        grid = {"max_depth": [1,2,3,4,5,6,7,8]}
     elif ind == "2":
-        grid = {"random_state": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
-            "max_depth": [1,2,3,4,5,6,7,8],
+        grid = {"max_depth": [1,2,3,4,5,6,7,8],
             "max_features": [0.1,0.2,0.3,0.4]}
     elif ind == "3":
-        grid = {"random_state": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
-            "max_depth": [1,2,3,4,5,6,7,8],
+        grid = {"max_depth": [1,2,3,4,5,6,7,8],
             "max_features": [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]}
     elif ind == "4":
         grid = {"max_features": [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]}
@@ -1033,12 +1030,15 @@ def makeOptParameters(dP, ind):
         grid = {"n_estimators": [1,5,10,15,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200]}
     elif ind == "6":
         grid = {"n_estimators": [1,5,10,15,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200],
-            "random_state": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
             "max_depth": [1,2,3,4,5,6,7,8]}
     elif ind == "7":
         grid = {"n_estimators": [1,5,10,15,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200],
             "max_features": [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]}
     elif ind == "8":
+        grid = {"random_state": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+            "max_depth": [1,2,3,4,5,6,7,8],
+            "max_features": [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]}
+    elif ind == "9":
         grid = {"random_state": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
             "max_depth": [1,2,3,4,5,6,7,8],
             "n_estimators": [1,5,10,15,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200],
@@ -1095,14 +1095,15 @@ def usage():
     print('\n Run hyperparameter optimization (with external validation):')
     print('  DataML_DF -o <type of optimization> <learningFile> <validFile>')
     print('\n Types of optimization:')
-    print('  1 - random_state, max_depth')
-    print('  2 - random_state, max_depth, max_features (restricted)')
-    print('  3 - random_state, max_depth, max_features')
+    print('  1 - max_depth')
+    print('  2 - max_depth, max_features (restricted)')
+    print('  3 - max_depth, max_features')
     print('  4 - max_features')
     print('  5 - n_estimators [1-200]')
-    print('  6 - n_estimators [1-200], random_state, max_depth')
+    print('  6 - n_estimators [1-200], max_depth')
     print('  7 - n_estimators [1-200], max_features')
-    print('  8 - n_estimators [1-200], random_state, max_depth, max_features')
+    print('  8 - random_state, max_depth, max_features')
+    print('  9 - n_estimators [1-200], random_state, max_depth, max_features')
     print('  else - custom file\n')
     
     print(' Requires python 3.x. Not compatible with python 2.x\n')
