@@ -117,7 +117,7 @@ class Conf():
     
     def sysDef(self):
         self.conf['System'] = {
-            'random_state' : 1,
+            'random_state' : 42,
             'n_jobs' : -1,
             'saveAsTxt' : True,
             }
