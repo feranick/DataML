@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2026.03.18.3
+* version: 2026.03.20.1
 * Uses: sklearn, tabpfn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -1019,8 +1019,8 @@ def makeOptParameters(dP, ind):
     if ind == "1":
         grid = {"max_depth": [1,2,3,4,5,6,7,8]}
     elif ind == "2":
-        grid = {"max_depth": [1,2,3,4,5,6,7,8],
-            "max_features": [0.1,0.2,0.3,0.4]}
+        grid = {"max_depth": [1,2],
+            "max_features": [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]}
     elif ind == "3":
         grid = {"max_depth": [1,2,3,4,5,6,7,8],
             "max_features": [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]}
@@ -1096,7 +1096,7 @@ def usage():
     print('  DataML_DF -o <type of optimization> <learningFile> <validFile>')
     print('\n Types of optimization:')
     print('  1 - max_depth')
-    print('  2 - max_depth, max_features (restricted)')
+    print('  2 - max_depth (restricted), max_features')
     print('  3 - max_depth, max_features')
     print('  4 - max_features')
     print('  5 - n_estimators [1-200]')
