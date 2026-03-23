@@ -20,7 +20,7 @@ Installation
 ## Installation from available wheel package
 If available from the main site, you can install SpectraKeras by running:
 
-    python3 -m pip install --upgrade dataml-2026.03.20.1-py3-none-any.whl
+    python3 -m pip install --upgrade dataml-2026.03.23.1-py3-none-any.whl
     
 SpectraKeras_CNN and Spectrakeras_MLP are available directly from the command line.
 NOTE: The Utilities in the `Utilities` folder are not included in the package, and can be run locally as needed.
@@ -245,9 +245,9 @@ Train (Random cross validation):
   DataML_DF -o <type of optimization> <learningFile> <validFile>
 
  Types of optimization:
-  1 - max_depth
+  1 - max_depth, max_features
   2 - max_depth (restricted), max_features
-  3 - max_depth, max_features
+  3 - max_depth
   4 - max_features
   5 - n_estimators [1-200]
   6 - n_estimators [1-200], max_depth
