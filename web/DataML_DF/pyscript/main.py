@@ -212,15 +212,16 @@ async def singlePredict(event):
         print("ad_model loaded")
     except:
         ad_model = None
-        
+    
+    ad_tag = ""
     if ad_model is not None:
         safety_flags = ad_model.predict(R)
+        ad_tag_temp = ""
         for i, flag in enumerate(safety_flags):
             if flag == -1:
                 print("   WARNING: Sample features fall OUTSIDE the known Applicability Domain! Prediction may be unreliable.")
-                ad_tag = "\nWARNING: Sample features fall \nOUTSIDE the known Applicability Domain! \nPrediction may be unreliable."
-    else:
-        ad_tag = ""
+                ad_tag_temp = "\nWARNING: Sample features fall \nOUTSIDE the known Applicability Domain! \nPrediction may be unreliable."
+        ad_tag = ad_tag_temp
 
     if dP.regressor:
         if dP.normalize:
