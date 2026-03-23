@@ -1097,7 +1097,7 @@ def usage():
     print('\n Types of optimization:')
     print('  1 - max_depth, max_features')
     print('  2 - max_depth (restricted), max_features')
-    print('  3 - max_depth)
+    print('  3 - max_depth')
     print('  4 - max_features')
     print('  5 - n_estimators [1-200]')
     print('  6 - n_estimators [1-200], max_depth')
