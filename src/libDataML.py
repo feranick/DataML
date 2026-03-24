@@ -97,8 +97,8 @@ class Normalizer(object):
         return vn
 
     # Multiple samples, format as vertical stacks of singles
-    def transform_inverse(self,V):
-        return self.min + V * (self.max - self.min) / self.YnormTo
+    def transform_inverse_multiple(self,V):
+        return self.min[0] + V * (self.max[0] - self.min[0]) / self.YnormTo
 
     # format simular to original DataML file
     def transform_inverse_features(self,V):
@@ -107,6 +107,10 @@ class Normalizer(object):
             vn = (self.min[i] + + V[1:,i]*(self.max[i] - self.min[i])/self.YnormTo)
             Vn.append(vn)
         return np.vstack([V[0,:],np.vstack(Vn).T])
+        
+    # Column by column, format as vertical stacks of singles
+    def transform_inverse(self,V):
+        return self.min + V * (self.max - self.min) / self.YnormTo
 
     def save(self):
         with open(self.norm_file, 'wb') as f:
