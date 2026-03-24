@@ -308,7 +308,8 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
                 
     if dP.purgeUndefRows:
         P = purgeRows(P)
-        V = purgeRows(V)
+        if dP.validFile:
+            V = purgeRows(V)
     
     if dP.convertToNAN:
         # =========================================================
@@ -318,10 +319,10 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
         p_features = P[1:, 1:].astype(float)
         p_features[p_features == 0.0] = np.nan
         P[1:, 1:] = p_features
-    
-        v_features = V[1:, 1:].astype(float)
-        v_features[v_features == 0.0] = np.nan
-        V[1:, 1:] = v_features
+        if dP.validFile:
+            v_features = V[1:, 1:].astype(float)
+            v_features[v_features == 0.0] = np.nan
+            V[1:, 1:] = v_features
             
     if dP.saveNormalized or dP.normalizeLabel:
         norm = Normalizer(P, dP)
