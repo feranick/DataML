@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2026.03.24.2
+* version: 2026.03.24.3
 * Uses: sklearn, tabpfn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
