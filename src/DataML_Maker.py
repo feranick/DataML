@@ -51,6 +51,8 @@ class Conf():
         
         self.validRows = [x-1 for x in self.validRows]
         self.excludeRows = [x-1 for x in self.excludeRows] # <-- Converted to 0-based index
+        
+        self.numericValueForNAN = 0
     
     def dataMLMakerDef(self):
         self.conf['Parameters'] = {
@@ -307,9 +309,9 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
         V = None
                 
     if dP.purgeUndefRows:
-        P = purgeRows(P)
+        P = purgeRows(dP, P)
         if dP.validFile:
-            V = purgeRows(V)
+            V = purgeRows(dP, V)
     
     if dP.convertToNAN:
         # =========================================================
@@ -504,9 +506,9 @@ def formatSubset(A, percent, num_group_cols, strict_nonzero_valid=False):
 #************************************
 # Purge rows with undefined Cl value
 #************************************
-def purgeRows(M):
-    #condition = M[:,0] == "nan"
-    condition = np.isnan(M[:,0])
+def purgeRows(dP, M):
+    condition = M[:,0] == dP.numericValueForNAN
+    #condition = np.isnan(M[:,0])
     condition[0] = False
     M2 = M[~condition]
     print(" Shape original dataset:", M.shape)
