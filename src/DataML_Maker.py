@@ -5,7 +5,7 @@
 * DataML_Maker
 * Adds data from single file to Master Doc
 * File must be in ASCII
-* version: 2026.03.23.1
+* version: 2026.03.24.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -180,11 +180,11 @@ def main():
     rootFile += '_p' + str(predRColTag[0])
     learnFile = rootFile + '_train'
     
-    try:
-        P,V,norm = readParamFile(sys.argv[1], predRCol, rootFile, dP)
-    except Exception as e:
-        print("\033[1m" + f" Something went wrong during parsing: {e}\n" + "\033[0m")
-        return
+    #try:
+    P,V,norm = readParamFile(sys.argv[1], predRCol, rootFile, dP)
+    #except Exception as e:
+    #    print("\033[1m" + f" Something went wrong during parsing: {e}\n" + "\033[0m")
+    #    return
     
     normTag = ""
     if dP.saveNormalized or dP.normalizeLabel:
@@ -255,7 +255,6 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
             
         else:
             if dP.validRows:
-            
                 # Extract manually specified rows based on original index
                 # <-- ENSURE EXCLUDED ROWS AREN'T IN THE VALIDATION SET
                 valid_clean = [r for r in dP.validRows if r not in dP.excludeRows]
@@ -303,9 +302,13 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
                 
                 P = np.vstack([featNum, P_data_clean])
                 V = np.vstack([featNum, V_data])
+    else:
+        P = np.vstack([featNum, M])
+        V = None
                 
     if dP.purgeUndefRows:
         P = purgeRows(P)
+        V = purgeRows(V)
     
     if dP.convertToNAN:
         # =========================================================
@@ -326,7 +329,8 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
         norm.save()
     else:
         norm = None
-        saveLearnFile(V, validFile, False, dP)
+        if dP.validFile:
+            saveLearnFile(V, validFile, False, dP)
 
     return P,V, norm
     
@@ -500,7 +504,8 @@ def formatSubset(A, percent, num_group_cols, strict_nonzero_valid=False):
 # Purge rows with undefined Cl value
 #************************************
 def purgeRows(M):
-    condition = M[:,0] == 0
+    #condition = M[:,0] == "nan"
+    condition = np.isnan(M[:,0])
     condition[0] = False
     M2 = M[~condition]
     print(" Shape original dataset:", M.shape)
