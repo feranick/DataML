@@ -182,11 +182,11 @@ def main():
     rootFile += '_p' + str(predRColTag[0])
     learnFile = rootFile + '_train'
     
-    #try:
-    P,V,norm = readParamFile(sys.argv[1], predRCol, rootFile, dP)
-    #except Exception as e:
-    #    print("\033[1m" + f" Something went wrong during parsing: {e}\n" + "\033[0m")
-    #    return
+    try:
+        P,V,norm = readParamFile(sys.argv[1], predRCol, rootFile, dP)
+    except Exception as e:
+        print("\033[1m" + f" Something went wrong during parsing: {e}\n" + "\033[0m")
+        return
     
     normTag = ""
     if dP.saveNormalized or dP.normalizeLabel:
@@ -229,6 +229,11 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
     
     featNum = np.insert([x -dP.numHeadColumns+1 for x in usecols], 0,0)
 
+    # <-- REMOVE EXCLUDE ROWS
+    if dP.excludeRows:
+        M = np.delete(M, dP.excludeRows, 0)
+        print(f" Excluded {len(dP.excludeRows)} specific rows from dataset.")
+
     #***************************************
     # Handle Validation File
     #***************************************
@@ -236,12 +241,6 @@ def readParamFile(paramFile, predRCol, rootFile, dP):
         validFile = rootFile + '_test'
         
         if dP.createRandomValidSet:
-            
-            # <-- REMOVE EXCLUDE ROWS HERE FOR RANDOM SET
-            if dP.excludeRows:
-                M = np.delete(M, dP.excludeRows, 0)
-                print(f" Excluded {len(dP.excludeRows)} specific rows from dataset.")
-                
             # Global Clean for Random Split
             initial_len = len(M)
             M = np.unique(M, axis=0)
