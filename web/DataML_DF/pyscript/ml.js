@@ -1,18 +1,26 @@
 var modelPkl = 0;
 var nameSelIndex="selIndex"+transformString(window.location.pathname);
 //var nameSelIndex="selIndex_"+window.location.pathname.split('/').slice(-2)[0];
+//var nameSelIndex = "selectedIndex_KyoML_20250820_20250910_MP_Perf1"
 
 function showLog() {
-  const url="./";
+  const url = "./";
   const dropdown = document.getElementById('model');
+  if (!dropdown) return;
   const selectedText = dropdown.options[dropdown.selectedIndex].text;
+
   const log = document.getElementById("log");
+  if (log) log.href = url + "/" + selectedText + "/log.txt";
+
+  const dae = document.getElementById("dae");
+  if (dae) dae.href = url + "/" + selectedText + "/DataML_DAE.ini";
+
   const importance1 = document.getElementById("importance1");
+  if (importance1) importance1.href = url + "/" + selectedText + "/model_GradientBoostingRegressor_importances_MDI.png";
+
   const importance2 = document.getElementById("importance2");
-  log.href = url+"/"+selectedText+"/log.txt";
-  importance1.href = url+"/"+selectedText+"/model_GradientBoostingRegressor_importances_MDI.png";
-  importance2.href = url+"/"+selectedText+"/model_GradientBoostingRegressor_importances_Perm.png";
-  }
+  if (importance2) importance2.href = url + "/" + selectedText + "/model_GradientBoostingRegressor_importances_Perm.png";
+}
 
 async function selectModel() {
   document.getElementById("output").innerHTML = "";
@@ -113,7 +121,6 @@ function init() {
   modelDropdown.selectedIndex = indexToSet;
   showLog(); // Call after selectedIndex is definitively set
 }
-
 //window.onload = init();
 
 // #######  Utilities  ##################################
