@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
-* version: 2026.03.24.3
+* version: 2026.03.24.4
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
