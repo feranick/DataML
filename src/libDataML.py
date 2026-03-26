@@ -2,7 +2,7 @@
 '''
 **************************************************
 * libDataML - Library for DataML/DataML_DF
-* version: 2026.03.24.5
+* version: 2026.03.26.1
 * Uses: Keras, TensorFlow, scikit-learn
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
@@ -847,13 +847,14 @@ def printParamDF(dP):
     print('  ================================================')
     print('   Number of estimators:',dP.n_estimators,
                 '\n   Max depth:', dP.max_depth,
-                '\n   Max features:',dP.max_features,
-                '\n   Epochs/Max number of iterations:',dP.epochs,
-                '\n   Cross validation split:', str(dP.cv_split*100)+'%')
+                '\n   Max features:',dP.max_features)
+    if dP.typeDF != 'GradientBoosting':
+        print('\n   Epochs/Max number of iterations:',dP.epochs)
     if dP.fullSizeBatch:
         print('   Batch size: full')
     else:
         print('   Batch size:', dP.batch_size)
+    print('\n   Cross validation split:', str(dP.cv_split*100)+'%')
     print('   Train on full dataset:',dP.trainFullData)
     print('   Number of labels:', dP.numLabels)
     print('   Random state:', dP.random_state)

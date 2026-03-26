@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
-* version: 2026.03.24.5
+* version: 2026.03.26.1
 * Uses: sklearn, tabpfn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -396,7 +396,7 @@ def train(learnFile, testFile):
         if dP.typeDF == 'GradientBoosting':
             if dP.max_features == 0:
                 dP.max_features = None
-            df = GradientBoostingRegressor(n_estimators = dP.epochs, max_depth=dP.max_depth, max_features = dP.max_features, verbose = dP.verbose, learning_rate=dP.l_rate, random_state=dP.random_state)
+            df = GradientBoostingRegressor(n_estimators = dP.n_estimators, max_depth=dP.max_depth, max_features = dP.max_features, verbose = dP.verbose, learning_rate=dP.l_rate, random_state=dP.random_state)
         if dP.typeDF == 'DecisionTree':
             if dP.max_features == 0:
                 dP.max_features = None
@@ -413,7 +413,7 @@ def train(learnFile, testFile):
         if dP.typeDF == 'GradientBoosting':
             if dP.max_features == 0:
                 dP.max_features = None
-            df = GradientBoostingClassifier(n_estimators = dP.epochs, max_depth=dP.max_depth, max_features = dP.max_features, verbose = dP.verbose, learning_rate=dP.l_rate, random_state=dP.random_state)
+            df = GradientBoostingClassifier(n_estimators = dP.n_estimators, max_depth=dP.max_depth, max_features = dP.max_features, verbose = dP.verbose, learning_rate=dP.l_rate, random_state=dP.random_state)
         if dP.typeDF == 'DecisionTree':
             if dP.max_features == 0:
                 dP.max_features = None
@@ -1027,12 +1027,12 @@ def makeOptParameters(dP, ind):
     elif ind == "4":
         grid = {"max_features": [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]}
     elif ind == "5":
-        grid = {"n_estimators": [1,5,10,15,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200]}
+        grid = {"n_estimators": [10,20,40,60,80,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000]}
     elif ind == "6":
-        grid = {"n_estimators": [1,5,10,15,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200],
+        grid = {"n_estimators": [10,20,40,60,80,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000],
             "max_depth": [1,2,3,4,5,6,7,8]}
     elif ind == "7":
-        grid = {"n_estimators": [1,5,10,15,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200],
+        grid = {"n_estimators": [10,20,40,60,80,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000],
             "max_features": [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]}
     elif ind == "8":
         grid = {"random_state": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
@@ -1041,7 +1041,7 @@ def makeOptParameters(dP, ind):
     elif ind == "9":
         grid = {"random_state": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
             "max_depth": [1,2,3,4,5,6,7,8],
-            "n_estimators": [1,5,10,15,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200],
+            "n_estimators": [10,20,40,60,80,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000],
             "max_features": [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]}
     else:
         flag = False
@@ -1099,11 +1099,11 @@ def usage():
     print('  2 - max_depth (restricted), max_features')
     print('  3 - max_depth')
     print('  4 - max_features')
-    print('  5 - n_estimators [1-200]')
-    print('  6 - n_estimators [1-200], max_depth')
-    print('  7 - n_estimators [1-200], max_features')
+    print('  5 - n_estimators [10-1000]')
+    print('  6 - n_estimators [10-1000], max_depth')
+    print('  7 - n_estimators [10-1000], max_features')
     print('  8 - random_state, max_depth, max_features')
-    print('  9 - n_estimators [1-200], random_state, max_depth, max_features')
+    print('  9 - n_estimators [10-1000], random_state, max_depth, max_features')
     print('  else - custom file\n')
     
     print(' Requires python 3.x. Not compatible with python 2.x\n')
