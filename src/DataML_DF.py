@@ -203,15 +203,15 @@ def main():
 
     for o, a in opts:
         if o in ("-t" , "--train"):
-            #try:
-            dP.updateConfig('Parameters','featureReduction','False')
-            if len(sys.argv) == 3:
-                train(sys.argv[2], None)
-            else:
-                train(sys.argv[2], sys.argv[3])
-            #except Exception as e:
-            #    print(f" An error occurred: {e}\n")
-            #    sys.exit(2)
+            try:
+                dP.updateConfig('Parameters','featureReduction','False')
+                if len(sys.argv) == 3:
+                    train(sys.argv[2], None)
+                else:
+                    train(sys.argv[2], sys.argv[3])
+            except Exception as e:
+                print(f" An error occurred: {e}\n")
+                sys.exit(2)
             
         if o in ("-r" , "--reduce"):
             try:
