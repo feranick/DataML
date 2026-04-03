@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://pyscript.net/releases/2026.3.1/core.css">
-    <script type="module" src="https://pyscript.net/releases/2025.3.1/core.js"></script>
+    <script type="module" src="https://pyscript.net/releases/2026.3.1/core.js"></script>
     <title>DataML - pyscript version</title>
   </head>
   <body>
@@ -24,9 +24,7 @@
   <fieldset>
   <legend>Manual prediction</legend>
   <form name = "MIT_ML" id="mit_ml">
-  Model: <select name="model" id="model" onchange="selectModel()" py-change="on_model_select">
-  <option>Perf1_model1</option>
-  <option>Perf3_model1</option>
+  Model: <select name="model" id="model" onchange="selectModel()" py-change="getModel">
   </select>
   <div id="feature-entries-container">
         </div>
@@ -47,13 +45,37 @@
 
   <script type="py" src="./main.py" config="./pyscript.toml"></script>
   <script type="text/javascript" src="ml.js" ></script>
-  <script>setButtonLabel();</script>
+  
   <script>
-  init();
-  selectModel();
+  // Fetch the pre-built list of models
+  fetch('models_list.json')
+    .then(response => {
+        if (!response.ok) throw new Error("models_list.json not found.");
+        return response.json();
+    })
+    .then(models => {
+        const modelDropdown = document.getElementById("model");
+        modelDropdown.innerHTML = ''; // Clear the dropdown
+        
+        // Populate the dropdown
+        models.forEach(modelName => {
+            let option = document.createElement("option");
+            option.text = modelName;
+            modelDropdown.add(option);
+        });
+        
+        // 1. Restore the user's previously selected index (if any)
+        init(); 
+        
+        // 2. Dispatch a change event. 
+        // This automatically triggers selectModel() in JS AND getModel() in Python.
+        modelDropdown.dispatchEvent(new Event('change'));
+    })
+    .catch(error => {
+        console.error(error);
+        document.getElementById("output").innerHTML = "<b>Error:</b> Could not load models. Please ensure you run 'update_models.py' to generate 'models_list.json' first.";
+    });
   </script>
-  <py-script>
-  getModel("")
-  </pyscript>
+  
   </body>
 </html>
