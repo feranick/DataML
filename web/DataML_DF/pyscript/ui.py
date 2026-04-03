@@ -4,12 +4,11 @@
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
 * Offline tkinter UI
-* version: 2026.04.03.1
+* version: 2026.04.03.2
 * Uses: tkinter
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
 '''
-
 import os
 import re
 import csv
@@ -60,7 +59,10 @@ class DataMLOfflineApp:
         self.features = []
         self.entry_widgets = {}
 
-        self.parse_index_html('index.html')
+        # Get title from HTML if possible, but build models list from directories
+        self.get_app_title('index.html')
+        self.scan_model_directories()
+        
         self.root.title(self.app_title)
         
         self.setup_ui()
@@ -68,25 +70,34 @@ class DataMLOfflineApp:
             self.model_combo.current(0)
             self.on_model_select(None)
 
-    def parse_index_html(self, filepath):
-        """Extracts the title and model options dynamically from index.html without hardcoding."""
-        if not os.path.exists(filepath):
-            messagebox.showwarning("Warning", f"'{filepath}' not found. Cannot extract models dynamically.")
-            return
+    def get_app_title(self, filepath):
+        """Optionally extracts the title from index.html if it exists."""
+        if os.path.exists(filepath):
+            with open(filepath, 'r', encoding='utf-8') as f:
+                content = f.read()
+            title_match = re.search(r'<title>(.*?)</title>', content, re.IGNORECASE)
+            if title_match:
+                self.app_title = title_match.group(1).replace("pyscript version", "Offline Desktop Version").strip()
 
-        with open(filepath, 'r', encoding='utf-8') as f:
-            content = f.read()
+    def scan_model_directories(self):
+        """Scans the current directory for subfolders that represent valid ML models."""
+        current_dir = os.getcwd()
+        subfolders = []
 
-        # Extract Title
-        title_match = re.search(r'<title>(.*?)</title>', content, re.IGNORECASE)
-        if title_match:
-            self.app_title = title_match.group(1).replace("pyscript version", "Offline Desktop Version").strip()
+        for item in os.listdir(current_dir):
+            item_path = os.path.join(current_dir, item)
+            
+            # Check if it's a directory and not a hidden/system folder
+            if os.path.isdir(item_path) and not item.startswith('.') and item != '__pycache__':
+                # Verify it's an actual model folder by checking for required files
+                if os.path.exists(os.path.join(item_path, 'config.txt')) or os.path.exists(os.path.join(item_path, 'DataML_DF.ini')):
+                    subfolders.append(item)
 
-        # Extract Models from <select id="model">
-        select_match = re.search(r'<select[^>]*id="model"[^>]*>(.*?)</select>', content, re.DOTALL | re.IGNORECASE)
-        if select_match:
-            options = re.findall(r'<option>(.*?)</option>', select_match.group(1), re.IGNORECASE)
-            self.models = [opt.strip() for opt in options]
+        # Sort alphabetically so the dropdown is organized
+        self.models = sorted(subfolders)
+
+        if not self.models:
+            messagebox.showwarning("Warning", "No model subfolders found in the current directory.")
 
     def setup_ui(self):
         """Sets up the Tkinter GUI layout."""
@@ -103,7 +114,9 @@ class DataMLOfflineApp:
         top_frame.pack(fill=tk.X, pady=(0, 15))
 
         ttk.Label(top_frame, text="Model:", font=("Helvetica", 10, "bold")).pack(side=tk.LEFT, padx=(0, 10))
-        self.model_combo = ttk.Combobox(top_frame, values=self.models, state="readonly", width=30)
+        
+        # Use self.models populated by directory scanning
+        self.model_combo = ttk.Combobox(top_frame, values=self.models, state="readonly", width=40)
         self.model_combo.pack(side=tk.LEFT)
         self.model_combo.bind("<<ComboboxSelected>>", self.on_model_select)
 
@@ -154,7 +167,10 @@ class DataMLOfflineApp:
                 if content:
                     self.features = [feat.strip() for feat in content.split(",")]
 
-        self.predict_btn.config(text=f"Predict {folder[:5]}")
+        # Shorten button label if folder name is very long
+        display_name = folder[:15] + "..." if len(folder) > 15 else folder
+        self.predict_btn.config(text=f"Predict {display_name}")
+        
         self.build_feature_entries()
         self.log_message(f"Loaded configuration for model: {folder}")
 
@@ -238,7 +254,7 @@ class DataMLOfflineApp:
                 pred = norm.transform_inverse_single(df.predict(R))
             else:
                 pred = df.predict(R)
-            output += f" {folder[:5]} = {pred[0]:.5f}\n"
+            output += f" {folder[:15]} = {pred[0]:.5f}\n"
         else:
             with open(cfg.model_le, 'rb') as f:
                 le = pickle.load(f)
@@ -320,10 +336,9 @@ class DataMLOfflineApp:
                 le = pickle.load(f)
             summaryFile.append(['Sample', 'Predicted Value', 'Probability %'])
 
-        output = f"======================================\n Prediction for {folder[:5]}\n======================================\n"
+        output = f"======================================\n Prediction for {folder[:15]}\n======================================\n"
         overall_ad_tag = ""
 
-        # Loop columns just as in the PyScript routine 
         for i in range(1, dataDf.shape[1]):
             R = np.array([dataDf.iloc[:, i].tolist()], dtype=float)
             col_name = dataDf.columns[i]
