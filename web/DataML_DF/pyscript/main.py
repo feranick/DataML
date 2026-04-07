@@ -4,7 +4,7 @@
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
 * pyscript version
-* version: 2026.04.03.3
+* version: 2026.04.07.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -267,8 +267,8 @@ async def batchPredict(event):
     dP = Conf(ini)
 
     # Use this when opening modelPkl here.
-    #modelPkl = await getFile(folder, dP.modelName, True)
-    #df = pickle.loads(modelPkl)
+    modelPkl = await getFile(folder, dP.modelName, True)
+    df = pickle.loads(modelPkl)
 
     # Use this when opening modelPkl in JS
     #import js
@@ -333,18 +333,21 @@ async def batchPredict(event):
 
         if dP.normalize:
             R = norm.transform_valid_data(R)
+        
+        ad_tag = ""
+        ood_tag = ""
 
         if ad_model is not None:
-            safety_flags = ad_model.predict(R)
-            for j, flag in enumerate(safety_flags):
-                if flag == -1:
-                    print("   WARNING: Sample features fall OUTSIDE the known Applicability Domain! Prediction may be unreliable.")
-                    ad_tag = "\nWARNING: Sample features fall \nOUTSIDE the known Applicability Domain! \nPrediction may be unreliable."
-                    ood_tag = "[OOD]"
-        else:
-            ad_tag = ""
-            ood_tag = ""
-
+            try:
+                safety_flags = ad_model.predict(R)
+                for j, flag in enumerate(safety_flags):
+                    if flag == -1:
+                        print("   WARNING: Sample features fall OUTSIDE the known Applicability Domain! Prediction may be unreliable.")
+                        ad_tag = "\nWARNING: Sample features fall \nOUTSIDE the known Applicability Domain! \nPrediction may be unreliable."
+                        ood_tag = "[OOD]"
+            except ValueError as e:
+                print(f"   AD check skipped — {e}")
+            
         if dP.regressor:
             try:
                 if dP.normalize:
