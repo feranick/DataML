@@ -2,7 +2,7 @@
 '''
 **************************************************
 * libDataML - Library for DataML/DataML_DF
-* version: 2026.04.07.1
+* version: 2026.04.07.2
 * Uses: Keras, TensorFlow, scikit-learn
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
@@ -846,6 +846,7 @@ def printParamDF(dP):
     print('  \033[1m',dP.typeDF,dP.mode,' \033[0m- Parameters')
     print('  ================================================')
     print('   Number of estimators:',dP.n_estimators,
+                '\n   Learning rate:', dP.l_rate,
                 '\n   Max depth:', dP.max_depth,
                 '\n   Max features:',dP.max_features)
     if dP.typeDF != 'GradientBoosting':

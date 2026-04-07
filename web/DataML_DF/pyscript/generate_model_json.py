@@ -3,7 +3,7 @@
 '''
 *****************************************************
 * Generate list of models from the folder names
-* version: 2026.04.07.1
+* version: 2026.04.07.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
 '''
