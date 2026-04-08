@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * CopyOutliers
-* version: 2026.03.10.2
+* version: 2026.04.8.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -21,6 +21,7 @@ from libDataML import *
 class dP:
     saveAsTxt = True
     numCopies = 3
+    plotData = True
     
     # Define the percentile thresholds for both tails
     lower_percentile = 5  # Grabs the bottom ~25% (your 6 lowest points)
@@ -43,19 +44,19 @@ def main():
 
 def copyOutliers(file, low, high):
     # Load Learning dataset (purged)
-    En, M = readLearnFile(file)
+    En, A, M = readLearnFile(file)
     
     newFile = os.path.splitext(file)[0] + '_added'
 
     # 1. Calculate the dynamic thresholds for both tails
-    lower_threshold = np.percentile(M[:, 0], low)
-    upper_threshold = np.percentile(M[:, 0], high)
+    lower_threshold = np.percentile(A[:, 0], low)
+    upper_threshold = np.percentile(A[:, 0], high)
     
     print(f"\n Calculated lower {low}th percentile threshold: {lower_threshold:.5f}")
     print(f" Calculated upper {high}th percentile threshold: {upper_threshold:.5f}")
 
     # 2. Isolate the outliers (rows where column 0 is <= lower OR >= upper)
-    outliers = M[(M[:, 0] <= lower_threshold) | (M[:, 0] >= upper_threshold)]
+    outliers = A[(A[:, 0] <= lower_threshold) | (A[:, 0] >= upper_threshold)]
     
     print("\n Outliers found:")
     print(outliers)
@@ -65,16 +66,45 @@ def copyOutliers(file, low, high):
         duplicated_outliers = np.tile(outliers, (dP.numCopies, 1))
 
         # 4. Append them back to the main dataset
-        full_data = np.vstack((M, duplicated_outliers))
+        full_data = np.vstack((A, duplicated_outliers))
         final = np.vstack((En, full_data))
         
         print(f"\n Original matrix size: {M.shape[0]} rows")
         print(f" New anchored matrix size: {full_data.shape[0]} rows\n")
 
+        if dP.plotData:
+            plotOutliers(dP, A.shape, A, outliers, newFile+"_train-valid-plots.pdf")
+            
         # 5. Save the new "anchored" dataset
         saveLearnFile(final, newFile)
     else:
         print(f"\n No outliers found. No new file saved.")
+        
+#************************************
+# Plot outliers
+#************************************
+def plotOutliers(dP, shape, A1, A2, plotFile):
+    import matplotlib.pyplot as plt
+    from matplotlib.backends.backend_pdf import PdfPages
+    
+    pdf = PdfPages(plotFile)
+        
+    for i in range(1, shape[1]):
+        xA1 = A1[:,i]
+        yA1 = A1[:,0]
+        xA2 = A2[:,i]
+        yA2 = A2[:,0]
+        
+        #xA1,yA1 = removeZeros(dP, xA1,yA1)
+        #xA2,yA2 = removeZeros(dP, xA2,yA2)
+        plt.plot(xA1,yA1, 'bo', markersize=3)
+        plt.plot(xA2,yA2, 'ro', markersize=3)
+        plt.xlabel("col "+str(i)+" - feature parameter")
+        plt.ylabel("col 0 - predicted parameter")
+        pdf.savefig()
+        plt.close()
+    pdf.close()
+    print(" Plots saved in:", plotFile, "\n")
 
 #************************************
 # Open Learning Data
@@ -96,7 +126,7 @@ def readLearnFile(learnFile):
 
     En = M[0,:]
     A = M[1:,:]
-    return En, A
+    return En, A, M
 
 #***************************************
 # Save new learning Data
@@ -104,12 +134,12 @@ def readLearnFile(learnFile):
 def saveLearnFile(M, learnFile):
     if dP.saveAsTxt == True:
         learnFile += '.txt'
-        print(" Saving new training file (txt) in:", learnFile+"\n")
+        print(" New training file (txt) saved in:", learnFile+"\n")
         with open(learnFile, 'w') as f:
             np.savetxt(f, M, delimiter='\t', fmt='%10.6f')
     else:
         learnFile += '.h5'
-        print(" Saving new training file (hdf5) in: "+learnFile+"\n")
+        print(" New training file (hdf5) saved in: "+learnFile+"\n")
         with h5py.File(learnFile, 'w') as hf:
             hf.create_dataset("M",  data=M)
 
