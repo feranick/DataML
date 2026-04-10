@@ -881,6 +881,8 @@ def printParam(dP):
     print('  Architecture:', dP.net_arch, '->', dP.encoded_dim)
     print('  Outer Activation function:', dP.activation)
     print('  Inner Activation function:', dP.innerActivation)
+    print('  Loss Metric:', dP.lossMetric)
+    
     print('  Reg L1:',dP.regL1)
     print('  Dropout:', dP.dropout)
     print('  Learning rate:', dP.l_rate)
