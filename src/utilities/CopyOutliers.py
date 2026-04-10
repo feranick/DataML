@@ -3,7 +3,7 @@
 '''
 ***********************************************
 * CopyOutliers
-* version: 2026.04.09.1
+* version: 2026.04.10.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -68,7 +68,7 @@ def copyOutliers(file, low, high):
 
         newFile = os.path.splitext(file)[0] + '_added'
         if dP.plotData:
-            plotOutliers(dP, A.shape, A, outliers, newFile+"_train-valid-plots.pdf")
+            plotOutliers(dP, A.shape, A, outliers, newFile+"_copied-outliers-plots.pdf")
             
         # 5. Save the new "anchored" dataset
         saveLearnFile(final, newFile)
