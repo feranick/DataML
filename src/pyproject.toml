@@ -9,7 +9,7 @@ include = [
 
 [project]
 name = "DataML"
-version = "v2026.04.10.1"
+version = "v2016.04.10.2"
 dependencies = [
     "numpy",
     "h5py",

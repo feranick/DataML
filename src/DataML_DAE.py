@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
-* version: 2026.04.10.1
+* version: 2016.04.10.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -29,7 +29,7 @@ def DataML_DAE():
 class Conf():
     def __init__(self):
     
-        ####################################
+        #####################################################
         ### Types of noise:
         ### Set using: typeNoise
         ### - Random (default)
@@ -46,7 +46,10 @@ class Conf():
         ### Set using: innerActivation
         ### - elu
         ### - relu
-        ####################################
+        ### Loss Metric:
+        ### - mean_squared_error (default, for ordered data)
+        ### - mean_absolute_error (for scattered data)
+        #####################################################
         
         self.appName = "DataML_DAE"
         confFileName = "DataML_DAE.ini"
@@ -82,6 +85,7 @@ class Conf():
             'l_rate' : 0.001,
             'l_rdecay' : 0.9,
             'activation' : 'linear',
+            'lossMetric' : 'mean_squared_error',
             'innerActivation' : 'elu',
             'typeNoise' : 'Random',
             'fitPolyDegree' : 3,
@@ -124,6 +128,7 @@ class Conf():
             self.l_rate = self.conf.getfloat('Parameters','l_rate')
             self.l_rdecay = self.conf.getfloat('Parameters','l_rdecay')
             self.activation = self.conf.get('Parameters','activation')
+            self.lossMetric = self.conf.get('Parameters','lossMetric', fallback='mean_squared_error')
             self.innerActivation = self.conf.get('Parameters','innerActivation', fallback='elu')
             self.typeNoise = self.conf.get('Parameters','typeNoise')
             self.fitPolyDegree = self.conf.getint('Parameters','fitPolyDegree')
@@ -631,7 +636,7 @@ def trainAutoencoder(dP, noisyA, A, file):
     else:
         print("  Initializing new DAE model:",dP.modelName,"\n")
         autoencoder = keras.Model(input, decoded)
-        autoencoder.compile(loss='mean_squared_error', optimizer = optim)
+        autoencoder.compile(loss = dP.lossMetric, optimizer = optim)
         
     tbLog = keras.callbacks.TensorBoard(log_dir=dP.tb_directory, histogram_freq=120,
             write_graph=True, write_images=False)
