@@ -4,7 +4,7 @@
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
 * Offline tkinter UI
-* version: 2016.04.10.2
+* version: 2026.04.11.1
 * Uses: tkinter
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
