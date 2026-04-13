@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_VAE
 * Generative AI via Variational Autoencoder
-* version: 2026.04.13.1
+* version: 2026.04.13.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -15,122 +15,40 @@ import sys, os.path, h5py, pickle, configparser, ast, getopt
 from numpy.polynomial.polynomial import Polynomial as polyfit
 from numpy.polynomial.polynomial import polyval as polyval
 
-import tensorflow as tf
 import keras
+from keras import ops
+from keras import random
 
 from libDataML import *
 
 #***************************************************
-# Custom VAE Classes (Required for Probabilistic Sampling)
+# Custom VAE Classes (Backend-Agnostic)
 #***************************************************
 @keras.saving.register_keras_serializable()
 class Sampling(keras.layers.Layer):
     """Uses (z_mean, z_log_var) to sample z, the vector encoding the input."""
     def call(self, inputs):
         z_mean, z_log_var = inputs
-        batch = tf.shape(z_mean)[0]
-        dim = tf.shape(z_mean)[1]
-        epsilon = tf.keras.backend.random_normal(shape=(batch, dim))
-        return z_mean + tf.exp(0.5 * z_log_var) * epsilon
+        batch = ops.shape(z_mean)[0]
+        dim = ops.shape(z_mean)[1]
+        
+        # Keras 3 uses keras.random for backend-agnostic RNG
+        epsilon = random.normal(shape=(batch, dim))
+        
+        return z_mean + ops.exp(0.5 * z_log_var) * epsilon
 
 @keras.saving.register_keras_serializable()
-class VAEModel(keras.Model):
-    def __init__(self, encoder, decoder, loss_metric='mean_squared_error', **kwargs):
-        super(VAEModel, self).__init__(**kwargs)
-        self.encoder = encoder
-        self.decoder = decoder
-        self.loss_metric = loss_metric
-        # Use "loss" for the main tracker so EarlyStopping/ModelCheckpoint can monitor it easily
-        self.total_loss_tracker = keras.metrics.Mean(name="loss")
-        self.reconstruction_loss_tracker = keras.metrics.Mean(name="reconstruction_loss")
-        self.kl_loss_tracker = keras.metrics.Mean(name="kl_loss")
-
-    @property
-    def metrics(self):
-        return [
-            self.total_loss_tracker,
-            self.reconstruction_loss_tracker,
-            self.kl_loss_tracker,
-        ]
-
-    def train_step(self, data):
-        if isinstance(data, tuple):
-            data = data[0]
-        with tf.GradientTape() as tape:
-            z_mean, z_log_var, z = self.encoder(data)
-            reconstruction = self.decoder(z)
-            
-            if self.loss_metric == 'mean_absolute_error':
-                reconstruction_loss = tf.reduce_mean(
-                    tf.reduce_sum(keras.losses.mean_absolute_error(data, reconstruction))
-                )
-            else:
-                reconstruction_loss = tf.reduce_mean(
-                    tf.reduce_sum(keras.losses.mean_squared_error(data, reconstruction))
-                )
-                
-            kl_loss = -0.5 * (1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var))
-            kl_loss = tf.reduce_mean(tf.reduce_sum(kl_loss, axis=1))
-            total_loss = reconstruction_loss + kl_loss
-            
-        grads = tape.gradient(total_loss, self.trainable_weights)
-        self.optimizer.apply_gradients(zip(grads, self.trainable_weights))
-        
-        self.total_loss_tracker.update_state(total_loss)
-        self.reconstruction_loss_tracker.update_state(reconstruction_loss)
-        self.kl_loss_tracker.update_state(kl_loss)
-        
-        return {
-            "loss": self.total_loss_tracker.result(),
-            "reconstruction_loss": self.reconstruction_loss_tracker.result(),
-            "kl_loss": self.kl_loss_tracker.result(),
-        }
-
-    def test_step(self, data):
-        if isinstance(data, tuple):
-            data = data[0]
-        z_mean, z_log_var, z = self.encoder(data)
-        reconstruction = self.decoder(z)
-        
-        if self.loss_metric == 'mean_absolute_error':
-            reconstruction_loss = tf.reduce_mean(
-                tf.reduce_sum(keras.losses.mean_absolute_error(data, reconstruction))
-            )
-        else:
-            reconstruction_loss = tf.reduce_mean(
-                tf.reduce_sum(keras.losses.mean_squared_error(data, reconstruction))
-            )
-            
-        kl_loss = -0.5 * (1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var))
-        kl_loss = tf.reduce_mean(tf.reduce_sum(kl_loss, axis=1))
-        total_loss = reconstruction_loss + kl_loss
-        
-        self.total_loss_tracker.update_state(total_loss)
-        self.reconstruction_loss_tracker.update_state(reconstruction_loss)
-        self.kl_loss_tracker.update_state(kl_loss)
-        
-        return {
-            "loss": self.total_loss_tracker.result(),
-            "reconstruction_loss": self.reconstruction_loss_tracker.result(),
-            "kl_loss": self.kl_loss_tracker.result(),
-        }
-
+class KLLossLayer(keras.layers.Layer):
+    """Calculates and adds the KL Divergence loss to the model."""
     def call(self, inputs):
-        z_mean, _, z = self.encoder(inputs)
-        return self.decoder(z)
+        z_mean, z_log_var = inputs
         
-    def get_config(self):
-        config = super(VAEModel, self).get_config()
-        config.update({
-            "encoder": self.encoder,
-            "decoder": self.decoder,
-            "loss_metric": self.loss_metric,
-        })
-        return config
-        
-    @classmethod
-    def from_config(cls, config):
-        return cls(**config)
+        # Pure Keras 3 ops math
+        kl_loss = -0.5 * ops.mean(
+            ops.sum(1 + z_log_var - ops.square(z_mean) - ops.exp(z_log_var), axis=1)
+        )
+        self.add_loss(kl_loss)
+        return inputs
 
 #***************************************************
 # This is needed for installation through pip
@@ -220,7 +138,7 @@ class Conf():
             'plotAugmData' : False,
             'stopAtBest' : False,
             'saveBestModel' : False,
-            'metricBestModel' : 'val_mae',
+            'metricBestModel' : 'val_loss',
             }
             
     def readConfig(self,configFile):
@@ -355,7 +273,7 @@ def generate(csvFile):
     newDataDf = pd.DataFrame(dataDf[dataDf.columns[0]])
         
     print("  Loading existing VAE model:",dP.modelName,"\n")
-    autoencoder = keras.saving.load_model(dP.modelName, custom_objects={'VAEModel': VAEModel, 'Sampling': Sampling})
+    autoencoder = keras.saving.load_model(dP.modelName, custom_objects={'KLLossLayer': KLLossLayer, 'Sampling': Sampling})
     
     if dP.normalize:
         try:
@@ -693,6 +611,11 @@ def trainAutoencoder(dP, noisyA, A, file):
     # VAE Bottleneck: split into mean and variance
     z_mean = keras.layers.Dense(dP.encoded_dim, name="z_mean")(encoded)
     z_log_var = keras.layers.Dense(dP.encoded_dim, name="z_log_var")(encoded)
+    
+    # Apply custom KL Divergence loss layer directly to the computation graph
+    z_mean, z_log_var = KLLossLayer()([z_mean, z_log_var])
+    
+    # Sample the latent vector
     z = Sampling()([z_mean, z_log_var])
     
     encoder = keras.Model(input, [z_mean, z_log_var, z], name="encoder")
@@ -718,7 +641,7 @@ def trainAutoencoder(dP, noisyA, A, file):
     decoder = keras.Model(latent_inputs, decoded, name="decoder")
     
     ###############
-    # VAE Model
+    # VAE Model Configuration
     ###############
     if dP.deepAutoencoder:
         if dP.linear_net:
@@ -743,11 +666,13 @@ def trainAutoencoder(dP, noisyA, A, file):
     
     if dP.reinforce and os.path.exists(dP.modelName):
         print("  Loading existing VAE model:",dP.modelName,"\n")
-        autoencoder = keras.saving.load_model(dP.modelName, custom_objects={'VAEModel': VAEModel, 'Sampling': Sampling})
+        autoencoder = keras.saving.load_model(dP.modelName, custom_objects={'KLLossLayer': KLLossLayer, 'Sampling': Sampling})
     else:
         print("  Initializing new VAE model:",dP.modelName,"\n")
-        autoencoder = VAEModel(encoder, decoder, loss_metric=dP.lossMetric)
-        autoencoder.compile(optimizer=optim)
+        # Combine the encoder and decoder through the standard functional API
+        vae_outputs = decoder(encoder(input)[2])
+        autoencoder = keras.Model(input, vae_outputs, name="vae")
+        autoencoder.compile(loss=dP.lossMetric, optimizer=optim)
         
     tbLog = keras.callbacks.TensorBoard(log_dir=dP.tb_directory, histogram_freq=120,
             write_graph=True, write_images=False)
@@ -755,7 +680,6 @@ def trainAutoencoder(dP, noisyA, A, file):
     tbLogs = [tbLog]
     
     if dP.stopAtBest == True:
-        # Note: Monitor 'val_loss' which tracks the custom total_loss in VAE
         es = keras.callbacks.EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=500)
         tbLogs.append(es)
     if dP.saveBestModel == True:
@@ -1039,3 +963,4 @@ def usage():
 #************************************
 if __name__ == "__main__":
     sys.exit(main())
+    
