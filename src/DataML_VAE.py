@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 '''
 ***********************************************
-* DataML_DAE
-* Generative AI via Denoising Autoencoder
+* DataML_VAE
+* Generative AI via Variational Autoencoder
 * version: 2026.04.13.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
@@ -15,12 +15,127 @@ import sys, os.path, h5py, pickle, configparser, ast, getopt
 from numpy.polynomial.polynomial import Polynomial as polyfit
 from numpy.polynomial.polynomial import polyval as polyval
 
+import tensorflow as tf
+import keras
+
 from libDataML import *
+
+#***************************************************
+# Custom VAE Classes (Required for Probabilistic Sampling)
+#***************************************************
+@keras.saving.register_keras_serializable()
+class Sampling(keras.layers.Layer):
+    """Uses (z_mean, z_log_var) to sample z, the vector encoding the input."""
+    def call(self, inputs):
+        z_mean, z_log_var = inputs
+        batch = tf.shape(z_mean)[0]
+        dim = tf.shape(z_mean)[1]
+        epsilon = tf.keras.backend.random_normal(shape=(batch, dim))
+        return z_mean + tf.exp(0.5 * z_log_var) * epsilon
+
+@keras.saving.register_keras_serializable()
+class VAEModel(keras.Model):
+    def __init__(self, encoder, decoder, loss_metric='mean_squared_error', **kwargs):
+        super(VAEModel, self).__init__(**kwargs)
+        self.encoder = encoder
+        self.decoder = decoder
+        self.loss_metric = loss_metric
+        # Use "loss" for the main tracker so EarlyStopping/ModelCheckpoint can monitor it easily
+        self.total_loss_tracker = keras.metrics.Mean(name="loss")
+        self.reconstruction_loss_tracker = keras.metrics.Mean(name="reconstruction_loss")
+        self.kl_loss_tracker = keras.metrics.Mean(name="kl_loss")
+
+    @property
+    def metrics(self):
+        return [
+            self.total_loss_tracker,
+            self.reconstruction_loss_tracker,
+            self.kl_loss_tracker,
+        ]
+
+    def train_step(self, data):
+        if isinstance(data, tuple):
+            data = data[0]
+        with tf.GradientTape() as tape:
+            z_mean, z_log_var, z = self.encoder(data)
+            reconstruction = self.decoder(z)
+            
+            if self.loss_metric == 'mean_absolute_error':
+                reconstruction_loss = tf.reduce_mean(
+                    tf.reduce_sum(keras.losses.mean_absolute_error(data, reconstruction))
+                )
+            else:
+                reconstruction_loss = tf.reduce_mean(
+                    tf.reduce_sum(keras.losses.mean_squared_error(data, reconstruction))
+                )
+                
+            kl_loss = -0.5 * (1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var))
+            kl_loss = tf.reduce_mean(tf.reduce_sum(kl_loss, axis=1))
+            total_loss = reconstruction_loss + kl_loss
+            
+        grads = tape.gradient(total_loss, self.trainable_weights)
+        self.optimizer.apply_gradients(zip(grads, self.trainable_weights))
+        
+        self.total_loss_tracker.update_state(total_loss)
+        self.reconstruction_loss_tracker.update_state(reconstruction_loss)
+        self.kl_loss_tracker.update_state(kl_loss)
+        
+        return {
+            "loss": self.total_loss_tracker.result(),
+            "reconstruction_loss": self.reconstruction_loss_tracker.result(),
+            "kl_loss": self.kl_loss_tracker.result(),
+        }
+
+    def test_step(self, data):
+        if isinstance(data, tuple):
+            data = data[0]
+        z_mean, z_log_var, z = self.encoder(data)
+        reconstruction = self.decoder(z)
+        
+        if self.loss_metric == 'mean_absolute_error':
+            reconstruction_loss = tf.reduce_mean(
+                tf.reduce_sum(keras.losses.mean_absolute_error(data, reconstruction))
+            )
+        else:
+            reconstruction_loss = tf.reduce_mean(
+                tf.reduce_sum(keras.losses.mean_squared_error(data, reconstruction))
+            )
+            
+        kl_loss = -0.5 * (1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var))
+        kl_loss = tf.reduce_mean(tf.reduce_sum(kl_loss, axis=1))
+        total_loss = reconstruction_loss + kl_loss
+        
+        self.total_loss_tracker.update_state(total_loss)
+        self.reconstruction_loss_tracker.update_state(reconstruction_loss)
+        self.kl_loss_tracker.update_state(kl_loss)
+        
+        return {
+            "loss": self.total_loss_tracker.result(),
+            "reconstruction_loss": self.reconstruction_loss_tracker.result(),
+            "kl_loss": self.kl_loss_tracker.result(),
+        }
+
+    def call(self, inputs):
+        z_mean, _, z = self.encoder(inputs)
+        return self.decoder(z)
+        
+    def get_config(self):
+        config = super(VAEModel, self).get_config()
+        config.update({
+            "encoder": self.encoder,
+            "decoder": self.decoder,
+            "loss_metric": self.loss_metric,
+        })
+        return config
+        
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
 
 #***************************************************
 # This is needed for installation through pip
 #***************************************************
-def DataML_DAE():
+def DataML_VAE():
     main()
 
 #************************************
@@ -51,8 +166,8 @@ class Conf():
         ### - mean_absolute_error (for scattered data)
         #####################################################
         
-        self.appName = "DataML_DAE"
-        confFileName = "DataML_DAE.ini"
+        self.appName = "DataML_VAE"
+        confFileName = "DataML_VAE.ini"
         self.configFile = os.path.join(os.getcwd(),confFileName)
         self.conf = configparser.ConfigParser()
         self.conf.optionxform = str
@@ -63,12 +178,12 @@ class Conf():
         self.model_directory = "./"
         self.tb_directory = "tb_model"
         
-        self.modelName = "model_DAE.keras"
+        self.modelName = "model_VAE.keras"
         
-        self.norm_file = self.model_directory+"norm_file_DAE.pkl"
+        self.norm_file = self.model_directory+"norm_file_VAE.pkl"
         self.numLabels = 1
             
-    def denDaeDef(self):
+    def denVaeDef(self):
         self.conf['Parameters'] = {
             'saveAsTxt' : True,
             'deepAutoencoder' : True,
@@ -90,7 +205,7 @@ class Conf():
             'typeNoise' : 'Random',
             'fitPolyDegree' : 3,
             'numColSwaps' : 10,
-            'min_loss_dae' : 0.05,
+            'min_loss_vae' : 0.05,
             'numAdditions' : 20,
             'numAddedNoisyDataBlocks' : 20,
             'percNoiseDistrMax' : 0.075,
@@ -111,14 +226,14 @@ class Conf():
     def readConfig(self,configFile):
         try:
             self.conf.read(configFile)
-            self.denDaePar = self.conf['Parameters']
+            self.denVaePar = self.conf['Parameters']
         
             self.saveAsTxt = self.conf.getboolean('Parameters','saveAsTxt')
             self.deepAutoencoder = self.conf.getboolean('Parameters','deepAutoencoder')
             self.reinforce = self.conf.getboolean('Parameters','reinforce')
             self.shuffle = self.conf.getboolean('Parameters','shuffle')
             self.linear_net = self.conf.getboolean('Parameters','linear_net')
-            self.net_arch = ast.literal_eval(self.denDaePar['net_arch'])
+            self.net_arch = ast.literal_eval(self.denVaePar['net_arch'])
             self.encoded_dim = self.conf.getint('Parameters','encoded_dim')
             self.batch_size = self.conf.getint('Parameters','batch_size')
             self.epochs = self.conf.getint('Parameters','epochs')
@@ -133,7 +248,7 @@ class Conf():
             self.typeNoise = self.conf.get('Parameters','typeNoise')
             self.fitPolyDegree = self.conf.getint('Parameters','fitPolyDegree')
             self.numColSwaps = self.conf.getint('Parameters','numColSwaps')
-            self.min_loss_dae = self.conf.getfloat('Parameters','min_loss_dae')
+            self.min_loss_vae = self.conf.getfloat('Parameters','min_loss_vae')
             self.numAdditions = self.conf.getint('Parameters','numAdditions')
             self.numAddedNoisyDataBlocks = self.conf.getint('Parameters','numAddedNoisyDataBlocks')
             self.percNoiseDistrMax = self.conf.getfloat('Parameters','percNoiseDistrMax')
@@ -157,7 +272,7 @@ class Conf():
     # Create configuration file
     def createConfig(self):
         try:
-            self.denDaeDef()
+            self.denVaeDef()
             with open(self.configFile, 'w') as configfile:
                 self.conf.write(configfile)
                 
@@ -176,12 +291,6 @@ class Conf():
             except Exception as e:
                 print("Error in updating configuration file:")
                 print(f"  {e}\n")
-    
-    '''
-    import tensorflow as tf
-    seed_value = 10  # Choose any integer
-    tf.random.set_seed(seed_value)
-    '''
     
 #************************************
 # Main
@@ -221,7 +330,7 @@ def main():
                 sys.exit(2)
         
 #***********************************************
-# Train DAE via final learning file
+# Train VAE via final learning file
 #***********************************************
 def train(learnFile):
     dP = Conf()
@@ -236,7 +345,6 @@ def train(learnFile):
 # Generate new sample based on prompt
 #***********************************************
 def generate(csvFile):
-    import keras
     import pandas as pd
     from datetime import datetime, date
     dP = Conf()
@@ -246,8 +354,8 @@ def generate(csvFile):
     
     newDataDf = pd.DataFrame(dataDf[dataDf.columns[0]])
         
-    print("  Loading existing DAE model:",dP.modelName,"\n")
-    autoencoder = keras.saving.load_model(dP.modelName)
+    print("  Loading existing VAE model:",dP.modelName,"\n")
+    autoencoder = keras.saving.load_model(dP.modelName, custom_objects={'VAEModel': VAEModel, 'Sampling': Sampling})
     
     if dP.normalize:
         try:
@@ -265,10 +373,11 @@ def generate(csvFile):
         Rorig = np.copy(R)
         
         if dP.normalize:
+            # Note: assuming transform_valid_data_DAE handles general matrix shapes, 
+            # consider renaming in your libDataML later. Using as-is per instructions.
             R = norm.transform_valid_data_DAE(R)
         
         newR = autoencoder.predict(R)
-        #print("\nThis is the predicted R:",newR)
         if dP.normalize:
             newR = norm.transform_inverse(newR)
         newDataDf[dataDf.columns[i]] = newR.flatten()
@@ -286,15 +395,15 @@ def generate(csvFile):
     print('  --------------------------------------------------------------------------------\n')
     
     summaryCSVFileRoot = os.path.splitext(csvFile)[0]
-    summaryCSVFile = summaryCSVFileRoot+"_DAE_output"+str(datetime.now().strftime('_%Y-%m-%d_%H-%M-%S.csv'))
+    summaryCSVFile = summaryCSVFileRoot+"_VAE_output"+str(datetime.now().strftime('_%Y-%m-%d_%H-%M-%S.csv'))
     
-    newDataDf.rename(columns={ dataDf.columns[0]: "DAE output"}, inplace=True)
+    newDataDf.rename(columns={ dataDf.columns[0]: "VAE output"}, inplace=True)
     newDataDf.to_csv(summaryCSVFile, index=False, sep=',')
     
-    print(f" DAE generated samples saved in: {summaryCSVFile}\n")
+    print(f" VAE generated samples saved in: {summaryCSVFile}\n")
         
 #***********************************************
-# Augment learning data via DAE
+# Augment learning data via VAE
 # Create a new learning file with added data
 #***********************************************
 def augment(learnFile,augFlag):
@@ -305,7 +414,7 @@ def augment(learnFile,augFlag):
     En_orig = M_raw[0, :]
     
     try:
-        En, A, M, empty = readLearnFileDAE(learnFile, True, dP)
+        En, A, M, empty = readLearnFileVAE(learnFile, True, dP)
         if empty:
             return 1
     except Exception as e:
@@ -313,7 +422,7 @@ def augment(learnFile,augFlag):
         return 1
     
     rootFile = dP.model_directory + os.path.splitext(os.path.basename(learnFile))[0] + \
-            '_numDataTrainDae' + str(dP.numAddedNoisyDataBlocks * A.shape[0])
+            '_numDataTrainVae' + str(dP.numAddedNoisyDataBlocks * A.shape[0])
     
     if dP.normalize:
         with open(dP.norm_file, "rb") as f:
@@ -353,11 +462,11 @@ def augment(learnFile,augFlag):
             print("  Check value of typeNoise in ini file. Aborting.")
             return 0;
             
-        dae, val_loss = trainAutoencoder(dP, noisy_A, new_A, sys.argv[1])
+        autoencoder, val_loss = trainAutoencoder(dP, noisy_A, new_A, sys.argv[1])
         
         if augFlag:
-            if val_loss < dP.min_loss_dae:
-                A_tmp = generateData(dP, dae, A, M, norm)
+            if val_loss < dP.min_loss_vae:
+                A_tmp = generateData(dP, autoencoder, A, M, norm)
                 
                 # Snap generated discrete data & conditionally filter labels
                 A_tmp = snap_discrete_features(orig_physical_A, A_tmp, dP.discreteThreshold)
@@ -367,9 +476,9 @@ def augment(learnFile,augFlag):
                 total_added_rows += A_tmp.shape[0]  # UPDATE TRACKER
                 print("\n  Successful. Added blocks so far:", str(success), "| Total new rows:", str(total_added_rows), "\n")
             else:
-                print("  Skip this denoising autoencoder. Added blocks so far:", str(success), "\n")
+                print("  Skip this variational autoencoder. Added blocks so far:", str(success), "\n")
         else:
-            print("  Trained DAE model\n")
+            print("  Trained VAE model\n")
             return
         
         
@@ -398,7 +507,7 @@ def augment(learnFile,augFlag):
                 A_plot = A
             plotData(dP, A_plot, newA, plotFeatType, False, "Augmented data", newFile+"_plots.pdf")
     else:
-        print("  No new training data created. Try to increse numAdditions or/and min_loss_dae.\n")
+        print("  No new training data created. Try to increse numAdditions or/and min_loss_vae.\n")
 
 
 #******************************************************
@@ -421,11 +530,8 @@ def getAmin(A):
 def createNoisyData(dP, A):
     import random
         
-    #A_min = A.min(axis=0)
     A_min = getAmin(A)
-    #A_max = A.max(axis=0)
     A_mean = np.mean(A, axis=0)
-    #A_std = A.std(axis=0)
     
     noisyA_list = []
     newA_list = []
@@ -475,7 +581,6 @@ def createYFitNoisyData(dP, A):
         nA_tmp = [x_tmp.reshape(-1,1)]
         for j in range(1,A.shape[1]):
             tmp = (polyval(x_tmp, poly[j]) + np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, A.shape[0])).reshape(-1,1)
-            #tmp = (polyval(A[:,0], poly[j])).reshape(-1,1)
             nA_tmp.append(tmp)
         noisyA_list.append(np.hstack(nA_tmp))
         newA_list.append(A)
@@ -508,7 +613,6 @@ def createXFitNoisyData(dP, A):
         y_tmp_list = []
 
         for j in range(1, A.shape[1]):
-            #x_tmp_single = A[:, j] + np.random.uniform(-dP.percNoiseDistrMax, dP.percNoiseDistrMax, A.shape[0]).reshape(-1, 1)
             x_tmp_single = A[:, j].reshape(-1, 1)
             y_tmp_single = polyval(x_tmp_single, poly[j]).reshape(-1, 1)
             x_tmp_list.append(x_tmp_single)
@@ -518,7 +622,6 @@ def createXFitNoisyData(dP, A):
         y_tmp = np.hstack(y_tmp_list)
         
         noisyA_tmp = np.hstack([np.mean(y_tmp, axis=1).reshape(-1, 1), x_tmp])
-        #noisyA_tmp = np.hstack([y_tmp[:,0].reshape(-1, 1),x_tmp])
         noisyA_list.append(noisyA_tmp)
         newA_list.append(A)
 
@@ -569,9 +672,9 @@ def swapValuesColumn(dP, A):
 #************************************
 def trainAutoencoder(dP, noisyA, A, file):
     printParam(dP)
-    import keras
-    #input = keras.Input(shape=(A.shape[1],),sparse=True)
+    
     input = keras.Input(shape=(A.shape[1],))
+    
     ############
     # Encoder
     ############
@@ -586,14 +689,21 @@ def trainAutoencoder(dP, noisyA, A, file):
             for i in range(len(dP.net_arch)):
                 encoded = keras.layers.Dense(dP.net_arch[i],  activation=dP.innerActivation,activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
                 encoded = keras.layers.Dropout(dP.dropout)(encoded)
-        encoded = keras.layers.Dense(dP.encoded_dim,activation=dP.innerActivation,activity_regularizer=keras.regularizers.l1(dP.regL1))(encoded)
-        encoded = keras.layers.Dropout(dP.dropout)(encoded)
+                
+    # VAE Bottleneck: split into mean and variance
+    z_mean = keras.layers.Dense(dP.encoded_dim, name="z_mean")(encoded)
+    z_log_var = keras.layers.Dense(dP.encoded_dim, name="z_log_var")(encoded)
+    z = Sampling()([z_mean, z_log_var])
+    
+    encoder = keras.Model(input, [z_mean, z_log_var, z], name="encoder")
         
     ############
     # Decoder
     ############
+    latent_inputs = keras.Input(shape=(dP.encoded_dim,))
+    decoded = latent_inputs
     if dP.deepAutoencoder:
-        decoded = keras.layers.Dense(dP.encoded_dim+1,  activation=dP.innerActivation)(encoded)
+        decoded = keras.layers.Dense(dP.encoded_dim+1,  activation=dP.innerActivation)(decoded)
         if dP.linear_net:
             if A.shape[1] > dP.encoded_dim+2:
                 for i in range(dP.encoded_dim+2,A.shape[1],1):
@@ -603,23 +713,25 @@ def trainAutoencoder(dP, noisyA, A, file):
                 decoded = keras.layers.Dense(dP.net_arch[i], activation=dP.innerActivation)(decoded)
         decoded = keras.layers.Dense(A.shape[1], activation=dP.activation)(decoded)
     else:
-        decoded = keras.layers.Dense(A.shape[1], activation=dP.activation)(encoded)
+        decoded = keras.layers.Dense(A.shape[1], activation=dP.activation)(decoded)
+        
+    decoder = keras.Model(latent_inputs, decoded, name="decoder")
     
     ###############
-    # Autoencoder
+    # VAE Model
     ###############
     if dP.deepAutoencoder:
         if dP.linear_net:
             if A.shape[1] > dP.encoded_dim+2:
-                print("\n  Training Deep Autoencoder with linear architecture\n   Hidden layers:",A.shape[1]-dP.encoded_dim,
+                print("\n  Training Deep VAE with linear architecture\n   Hidden layers:",A.shape[1]-dP.encoded_dim,
                     "\n   Encoded dimension:",dP.encoded_dim,"\n")
             else:
-                print("\n  Training shallow Autoencoder \n   Encoded dimension:",dP.encoded_dim,"\n")
+                print("\n  Training shallow VAE \n   Encoded dimension:",dP.encoded_dim,"\n")
         else:
-            print("\n  Training Deep Autoencoder with discrete architecture\n   Hidden layers:",dP.net_arch,
+            print("\n  Training Deep VAE with discrete architecture\n   Hidden layers:",dP.net_arch,
                 "\n   Encoded dimension:",dP.encoded_dim,"\n")
     else:
-        print("\n  Training shallow Autoencoder \n   Encoded dimension:",dP.encoded_dim,"\n")
+        print("\n  Training shallow VAE \n   Encoded dimension:",dP.encoded_dim,"\n")
 
     lr_schedule = keras.optimizers.schedules.ExponentialDecay(
             initial_learning_rate=dP.l_rate,
@@ -628,15 +740,14 @@ def trainAutoencoder(dP, noisyA, A, file):
     optim = keras.optimizers.Adam(learning_rate=lr_schedule, beta_1=0.9,
                 beta_2=0.999, epsilon=1e-08,
                 amsgrad=False)
-    #optim = keras.optimizers.Adam()
     
     if dP.reinforce and os.path.exists(dP.modelName):
-        print("  Loading existing DAE model:",dP.modelName,"\n")
-        autoencoder = keras.saving.load_model(dP.modelName)
+        print("  Loading existing VAE model:",dP.modelName,"\n")
+        autoencoder = keras.saving.load_model(dP.modelName, custom_objects={'VAEModel': VAEModel, 'Sampling': Sampling})
     else:
-        print("  Initializing new DAE model:",dP.modelName,"\n")
-        autoencoder = keras.Model(input, decoded)
-        autoencoder.compile(loss = dP.lossMetric, optimizer = optim)
+        print("  Initializing new VAE model:",dP.modelName,"\n")
+        autoencoder = VAEModel(encoder, decoder, loss_metric=dP.lossMetric)
+        autoencoder.compile(optimizer=optim)
         
     tbLog = keras.callbacks.TensorBoard(log_dir=dP.tb_directory, histogram_freq=120,
             write_graph=True, write_images=False)
@@ -644,6 +755,7 @@ def trainAutoencoder(dP, noisyA, A, file):
     tbLogs = [tbLog]
     
     if dP.stopAtBest == True:
+        # Note: Monitor 'val_loss' which tracks the custom total_loss in VAE
         es = keras.callbacks.EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=500)
         tbLogs.append(es)
     if dP.saveBestModel == True:
@@ -684,8 +796,8 @@ def removeSpurious(A_physical, T, dP):
 
 #**************************************************************************
 # Snaps generated data to discrete steps if they are close.
-#    PURGES the entire row if the generated data falls too far
-#    into the invalid 'void' between steps.
+#  PURGES the entire row if the generated data falls too far
+#  into the invalid 'void' between steps.
 #**************************************************************************
 def snap_discrete_features(real_features, synthetic_features, discrete_threshold=10, tolerance=0.15):
     corrected_synthetic = np.copy(synthetic_features)
@@ -757,10 +869,10 @@ def generateData(dP, autoencoder, A, M, norm):
             random_seeds[:, i] += np.random.uniform(-variance, variance, size=num_random)
             
     seeds = np.vstack((A, random_seeds))
-    normDea = autoencoder.predict(seeds)
+    normVae = autoencoder.predict(seeds)
     
     if dP.postGenerationNoise:
-        noise = np.random.normal(loc=0.0, scale=dP.postGenerationNoiseMax, size=normDea.shape)
+        noise = np.random.normal(loc=0.0, scale=dP.postGenerationNoiseMax, size=normVae.shape)
         # Protect Label and Discrete features from post-generation noise
         noise[:, 0] = 0.0 
         for i in range(1, A.shape[1]):
@@ -768,17 +880,17 @@ def generateData(dP, autoencoder, A, M, norm):
             if len(unique_vals) <= dP.discreteThreshold:
                 noise[:, i] = 0.0
                 
-        normDea = normDea + noise
+        normVae = normVae + noise
     
     if dP.normalize:
-        normDea = norm.transform_inverse(normDea)
+        normVae = norm.transform_inverse(normVae)
     
-    return normDea
+    return normVae
  
 #************************************
 # Open Learning Data
 #************************************
-def readLearnFileDAE(learnFile, newNorm, dP):
+def readLearnFileVAE(learnFile, newNorm, dP):
     M = readFile(learnFile)
     empty = False
     
@@ -875,7 +987,7 @@ def plotData(dP, A, newA, feat, normFlag, title, plotFile):
 #************************************
 def printParam(dP):
     print('  ================================================')
-    print('  \033[1m DAE \033[0m - Parameters')
+    print('  \033[1m VAE \033[0m - Parameters')
     print('  ================================================')
     print('  Linear Architecture:',dP.linear_net)
     print('  Architecture:', dP.net_arch, '->', dP.encoded_dim)
@@ -890,7 +1002,7 @@ def printParam(dP):
 
     print('  Batch size:', dP.batch_size)
     print('  Epochs:',dP.epochs)
-    print('  Min loss dae:',dP.min_loss_dae)
+    print('  Min loss VAE:',dP.min_loss_vae)
     print('  Num Additions:',dP.numAdditions)
     print('  Num Added Noisy Data Blocks:', dP.numAddedNoisyDataBlocks)
     print('  Max Perc Noise Distribution:', dP.percNoiseDistrMax)
@@ -913,12 +1025,12 @@ def printParam(dP):
 #************************************
 def usage():
     print('\n Usage:\n')
-    print(' Train DAE:')
-    print('  DataML_DAE -t <learningFile>\n')
-    print(' Augment data from <learningFile> using DAE:')
-    print('  DataML_DAE -a <learningFile>\n')
-    print(' Generate new DAE samples from csv of incomplete samples')
-    print('  DataML_DAE -g <csvlist>\n')
+    print(' Train VAE:')
+    print('  DataML_VAE -t <learningFile>\n')
+    print(' Augment data from <learningFile> using VAE:')
+    print('  DataML_VAE -a <learningFile>\n')
+    print(' Generate new VAE samples from csv of incomplete samples')
+    print('  DataML_VAE -g <csvlist>\n')
     
     print(' Requires python 3.x. Not compatible with python 2.x\n')
 
