@@ -5,7 +5,7 @@
 * DataML_BatchMaker
 * Adds data from single file to Master Doc
 * File must be in ASCII
-* version: 2026.04.15.2
+* version: 2026.04.15.3
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''

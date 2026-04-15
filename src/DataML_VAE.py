@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_VAE
 * Generative AI via Variational Autoencoder
-* version: 2026.04.15.2
+* version: 2026.04.15.3
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -881,6 +881,7 @@ def plotData(dP, A, newA, feat, normFlag, title, plotFile):
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_pdf import PdfPages
     from sklearn.metrics import r2_score
+    import warnings
     
     pdf = PdfPages(plotFile)
         
@@ -911,6 +912,15 @@ def plotData(dP, A, newA, feat, normFlag, title, plotFile):
         
         if newA is not None:
             plt.plot(xA,yA, 'bo', markersize=3)
+            
+        unique_x_count = len(np.unique(x))
+        safe_degree = min(dP.fitPolyDegree, unique_x_count - 1)
+        safe_degree = max(0, safe_degree) # Fallback to 0 (flat line) if only 1 unique point exists
+        
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            poly = polyfit.fit(x, y, safe_degree)    
+            
         poly = polyfit.fit(x, y, dP.fitPolyDegree)
         plt.plot(np.unique(x), poly(np.unique(x)))
         plt.plot(x,y, 'ro', markersize=5)

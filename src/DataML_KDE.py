@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_KDE
 * Generative AI via Kernel Density Estimation
-* version: 2026.04.16.4
+* version: 2026.04.15.3
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -308,6 +308,9 @@ def snap_discrete_features(real_features, synthetic_physical, discrete_threshold
     print(f"   [x] Purged {rows_removed} unphysical rows out of bounds.")
     return purged_synthetic
 
+#************************************
+# Open Learning Data
+#************************************
 def readLearnFileKDE(learnFile, newNorm, dP):
     M = readFile(learnFile)
     empty = False
@@ -337,10 +340,14 @@ def readLearnFileKDE(learnFile, newNorm, dP):
     A = M[1:,:]
     return En, A, M, empty
 
+#************************************
+# Plot augmented training data
+#************************************
 def plotData(dP, A_physical, newA_physical, feat, title, plotFile):
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_pdf import PdfPages
     from sklearn.metrics import r2_score
+    import warnings
     
     pdf = PdfPages(plotFile)
         
@@ -362,7 +369,15 @@ def plotData(dP, A_physical, newA_physical, feat, title, plotFile):
         
         plt.plot(xA,yA, 'bo', markersize=3, alpha=0.5, label='KDE Generated')
         
-        poly = polyfit.fit(x, y, dP.fitPolyDegree)
+        # A polynomial of degree N requires at least N + 1 unique data points
+        unique_x_count = len(np.unique(x))
+        safe_degree = min(dP.fitPolyDegree, unique_x_count - 1)
+        safe_degree = max(0, safe_degree) # Fallback to 0 (flat line) if only 1 unique point exists
+        
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            poly = polyfit.fit(x, y, safe_degree)
+        
         plt.plot(np.unique(x), poly(np.unique(x)), 'g-', label='Polynomial Fit')
         plt.plot(x,y, 'ro', markersize=5, label='Original Data')
         
