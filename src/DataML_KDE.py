@@ -40,7 +40,8 @@ class Conf():
         self.numLabels = 1
         
         # Hardcoded True because KDE mathematically requires scaled features
-        self.normalize = True 
+        self.normalize = True
+        self.normalizeLabel = True
 
         if os.path.isfile(self.configFile) is False:
             print(" Configuration file: \""+confFileName+"\" does not exist: Creating one.\n")
