@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_KDE
 * Generative AI via Kernel Density Estimation
-* version: 2026.04.15.3
+* version: 2026.04.15.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -222,10 +222,15 @@ def augment(learnFile, augFlag):
     print(f"\n  Sampling {n_samples} points from KDE landscape...")
     synthetic_A_norm = kde.sample(n_samples)
     
-    # Prevents infinite Gaussian tails from blowing up the Normalizer
+    # Prevent extreme infinite tails from overflowing the Normalizer math,
+    # but allow a 10% padding so "spurious" data can actually be generated.
     A_min_norm = np.min(A, axis=0)
     A_max_norm = np.max(A, axis=0)
-    synthetic_A_norm = np.clip(synthetic_A_norm, A_min_norm, A_max_norm)
+    A_range = A_max_norm - A_min_norm
+    
+    safe_min = A_min_norm - (0.10 * A_range)
+    safe_max = A_max_norm + (0.10 * A_range)
+    synthetic_A_norm = np.clip(synthetic_A_norm, safe_min, safe_max)
     
     # Convert immediately to physical space using np.copy
     synthetic_A_phys = norm.transform_inverse(np.copy(synthetic_A_norm))
@@ -254,7 +259,7 @@ def augment(learnFile, augFlag):
 #***********************************************************
 # Snap new samples in discrete points if discrete parameters
 #***********************************************************
-def snap_discrete_features(real_features, synthetic_physical, discrete_threshold=10, tolerance_pct=0.15):
+def snap_discrete_features(real_features, synthetic_physical, discrete_threshold=10, tolerance_pct=0.15, remove_spurious=True):
     corrected_synthetic = np.copy(synthetic_physical)
     num_features = real_features.shape[1]
     valid_mask = np.ones(synthetic_physical.shape[0], dtype=bool)
@@ -266,23 +271,23 @@ def snap_discrete_features(real_features, synthetic_physical, discrete_threshold
             discrete_cols.append(i)
             synth_col = synthetic_physical[:, i]
             
-            # --- NEW: Dynamic Tolerance ---
             # Calculate tolerance as a percentage of the column's total physical range
             col_range = real_features[:, i].max() - real_features[:, i].min()
             actual_tolerance = tolerance_pct * col_range if col_range > 0 else 0.15
-            # ------------------------------
 
             distances = np.abs(synth_col[:, np.newaxis] - unique_vals)
             min_distances = distances.min(axis=1)
             closest_indices = distances.argmin(axis=1)
             
-            # Use the dynamically calculated physical tolerance
-            valid_mask = valid_mask & (min_distances <= actual_tolerance)
+            # Only purge the row for violating the tolerance if remove_spurious is True
+            if remove_spurious:
+                valid_mask = valid_mask & (min_distances <= actual_tolerance)
+                
             corrected_synthetic[:, i] = unique_vals[closest_indices]
         else:
             pass # Continuous
             
-    if discrete_cols:
+    if discrete_cols and remove_spurious:
         real_discrete = real_features[:, discrete_cols]
         synth_discrete = corrected_synthetic[:, discrete_cols]
         label_col = 0  
@@ -305,7 +310,8 @@ def snap_discrete_features(real_features, synthetic_physical, discrete_threshold
     purged_synthetic = corrected_synthetic[valid_mask]
         
     rows_removed = synthetic_physical.shape[0] - purged_synthetic.shape[0]
-    print(f"   [x] Purged {rows_removed} unphysical rows out of bounds.")
+    if rows_removed > 0:
+        print(f"   [x] Purged {rows_removed} unphysical rows out of bounds.")
     return purged_synthetic
 
 #************************************
