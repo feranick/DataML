@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_VAE
 * Generative AI via Variational Autoencoder
-* version: 2026.04.13.3
+* version: 2026.04.15.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -39,16 +39,29 @@ class Sampling(keras.layers.Layer):
 
 @keras.saving.register_keras_serializable()
 class KLLossLayer(keras.layers.Layer):
-    """Calculates and adds the KL Divergence loss to the model."""
+    """Calculates and adds the scaled KL Divergence loss (Beta-VAE)."""
+    def __init__(self, beta=0.02, **kwargs):
+        super().__init__(**kwargs)
+        self.beta = beta
+
     def call(self, inputs):
         z_mean, z_log_var = inputs
         
-        # Pure Keras 3 ops math
+        # Calculate standard KL loss
         kl_loss = -0.5 * ops.mean(
             ops.sum(1 + z_log_var - ops.square(z_mean) - ops.exp(z_log_var), axis=1)
         )
-        self.add_loss(kl_loss)
+        
+        # Scale the KL loss down to force reconstruction
+        scaled_kl_loss = self.beta * kl_loss
+        
+        self.add_loss(scaled_kl_loss)
         return inputs
+        
+    def get_config(self):
+        config = super().get_config()
+        config.update({"beta": self.beta})
+        return config
 
 #***************************************************
 # This is needed for installation through pip
