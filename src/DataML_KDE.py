@@ -402,14 +402,15 @@ def getAmin(A):
         A_min_single = non_zero.min() if non_zero.size > 0 else 0.0
         A_min.append(A_min_single)
     return np.array(A_min)
-
+    
 def removeSpurious(A_physical, T):
-    A_min = getAmin(A_physical)
-    for i in range(T.shape[0]):
-        for j in range(T.shape[1]):
-            if T[i,j] < A_min[j]:
-                T[i,j] = 0
-    return T
+    # Instead of forcing values to zero, strictly clamp them to the exact
+    # physical boundaries of the original dataset.
+    A_min = np.min(A_physical, axis=0)
+    A_max = np.max(A_physical, axis=0)
+    
+    clamped_T = np.clip(T, A_min, A_max)
+    return clamped_T
 
 def printParam(dP):
     print('  ================================================')
