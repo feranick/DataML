@@ -115,11 +115,11 @@ def main():
                 sys.exit(2)
                 
         if o in ("-a" , "--augment"):
-            try:
-                augment(sys.argv[2], True)
-            except Exception as e:
-                print(f" An error occurred: {e}\n")
-                sys.exit(2)
+            #try:
+            augment(sys.argv[2], True)
+            #except Exception as e:
+            #   print(f" An error occurred: {e}\n")
+            #   sys.exit(2)
         
         if o in ("-g" , "--generate"):
             try:
@@ -336,7 +336,7 @@ def readLearnFileKDE(learnFile, newNorm, dP):
         print("  Normalization of feature matrix to 1")
         if newNorm:
             norm = Normalizer(M, dP)
-            norm.save(dP.norm_file)
+            norm.save()
         else:
             with open(dP.norm_file, "rb") as f:
                 norm = pickle.load(f)
