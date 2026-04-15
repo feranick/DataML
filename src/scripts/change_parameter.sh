@@ -1,22 +1,20 @@
 #!/bin/bash
 
 # Check if the correct number of arguments is provided
-if [ "$#" -ne 3 ]; then
-    echo "Usage: $0 <value> <folder_path> <ini file>"
+if [ "$#" -ne 4 ]; then
+    echo "Usage: $0 <parameter> <value> <folder_path> <ini file>"
     exit 1
 fi
 
-value="$1"
-folder_path="$2"
-#filename="DataML_VAE.ini"
-inifile="$3"
+metric="$1"
+value="$2"
+folder_path="$3"
+inifile="$4"
 
 if [[ $inifile == "DataML_DAE.ini" ]]; then
     filename="DataML_DAE.ini"
-    metric="min_loss_dae"
 elif [[ $inifile="DataML_VAE.ini" ]]; then
     filename="DataML_VAE.ini"
-    metric="min_loss_vae"
 else
     echo "Error: inifile has to be either DataML_DAE.ini or DataML_VAE.ini"
 fi

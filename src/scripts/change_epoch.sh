@@ -13,11 +13,11 @@ inifile="$3"
 
 metric="epochs"
 
-if [ $inifile == "DataML_DAE.ini" ]]; then
+if [[ $inifile == "DataML_DAE.ini" ]]; then
     filename="DataML_DAE.ini"
 elif [[ $inifile="DataML_VAE.ini" ]]; then
     filename="DataML_VAE.ini"
-else:
+else
     echo "Error: inifile has to be either DataML_DAE.ini or DataML_VAE.ini"
 fi
 
