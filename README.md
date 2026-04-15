@@ -61,86 +61,6 @@ These are found in Unix based systems using common repositories (apt-get for Deb
 
 Prediction can be carried out using the regular tensorflow, or using [tensorflow-lite](https://www.tensorflow.org/lite/) for [quantized models](https://www.tensorflow.org/lite/performance/post_training_quantization). Loading times of tflite (direct or via [ai_edge_litert](https://github.com/google-ai-edge/LiteRT) (or the previous [tflite-runtime](https://www.tensorflow.org/lite/guide/python)) are significantly faster than tensorflow with minimal loss in accuracy. SpectraKeras provides an option to convert tensorflow models to quantized tflite models. TFlite models have been tested in Linux x86-64, arm7 (including Raspberry Pi3) and aarm64, MacOS, Windows. For using quantized model (specifically when deployed on Coral EdgeTPU), TF 2.17 or higher is recommended. 
 
-INI configuration examples for DAE
-==================================
-
-## Under-complete DAE (><)
-```
-[Parameters]
-saveAsTxt = True
-deepAutoencoder = True
-reinforce = False
-shuffle = True
-linear_net = False
-net_arch = [20, 16, 12]
-encoded_dim = 8
-batch_size = 16
-epochs = 200
-validation_split = 0.1
-regL1 = 0
-dropout = 0
-l_rate = 0.001
-l_rdecay = 0.9
-activation = linear
-lossMetric = mean_squared_error
-typeNoise = Random
-fitPolyDegree = 3
-numColSwaps = 10
-min_loss_dae = 0.02
-numAdditions = 20
-numAddedNoisyDataBlocks = 20
-percNoiseDistrMax = 0.1
-postGenerationNoise = True
-postGenerationNoiseMax = 0.075
-excludeZeroFeatures = False
-excludeZeroLabels = True
-removeSpurious = True
-normalize = True
-normalizeLabel = True
-plotAugmData = True
-stopAtBest = False
-saveBestModel = True
-metricBestModel = val_mae
-```
-## Over-complete DAE (<>)
-```
-[Parameters]
-saveAsTxt = True
-deepAutoencoder = True
-reinforce = False
-shuffle = True
-linear_net = False
-net_arch = [3, 4, 6]
-encoded_dim = 8
-batch_size = 16
-epochs = 200
-validation_split = 0.1
-regL1 = 0.0001
-dropout = 0.2
-l_rate = 0.001
-l_rdecay = 0.9
-activation = sigmoid
-lossMetric = mean_squared_error
-typeNoise = Random
-fitPolyDegree = 3
-numColSwaps = 10
-min_loss_dae = 0.02
-numAdditions = 20
-numAddedNoisyDataBlocks = 20
-percNoiseDistrMax = 0.1
-postGenerationNoise = True
-postGenerationNoiseMax = 0.075
-excludeZeroFeatures = False
-excludeZeroLabels = True
-removeSpurious = True
-normalize = True
-normalizeLabel = True
-plotAugmData = True
-stopAtBest = False
-saveBestModel = True
-metricBestModel = val_mae
-```
-
 Usage
 ===================
 Two separate executables are available for Neural-Network-based ML (DataML) and Decision Forests (DataML_DF):
@@ -257,6 +177,30 @@ Train (Random cross validation):
   8 - random_state, max_depth, max_features
   9 - n_estimators [10-1000], random_state, max_depth, max_features
   else - custom file
+  
+## Denoising Autoencoder: DataML_DAE
+  Train DAE:
+   DataML_DAE -t <learningFile>
+  Augment data from <learningFile> using DAE:
+   DataML_DAE -a <learningFile>
+  Generate new DAE samples from csv of incomplete samples
+   DataML_DAE -g <csvlist>
+   
+## Variational AutoEncoder: DataML_VAE
+  Train VAE:
+   DataML_VAE -t <learningFile>
+  Augment data from <learningFile> using VAE:
+   DataML_VAE -a <learningFile>
+  Generate new VAE samples from csv of incomplete samples
+   DataML_VAE -g <csvlist>
+   
+## Kernel Density Estimator: DataML_KDE
+  Fit KDE:
+   DataML_KDE -t <learningFile>
+  Augment data from <learningFile> using KDE:
+   DataML_KDE -a <learningFile>
+  Generate new KDE samples from csv of incomplete samples
+   DataML_KDE -g <csvlist>
     
 Formatting input file for training
 ===================================
@@ -289,6 +233,140 @@ One can use the same to create a validation file, or you can use [other scripts]
 
 Once models are trained trained, prediction on individual files can be made using simply formatted ASCII files (like in the example above).
 
+INI configuration examples for DAE
+==================================
+
+## Under-complete DAE (><)
+```
+[Parameters]
+saveAsTxt = True
+deepAutoencoder = True
+reinforce = False
+shuffle = True
+linear_net = False
+net_arch = [20, 16, 12]
+encoded_dim = 8
+batch_size = 16
+epochs = 200
+validation_split = 0.1
+regL1 = 0
+dropout = 0
+l_rate = 0.001
+l_rdecay = 0.9
+activation = linear
+lossMetric = mean_squared_error
+typeNoise = Random
+fitPolyDegree = 3
+numColSwaps = 10
+min_loss_dae = 0.02
+numAdditions = 20
+numAddedNoisyDataBlocks = 20
+percNoiseDistrMax = 0.1
+postGenerationNoise = True
+postGenerationNoiseMax = 0.075
+excludeZeroFeatures = False
+excludeZeroLabels = True
+removeSpurious = True
+normalize = True
+normalizeLabel = True
+plotAugmData = True
+stopAtBest = False
+saveBestModel = True
+metricBestModel = val_mae
+```
+## Over-complete DAE (<>)
+```
+[Parameters]
+saveAsTxt = True
+deepAutoencoder = True
+reinforce = False
+shuffle = True
+linear_net = False
+net_arch = [3, 4, 6]
+encoded_dim = 8
+batch_size = 16
+epochs = 200
+validation_split = 0.1
+regL1 = 0.0001
+dropout = 0.2
+l_rate = 0.001
+l_rdecay = 0.9
+activation = sigmoid
+lossMetric = mean_squared_error
+typeNoise = Random
+fitPolyDegree = 3
+numColSwaps = 10
+min_loss_dae = 0.02
+numAdditions = 20
+numAddedNoisyDataBlocks = 20
+percNoiseDistrMax = 0.1
+postGenerationNoise = True
+postGenerationNoiseMax = 0.075
+excludeZeroFeatures = False
+excludeZeroLabels = True
+removeSpurious = True
+normalize = True
+normalizeLabel = True
+plotAugmData = True
+stopAtBest = False
+saveBestModel = True
+metricBestModel = val_mae
+```
+## Variational Autoencoder (VAE)
+```
+[Parameters]
+saveAsTxt = True
+deepAutoencoder = True
+reinforce = True
+shuffle = True
+linear_net = False
+net_arch = [20, 16, 12]
+encoded_dim = 8
+batch_size = 16
+epochs = 200
+validation_split = 0.1
+regL1 = 0
+dropout = 0
+l_rate = 0.001
+l_rdecay = 0.9
+activation = linear
+lossMetric = mean_squared_error
+innerActivation = elu
+typeNoise = Random
+fitPolyDegree = 3
+numColSwaps = 10
+min_loss_vae = 0.05
+numAdditions = 1
+numAddedNoisyDataBlocks = 20
+percNoiseDistrMax = 0.075
+postGenerationNoise = True
+postGenerationNoiseMax = 0.075
+excludeZeroFeatures = False
+excludeZeroLabels = True
+removeSpurious = True
+normalize = True
+normalizeLabel = True
+discreteThreshold = 5
+plotAugmData = False
+stopAtBest = False
+saveBestModel = False
+metricBestModel = val_loss
+```
+## Kernel Density Estimation (KDE))
+```
+[Parameters]
+saveAsTxt = True
+shuffle = True
+kde_bandwidth = 0.05
+kde_kernel = gaussian
+numAddedDataBlocks = 50
+fitPolyDegree = 3
+excludeZeroFeatures = False
+excludeZeroLabels = True
+removeSpurious = True
+discreteThreshold = 5
+plotAugmData = True
+```
 
 Web Versions
 ========================
