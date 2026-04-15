@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_KDE
 * Generative AI via Kernel Density Estimation
-* version: 2026.04.16.3
+* version: 2026.04.16.4
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -38,6 +38,9 @@ class Conf():
         self.modelName = self.model_directory + "model_KDE.pkl"
         self.norm_file = self.model_directory + "norm_file_KDE.pkl"
         self.numLabels = 1
+        
+        # Hardcoded True because KDE mathematically requires scaled features
+        self.normalize = True 
 
         if os.path.isfile(self.configFile) is False:
             print(" Configuration file: \""+confFileName+"\" does not exist: Creating one.\n")
@@ -55,8 +58,6 @@ class Conf():
             'excludeZeroFeatures' : False,
             'excludeZeroLabels' : True,
             'removeSpurious' : True,
-            'normalize' : True,
-            'normalizeLabel' : True,
             'discreteThreshold' : 5,
             'plotAugmData' : True
             }
@@ -74,8 +75,6 @@ class Conf():
             self.excludeZeroFeatures = self.conf.getboolean('Parameters','excludeZeroFeatures')
             self.excludeZeroLabels = self.conf.getboolean('Parameters','excludeZeroLabels')
             self.removeSpurious = self.conf.getboolean('Parameters','removeSpurious')
-            self.normalize = self.conf.getboolean('Parameters','normalize')
-            self.normalizeLabel = self.conf.getboolean('Parameters','normalizeLabel')
             self.discreteThreshold = self.conf.getint('Parameters','discreteThreshold', fallback=5)
             self.plotAugmData = self.conf.getboolean('Parameters','plotAugmData')
         
@@ -154,23 +153,19 @@ def generate(csvFile):
         print("\033[1m KDE model file not found. Train it first. \033[0m")
         sys.exit()
     
-    if dP.normalize:
-        try:
-            with open(dP.norm_file, "rb") as f:
-                norm = pickle.load(f)
-        except:
-            print("\033[1m pkl file not found \033[0m")
-            sys.exit()
-    else:
-        norm = None
+    try:
+        with open(dP.norm_file, "rb") as f:
+            norm = pickle.load(f)
+    except:
+        print("\033[1m pkl file not found \033[0m")
+        sys.exit()
     
     # KDE samples pure distributions
     print(f"  Generating {num_samples_to_generate} synthetic samples directly from KDE distribution...")
     generated_data = kde.sample(num_samples_to_generate)
     
-    if dP.normalize:
-        # np.copy shields against in-place mutations
-        generated_data = norm.transform_inverse(np.copy(generated_data))
+    # np.copy shields against in-place mutations
+    generated_data = norm.transform_inverse(np.copy(generated_data))
         
     # Populate the output DF
     newDataDf = pd.DataFrame(generated_data, columns=dataDf.columns)
@@ -201,14 +196,10 @@ def augment(learnFile, augFlag):
     rootFile = dP.model_directory + os.path.splitext(os.path.basename(learnFile))[0] + \
             '_numAddedKDE' + str(dP.numAddedDataBlocks * A.shape[0])
     
-    if dP.normalize:
-        with open(dP.norm_file, "rb") as f:
-            norm = pickle.load(f)
-        # CRITICAL FIX: np.copy() prevents norm from mutating A back into physical space
-        orig_physical_A = norm.transform_inverse(np.copy(A))
-    else:
-        orig_physical_A = np.copy(A)
-        norm = None
+    with open(dP.norm_file, "rb") as f:
+        norm = pickle.load(f)
+    # CRITICAL FIX: np.copy() prevents norm from mutating A back into physical space
+    orig_physical_A = norm.transform_inverse(np.copy(A))
         
     printParam(dP)
     
@@ -236,10 +227,7 @@ def augment(learnFile, augFlag):
     synthetic_A_norm = np.clip(synthetic_A_norm, A_min_norm, A_max_norm)
     
     # Convert immediately to physical space using np.copy
-    if dP.normalize:
-        synthetic_A_phys = norm.transform_inverse(np.copy(synthetic_A_norm))
-    else:
-        synthetic_A_phys = np.copy(synthetic_A_norm)
+    synthetic_A_phys = norm.transform_inverse(np.copy(synthetic_A_norm))
         
     # Snap discrete variables back into physical bounds
     print("  Applying physical constraints and boundaries...")
@@ -262,27 +250,10 @@ def augment(learnFile, augFlag):
     if dP.plotAugmData:
         plotData(dP, orig_physical_A, purged_physical_A, True, "KDE Augmented Data", newFile+"_plots.pdf")
 
-#******************************************************
-# Utility Functions
-#******************************************************
-def getAmin(A):
-    A_min = []
-    for i in range(A.shape[1]):
-        non_zero = A[:, i][A[:, i] != 0]
-        A_min_single = non_zero.min() if non_zero.size > 0 else 0.0
-        A_min.append(A_min_single)
-    return np.array(A_min)
-
-def removeSpurious(A_physical, T):
-    A_min = getAmin(A_physical)
-    for i in range(T.shape[0]):
-        for j in range(T.shape[1]):
-            if T[i,j] < A_min[j]:
-                T[i,j] = 0
-    return T
-
-# Reverted to pure physical space function (no normalization round-trips)
-def snap_discrete_features(real_features, synthetic_physical, discrete_threshold=10, tolerance=0.15):
+#***********************************************************
+# Snap new samples in discrete points if discrete parameters
+#***********************************************************
+def snap_discrete_features(real_features, synthetic_physical, discrete_threshold=10, tolerance_pct=0.15):
     corrected_synthetic = np.copy(synthetic_physical)
     num_features = real_features.shape[1]
     valid_mask = np.ones(synthetic_physical.shape[0], dtype=bool)
@@ -293,10 +264,19 @@ def snap_discrete_features(real_features, synthetic_physical, discrete_threshold
         if len(unique_vals) <= discrete_threshold:
             discrete_cols.append(i)
             synth_col = synthetic_physical[:, i]
+            
+            # --- NEW: Dynamic Tolerance ---
+            # Calculate tolerance as a percentage of the column's total physical range
+            col_range = real_features[:, i].max() - real_features[:, i].min()
+            actual_tolerance = tolerance_pct * col_range if col_range > 0 else 0.15
+            # ------------------------------
+
             distances = np.abs(synth_col[:, np.newaxis] - unique_vals)
             min_distances = distances.min(axis=1)
             closest_indices = distances.argmin(axis=1)
-            valid_mask = valid_mask & (min_distances <= tolerance)
+            
+            # Use the dynamically calculated physical tolerance
+            valid_mask = valid_mask & (min_distances <= actual_tolerance)
             corrected_synthetic[:, i] = unique_vals[closest_indices]
         else:
             pass # Continuous
@@ -331,16 +311,15 @@ def readLearnFileKDE(learnFile, newNorm, dP):
     M = readFile(learnFile)
     empty = False
     
-    if dP.normalize:
-        print("  Normalization of feature matrix to 1")
-        if newNorm:
-            norm = Normalizer(M, dP)
-            norm.save()
-        else:
-            with open(dP.norm_file, "rb") as f:
-                norm = pickle.load(f)
-        # CRITICAL FIX: np.copy shields M from in-place mutation
-        M = norm.transform(np.copy(M))
+    print("  Normalization of feature matrix to 1")
+    if newNorm:
+        norm = Normalizer(M, dP)
+        norm.save()
+    else:
+        with open(dP.norm_file, "rb") as f:
+            norm = pickle.load(f)
+    # CRITICAL FIX: np.copy shields M from in-place mutation
+    M = norm.transform(np.copy(M))
     
     ind = np.any(M == 0, axis=1)
     ind[0] = False
@@ -390,6 +369,25 @@ def plotData(dP, A_physical, newA_physical, feat, title, plotFile):
         pdf.savefig()
         plt.close()
     pdf.close()
+    
+#******************************************************
+# Utility Functions
+#******************************************************
+def getAmin(A):
+    A_min = []
+    for i in range(A.shape[1]):
+        non_zero = A[:, i][A[:, i] != 0]
+        A_min_single = non_zero.min() if non_zero.size > 0 else 0.0
+        A_min.append(A_min_single)
+    return np.array(A_min)
+
+def removeSpurious(A_physical, T):
+    A_min = getAmin(A_physical)
+    for i in range(T.shape[0]):
+        for j in range(T.shape[1]):
+            if T[i,j] < A_min[j]:
+                T[i,j] = 0
+    return T
 
 def printParam(dP):
     print('  ================================================')
@@ -399,7 +397,6 @@ def printParam(dP):
     print('  Kernel Type:', dP.kde_kernel)
     print('  Added Data Multiplier:', dP.numAddedDataBlocks)
     print('  Remove Spurious:', dP.removeSpurious)
-    print('  Normalize:', dP.normalize)
     print('  Discrete Threshold:', dP.discreteThreshold)
     print('  ================================================\n')
 
