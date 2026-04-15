@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_KDE
 * Generative AI via Kernel Density Estimation
-* version: 2026.04.15.2
+* version: 2026.04.16.3
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -115,11 +115,11 @@ def main():
                 sys.exit(2)
                 
         if o in ("-a" , "--augment"):
-            #try:
-            augment(sys.argv[2], True)
-            #except Exception as e:
-            #   print(f" An error occurred: {e}\n")
-            #   sys.exit(2)
+            try:
+                augment(sys.argv[2], True)
+            except Exception as e:
+                print(f" An error occurred: {e}\n")
+                sys.exit(2)
         
         if o in ("-g" , "--generate"):
             try:
@@ -164,12 +164,13 @@ def generate(csvFile):
     else:
         norm = None
     
-    # KDE samples pure distributions rather than predicting Y from X
+    # KDE samples pure distributions
     print(f"  Generating {num_samples_to_generate} synthetic samples directly from KDE distribution...")
     generated_data = kde.sample(num_samples_to_generate)
     
     if dP.normalize:
-        generated_data = norm.transform_inverse(generated_data)
+        # np.copy shields against in-place mutations
+        generated_data = norm.transform_inverse(np.copy(generated_data))
         
     # Populate the output DF
     newDataDf = pd.DataFrame(generated_data, columns=dataDf.columns)
@@ -203,17 +204,18 @@ def augment(learnFile, augFlag):
     if dP.normalize:
         with open(dP.norm_file, "rb") as f:
             norm = pickle.load(f)
-        orig_physical_A = norm.transform_inverse(A)
+        # CRITICAL FIX: np.copy() prevents norm from mutating A back into physical space
+        orig_physical_A = norm.transform_inverse(np.copy(A))
     else:
-        orig_physical_A = A
+        orig_physical_A = np.copy(A)
         norm = None
         
     printParam(dP)
     
     # Fit the Kernel Density Estimator
-    print("  Fitting Kernel Density Estimator to dataset...")
+    print("  Fitting Kernel Density Estimator to normalized dataset...")
     kde = KernelDensity(bandwidth=dP.kde_bandwidth, kernel=dP.kde_kernel)
-    kde.fit(A)
+    kde.fit(A) # A is guaranteed to still be normalized
     
     # Save the fitted KDE model
     with open(dP.modelName, 'wb') as f:
@@ -226,17 +228,22 @@ def augment(learnFile, augFlag):
     # Generate Synthetic Samples
     n_samples = int(dP.numAddedDataBlocks * A.shape[0])
     print(f"\n  Sampling {n_samples} points from KDE landscape...")
-    synthetic_A = kde.sample(n_samples)
+    synthetic_A_norm = kde.sample(n_samples)
     
+    # Prevents infinite Gaussian tails from blowing up the Normalizer
+    A_min_norm = np.min(A, axis=0)
+    A_max_norm = np.max(A, axis=0)
+    synthetic_A_norm = np.clip(synthetic_A_norm, A_min_norm, A_max_norm)
+    
+    # Convert immediately to physical space using np.copy
+    if dP.normalize:
+        synthetic_A_phys = norm.transform_inverse(np.copy(synthetic_A_norm))
+    else:
+        synthetic_A_phys = np.copy(synthetic_A_norm)
+        
     # Snap discrete variables back into physical bounds
     print("  Applying physical constraints and boundaries...")
-    purged_synthetic_A = snap_discrete_features(orig_physical_A, synthetic_A, dP.discreteThreshold, norm=norm)
-    
-    # De-normalize generated data for the final file
-    if dP.normalize:
-        purged_physical_A = norm.transform_inverse(purged_synthetic_A)
-    else:
-        purged_physical_A = purged_synthetic_A
+    purged_physical_A = snap_discrete_features(orig_physical_A, synthetic_A_phys, dP.discreteThreshold)
         
     if dP.removeSpurious:
         purged_physical_A = removeSpurious(orig_physical_A, purged_physical_A)
@@ -274,12 +281,8 @@ def removeSpurious(A_physical, T):
                 T[i,j] = 0
     return T
 
-def snap_discrete_features(real_features, synthetic_features, discrete_threshold=10, tolerance=0.15, norm=None):
-    if norm is not None:
-        synthetic_physical = norm.transform_inverse(synthetic_features)
-    else:
-        synthetic_physical = synthetic_features
-        
+# Reverted to pure physical space function (no normalization round-trips)
+def snap_discrete_features(real_features, synthetic_physical, discrete_threshold=10, tolerance=0.15):
     corrected_synthetic = np.copy(synthetic_physical)
     num_features = real_features.shape[1]
     valid_mask = np.ones(synthetic_physical.shape[0], dtype=bool)
@@ -319,12 +322,8 @@ def snap_discrete_features(real_features, synthetic_features, discrete_threshold
                     valid_mask[row_idx] = False
     
     purged_synthetic = corrected_synthetic[valid_mask]
-    
-    # Re-normalize if necessary so the return matches the input space type
-    if norm is not None:
-        purged_synthetic = norm.transform(purged_synthetic)
         
-    rows_removed = synthetic_features.shape[0] - purged_synthetic.shape[0]
+    rows_removed = synthetic_physical.shape[0] - purged_synthetic.shape[0]
     print(f"   [x] Purged {rows_removed} unphysical rows out of bounds.")
     return purged_synthetic
 
@@ -340,7 +339,8 @@ def readLearnFileKDE(learnFile, newNorm, dP):
         else:
             with open(dP.norm_file, "rb") as f:
                 norm = pickle.load(f)
-        M = norm.transform(M)
+        # CRITICAL FIX: np.copy shields M from in-place mutation
+        M = norm.transform(np.copy(M))
     
     ind = np.any(M == 0, axis=1)
     ind[0] = False
