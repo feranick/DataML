@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_KDE
 * Generative AI via Kernel Density Estimation
-* version: 2026.04.15.2
+* version: 2026.04.15.3
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
