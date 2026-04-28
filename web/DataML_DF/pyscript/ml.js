@@ -11,6 +11,9 @@ function showLog() {
 
   const log = document.getElementById("log");
   if (log) log.href = url + "/" + selectedText + "/log.txt";
+  
+  const train = document.getElementById("train");
+  if (train) train.href = url + "/" + selectedText + "/train.txt";
 
   const dae = document.getElementById("dae");
   if (dae) dae.href = url + "/" + selectedText + "/DataML_DAE.ini";
