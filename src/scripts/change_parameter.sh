@@ -13,7 +13,7 @@ inifile="$4"
 
 if [[ $inifile == "DataML_DAE.ini" ]]; then
     filename="DataML_DAE.ini"
-elif [[ $inifile="DataML_VAE.ini" ]]; then
+elif [[ $inifile == "DataML_VAE.ini" ]]; then
     filename="DataML_VAE.ini"
 else
     echo "Error: inifile has to be either DataML_DAE.ini or DataML_VAE.ini"
@@ -35,7 +35,16 @@ find "$folder_path" -type f -name "$filename" | while read -r file; do
     if grep -q "$metric =" "$file"; then
         echo "  Found '$metric'. Replacing its value with '$value'"
         # Use sed to replace the rest of the line with the new value
-        sed -i '' "s/$metric = .*/$metric = $value/g" "$file"
+        
+        # Mac version
+        # sed -i '' "s/$metric = .*/$metric = $value/g" "$file"
+        
+        # Linux version:
+        # sed -i "s/$metric = .*/$metric = $value/g" "$file"
+        
+        # Universal version
+        sed "s/$metric = .*/$metric = $value/g" "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+        
         echo "  Replacement complete for $file"
     else
         echo "  '$metric =' not found in $file. Skipping replacement."
