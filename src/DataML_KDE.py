@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_KDE
 * Generative AI via Kernel Density Estimation
-* version: 2026.04.15.3
+* version: 2026.05.05.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -373,8 +373,6 @@ def plotData(dP, A_physical, newA_physical, feat, title, plotFile):
             plt.xlabel("col 0 - predicted parameter")
             plt.ylabel("col "+str(i)+" - feature parameter")
         
-        plt.plot(xA,yA, 'bo', markersize=3, alpha=0.5, label='KDE Generated')
-        
         # A polynomial of degree N requires at least N + 1 unique data points
         unique_x_count = len(np.unique(x))
         safe_degree = min(dP.fitPolyDegree, unique_x_count - 1)
@@ -384,8 +382,9 @@ def plotData(dP, A_physical, newA_physical, feat, title, plotFile):
             warnings.simplefilter('ignore')
             poly = polyfit.fit(x, y, safe_degree)
         
+        plt.plot(x,y, 'ro', markersize=6, label='Original Data')
+        plt.plot(xA,yA, 'bo', markersize=3, alpha=0.5, label='KDE Generated')
         plt.plot(np.unique(x), poly(np.unique(x)), 'g-', label='Polynomial Fit')
-        plt.plot(x,y, 'ro', markersize=5, label='Original Data')
         
         plt.title(title+" - $R^2={0:.3f}$".format(r2_score(y, poly(x))))
         pdf.savefig()
