@@ -3,7 +3,7 @@
 '''
 ******************************************************************
 * Add individual Perf sheets into CorrAnalysis Result master XLSX
-* v2025.10.16.1
+* v2026.5.8.1
 * Uses: Pandas
 * By: Nicola Ferralis <feranick@hotmail.com>
 ******************************************************************
@@ -67,7 +67,7 @@ def AddPerfTabs(xlsx):
         #print(new_df)
         par_label = "_".join(p.split()[-2:])
         
-        with pd.ExcelWriter(newXlsx, mode='a', engine='openpyxl') as writer:
+        with pd.ExcelWriter(newXlsx, mode='a', engine='openpyxl', if_sheet_exists='replace') as writer:
             df_final.to_excel(writer, sheet_name=par_label, index=False)
         
         print(f" Added new tab {par_label} to {newXlsx}")
