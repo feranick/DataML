@@ -33,9 +33,11 @@ def AddPerfTabs(xlsx):
         shutil.copy(xlsx, newXlsx)
         print(f" File copied successfully from '{xlsx}' to '{newXlsx}'")
     except FileNotFoundError:
-        print(f" Error: The source file '{xlsx}' was not found.")
+        print(f" Error: The master file '{xlsx}' was not found.\n")
+        sys.exit()
     except Exception as e:
-        print(f" An error occurred during copy: {e}")
+        print(f" An error occurred during copy: {e}\n")
+        sys.exit()
     
     df_orig = pd.read_excel(xlsx, sheet_name='Complete')
     df = df_orig.dropna(subset=['PERF'])
