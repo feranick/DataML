@@ -11,13 +11,15 @@ value="$2"
 folder_path="$3"
 inifile="$4"
 
-if [[ $inifile == "DataML_DAE.ini" ]]; then
-    filename="DataML_DAE.ini"
-elif [[ $inifile == "DataML_VAE.ini" ]]; then
-    filename="DataML_VAE.ini"
-else
-    echo "Error: inifile has to be either DataML_DAE.ini or DataML_VAE.ini"
-fi
+#if [[ $inifile == "DataML_DAE.ini" ]]; then
+#    filename="DataML_DAE.ini"
+#elif [[ $inifile == "DataML_VAE.ini" ]]; then
+#    filename="DataML_VAE.ini"
+#else
+#    echo "Error: inifile has to be either DataML_DAE.ini or DataML_VAE.ini"
+#fi
+
+filename=$inifile
 
 # Check if the provided folder path is a valid directory
 if [ ! -d "$folder_path" ]; then
