@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_KDE
 * Generative AI via Kernel Density Estimation
-* version: 2026.05.12.1
+* version: 2026.05.27.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -321,6 +321,20 @@ def readLearnFileKDE(learnFile, newNorm, dP):
     M = readFile(learnFile)
     empty = False
     
+    # 1. Identify valid non-zero rows on the RAW, un-normalized physical data
+    valid_mask = np.ones(M.shape[0], dtype=bool)
+    
+    if dP.excludeZeroLabels:
+        label_mask = (M[:, 0] != 0)
+        label_mask[0] = True # Always preserve the En_orig header row
+        valid_mask = valid_mask & label_mask
+        
+    if dP.excludeZeroFeatures:
+        feature_mask = ~np.any(M == 0, axis=1)
+        feature_mask[0] = True # Always preserve the En_orig header row
+        valid_mask = valid_mask & feature_mask
+
+    # 2. Normalize the feature matrix
     print("  Normalization of feature matrix to 1")
     if newNorm:
         norm = Normalizer(M, dP)
@@ -328,23 +342,16 @@ def readLearnFileKDE(learnFile, newNorm, dP):
     else:
         with open(dP.norm_file, "rb") as f:
             norm = pickle.load(f)
-    # CRITICAL FIX: np.copy shields M from in-place mutation
-    M = norm.transform(np.copy(M))
+            
+    # np.copy shields M from in-place mutation
+    M_norm = norm.transform(np.copy(M))
     
-    ind = np.any(M == 0, axis=1)
-    ind[0] = False
-    M_no_zero_features = M[~ind]
+    # 3. Apply the pre-calculated validity mask to the normalized data
+    M_filtered = M_norm[valid_mask]
     
-    ind_labels = (M[:, 0] != 0)
-    ind_labels[0] = True
-    M_no_zero_labels = M[ind_labels]
-    
-    if dP.excludeZeroLabels: M = M_no_zero_labels
-    if dP.excludeZeroFeatures: M = M_no_zero_features
-    
-    En = M[0,:]
-    A = M[1:,:]
-    return En, A, M, empty
+    En = M_filtered[0,:]
+    A = M_filtered[1:,:]
+    return En, A, M_filtered, empty
 
 #************************************
 # Plot augmented training data

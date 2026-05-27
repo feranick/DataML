@@ -2,7 +2,7 @@
 '''
 **************************************************
 * libDataML - Library for DataML/DataML_DF
-* version: 2026.05.12.1
+* version: 2026.05.27.1
 * Uses: Keras, TensorFlow, scikit-learn
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
