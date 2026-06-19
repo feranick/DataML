@@ -40,7 +40,7 @@ A wheel package is available in the subfolder `dir`. You can install it followin
 This software requires Python (3.9 or higher). It has been tested with Python 3.10 or higher which is the recommended platform. It is not compatible with python 2.x. Additional required packages:
 
     numpy
-    scikit-learn (==1.7.0)
+    scikit-learn (==1.8.0)
     scipy
     matplotlib
     pandas
