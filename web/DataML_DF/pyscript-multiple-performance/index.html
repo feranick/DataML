@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" href="icon.png">
+    <link rel="apple-touch-icon" href="icon180.png">
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://pyscript.net/releases/2026.6.1/core.css">
+    <script type="module" src="https://pyscript.net/releases/2026.6.1/core.js"></script>
+    <title>IGC_ML Multi-Perf 20260616</title>
+  </head>
+  <body>
+  <b>IGC_ML - Multi-Performance Prediction</b><br>
+  <br>Mat Pars -&gt; multiple Perf parameters<br><br>
+
+  <fieldset>
+  <legend>Manual prediction</legend>
+  <form name="MIT_ML" id="mit_ml">
+
+    <b>Select a model for each performance parameter:</b>
+    <div id="perf-selectors-container"></div>
+    <hr>
+    <b>Input parameters:</b>
+    <div id="feature-entries-container"></div>
+  </form>
+  <div name="predict" id="predict">
+    <br><button name="button" id="button" py-click="singlePredict" class="button">Predict all Perf</button>
+  </div>
+  </fieldset>
+
+  <br><br>
+  <fieldset>
+  <legend>Predict using CSV file</legend>
+  <form name="fileUpload" id="fileUpload">
+    <input id="inputFile" type="file" name="file" py-change="batchPredict" accept=".csv" class="hidden-button">
+    <label for="inputFile" class="button">Select a CSV File to predict</label>
+    <br><br><div id="download-area"></div>
+  </form>
+  </fieldset>
+
+  <div id="out"><br><div id="output"></div></div>
+
+  <script type="py" src="./main.py" config="./pyscript.toml"></script>
+  <script type="text/javascript" src="ml.js"></script>
+
+  <script>
+  // Fetch the pre-built list of model folders
+  fetch('models_list.json')
+    .then(response => {
+        if (!response.ok) throw new Error("models_list.json not found.");
+        return response.json();
+    })
+    .then(models => {
+        buildPerfGroups(models);   // group folders by Perf key (e.g. Perf1B)
+        createSelectors();         // one dropdown per Perf group (sorted, state restored)
+        buildFeatureEntries();     // input fields built once from any model's config.txt
+    })
+    .catch(error => {
+        console.error(error);
+        document.getElementById("output").innerHTML =
+          "<b>Error:</b> Could not load models. Ensure 'models_list.json' exists.";
+    });
+  </script>
+
+  </body>
+</html>

@@ -1,0 +1,6 @@
+name = "DataML_pyscript"
+description = "DataML pyscript"
+packages = ["numpy", "scikit-learn==1.8.0", "pandas"]
+[[fetch]]
+files = ['libDataML.py']
+
