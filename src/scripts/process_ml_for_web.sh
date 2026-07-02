@@ -28,6 +28,8 @@ for dir in *; do
         # 2. File duplication logic for train.txt
         kde_aug_file=$(find . -maxdepth 1 -name "*_kde_aug.txt" -print -quit)
         train_suffix_file=$(find . -maxdepth 1 -name "*_train.txt" -print -quit)
+        random_file=$(find . -maxdepth 1 -name "*_Random.txt" -print -quit)
+        random_nospur_file=$(find . -maxdepth 1 -name "*_Random_noSpur.txt" -print -quit)
 
         if [ -n "$kde_aug_file" ]; then
             echo "  Found *_kde_aug.txt ($kde_aug_file). Copying to train.txt..."
@@ -35,6 +37,12 @@ for dir in *; do
         elif [ -n "$train_suffix_file" ]; then
             echo "  *_kde_aug.txt not found. Found *_train.txt ($train_suffix_file). Copying to train.txt..."
             cp "$train_suffix_file" "train.txt"
+        elif [ -n "$random_file" ]; then
+            echo "  Found *_Random.txt ($random_file). Copying to train.txt..."
+            cp "$random_file" "train.txt"
+        elif [ -n "$random_nospur_file" ]; then
+            echo "  Found *_Random_noSpur.txt ($random_nospur_file). Copying to train.txt..."
+            cp "$random_npspur_file" "train.txt"
         else
             echo "  No matching target files found for train.txt logic."
         fi
