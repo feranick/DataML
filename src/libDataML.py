@@ -9,7 +9,7 @@
 '''
 import numpy as np
 import scipy
-import sys, os.path, pickle, h5py
+import sys, os.path, pickle, h5py, pickle
 
 #************************************
 # Normalizer
