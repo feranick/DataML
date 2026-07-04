@@ -1,0 +1,186 @@
+[Parameters]
+typeDF = GradientBoosting
+regressor = True
+n_estimators = 1000
+max_depth = 3
+max_features = 0.2
+epochs = 100
+l_rate = 0.05
+cv_split = 0.01
+trainFullData = False
+fullSizeBatch = False
+batch_size = 4
+numLabels = 1
+normalize = False
+normalizeLabel = False
+runDimRedFlag = False
+typeDimRed = SparsePCA
+numDimRedComp = 3
+plotFeatImportance = True
+optimizeParameters = False
+optScoringR = r2
+optScoringC = accuracy
+featureReduction = False
+minNumFeatures = 4
+
+[System]
+random_state = 7
+n_jobs = -1
+saveAsTxt = True
+
+         4         297.7782            0.25s
+         5         275.7703            0.23s
+         6         255.2830            0.23s
+         7         236.7325            0.22s
+         8         219.9717            0.22s
+         9         204.4548            0.21s
+        10         191.0979            0.21s
+        20          99.2016            0.19s
+        30          56.4428            0.18s
+        40          34.9675            0.17s
+        50          23.7943            0.17s
+        60          16.7679            0.16s
+        70          12.2720            0.16s
+        80           9.5605            0.16s
+        90           7.5251            0.16s
+       100           5.9155            0.15s
+       200           0.6232            0.13s
+       300           0.0896            0.12s
+       400           0.0130            0.10s
+       500           0.0025            0.08s
+       600           0.0005            0.07s
+       700           0.0001            0.05s
+       800           0.0000            0.03s
+       900           0.0000            0.02s
+      1000           0.0000            0.00s
+
+  ========================================================
+  [1m HyperParameters Optimization: Results[0m
+  ========================================================
+    mean_test_score  std_test_score  rank_test_score
+21         0.977424             0.0                1
+52         0.964265             0.0                2
+22         0.962980             0.0                3
+42         0.957927             0.0                4
+32         0.952033             0.0                5
+..              ...             ...              ...
+63         0.842545             0.0               66
+56         0.823659             0.0               67
+68         0.821286             0.0               68
+67         0.814064             0.0               69
+57         0.783874             0.0               70
+
+[70 rows x 3 columns]
+
+  Optimization results successfully saved to: model_DF_GradientBoosting_opt_results.csv
+
+ Using scoring: r2
+
+ Optimal parameters for best model:
+  {'max_depth': 3, 'max_features': 0.2} 
+
+ Updated parameters for best model in Data_DF.ini.
+ Setting DataML_DF training in non-optimization mode. 
+
+  List of used parameters saved in config.txt
+ 
+ Scikit-learn v. 1.8.0 
+
+ Total time: 8.7s or 0.1m or 0.0h 
+
+
+*****************************************************
+* DataML Decision Forests - Classifier and Regressor
+* version: 2026.05.27.1
+* Uses: sklearn, tabpfn
+* By: Nicola Ferralis <feranick@hotmail.com>
+*****************************************************
+
+  Opening training file:
+   IGC_MIT_20260616_master_partialDataSet_purged_p29_train.txt 
+
+  Opening training file:
+   IGC_MIT_20260616_master_partialDataSet_purged_p29_test.txt 
+
+  Data size: (62, 15)
+  Number of learning labels: 1
+  Total number of points per data: 15
+
+  Testing set file: IGC_MIT_20260616_master_partialDataSet_purged_p29_test.txt
+  Training set file datapoints: 62
+  Testing set file datapoints: 3
+
+  Training Applicability Domain model (Isolation Forest)...
+    -> Small dataset detected (62 rows). Setting contamination to 'auto'.
+  AD model saved in: ./model_ad.pkl 
+
+      Iter       Train Loss   Remaining Time 
+         1         370.0484            1.26s
+         2         340.9839            0.74s
+         3         316.9312            0.56s
+         4         301.0942            0.46s
+         5         279.0197            0.40s
+         6         258.3180            0.37s
+         7         239.1098            0.34s
+         8         222.3204            0.32s
+         9         206.5707            0.30s
+        10         192.6108            0.29s
+        20          99.6525            0.22s
+        30          55.5022            0.20s
+        40          33.6655            0.19s
+        50          22.2086            0.18s
+        60          16.2552            0.18s
+        70          12.3147            0.17s
+        80           9.4929            0.17s
+        90           7.4189            0.16s
+       100           5.6240            0.16s
+       200           0.6065            0.13s
+       300           0.0801            0.12s
+       400           0.0128            0.10s
+       500           0.0029            0.08s
+       600           0.0006            0.06s
+       700           0.0002            0.05s
+       800           0.0000            0.03s
+       900           0.0000            0.02s
+      1000           0.0000            0.00s
+
+   GradientBoostingRegressor model saved in: model_DF_GradientBoostingRegressor.pkl
+
+  ================================================
+  [1m GradientBoosting Regressor  [0m- Parameters
+  ================================================
+   Number of estimators: 1000 
+   Learning rate: 0.05 
+   Max depth: 3 
+   Max features: 0.2
+   Batch size: 4
+
+   Cross validation split: 1.0%
+   Train on full dataset: False
+   Number of labels: 1
+   Random state: 7
+   Normalize: False
+
+  ================================================================================
+  [1m GradientBoosting Regressor [0m- Results
+  ================================================================================
+   Real class	| Predicted class	| Delta
+  --------------------------------------------------------------------------------
+   167.0000	| 166.6723		| -0.3277
+   154.0000	| 157.5828		| 3.5828
+   124.5000	| 127.4102		| 2.9102
+  --------------------------------------------------------------------------------
+   MAE = 2.2736
+   R^2 = 0.9774
+   StDev = 2.09
+  ================================================================================
+
+  Feature importances plots saved
+
+  List of used parameters saved in config.txt
+ 
+ Scikit-learn v. 1.8.0 
+
+ Total time: 4.1s or 0.1m or 0.0h 
+
+/Users/feranick/Desktop/Perf1B/Perf1B_Marlene-ALL15par_09774

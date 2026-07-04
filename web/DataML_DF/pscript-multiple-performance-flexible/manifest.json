@@ -1,0 +1,7 @@
+{
+  "name": "DataML_DF - Multi-Perf",
+  "short_name": "DataML_DF - Multi-Perf",
+  "description": "DataML predictive and generative ML Models",
+  "start_url": ".",
+  "display": "standalone"
+}
