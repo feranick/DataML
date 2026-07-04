@@ -150,6 +150,7 @@ async def singlePredict(event):
     ok, report = await verify_feature_consistency(selectors, feat_list)
     if not ok:
         output_div.innerText = report
+        document.querySelector("#button").disabled = False
         return
 
     # Read input values
