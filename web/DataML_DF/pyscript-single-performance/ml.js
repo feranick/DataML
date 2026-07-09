@@ -27,9 +27,10 @@ function showLog() {
 
 async function selectModel() {
   document.getElementById("output").innerHTML = "";
-  selIndex = document.MIT_ML.model.selectedIndex;
+  const dropdown = document.getElementById("model");
+  selIndex = dropdown.selectedIndex;
   setCookie(nameSelIndex, selIndex ,1000);
-  folder = (document.MIT_ML.model[selIndex].text);
+  folder = dropdown.options[selIndex].text;
   console.log(folder);
   showLog();
 
@@ -114,14 +115,15 @@ function toggleParams() {
 }
 
 function setButtonLabel() {
-  selIndex = document.MIT_ML.model.selectedIndex;
-  folder = (document.MIT_ML.model[selIndex].text);
+  const dropdown = document.getElementById("model");
+  selIndex = dropdown.selectedIndex;
+  folder = dropdown.options[selIndex].text;
   const button = document.getElementById("button");
   button.innerHTML = "Predict "+folder.slice(0,5);
 }
 
 function init() {
-  const modelDropdown = document.MIT_ML.model;
+  const modelDropdown = document.getElementById("model");
   if (!modelDropdown) {
       console.error("Fatal Error: Could not find model dropdown.");
       return;
