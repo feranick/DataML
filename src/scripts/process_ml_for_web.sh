@@ -42,7 +42,7 @@ for dir in *; do
             cp "$random_file" "train.txt"
         elif [ -n "$random_nospur_file" ]; then
             echo "  Found *_Random_noSpur.txt ($random_nospur_file). Copying to train.txt..."
-            cp "$random_npspur_file" "train.txt"
+            cp "$random_nospur_file" "train.txt"
         else
             echo "  No matching target files found for train.txt logic."
         fi
