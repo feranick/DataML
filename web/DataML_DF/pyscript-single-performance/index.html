@@ -22,12 +22,13 @@
   <br><br><small><a id="importance1">Parametric importance vs decrease in impurity</a><br>
   <a id="importance2">Parametric importance vs mean accuracy</a></small><br><br><br>
 
-  <div id="model-select-area">
-  Model: <select name="model" id="model" onchange="selectModel()" py-change="getModel">
+  <fieldset id="model-select-area">
+  <legend>Model</legend>
+  <select name="model" id="model" onchange="selectModel()" py-change="getModel">
   </select>
-  </div>
+  </fieldset>
 
-  <fieldset>
+  <br><br><fieldset>
   <legend>Manual prediction</legend>
   <form name = "MIT_ML" id="mit_ml">
   <div id="params-toggle" class="params-toggle" onclick="toggleParams()">
