@@ -20,6 +20,15 @@ import pandas as pd
 import tkinter as tk
 from tkinter import ttk, filedialog, scrolledtext, messagebox
 
+# Optional drag-and-drop support. Requires the 'tkinterdnd2' package
+# (pip install tkinterdnd2). If unavailable, the CSV button still works;
+# only the drag-and-drop convenience is disabled.
+try:
+    from tkinterdnd2 import DND_FILES, TkinterDnD
+    _HAS_DND = True
+except ImportError:
+    _HAS_DND = False
+
 try:
     from libDataML import *
 except ImportError:
@@ -74,6 +83,7 @@ class DataMLMultiApp:
         self.features = []
         self.entry_widgets = {}
         self.perf_combos = {}     # key -> Combobox
+        self.params_visible = False   # input parameters start collapsed
         self.state = self.load_state()
 
         self.load_model_list()
@@ -157,8 +167,9 @@ class DataMLMultiApp:
         style = ttk.Style()
         style.configure("TButton", font=("Helvetica", 10), padding=5)
         style.configure("TLabel", font=("Helvetica", 10))
+        style.configure("Toggle.TLabel", foreground="#007bff", font=("Helvetica", 10, "bold"))
 
-        # --- Perf model selectors ---
+        # --- Perf model selectors (own titled box) ---
         sel_lf = ttk.LabelFrame(self.root, text="Select a model for each performance parameter", padding=12)
         sel_lf.pack(fill=tk.X, pady=(0, 12))
 
@@ -179,12 +190,22 @@ class DataMLMultiApp:
             combo.bind("<<ComboboxSelected>>", lambda e, k=key: self.on_select(k))
             self.perf_combos[key] = combo
 
-        # --- Input parameters ---
+        # --- Input parameters (collapsible) ---
         self.manual_lf = ttk.LabelFrame(self.root, text="Input parameters", padding=12)
         self.manual_lf.pack(fill=tk.BOTH, expand=True, pady=(0, 12))
 
-        self.canvas = tk.Canvas(self.manual_lf, highlightthickness=0)
-        scrollbar = ttk.Scrollbar(self.manual_lf, orient="vertical", command=self.canvas.yview)
+        # Collapsible toggle header (mirrors the web "Show input parameters" triangle)
+        self.toggle_lbl = ttk.Label(self.manual_lf, text="▶ Show input parameters",
+                                    style="Toggle.TLabel", cursor="hand2")
+        self.toggle_lbl.pack(anchor="w", pady=(0, 8))
+        self.toggle_lbl.bind("<Button-1>", lambda e: self.toggle_params())
+
+        # Container wrapping canvas + scrollbar so the whole block can be hidden
+        self.params_container = ttk.Frame(self.manual_lf)
+        # NOT packed initially -> parameters collapsed by default
+
+        self.canvas = tk.Canvas(self.params_container, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(self.params_container, orient="vertical", command=self.canvas.yview)
         self.features_frame = ttk.Frame(self.canvas)
         self.features_frame.bind("<Configure>",
                                  lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
@@ -199,14 +220,47 @@ class DataMLMultiApp:
         # --- Batch CSV ---
         csv_lf = ttk.LabelFrame(self.root, text="Predict using CSV file", padding=12)
         csv_lf.pack(fill=tk.X, pady=(0, 12))
-        ttk.Button(csv_lf, text="Select a CSV File to predict",
-                   command=self.batch_predict).pack()
+        self.csv_btn = ttk.Button(csv_lf, text="Select a CSV File to predict",
+                                  command=self.batch_predict)
+        self.csv_btn.pack()
+
+        # Drag-and-drop hint + registration (only if tkinterdnd2 is available)
+        if _HAS_DND:
+            hint = ttk.Label(csv_lf, text="or drag & drop a CSV file here", foreground="#888")
+            hint.pack(pady=(8, 0))
+            for w in (csv_lf, self.csv_btn, hint):
+                w.drop_target_register(DND_FILES)
+                w.dnd_bind('<<Drop>>', self.on_drop_csv)
 
         # --- Output ---
         out_lf = ttk.LabelFrame(self.root, text="Output", padding=10)
         out_lf.pack(fill=tk.BOTH, expand=True)
         self.output_text = scrolledtext.ScrolledText(out_lf, wrap=tk.NONE, font=("Courier", 10))
         self.output_text.pack(fill=tk.BOTH, expand=True)
+
+    def toggle_params(self):
+        """Show/hide the auto-generated input parameter fields."""
+        self.params_visible = not self.params_visible
+        if self.params_visible:
+            self.params_container.pack(fill=tk.BOTH, expand=True)
+            self.toggle_lbl.config(text="▼ Hide input parameters")
+        else:
+            self.params_container.pack_forget()
+            self.toggle_lbl.config(text="▶ Show input parameters")
+
+    def on_drop_csv(self, event):
+        """Handle a file dropped onto the CSV box (requires tkinterdnd2)."""
+        try:
+            paths = self.root.tk.splitlist(event.data)
+        except Exception:
+            paths = [event.data]
+        if not paths:
+            return
+        path = paths[0]
+        if not path.lower().endswith(".csv"):
+            self.log_message("Please drop a .csv file.", clear=True)
+            return
+        self.batch_predict(filepath=path)
 
     def on_select(self, key):
         self.state[key] = self.perf_combos[key].get()
@@ -336,15 +390,18 @@ class DataMLMultiApp:
         self.log_message(out, clear=True)
 
     # ---------- batch predict ----------
-    def batch_predict(self):
+    def batch_predict(self, filepath=None):
+        """`filepath` may be supplied by a drag-and-drop event; when None, an
+        Open dialog is shown as before."""
         if not self.sorted_keys:
             return
-        filepath = filedialog.askopenfilename(title="Select CSV", filetypes=[("CSV Files", "*.csv")])
+        if filepath is None:
+            filepath = filedialog.askopenfilename(title="Select CSV", filetypes=[("CSV Files", "*.csv")])
         if not filepath:
             return
         filename = os.path.basename(filepath)
         self.log_message("Processing CSV... Please wait.", clear=True)
-        
+
         ok, report = self.verify_feature_consistency()
         if not ok:
             self.log_message(report, clear=True)
@@ -430,7 +487,7 @@ class DataMLMultiApp:
                 self.log_message(f"\n[Success] Results saved to:\n{save_path}")
             except Exception as e:
                 self.log_message(f"\n[Error] Could not save results: {e}")
-                
+
     def verify_feature_consistency(self):
         """
         Verify every selected model's config.txt matches the reference (self.features).
@@ -469,6 +526,7 @@ class DataMLMultiApp:
 
 
 if __name__ == "__main__":
-    root = tk.Tk()
+    # Use the DnD-enabled Tk root when tkinterdnd2 is installed
+    root = TkinterDnD.Tk() if _HAS_DND else tk.Tk()
     app = DataMLMultiApp(root)
     root.mainloop()

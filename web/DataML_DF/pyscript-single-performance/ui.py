@@ -19,7 +19,16 @@ import pandas as pd
 import tkinter as tk
 from tkinter import ttk, filedialog, scrolledtext, messagebox
 
-# Import the custom library natively. 
+# Optional drag-and-drop support. Requires the 'tkinterdnd2' package
+# (pip install tkinterdnd2). If unavailable, the CSV button still works;
+# only the drag-and-drop convenience is disabled.
+try:
+    from tkinterdnd2 import DND_FILES, TkinterDnD
+    _HAS_DND = True
+except ImportError:
+    _HAS_DND = False
+
+# Import the custom library natively.
 # This is required so pickle can un-serialize the Normalizer and MultiClassReductor.
 try:
     from libDataML import *
@@ -33,7 +42,7 @@ class ModelConfig:
         self.ini_path = os.path.join(folder, "DataML_DF.ini")
         self.conf = configparser.ConfigParser()
         self.conf.optionxform = str
-        
+
         if os.path.exists(self.ini_path):
             self.conf.read(self.ini_path)
             self.typeDF = self.conf.get('Parameters', 'typeDF', fallback='GradientBoosting')
@@ -58,13 +67,14 @@ class DataMLOfflineApp:
         self.app_title = "DataML - Offline"
         self.features = []
         self.entry_widgets = {}
+        self.params_visible = False   # input parameters start collapsed
 
         # Get title from HTML if possible, but build models list from directories
         self.get_app_title('index.html')
         self.scan_model_directories()
-        
+
         self.root.title(self.app_title)
-        
+
         self.setup_ui()
         if self.models:
             self.model_combo.current(0)
@@ -86,7 +96,7 @@ class DataMLOfflineApp:
 
         for item in os.listdir(current_dir):
             item_path = os.path.join(current_dir, item)
-            
+
             # Check if it's a directory and not a hidden/system folder
             if os.path.isdir(item_path) and not item.startswith('.') and item != '__pycache__':
                 # Verify it's an actual model folder by checking for required files
@@ -108,25 +118,34 @@ class DataMLOfflineApp:
         style = ttk.Style()
         style.configure("TButton", font=("Helvetica", 10), padding=5)
         style.configure("TLabel", font=("Helvetica", 10))
+        style.configure("Toggle.TLabel", foreground="#007bff", font=("Helvetica", 10, "bold"))
 
-        # --- Top Section: Model Selection ---
-        top_frame = ttk.Frame(self.root)
-        top_frame.pack(fill=tk.X, pady=(0, 15))
+        # --- Top Section: Model Selection (own titled box) ---
+        model_lf = ttk.LabelFrame(self.root, text="Model", padding=12)
+        model_lf.pack(fill=tk.X, pady=(0, 15))
 
-        ttk.Label(top_frame, text="Model:", font=("Helvetica", 10, "bold")).pack(side=tk.LEFT, padx=(0, 10))
-        
         # Use self.models populated by directory scanning
-        self.model_combo = ttk.Combobox(top_frame, values=self.models, state="readonly", width=40)
-        self.model_combo.pack(side=tk.LEFT)
+        self.model_combo = ttk.Combobox(model_lf, values=self.models, state="readonly")
+        self.model_combo.pack(fill=tk.X)
         self.model_combo.bind("<<ComboboxSelected>>", self.on_model_select)
 
         # --- Middle Section: Dynamic Features & Manual Predict ---
         self.manual_lf = ttk.LabelFrame(self.root, text="Manual Prediction", padding=15)
         self.manual_lf.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
 
+        # Collapsible toggle header (mirrors the web "Show parameters" triangle)
+        self.toggle_lbl = ttk.Label(self.manual_lf, text="▶ Show parameters",
+                                    style="Toggle.TLabel", cursor="hand2")
+        self.toggle_lbl.pack(anchor="w", pady=(0, 8))
+        self.toggle_lbl.bind("<Button-1>", lambda e: self.toggle_params())
+
+        # Container wrapping canvas + scrollbar so the whole block can be hidden
+        self.params_container = ttk.Frame(self.manual_lf)
+        # NOT packed initially -> parameters collapsed by default
+
         # Canvas/Scrollbar for dynamic features in case there are many
-        self.canvas = tk.Canvas(self.manual_lf, highlightthickness=0)
-        scrollbar = ttk.Scrollbar(self.manual_lf, orient="vertical", command=self.canvas.yview)
+        self.canvas = tk.Canvas(self.params_container, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(self.params_container, orient="vertical", command=self.canvas.yview)
         self.features_frame = ttk.Frame(self.canvas)
 
         self.features_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
@@ -146,12 +165,44 @@ class DataMLOfflineApp:
         self.csv_btn = ttk.Button(csv_lf, text="Select a CSV File to predict", command=self.batch_predict)
         self.csv_btn.pack()
 
+        # Drag-and-drop hint + registration (only if tkinterdnd2 is available)
+        if _HAS_DND:
+            hint = ttk.Label(csv_lf, text="or drag & drop a CSV file here", foreground="#888")
+            hint.pack(pady=(8, 0))
+            for w in (csv_lf, self.csv_btn, hint):
+                w.drop_target_register(DND_FILES)
+                w.dnd_bind('<<Drop>>', self.on_drop_csv)
+
         # --- Bottom Section: Output Log ---
         out_lf = ttk.LabelFrame(self.root, text="Output", padding=10)
         out_lf.pack(fill=tk.BOTH, expand=True)
 
         self.output_text = scrolledtext.ScrolledText(out_lf, wrap=tk.WORD, font=("Courier", 10))
         self.output_text.pack(fill=tk.BOTH, expand=True)
+
+    def toggle_params(self):
+        """Show/hide the auto-generated input parameter fields."""
+        self.params_visible = not self.params_visible
+        if self.params_visible:
+            self.params_container.pack(fill=tk.BOTH, expand=True)
+            self.toggle_lbl.config(text="▼ Hide parameters")
+        else:
+            self.params_container.pack_forget()
+            self.toggle_lbl.config(text="▶ Show parameters")
+
+    def on_drop_csv(self, event):
+        """Handle a file dropped onto the CSV box (requires tkinterdnd2)."""
+        try:
+            paths = self.root.tk.splitlist(event.data)
+        except Exception:
+            paths = [event.data]
+        if not paths:
+            return
+        path = paths[0]
+        if not path.lower().endswith(".csv"):
+            self.log_message("Please drop a .csv file.", clear=True)
+            return
+        self.batch_predict(filepath=path)
 
     def on_model_select(self, event):
         """Triggers when a new model is selected. Loads its specific config.txt to generate entries."""
@@ -160,7 +211,7 @@ class DataMLOfflineApp:
 
         config_path = os.path.join(folder, "config.txt")
         self.features = []
-        
+
         if os.path.exists(config_path):
             with open(config_path, 'r', encoding='utf-8') as f:
                 content = f.read().strip()
@@ -170,7 +221,7 @@ class DataMLOfflineApp:
         # Shorten button label if folder name is very long
         display_name = folder[:15] + "..." if len(folder) > 15 else folder
         self.predict_btn.config(text=f"Predict {display_name}")
-        
+
         self.build_feature_entries()
         self.log_message(f"Loaded configuration for model: {folder}")
 
@@ -183,10 +234,10 @@ class DataMLOfflineApp:
         for i, feat in enumerate(self.features):
             row_frame = ttk.Frame(self.features_frame)
             row_frame.pack(fill=tk.X, pady=2)
-            
+
             lbl = ttk.Label(row_frame, text=feat, width=20, anchor="w")
             lbl.pack(side=tk.LEFT)
-            
+
             ent = ttk.Entry(row_frame)
             ent.insert(0, str(i)) # Setting default value just like PyScript logic fv[i] = i
             ent.pack(side=tk.LEFT, fill=tk.X, expand=True)
@@ -204,9 +255,9 @@ class DataMLOfflineApp:
         folder = self.model_combo.get()
         if not folder: return
         self.log_message("Please wait...", clear=True)
-        
+
         cfg = ModelConfig(folder)
-        
+
         # 1. Gather inputs
         try:
             R_list = [float(self.entry_widgets[feat].get()) for feat in self.features]
@@ -283,11 +334,16 @@ class DataMLOfflineApp:
 
         self.log_message(output, clear=True)
 
-    def batch_predict(self):
-        """Replicates batchPredict logic from PyScript."""
-        filepath = filedialog.askopenfilename(title="Select CSV", filetypes=[("CSV Files", "*.csv")])
+    def batch_predict(self, filepath=None):
+        """Replicates batchPredict logic from PyScript.
+
+        `filepath` may be supplied by a drag-and-drop event; when None, an
+        Open dialog is shown as before.
+        """
+        if filepath is None:
+            filepath = filedialog.askopenfilename(title="Select CSV", filetypes=[("CSV Files", "*.csv")])
         if not filepath: return
-        
+
         folder = self.model_combo.get()
         cfg = ModelConfig(folder)
         filename = os.path.basename(filepath)
@@ -342,7 +398,7 @@ class DataMLOfflineApp:
         for i in range(1, dataDf.shape[1]):
             R = np.array([dataDf.iloc[:, i].tolist()], dtype=float)
             col_name = dataDf.columns[i]
-            
+
             if cfg.normalize and norm:
                 R = norm.transform_valid_data(R)
 
@@ -358,7 +414,7 @@ class DataMLOfflineApp:
                     pred = norm.transform_inverse_single(df.predict(R))
                 else:
                     pred = df.predict(R)
-                
+
                 output += f" {col_name} = {pred[0]:.5f} \t {ood_tag}\n"
                 summaryFile.append([col_name, pred[0], ''])
             else:
@@ -372,7 +428,7 @@ class DataMLOfflineApp:
                         p_class = str(round(norm.transform_inverse_single(pred_classes[ind[j]]), 2))
                     else:
                         p_class = str(round(pred_classes[ind[j]], 2))
-                    
+
                     output += f" {col_name} = {p_class}\t\t|  {str(100 * proba[0][ind[j]])[:5]}%) {ood_tag}\n"
                     summaryFile.append([col_name, pred_classes[ind[j]], round(100 * proba[0][ind[j]], 1)])
 
@@ -381,12 +437,12 @@ class DataMLOfflineApp:
 
         # Output file saving logic
         save_path = filedialog.asksaveasfilename(
-            defaultextension=".csv", 
+            defaultextension=".csv",
             initialfile=f"Results_{filename}",
             title="Save Predictions As",
             filetypes=[("CSV Files", "*.csv")]
         )
-        
+
         if save_path:
             try:
                 with open(save_path, 'w', newline='', encoding='utf-8') as f:
@@ -397,6 +453,7 @@ class DataMLOfflineApp:
                 self.log_message(f"\n[Error] Could not save results: {e}")
 
 if __name__ == "__main__":
-    root = tk.Tk()
+    # Use the DnD-enabled Tk root when tkinterdnd2 is installed
+    root = TkinterDnD.Tk() if _HAS_DND else tk.Tk()
     app = DataMLOfflineApp(root)
     root.mainloop()
