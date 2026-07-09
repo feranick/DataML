@@ -18,15 +18,20 @@
   <b>IGC_ML - Multi-Performance Prediction</b><br>
   <br>Mat Pars -&gt; multiple Perf parameters<br><br>
 
+  <fieldset id="model-select-area">
+  <legend>Model</legend>
+  <b>Select a model for each performance parameter:</b>
+  <div id="perf-selectors-container"></div>
+  </fieldset>
+
+  <br><br>
   <fieldset>
   <legend>Manual prediction</legend>
   <form name="MIT_ML" id="mit_ml">
-
-    <b>Select a model for each performance parameter:</b>
-    <div id="perf-selectors-container"></div>
-    <hr>
-    <b>Input parameters:</b>
-    <div id="feature-entries-container"></div>
+    <div id="params-toggle" class="params-toggle" onclick="toggleParams()">
+      <span class="params-triangle">&#9654;</span> Show input parameters
+    </div>
+    <div id="feature-entries-container" class="collapsed"></div>
   </form>
   <div name="predict" id="predict">
     <br><button name="button" id="button" py-click="singlePredict" class="button">Predict all Perf</button>
@@ -37,9 +42,12 @@
   <fieldset>
   <legend>Predict using CSV file</legend>
   <form name="fileUpload" id="fileUpload">
-    <input id="inputFile" type="file" name="file" py-change="batchPredict" accept=".csv" class="hidden-button">
-    <label for="inputFile" class="button">Select a CSV File to predict</label>
-    <br><br><div id="download-area"></div>
+    <div id="drop-zone" class="drop-zone">
+      <input id="inputFile" type="file" name="file" py-change="batchPredict" accept=".csv" class="hidden-button">
+      <label for="inputFile" class="button">Select a CSV File to predict</label>
+      <div class="drop-hint">or drag &amp; drop a CSV file here</div>
+    </div>
+    <br><div id="download-area"></div>
   </form>
   </fieldset>
 
@@ -65,6 +73,9 @@
         document.getElementById("output").innerHTML =
           "<b>Error:</b> Could not load models. Ensure 'models_list.json' exists.";
     });
+
+  // Wire up drag-and-drop for the CSV box once the DOM is ready
+  setupDropZone();
   </script>
 
   </body>

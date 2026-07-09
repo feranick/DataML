@@ -152,6 +152,63 @@ function createEntries(features) {
   }
 }
 
+// Toggle visibility of the auto-generated input parameter fields
+function toggleParams() {
+  const container = document.getElementById('feature-entries-container');
+  const toggle = document.getElementById('params-toggle');
+  if (!container || !toggle) return;
+
+  const isCollapsed = container.classList.toggle('collapsed');
+  toggle.classList.toggle('open', !isCollapsed);
+
+  // Update the label text (keep the triangle span intact)
+  const triangle = toggle.querySelector('.params-triangle');
+  const triangleHTML = triangle ? triangle.outerHTML : '';
+  toggle.innerHTML = triangleHTML + (isCollapsed ? ' Show input parameters' : ' Hide input parameters');
+}
+
+// #######  Drag & Drop for CSV upload  ##################
+function setupDropZone() {
+  const dropZone = document.getElementById('drop-zone');
+  const input = document.getElementById('inputFile');
+  if (!dropZone || !input) return;
+
+  // Prevent the browser from opening the file when dropped anywhere
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+    dropZone.addEventListener(evt, e => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+  });
+
+  ['dragenter', 'dragover'].forEach(evt => {
+    dropZone.addEventListener(evt, () => dropZone.classList.add('dragover'));
+  });
+
+  ['dragleave', 'drop'].forEach(evt => {
+    dropZone.addEventListener(evt, () => dropZone.classList.remove('dragover'));
+  });
+
+  dropZone.addEventListener('drop', e => {
+    const files = e.dataTransfer && e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      alert('Please drop a .csv file.');
+      return;
+    }
+
+    // Assign the dropped file to the hidden input, then fire "change"
+    // so the existing py-change="batchPredict" handler runs as usual.
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+}
+// ########################################################
+
 // #######  Utilities  ##################################
 function getCookie(name) {
   return (name = (document.cookie + ';').match(new RegExp(name + '=.*;'))) && name[0].split(/=|;/)[1];
