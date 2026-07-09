@@ -54,6 +54,7 @@ In addition, these packages may be needed depending on your platform (via ```apt
     
     python3-tk
     graphviz
+    tkinterdnd2 (for GUI)
 
 These are found in Unix based systems using common repositories (apt-get for Debian/Ubuntu Linux, or MacPorts for MacOS). More details in the [scikit-learn installation page](http://scikit-learn.org/stable/install.html).
 
