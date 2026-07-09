@@ -27,7 +27,10 @@
   <form name = "MIT_ML" id="mit_ml">
   Model: <select name="model" id="model" onchange="selectModel()" py-change="getModel">
   </select>
-  <div id="feature-entries-container">
+  <div id="params-toggle" class="params-toggle" onclick="toggleParams()">
+    <span class="params-triangle">&#9654;</span> Show parameters
+  </div>
+  <div id="feature-entries-container" class="collapsed">
         </div>
   </form>
   <div name="predict" id="predict"><br><button name="button" id="button" py-click="singlePredict" class="button">Predict</button>
@@ -36,9 +39,12 @@
 
 <br><br><fieldset><legend>Predict using CSV file</legend>
 <form name = "fileUpload" id="fileUpload">
-<input id="inputFile" type="file" name="file" py-change="batchPredict" accept=".csv" class="hidden-button">
-<label for="inputFile" class="button">Select a CSV File to predict</label>
-<br><br><div id="download-area"></div>
+<div id="drop-zone" class="drop-zone">
+  <input id="inputFile" type="file" name="file" py-change="batchPredict" accept=".csv" class="hidden-button">
+  <label for="inputFile" class="button">Select a CSV File to predict</label>
+  <div class="drop-hint">or drag &amp; drop a CSV file here</div>
+</div>
+<br><div id="download-area"></div>
 </form>
 </fieldset>
 
@@ -46,7 +52,7 @@
 
   <script type="py" src="./main.py" config="./pyscript.toml"></script>
   <script type="text/javascript" src="ml.js" ></script>
-  
+
   <script>
   // Fetch the pre-built list of models
   fetch('models_list.json')
@@ -57,18 +63,18 @@
     .then(models => {
         const modelDropdown = document.getElementById("model");
         modelDropdown.innerHTML = ''; // Clear the dropdown
-        
+
         // Populate the dropdown
         models.forEach(modelName => {
             let option = document.createElement("option");
             option.text = modelName;
             modelDropdown.add(option);
         });
-        
+
         // 1. Restore the user's previously selected index (if any)
-        init(); 
-        
-        // 2. Dispatch a change event. 
+        init();
+
+        // 2. Dispatch a change event.
         // This automatically triggers selectModel() in JS AND getModel() in Python.
         modelDropdown.dispatchEvent(new Event('change'));
     })
@@ -76,7 +82,10 @@
         console.error(error);
         document.getElementById("output").innerHTML = "<b>Error:</b> Could not load models. Please ensure you run 'update_models.py' to generate 'models_list.json' first.";
     });
+
+  // Wire up drag-and-drop for the CSV box once the DOM is ready
+  setupDropZone();
   </script>
-  
+
   </body>
 </html>

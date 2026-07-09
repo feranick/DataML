@@ -11,7 +11,7 @@ function showLog() {
 
   const log = document.getElementById("log");
   if (log) log.href = url + "/" + selectedText + "/log.txt";
-  
+
   const train = document.getElementById("train");
   if (train) train.href = url + "/" + selectedText + "/train.txt";
 
@@ -98,6 +98,21 @@ function createEntries(features) {
   //container.appendChild(document.createElement("br"));
 }
 
+// Toggle visibility of the auto-generated parameter fields
+function toggleParams() {
+  const container = document.getElementById('feature-entries-container');
+  const toggle = document.getElementById('params-toggle');
+  if (!container || !toggle) return;
+
+  const isCollapsed = container.classList.toggle('collapsed');
+  toggle.classList.toggle('open', !isCollapsed);
+
+  // Update the label text (keep the triangle span intact)
+  const triangle = toggle.querySelector('.params-triangle');
+  const triangleHTML = triangle ? triangle.outerHTML : '';
+  toggle.innerHTML = triangleHTML + (isCollapsed ? ' Show parameters' : ' Hide parameters');
+}
+
 function setButtonLabel() {
   selIndex = document.MIT_ML.model.selectedIndex;
   folder = (document.MIT_ML.model[selIndex].text);
@@ -125,6 +140,48 @@ function init() {
   showLog(); // Call after selectedIndex is definitively set
 }
 //window.onload = init();
+
+// #######  Drag & Drop for CSV upload  ##################
+function setupDropZone() {
+  const dropZone = document.getElementById('drop-zone');
+  const input = document.getElementById('inputFile');
+  if (!dropZone || !input) return;
+
+  // Prevent the browser from opening the file when dropped anywhere
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+    dropZone.addEventListener(evt, e => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+  });
+
+  ['dragenter', 'dragover'].forEach(evt => {
+    dropZone.addEventListener(evt, () => dropZone.classList.add('dragover'));
+  });
+
+  ['dragleave', 'drop'].forEach(evt => {
+    dropZone.addEventListener(evt, () => dropZone.classList.remove('dragover'));
+  });
+
+  dropZone.addEventListener('drop', e => {
+    const files = e.dataTransfer && e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      alert('Please drop a .csv file.');
+      return;
+    }
+
+    // Assign the dropped file to the hidden input, then fire "change"
+    // so the existing py-change="batchPredict" handler runs as usual.
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+}
+// ########################################################
 
 // #######  Utilities  ##################################
 function getCookie(name) {
