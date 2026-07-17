@@ -4,16 +4,104 @@
 ***********************************************
 * DataML_VAE
 * Generative AI via Variational Autoencoder
-* version: 2026.07.04.1
+* version: 2026.07.17.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
 print(__doc__)
 
 import numpy as np
+import os
 import sys, os.path, h5py, pickle, configparser, ast, getopt
 from numpy.polynomial.polynomial import Polynomial as polyfit
 from numpy.polynomial.polynomial import polyval as polyval
+
+#***************************************************
+# Device (CPU/GPU) configuration
+#***************************************************
+# configureDevices() runs at startup, detects what hardware is available,
+# and sets the backend up accordingly. No need to edit the file per machine.
+#
+# DEVICE_PREFERENCE controls the policy:
+#   "auto" -> use a GPU if one is present, otherwise CPU  (default)
+#   "cpu"  -> force CPU even if GPUs exist
+#   "gpu"  -> same as auto, but warn if no GPU is found
+#   "0", "1", ... -> use that specific GPU index
+# It can be overridden at run time via an environment variable, e.g.:
+#   DEVICE_PREFERENCE=cpu python3 DataML_VAE.py -a learnFile
+#
+# NOTE: this must run before Keras/TensorFlow initialize the GPUs. Importing
+# keras below does not initialize them; configureDevices() is called at the
+# start of main(), before any model is built, so the selection still applies.
+DEVICE_PREFERENCE = os.environ.get("DEVICE_PREFERENCE", "auto").lower()
+
+# When multiple GPUs are present and the policy is auto/gpu, pick the one
+# with the most free memory (queried via nvidia-smi). If False, or if the
+# query fails, the lowest index is used.
+AUTO_PICK_FREEST_GPU = True
+
+
+def _freestGPU():
+    # Return the index of the GPU with the most free memory, or 0 on failure.
+    try:
+        import subprocess
+        out = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=memory.free",
+             "--format=csv,noheader,nounits"], encoding="utf-8")
+        free = [int(x) for x in out.strip().splitlines()]
+        return int(np.argmax(free)) if free else 0
+    except Exception:
+        return 0
+
+
+def configureDevices():
+    #**********************************************************
+    # Detect available devices and configure TensorFlow before
+    # any GPU op runs. Making only the chosen GPU "visible" keeps
+    # the others from getting a CUDA context (no memory reserved
+    # on them), and memory growth stops TF from grabbing the whole
+    # card at startup.
+    #**********************************************************
+    try:
+        import tensorflow as tf
+    except Exception as e:
+        print(f"  Device configuration skipped (TensorFlow unavailable): {e}")
+        return
+
+    gpus = tf.config.list_physical_devices('GPU')
+
+    # ---- No usable GPU: run on CPU ----
+    if DEVICE_PREFERENCE == "cpu" or not gpus:
+        try:
+            tf.config.set_visible_devices([], 'GPU')
+        except Exception:
+            pass
+        if DEVICE_PREFERENCE == "cpu":
+            print("\n  Device config: CPU forced by preference.\n")
+        elif DEVICE_PREFERENCE == "gpu":
+            print("\n  Device config: GPU requested but none found - using CPU.\n")
+        else:
+            print("\n  Device config: no GPU detected - running on CPU.\n")
+        return
+
+    # ---- Choose which single GPU to use ----
+    if DEVICE_PREFERENCE.isdigit():
+        idx = int(DEVICE_PREFERENCE)
+        if idx >= len(gpus):
+            print(f"  Requested GPU {idx} not available; using GPU 0.")
+            idx = 0
+    else:  # "auto" or "gpu"
+        idx = _freestGPU() if (AUTO_PICK_FREEST_GPU and len(gpus) > 1) else 0
+
+    chosen = gpus[idx]
+    try:
+        tf.config.set_visible_devices([chosen], 'GPU')
+        tf.config.experimental.set_memory_growth(chosen, True)
+        print(f"\n  Device config: using GPU {idx} of {len(gpus)} "
+              f"(memory growth enabled).\n")
+    except RuntimeError as e:
+        # Raised if the GPUs were already initialized before this ran.
+        print(f"  Could not finalize GPU config (already initialized?): {e}")
 
 import keras
 from keras import ops
@@ -227,6 +315,7 @@ class Conf():
 # Main
 #************************************
 def main():
+    configureDevices()
     try:
         opts, args = getopt.getopt(sys.argv[1:],
             "tag:", ["train", "augment", "generate"])
@@ -308,7 +397,17 @@ def generate(csvFile):
             # consider renaming in your libDataML later. Using as-is per instructions.
             R = norm.transform_valid_data_DAE(R)
         
-        newR = autoencoder.predict(R)
+        #----------------
+        # Direct call instead of .predict() to avoid the large per-call
+        # overhead of predict() on tiny inputs.
+        newR = autoencoder(R.astype(np.float32), training=False).numpy()
+        
+        # Original call, suitable for very large inputs but with higher overhead
+        # Uses batches, rather than full input.
+        # Use this for large datasets
+        #newR = autoencoder.predict(R)
+        #-----------------
+        
         if dP.normalize:
             newR = norm.transform_inverse(newR)
         newDataDf[dataDf.columns[i]] = newR.flatten()
@@ -687,10 +786,13 @@ def trainAutoencoder(dP, noisyA, A, file):
         autoencoder = keras.Model(input, vae_outputs, name="vae")
         autoencoder.compile(loss=dP.lossMetric, optimizer=optim)
         
-    tbLog = keras.callbacks.TensorBoard(log_dir=dP.tb_directory, histogram_freq=120,
-            write_graph=True, write_images=False)
-    
-    tbLogs = [tbLog]
+    # TensorBoard callback disabled to reduce per-run overhead
+    # (histogram + graph writing on every training run). Re-enable
+    # by uncommenting the two lines below and removing "tbLogs = []".
+    #tbLog = keras.callbacks.TensorBoard(log_dir=dP.tb_directory, histogram_freq=120,
+    #        write_graph=True, write_images=False)
+    #tbLogs = [tbLog]
+    tbLogs = []
     
     if dP.stopAtBest == True:
         es = keras.callbacks.EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=500)
@@ -806,7 +908,17 @@ def generateData(dP, autoencoder, A, M, norm):
             random_seeds[:, i] += np.random.uniform(-variance, variance, size=num_random)
             
     seeds = np.vstack((A, random_seeds))
-    normVae = autoencoder.predict(seeds)
+    
+    #----------------
+    # Direct call instead of .predict() to avoid the large per-call
+    # overhead of predict() on small batches.
+    normVae = autoencoder(seeds.astype(np.float32), training=False).numpy()
+    
+    # Original call, suitable for very large inputs but with higher overhead
+    # Uses batches, rather than full input.
+    # Use this for large datasets
+    #newR = autoencoder.predict(seeds)
+    #-----------------
     
     if dP.postGenerationNoise:
         noise = np.random.normal(loc=0.0, scale=dP.postGenerationNoiseMax, size=normVae.shape)
