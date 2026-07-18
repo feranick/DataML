@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_VAE
 * Generative AI via Variational Autoencoder
-* version: 2026.07.17.1
+* version: 2026.07.18.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -400,8 +400,8 @@ def generate(csvFile):
         #----------------
         # Direct call instead of .predict() to avoid the large per-call
         # overhead of predict() on tiny inputs.
-        newR = autoencoder(R.astype(np.float32), training=False).numpy()
-        
+        newR    = keras.ops.convert_to_numpy(autoencoder(R.astype(np.float32), training=False))
+    
         # Original call, suitable for very large inputs but with higher overhead
         # Uses batches, rather than full input.
         # Use this for large datasets
@@ -912,7 +912,7 @@ def generateData(dP, autoencoder, A, M, norm):
     #----------------
     # Direct call instead of .predict() to avoid the large per-call
     # overhead of predict() on small batches.
-    normVae = autoencoder(seeds.astype(np.float32), training=False).numpy()
+    normVae = keras.ops.convert_to_numpy(autoencoder(seeds.astype(np.float32), training=False))
     
     # Original call, suitable for very large inputs but with higher overhead
     # Uses batches, rather than full input.

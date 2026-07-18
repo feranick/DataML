@@ -4,7 +4,7 @@
 *****************************************************
 * DataML Decision Forests - Multi-Perf Regressor
 * Offline tkinter UI
-* version: 2026.07.17.1
+* version: 2026.07.18.1
 * Uses: tkinter
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************

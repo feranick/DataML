@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
-* version: 2026.07.17.1
+* version: 2026.07.18.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -355,7 +355,7 @@ def generate(csvFile):
         #----------------
         # Direct call instead of .predict() to avoid the large per-call
         # overhead of predict() on tiny inputs.
-        newR = autoencoder(R.astype(np.float32), training=False).numpy()
+        newR = keras.ops.convert_to_numpy(autoencoder(R.astype(np.float32), training=False))
         
         # Original call, suitable for very large inputs but with higher overhead
         # Uses batches, rather than full input.
@@ -481,7 +481,7 @@ def augment(learnFile,augFlag):
         
         # USE total_added_rows FOR PRINTS AND FILENAMES
         print("\n  Added", str(total_added_rows), "new data points")
-        newFile = rootFile + '_numAdded' + str(total_added_rows) + tag  
+        newFile = rootFile + '_numAdded' + str(total_added_rows) + tag
         
         # Use newTrain to preserve header row for DataML_DF compatibility
         saveLearnFile(dP, newTrain, newFile, "")
@@ -859,8 +859,8 @@ def generateData(dP, autoencoder, A, M, norm):
     #----------------
     # Direct call instead of .predict() to avoid the large per-call
     # overhead of predict() on small batches.
-    normDae = autoencoder(seeds.astype(np.float32), training=False).numpy()
-    
+    normDae = keras.ops.convert_to_numpy(autoencoder(seeds.astype(np.float32), training=False))
+
     # Original call, suitable for very large inputs but with higher overhead
     # Uses batches, rather than full input.
     # Use this for large datasets
@@ -870,7 +870,7 @@ def generateData(dP, autoencoder, A, M, norm):
     if dP.postGenerationNoise:
         noise = np.random.normal(loc=0.0, scale=dP.postGenerationNoiseMax, size=normDae.shape)
         # Protect Label and Discrete features from post-generation noise
-        noise[:, 0] = 0.0 
+        noise[:, 0] = 0.0
         for i in range(1, A.shape[1]):
             unique_vals = np.unique(A[:, i])
             if len(unique_vals) <= dP.discreteThreshold:
