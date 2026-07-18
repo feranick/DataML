@@ -7,7 +7,7 @@
 #SBATCH --partition=long
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=2          # raise only if your code is multithreaded
-#SBATCH --gres=mps:8              # ~8% of the GPU; ~12 jobs share it
+#SBATCH --gres=mps:16              # -> 100/16 ~= 6 GPU slices; GPU is not the bottleneck
 #SBATCH --mem=2500M 
 #SBATCH --export=ALL
 
