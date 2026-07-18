@@ -917,7 +917,7 @@ def generateData(dP, autoencoder, A, M, norm):
     # Original call, suitable for very large inputs but with higher overhead
     # Uses batches, rather than full input.
     # Use this for large datasets
-    #newR = autoencoder.predict(seeds)
+    #normVae = autoencoder.predict(seeds)
     #-----------------
     
     if dP.postGenerationNoise:
