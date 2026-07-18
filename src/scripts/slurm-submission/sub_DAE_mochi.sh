@@ -6,9 +6,9 @@
 #SBATCH -e log_%x.e%j              # error file
 #SBATCH --partition=long
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=2          # raise only if your code is multithreaded
-#SBATCH --gres=mps:10              # ~8% of the GPU; ~12 jobs share it
-#SBATCH --mem=2500M 
+#SBATCH --cpus-per-task=1          # raise only if your code is multithreaded and have free cores
+#SBATCH --gres=mps:8              # ~8% of the GPU; ~12 jobs share it
+#SBATCH --mem=2500M
 #SBATCH --export=ALL
 
 #command="srun train_rruff_raman.sh $SLURM_JOB_NAME "
