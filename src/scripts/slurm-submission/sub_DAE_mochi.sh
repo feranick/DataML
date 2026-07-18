@@ -9,6 +9,7 @@
 #SBATCH --cpus-per-task=1          # raise only if your code is multithreaded and have free cores
 #SBATCH --gres=mps:8              # ~8% of the GPU; ~12 jobs share it
 #SBATCH --mem=2500M
+#SBATCH --gres=shard:1
 #SBATCH --export=ALL
 
 #command="srun train_rruff_raman.sh $SLURM_JOB_NAME "
