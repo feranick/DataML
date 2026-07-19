@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_VAE
 * Generative AI via Variational Autoencoder
-* version: 2026.07.18.1
+* version: 2026.07.19.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''

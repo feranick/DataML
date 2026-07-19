@@ -4,7 +4,7 @@
 *****************************************************
 * DataML Decision Forests - Multi-Perf Regressor
 * pyscript version - SUPERSET (name-matched features)
-* version: 2026.07.18.1
+* version: 2026.07.19.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
