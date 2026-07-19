@@ -789,7 +789,7 @@ def snap_discrete_features(real_features, synthetic_features, discrete_threshold
     corrected_synthetic = np.copy(synthetic_features)
     num_features = real_features.shape[1]
     valid_mask = np.ones(synthetic_features.shape[0], dtype=bool)
-    
+
     # --- Identify discrete columns ---
     discrete_cols = []
     # Start at 1 to strictly protect the label column (Col 0)
@@ -801,7 +801,19 @@ def snap_discrete_features(real_features, synthetic_features, discrete_threshold
             distances = np.abs(synth_col[:, np.newaxis] - unique_vals)
             min_distances = distances.min(axis=1)
             closest_indices = distances.argmin(axis=1)
-            valid_mask = valid_mask & (min_distances <= tolerance)
+            # Scale the tolerance to this column's discrete step, so the
+            # purge criterion is relative rather than absolute. A fixed
+            # absolute tolerance (e.g. 0.15) is far too tight for a
+            # large-magnitude column (values 800-900, step 25) while being
+            # reasonable for a small one (values 1-4, step 1). Here
+            # `tolerance` is interpreted as a fraction of the smallest gap
+            # between adjacent real steps.
+            if len(unique_vals) > 1:
+                col_step = np.min(np.diff(unique_vals))
+            else:
+                col_step = 1.0
+            col_tol = tolerance * col_step
+            valid_mask = valid_mask & (min_distances <= col_tol)
             corrected_synthetic[:, i] = unique_vals[closest_indices]
         else:
             print(f"   [v] Col {i}: CONTINUOUS. Preserving variance.")
@@ -866,7 +878,23 @@ def generateData(dP, autoencoder, A, M, norm):
     # Use this for large datasets
     #normDae = autoencoder.predict(seeds)
     #-----------------
-    
+
+    # ---------------------------------------------------------------
+    # Discrete columns cannot be reliably reproduced by the autoencoder:
+    # the reconstruction drifts off the real steps (badly so for
+    # large-magnitude columns), and the drift is then purged downstream
+    # by snap_discrete_features. Since the seeds already carry the exact,
+    # correlated discrete values (they are clones of real rows and are
+    # never jittered above), overwrite the reconstruction with the seed
+    # values so discrete features land exactly on real steps.
+    # Done here in normalized space, before inverse-transform, to stay
+    # consistent with the rest of normDae.
+    # ---------------------------------------------------------------
+    for i in range(1, A.shape[1]):
+        unique_vals = np.unique(A[:, i])
+        if len(unique_vals) <= dP.discreteThreshold:
+            normDae[:, i] = seeds[:, i]
+
     if dP.postGenerationNoise:
         noise = np.random.normal(loc=0.0, scale=dP.postGenerationNoiseMax, size=normDae.shape)
         # Protect Label and Discrete features from post-generation noise
