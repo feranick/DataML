@@ -4,7 +4,7 @@
 ***********************************************
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
-* version: 2026.07.19.1
+* version: 2026.07.18.1
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -853,6 +853,7 @@ def snap_discrete_features(real_features, synthetic_features, discrete_threshold
     return purged_synthetic
 
 def generateData(dP, autoencoder, A, M, norm):
+    import keras
     num_random = int(0.50 * A.shape[0])
     
     # Clone real rows to keep Labels and Discrete columns correlated
