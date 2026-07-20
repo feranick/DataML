@@ -11,7 +11,8 @@
 #   3. Bakes KERAS_BACKEND=torch into the image and exports it in the launcher
 #   4. Runs a verification container that checks the GPU + all imports
 #
-# After a successful run it prints (and optionally starts) the launch command.
+# After a successful run it drops you straight into the container prompt,
+# with your work directory mounted and KERAS_BACKEND=torch already set.
 #
 # Usage:
 #   ./setup_dae_spark.sh [options]
@@ -21,7 +22,7 @@
 #                       (default: current directory)
 #   -t, --tag TAG       NGC PyTorch base image tag (default: 25.11-py3)
 #       --rebuild       Rebuild the derived image even if it exists
-#       --shell         Drop into an interactive container shell at the end
+#       --no-shell      Just set up + verify; print the launch command, don't enter
 #   -h, --help          Show this help
 #===============================================================================
 
@@ -35,11 +36,12 @@ BASE_IMAGE=""                        # set after arg parsing
 DERIVED_IMAGE="dataml-dae:spark"     # local image with deps baked in
 WORKDIR="$(pwd)"
 REBUILD=0
-DROP_SHELL=0
+DROP_SHELL=1                         # default: end inside the container prompt
 
 # Python packages the script needs on top of the base container.
-# (torch / numpy / scipy already ship in the NGC PyTorch image — do NOT reinstall torch.)
-PY_DEPS="keras scikit-learn pandas h5py matplotlib packaging"
+# (torch / numpy already ship in the NGC PyTorch image — do NOT reinstall torch.)
+# scipy is listed explicitly: some NGC tags don't ship it, and libDataML.py imports it.
+PY_DEPS="keras scikit-learn scipy pandas h5py matplotlib packaging"
 
 #------------------------------------------------------------------------------
 # Pretty output
@@ -58,7 +60,8 @@ while [[ $# -gt 0 ]]; do
     -d|--workdir) WORKDIR="$2"; shift 2 ;;
     -t|--tag)     BASE_TAG="$2"; shift 2 ;;
     --rebuild)    REBUILD=1; shift ;;
-    --shell)      DROP_SHELL=1; shift ;;
+    --shell)      DROP_SHELL=1; shift ;;   # explicit; also the default
+    --no-shell)   DROP_SHELL=0; shift ;;
     -h|--help)    sed -n '2,40p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *)            die "Unknown option: $1 (use --help)" ;;
   esac
@@ -205,12 +208,8 @@ RUN_CMD="$DOCKER run --gpus all -it --rm --ipc=host \\
 cat <<EOF
 
 ${c_grn}Setup complete.${c_rst}  Everything is baked into the image '${DERIVED_IMAGE}'.
-
-To launch the container (KERAS_BACKEND=torch is already set inside):
-
-    ${RUN_CMD}
-
-Then, at the container prompt, run your script — e.g.:
+Inside the container you land in /workspace/dae (your '$WORKDIR'),
+with KERAS_BACKEND=torch already set. Run your script there, e.g.:
 
     python DataML_DAE.py -t <learningFile>     # train
     python DataML_DAE.py -a <learningFile>     # augment
@@ -219,6 +218,18 @@ Then, at the container prompt, run your script — e.g.:
 EOF
 
 if [[ "$DROP_SHELL" -eq 1 ]]; then
-  info "Dropping into an interactive container shell…"
-  eval "$RUN_CMD"
+  info "Entering the container now (type 'exit' to leave)…"
+  echo
+  # Replace this process with the container so the script ENDS at the
+  # container's own prompt — exactly the derived image with all deps.
+  exec $DOCKER run --gpus all -it --rm --ipc=host \
+    -v "$WORKDIR":/workspace/dae -w /workspace/dae \
+    "$DERIVED_IMAGE"
+else
+  cat <<EOF
+Run this to enter the container (KERAS_BACKEND=torch already set inside):
+
+    ${RUN_CMD}
+
+EOF
 fi
