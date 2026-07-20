@@ -55,6 +55,8 @@ In addition, these packages may be needed depending on your platform (via ```apt
     python3-tk
     graphviz
     tkinterdnd2 (for GUI)
+    
+Initial support for `pytorch` and `jax` have been added. This is because of the use of `keras 3`, that agnostically handles calls regardless of the backend. Yet a new library is added to allow for correct setting up the backend within your system including single or multi-GPU. If you rely on `slurm` for job subission, submission scripts are also available. To configure your slurm, depending on the hardware available, please refer to [Slurm-Scripts](https://github.com/feranick/Slurm-Tools). 
 
 These are found in Unix based systems using common repositories (apt-get for Debian/Ubuntu Linux, or MacPorts for MacOS). More details in the [scikit-learn installation page](http://scikit-learn.org/stable/install.html).
 
