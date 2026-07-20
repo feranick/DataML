@@ -4,7 +4,8 @@
 ***********************************************
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
-* version: 2026.07.18.1
+* Device config via shared DataML_Backend (TF / PyTorch / JAX), SLURM-aware
+* version: 2026.07.20.3
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
@@ -16,88 +17,10 @@ import sys, os.path, h5py, pickle, configparser, ast, getopt
 from numpy.polynomial.polynomial import Polynomial as polyfit
 from numpy.polynomial.polynomial import polyval as polyval
 
-#***************************************************
-# Device (CPU/GPU) configuration
-#***************************************************
-# configureDevices() runs at startup, detects what hardware is available,
-# and sets TensorFlow up accordingly. No need to edit the file per machine.
-#
-# DEVICE_PREFERENCE controls the policy:
-#   "auto" -> use a GPU if one is present, otherwise CPU  (default)
-#   "cpu"  -> force CPU even if GPUs exist
-#   "gpu"  -> same as auto, but warn if no GPU is found
-#   "0", "1", ... -> use that specific GPU index
-# It can be overridden at run time via an environment variable, e.g.:
-#   DEVICE_PREFERENCE=cpu python3 DataML_DAE.py -a learnFile
-DEVICE_PREFERENCE = os.environ.get("DEVICE_PREFERENCE", "auto").lower()
-
-# When multiple GPUs are present and the policy is auto/gpu, pick the one
-# with the most free memory (queried via nvidia-smi). If False, or if the
-# query fails, the lowest index is used.
-AUTO_PICK_FREEST_GPU = True
-
-
-def _freestGPU():
-    # Return the index of the GPU with the most free memory, or 0 on failure.
-    try:
-        import subprocess
-        out = subprocess.check_output(
-            ["nvidia-smi", "--query-gpu=memory.free",
-             "--format=csv,noheader,nounits"], encoding="utf-8")
-        free = [int(x) for x in out.strip().splitlines()]
-        return int(np.argmax(free)) if free else 0
-    except Exception:
-        return 0
-
-
-def configureDevices():
-    #**********************************************************
-    # Detect available devices and configure TensorFlow before
-    # any GPU op runs. Making only the chosen GPU "visible" keeps
-    # the others from getting a CUDA context (no memory reserved
-    # on them), and memory growth stops TF from grabbing the whole
-    # card at startup.
-    #**********************************************************
-    try:
-        import tensorflow as tf
-    except Exception as e:
-        print(f"  Device configuration skipped (TensorFlow unavailable): {e}")
-        return
-
-    gpus = tf.config.list_physical_devices('GPU')
-
-    # ---- No usable GPU: run on CPU ----
-    if DEVICE_PREFERENCE == "cpu" or not gpus:
-        try:
-            tf.config.set_visible_devices([], 'GPU')
-        except Exception:
-            pass
-        if DEVICE_PREFERENCE == "cpu":
-            print("\n  Device config: CPU forced by preference.\n")
-        elif DEVICE_PREFERENCE == "gpu":
-            print("\n  Device config: GPU requested but none found - using CPU.\n")
-        else:
-            print("\n  Device config: no GPU detected - running on CPU.\n")
-        return
-
-    # ---- Choose which single GPU to use ----
-    if DEVICE_PREFERENCE.isdigit():
-        idx = int(DEVICE_PREFERENCE)
-        if idx >= len(gpus):
-            print(f"  Requested GPU {idx} not available; using GPU 0.")
-            idx = 0
-    else:  # "auto" or "gpu"
-        idx = _freestGPU() if (AUTO_PICK_FREEST_GPU and len(gpus) > 1) else 0
-
-    chosen = gpus[idx]
-    try:
-        tf.config.set_visible_devices([chosen], 'GPU')
-        tf.config.experimental.set_memory_growth(chosen, True)
-        print(f"\n  Device config: using GPU {idx} of {len(gpus)} "
-              f"(memory growth enabled).\n")
-    except RuntimeError as e:
-        # Raised if the GPUs were already initialized before this ran.
-        print(f"  Could not finalize GPU config (already initialized?): {e}")
+# Backend-agnostic device/GPU selection lives in the shared DataML_Backend
+# module. Importing it (before any keras import) performs device SELECTION;
+# configureDevices() below applies the backend-specific memory tuning.
+from DataML_Backend import configureDevices
 
 from libDataML import *
 
