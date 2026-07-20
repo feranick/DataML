@@ -2,7 +2,7 @@
 '''
 **************************************************
 * DataML_Backend - shared device / backend config
-* version: 2026.07.20.1
+* version: 2026.07.20.3
 * Backend-agnostic (TensorFlow / PyTorch / JAX), SLURM-aware.
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
@@ -45,6 +45,14 @@ MEMORY BEHAVIOR (backend-specific, applied by configureDevices())
     PyTorch    : nothing needed (allocator is already incremental);
                  enables TF32 matmuls (Ampere/Blackwell+) as a bonus.
     JAX        : disable XLA preallocation (~75% by default) - set at import.
+
+APPLE SILICON (tensorflow-metal)
+    The Mac GPU is a TensorFlow PluggableDevice ("METAL"), NOT a CUDA device:
+    nvidia-smi cannot see it and CUDA_VISIBLE_DEVICES has no effect on it. So on
+    Apple Silicon the nvidia-smi-based selection finds nothing and DEFERS the
+    device choice to TensorFlow, which detects the Metal GPU on its own. CPU
+    forcing (DEVICE_PREFERENCE=cpu) is therefore applied at the framework level
+    (tf.config.set_visible_devices) rather than via CUDA_VISIBLE_DEVICES.
 '''
 
 import os
@@ -120,10 +128,14 @@ def _select_device():
     # 4. Auto: choose a GPU ourselves.
     free = _queryGPUFreeMem()
     if not free:
-        if DEVICE_PREFERENCE == "gpu":
-            print("  -> GPU requested but none detected; using CPU.\n")
-        else:
-            print("  -> No GPU detected; running on CPU.\n")
+        # nvidia-smi found nothing. This is either a machine with no NVIDIA GPU
+        # (e.g. Apple Silicon + tensorflow-metal, or a CPU-only box) or nvidia-smi
+        # is simply not installed. Do NOT force CPU and do NOT set
+        # CUDA_VISIBLE_DEVICES: leave the choice to the backend, which can still
+        # find a non-CUDA accelerator (Apple Metal) or fall back to CPU. The
+        # backend hook below reports what actually got selected.
+        print("  -> No NVIDIA GPU seen via nvidia-smi; deferring device choice "
+              "to the backend (e.g. Apple Metal) or CPU.")
         return
 
     n = len(free)
@@ -166,22 +178,50 @@ def configureDevices():
 
 def _configureTF():
     # TensorFlow grabs all VRAM at startup unless memory growth is enabled.
+    # Works for both CUDA GPUs and Apple Metal PluggableDevices (which TF, not
+    # nvidia-smi, is the only thing that can see).
     try:
         import tensorflow as tf
     except Exception as e:
         print(f"  [TF] device config skipped (TensorFlow unavailable): {e}\n")
         return
+
+    # Force CPU at the framework level when requested. Required on platforms
+    # where CUDA_VISIBLE_DEVICES has no effect (e.g. Apple Metal): hiding CUDA
+    # devices does nothing to a Metal PluggableDevice, so hide GPUs via the TF
+    # API instead.
+    if DEVICE_PREFERENCE == "cpu":
+        try:
+            tf.config.set_visible_devices([], 'GPU')
+        except Exception:
+            pass
+        print("  [TF] CPU forced; GPUs hidden.\n")
+        return
+
     gpus = tf.config.list_physical_devices('GPU')
     if not gpus:
         print("  [TF] no visible GPU - running on CPU.\n")
         return
+
+    # Name the accelerator(s) so it is obvious whether this is CUDA or METAL.
+    names = []
+    for g in gpus:
+        try:
+            names.append(tf.config.experimental.get_device_details(g).get("device_name", g.name))
+        except Exception:
+            names.append(g.name)
+
+    grown = False
     for g in gpus:
         try:
             tf.config.experimental.set_memory_growth(g, True)
-        except RuntimeError as e:
-            # Raised if the GPUs were already initialized before this ran.
-            print(f"  [TF] could not set memory growth (already initialized?): {e}")
-    print(f"  [TF] {len(gpus)} GPU(s) visible, memory growth enabled.\n")
+            grown = True
+        except Exception as e:
+            # Not fatal: already-initialized GPU, or a PluggableDevice that
+            # does not support the setting (e.g. some Metal builds).
+            print(f"  [TF] memory growth not set on {g.name}: {e}")
+    print(f"  [TF] {len(gpus)} GPU(s) visible ({', '.join(names)}); "
+          f"memory growth {'enabled' if grown else 'unavailable'}.\n")
 
 
 def _configureTorch():
@@ -193,7 +233,13 @@ def _configureTorch():
         print(f"  [torch] device config skipped (PyTorch unavailable): {e}\n")
         return
     if not torch.cuda.is_available():
-        print("  [torch] no CUDA device visible - running on CPU.\n")
+        # Apple Silicon: PyTorch uses the Metal Performance Shaders (MPS)
+        # backend instead of CUDA.
+        mps = getattr(torch.backends, "mps", None)
+        if mps is not None and mps.is_available():
+            print("  [torch] no CUDA device; Apple MPS (Metal) is available.\n")
+        else:
+            print("  [torch] no CUDA/MPS device visible - running on CPU.\n")
         return
     try:
         torch.set_float32_matmul_precision("high")  # TF32 where supported
