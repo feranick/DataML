@@ -7,7 +7,7 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-PARAM_ARG=../"$1"
+PARAM_ARG="$1"
 
 # Iterate over all items in the current directory
 for dir in *; do
