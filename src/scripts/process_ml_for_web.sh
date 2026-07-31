@@ -30,6 +30,8 @@ for dir in *; do
         train_suffix_file=$(find . -maxdepth 1 -name "*_train.txt" -print -quit)
         random_file=$(find . -maxdepth 1 -name "*_Random.txt" -print -quit)
         random_nospur_file=$(find . -maxdepth 1 -name "*_Random_noSpur.txt" -print -quit)
+        random_pdf=$(find . -maxdepth 1 -name "*_Random_plots.pdf" -print -quit)
+        random_nospur_pdf=$(find . -maxdepth 1 -name "*_Random_noSpur_plots.pdf" -print -quit)
 
         if [ -n "$kde_aug_file" ]; then
             echo "  Found *_kde_aug.txt ($kde_aug_file). Copying to train.txt..."
@@ -45,6 +47,16 @@ for dir in *; do
             cp "$random_nospur_file" "train.txt"
         else
             echo "  No matching target files found for train.txt logic."
+        fi
+        
+        if [ -n "$random_pdf" ]; then
+            echo "  Found *_Random_plots.pdf ($random_file). Copying to train.pdf..."
+            cp "$random_pdf" "train.pdf"
+        elif [ -n "$random_nospur_pdf" ]; then
+            echo "  Found *_Random_noSpur_plots.pdf ($random_nospur_file). Copying to train.pdf..."
+            cp "$random_nospur_pdf" "train.pdf"
+        else
+            echo "  No matching target files found for train.pdf logic."
         fi
 
         # 3. Create the index.html redirect file
