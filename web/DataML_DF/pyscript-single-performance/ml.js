@@ -14,6 +14,9 @@ function showLog() {
 
   const train = document.getElementById("train");
   if (train) train.href = url + "/" + selectedText + "/train.txt";
+  
+  const trainpdf = document.getElementById("trainpdf");
+  if (trainpdf) trainpdf.href = url + "/" + selectedText + "/train.pdf";
 
   const dae = document.getElementById("dae");
   if (dae) dae.href = url + "/" + selectedText + "/DataML_DAE.ini";
