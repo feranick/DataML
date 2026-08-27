@@ -4,7 +4,7 @@
 *****************************************************
 * DataML Decision Forests - Classifier and Regressor
 * pyscript version
-* version: 2026.07.20.3
+* version: 2026.08.27.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************

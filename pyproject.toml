@@ -1,15 +1,10 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
-
-[tool.hatch.build.targets.wheel]
-include = [
-  "*.py"
-]
 
 [project]
 name = "DataML"
-version = "v2026.07.20.3"
+version = "2026.08.27.1"
 dependencies = [
     "numpy",
     "h5py",
@@ -17,18 +12,20 @@ dependencies = [
     "pydot",
     "graphviz",
     "scipy",
+    "pandas",
+    "matplotlib",
     "tf-keras",
     "scikeras",
-    "scikit-learn",
+    "scikit-learn>=1.8,<1.9",
 ]
-    
+
 authors = [{ name="Nicola Ferralis", email="ferralis@mit.edu" },]
 description = "Multilabel machine learning for combined experimental data"
-readme = "../README.md"
+readme = "README.md"
 requires-python = ">=3.9"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
     "Operating System :: OS Independent",
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python",
@@ -60,3 +57,10 @@ GetClasses = "GetClasses:GetClasses"
 [project.urls]
 Homepage = "https://github.com/feranick/DataML"
 Issues = "https://github.com/feranick/DataML/issues"
+
+[tool.hatch.build.targets.wheel]
+sources = ["src"]
+include = ["src/*.py"]
+
+[tool.hatch.build.targets.sdist]
+only-include = ["src", "README.md", "LICENSE"]
