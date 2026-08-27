@@ -30,11 +30,11 @@ Make sure you have the PyPA build package installed:
 
     python3 -m pip install --upgrade build
     
-To build the wheel package from the `DataML/src` folder run:
+To build the wheel package from the `DataML` folder run:
 
     python3 -m build
     
-A wheel package is available in the subfolder `dir`. You can install it following the instructions shown above.
+A wheel package is available in the subfolder `dist`. You can install it following the instructions shown above.
 
 ## Compatibility and dependences
 This software requires Python (3.9 or higher). It has been tested with Python 3.10 or higher which is the recommended platform. It is not compatible with python 2.x. Additional required packages:
