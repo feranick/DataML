@@ -3,7 +3,7 @@ DataML Regression and Classification of sparse data using Neural Networks of Dec
 - Currently supported ML architectures:
     - Classifier/Regressor (`Scikit-learn`, `TensorFlow`, `TensorFlow-Lite`)
 - Required libraries for prediction using SciKit-Learn (`DataML_DF`):
-    - `scikit-learn`: version `1.7.0`.
+    - `scikit-learn`: version `1.8.0`.
 - Required libraries for prediction using Tensorflow (`DataML`):
     - tensorflow (version >= `2.16.2` - `v2.19.1` recommended)
     - Optional: [`ai_edge_litert` (v=> `1.1.4`)] (https://ai.google.dev/edge/litert) (alternatively yet soon to be deprecated: [`tensorflow-lite` runtime](https://www.tensorflow.org/lite/guide/python))
