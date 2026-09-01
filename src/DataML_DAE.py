@@ -841,47 +841,46 @@ def generateData(dP, autoencoder, A, M, norm):
 def readLearnFileDAE(learnFile, newNorm, dP):
     M = readFile(learnFile)
     empty = False
-    
+
+    ind = np.any(M == 0, axis=1)
+    ind[0] = False
+    M_no_zero_features_mask = ~ind
+
+    ind_labels = (M[:, 0] != 0)
+    ind_labels[0] = True
+    M_no_zero_labels_mask = ind_labels
+
+    if M_no_zero_features_mask.sum() == 1:
+        print("  Matrix with no zeros is empty\n")
+
+    if M_no_zero_labels_mask.sum() == 1:
+        print("  Labels in the matrix are all zero.\n")
+        empty = True
+
     if dP.normalize:
         print("  Normalization of feature matrix to 1")
         if newNorm:
-            print("  Normalization parameters saved in:", dP.norm_file,"\n")
+            print("  Normalization parameters saved in:", dP.norm_file, "\n")
             norm = Normalizer(M, dP)
             norm.save()
         else:
-            print("  Normalization parameters from:", dP.norm_file,"\n")
+            print("  Normalization parameters from:", dP.norm_file, "\n")
             with open(dP.norm_file, "rb") as f:
                 norm = pickle.load(f)
         M = norm.transform(M)
-    
-    # Filter out all rows in M where at least one member in that row is zero
-    ind = np.any(M == 0, axis=1)
-    ind[0] = False
-    M_no_zero_features = M[~ind]
-    
-    # Filter out all rows in M where at the label is zero
-    ind_labels = (M[:, 0] != 0)
-    ind_labels[0] = True
-    M_no_zero_labels = M[ind_labels]
-    
-    if M_no_zero_features.shape[0] == 1:
-        print("  Matrix with no zeros is empty\n")
-        
-    if M_no_zero_labels.shape[0] == 1:
-        print("  Labels in the matrix are all zero.\n")
-        empty = True
-        
+
     if dP.excludeZeroLabels:
         print("  Removing data with zero label.\n")
-        M = M_no_zero_labels
-    
-    if dP.excludeZeroFeatures:
+        M = M[M_no_zero_labels_mask]
+    elif dP.excludeZeroFeatures:
         print("  Removing data with zero features.\n")
-        M = M_no_zero_features
-    
-    En = M[0,:]
-    A = M[1:,:]
-    Cl = M[1:,0]
+        M = M[M_no_zero_features_mask]
+    elif dP.excludeZeroLabels and dP.excludeZeroFeatures:
+        M = M[M_no_zero_labels_mask & M_no_zero_features_mask]
+
+    En = M[0, :]
+    A = M[1:, :]
+    Cl = M[1:, 0]
 
     return En, A, M, empty
 
