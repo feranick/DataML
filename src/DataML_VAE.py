@@ -285,73 +285,145 @@ def train(learnFile):
 #***********************************************
 # Generate new sample based on prompt
 #***********************************************
-def generate(csvFile):
-    import pandas as pd
-    from datetime import datetime, date
+def generate(learnFile):
+    """Augment learnFile with the already-trained DAE, with diagnostics.
+
+    Behavioural changes relative to the previous version, both aimed at making
+    the zeros failure impossible to miss:
+
+      1. removeSpurious is applied under a policy. 'drop' discards offending
+         rows instead of writing 0 into cells, which is what you want here --
+         zeroing a cell in a column whose legitimate minimum is 122 does not
+         mark it as spurious, it marks it as missing, and downstream code reads
+         0 as missing.
+      2. If a stage eliminates essentially everything, generate() reports the
+         diagnosis and refuses to write the file.
+    """
+    import keras
+    import numpy as np
+    import os
+    import pickle
+    from datetime import datetime
+
     dP = Conf()
-    
-    print(f"  Opening file with prompt samples: {csvFile}")
-    dataDf = pd.read_csv(csvFile)
-    
-    newDataDf = pd.DataFrame(dataDf[dataDf.columns[0]])
-        
-    print("  Loading existing VAE model:",dP.modelName,"\n")
-    autoencoder = keras.saving.load_model(dP.modelName, custom_objects={'KLLossLayer': KLLossLayer, 'Sampling': Sampling})
-    
+    policy = 'drop' # options: 'drop' | 'zero' | 'clip'
+
+    if not os.path.exists(dP.modelName):
+        print(f"\033[1m  No trained model found: {dP.modelName}\033[0m")
+        print("  Train one first:  DataML_VAE -t <learningFile>\n")
+        return 1
+
+    print(f"  Opening file with seed samples: {learnFile}")
+    M_raw = readFile(learnFile)
+    En_orig = M_raw[0, :]
+
+    En, A, M, empty = readLearnFileDAE(learnFile, False, dP)
+    if empty:
+        print("  No usable rows in the input file.\n")
+        return 1
+
+    print(f"  Loading existing DAE model: {dP.modelName}\n")
+    autoencoder = keras.saving.load_model(dP.modelName)
+
     if dP.normalize:
-        try:
-            with open(dP.norm_file, "rb") as f:
-                norm = pickle.load(f)
-            print("  Opening pkl file with normalization data:",dP.norm_file)
-        except:
-            print("\033[1m pkl file not found \033[0m")
-            sys.exit()
+        with open(dP.norm_file, "rb") as f:
+            norm = pickle.load(f)
+        print(f"  Normalization data from: {dP.norm_file}")
+        orig_physical_A = norm.transform_inverse(A)
     else:
-        norm = None
-    
-    for i in range(1,dataDf.shape[1]):
-        R = np.array([dataDf.iloc[:,i].tolist()], dtype=float)
-        Rorig = np.copy(R)
-        
-        if dP.normalize:
-            # Note: assuming transform_valid_data_DAE handles general matrix shapes, 
-            # consider renaming in your libDataML later. Using as-is per instructions.
-            R = norm.transform_valid_data_DAE(R)
-        
-        #----------------
-        # Direct call instead of .predict() to avoid the large per-call
-        # overhead of predict() on tiny inputs.
-        newR    = keras.ops.convert_to_numpy(autoencoder(R.astype(np.float32), training=False))
-    
-        # Original call, suitable for very large inputs but with higher overhead
-        # Uses batches, rather than full input.
-        # Use this for large datasets
-        #newR = autoencoder.predict(R)
-        #-----------------
-        
-        if dP.normalize:
-            newR = norm.transform_inverse(newR)
-        newDataDf[dataDf.columns[i]] = newR.flatten()
-    
-    print('\n  ==============================================================================')
-    print('  \033[1m Generated data\033[0m')
-    print('  ==============================================================================')
-    for i in range(1,dataDf.shape[1]):
-        tmp = pd.DataFrame(dataDf[dataDf.columns[0]])
-        tmp.rename(columns={ dataDf.columns[0]: dataDf.columns[i]}, inplace=True)
-        print('  --------------------------------------------------------------------------------')
-        tmp["input"] = dataDf[dataDf.columns[i]]
-        tmp["output"] = newDataDf[newDataDf.columns[i]]
-        print(tmp)
-    print('  --------------------------------------------------------------------------------\n')
-    
-    summaryCSVFileRoot = os.path.splitext(csvFile)[0]
-    summaryCSVFile = summaryCSVFileRoot+"_VAE_output"+str(datetime.now().strftime('_%Y-%m-%d_%H-%M-%S.csv'))
-    
-    newDataDf.rename(columns={ dataDf.columns[0]: "VAE output"}, inplace=True)
-    newDataDf.to_csv(summaryCSVFile, index=False, sep=',')
-    
-    print(f" VAE generated samples saved in: {summaryCSVFile}\n")
+        norm = 0
+        orig_physical_A = A
+
+    if A.shape[1] != M_raw.shape[1]:
+        print(f"\033[1m  Column count mismatch: model space has {A.shape[1]}, "
+              f"file has {M_raw.shape[1]}\033[0m\n")
+        return 1
+
+    A_min = getAmin(orig_physical_A)
+
+    # ------------------------------------------------------------------
+    # Generate
+    # ------------------------------------------------------------------
+    blocks = []
+    total = 0
+    for g in range(dP.numAdditions):
+        print(f"\n  Generation pass {g + 1}/{dP.numAdditions}")
+
+        A_tmp = generateData(dP, autoencoder, A, M, norm)
+
+        A_tmp = snap_discrete_features(orig_physical_A, A_tmp,
+                                       dP.discreteThreshold)
+        if A_tmp.shape[0] == 0:
+            print("  All generated rows were purged by snap_discrete_features.")
+            continue
+
+        blocks.append(A_tmp)
+        total += A_tmp.shape[0]
+        print(f"  Kept {A_tmp.shape[0]} rows (running total {total})")
+
+    if not blocks:
+        print("\n  No usable rows generated.\n")
+        return 1
+
+    newA = np.vstack(blocks)
+
+    # ------------------------------------------------------------------
+    # Spurious handling, with a policy and a guard
+    # ------------------------------------------------------------------
+    if dP.removeSpurious:
+        before = newA.shape[0]
+        offending = np.any(newA < A_min, axis=1)
+        frac_cells = float((newA < A_min).mean())
+
+        if policy == 'drop':
+            newA = newA[~offending]
+            print(f"\n  Spurious rows dropped: {before - newA.shape[0]}"
+                  f" of {before}")
+        elif policy == 'clip':
+            newA = np.maximum(newA, A_min)
+            print(f"\n  Spurious values clipped up to the column minimum")
+        else:
+            newA = removeSpurious(orig_physical_A, newA, dP)
+            print("\n  Spurious data removed (zeroed).")
+
+        if newA.shape[0] == 0 or frac_cells > 0.90:
+            print('\n  ==============================================')
+            print('   \033[1mABORTED - generated data is unusable\033[0m')
+            print('  ==============================================')
+            print(f"  {frac_cells:.0%} of generated cells fell below the"
+                  f" physical column minima.")
+            print("  Nothing was written.")
+            print("  removeSpurious = False to inspect the raw generated/n"
+                  " values.")
+            return 1
+
+    newA = np.vstack([orig_physical_A, newA])
+    newTrain = np.vstack([En_orig, newA])
+
+    stamp = datetime.now().strftime('_%Y-%m-%d_%H-%M-%S')
+    rootFile = (dP.model_directory
+                + os.path.splitext(os.path.basename(learnFile))[0]
+                + '_DAEgen_numAdded' + str(newA.shape[0]
+                                           - orig_physical_A.shape[0]) + stamp)
+
+    saveLearnFile(dP, newTrain, rootFile, "")
+
+    n_synth = newA.shape[0] - orig_physical_A.shape[0]
+    print('\n  ==============================================================')
+    print('   \033[1mGenerated VAE data\033[0m')
+    print('  ==============================================================')
+    print(f"  Seed rows       : {orig_physical_A.shape[0]}")
+    print(f"  Generated       : {total}")
+    print(f"  Kept            : {n_synth}")
+    print(f"  Rows written    : {newA.shape[0]}  (real + synthetic)")
+    print(f"  Model           : {dP.modelName}  (not retrained)")
+    print('  ==============================================================\n')
+
+    if dP.plotAugmData:
+        plotData(dP, orig_physical_A, newA, True, False,
+                 "VAE generated data", rootFile + "_plots.pdf")
+
+    return 0
         
 #***********************************************
 # Augment learning data via VAE
@@ -892,47 +964,46 @@ def generateData(dP, autoencoder, A, M, norm):
 def readLearnFileVAE(learnFile, newNorm, dP):
     M = readFile(learnFile)
     empty = False
-    
+
+    ind = np.any(M == 0, axis=1)
+    ind[0] = False
+    M_no_zero_features_mask = ~ind
+
+    ind_labels = (M[:, 0] != 0)
+    ind_labels[0] = True
+    M_no_zero_labels_mask = ind_labels
+
+    if M_no_zero_features_mask.sum() == 1:
+        print("  Matrix with no zeros is empty\n")
+
+    if M_no_zero_labels_mask.sum() == 1:
+        print("  Labels in the matrix are all zero.\n")
+        empty = True
+
     if dP.normalize:
         print("  Normalization of feature matrix to 1")
         if newNorm:
-            print("  Normalization parameters saved in:", dP.norm_file,"\n")
+            print("  Normalization parameters saved in:", dP.norm_file, "\n")
             norm = Normalizer(M, dP)
             norm.save()
         else:
-            print("  Normalization parameters from:", dP.norm_file,"\n")
+            print("  Normalization parameters from:", dP.norm_file, "\n")
             with open(dP.norm_file, "rb") as f:
                 norm = pickle.load(f)
         M = norm.transform(M)
-    
-    # Filter out all rows in M where at least one member in that row is zero
-    ind = np.any(M == 0, axis=1)
-    ind[0] = False
-    M_no_zero_features = M[~ind]
-    
-    # Filter out all rows in M where at the label is zero
-    ind_labels = (M[:, 0] != 0)
-    ind_labels[0] = True
-    M_no_zero_labels = M[ind_labels]
-    
-    if M_no_zero_features.shape[0] == 1:
-        print("  Matrix with no zeros is empty\n")
-        
-    if M_no_zero_labels.shape[0] == 1:
-        print("  Labels in the matrix are all zero.\n")
-        empty = True
-        
+
     if dP.excludeZeroLabels:
         print("  Removing data with zero label.\n")
-        M = M_no_zero_labels
-    
-    if dP.excludeZeroFeatures:
+        M = M[M_no_zero_labels_mask]
+    elif dP.excludeZeroFeatures:
         print("  Removing data with zero features.\n")
-        M = M_no_zero_features
-    
-    En = M[0,:]
-    A = M[1:,:]
-    Cl = M[1:,0]
+        M = M[M_no_zero_features_mask]
+    elif dP.excludeZeroLabels and dP.excludeZeroFeatures:
+        M = M[M_no_zero_labels_mask & M_no_zero_features_mask]
+
+    En = M[0, :]
+    A = M[1:, :]
+    Cl = M[1:, 0]
 
     return En, A, M, empty
 

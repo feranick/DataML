@@ -352,8 +352,7 @@ def generate(learnFile):
                   f" physical column minima.")
             print("  Nothing was written.")
             print("  removeSpurious = False to inspect the raw generated"
-                  " values.")
-            print("  See the CAUSE A / CAUSE B notes at the top of this file.\n")
+                  " values./n")
             return 1
 
     newA = np.vstack([orig_physical_A, newA])
@@ -369,7 +368,7 @@ def generate(learnFile):
 
     n_synth = newA.shape[0] - orig_physical_A.shape[0]
     print('\n  ==============================================================')
-    print('   \033[1mGenerated data\033[0m')
+    print('   \033[1mGenerated DAE data\033[0m')
     print('  ==============================================================')
     print(f"  Seed rows       : {orig_physical_A.shape[0]}")
     print(f"  Generated       : {total}")
