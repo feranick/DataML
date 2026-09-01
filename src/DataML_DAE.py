@@ -243,73 +243,146 @@ def train(learnFile):
 #***********************************************
 # Generate new sample based on prompt
 #***********************************************
-def generate(csvFile):
+def generate(learnFile):
+    """Augment learnFile with the already-trained DAE, with diagnostics.
+
+    Behavioural changes relative to the previous version, both aimed at making
+    the zeros failure impossible to miss:
+
+      1. removeSpurious is applied under a policy. 'drop' discards offending
+         rows instead of writing 0 into cells, which is what you want here --
+         zeroing a cell in a column whose legitimate minimum is 122 does not
+         mark it as spurious, it marks it as missing, and downstream code reads
+         0 as missing.
+      2. If a stage eliminates essentially everything, generate() reports the
+         diagnosis and refuses to write the file.
+    """
     import keras
-    import pandas as pd
-    from datetime import datetime, date
+    import numpy as np
+    import os
+    import pickle
+    from datetime import datetime
+
     dP = Conf()
-    
-    print(f"  Opening file with prompt samples: {csvFile}")
-    dataDf = pd.read_csv(csvFile)
-    
-    newDataDf = pd.DataFrame(dataDf[dataDf.columns[0]])
-        
-    print("  Loading existing DAE model:",dP.modelName,"\n")
+    policy = 'drop' # options: 'drop' | 'zero' | 'clip'
+
+    if not os.path.exists(dP.modelName):
+        print(f"\033[1m  No trained model found: {dP.modelName}\033[0m")
+        print("  Train one first:  DataML_DAE -t <learningFile>\n")
+        return 1
+
+    print(f"  Opening file with seed samples: {learnFile}")
+    M_raw = readFile(learnFile)
+    En_orig = M_raw[0, :]
+
+    En, A, M, empty = readLearnFileDAE(learnFile, False, dP)
+    if empty:
+        print("  No usable rows in the input file.\n")
+        return 1
+
+    print(f"  Loading existing DAE model: {dP.modelName}\n")
     autoencoder = keras.saving.load_model(dP.modelName)
-    
+
     if dP.normalize:
-        try:
-            with open(dP.norm_file, "rb") as f:
-                norm = pickle.load(f)
-            print("  Opening pkl file with normalization data:",dP.norm_file)
-        except:
-            print("\033[1m pkl file not found \033[0m")
-            sys.exit()
+        with open(dP.norm_file, "rb") as f:
+            norm = pickle.load(f)
+        print(f"  Normalization data from: {dP.norm_file}")
+        orig_physical_A = norm.transform_inverse(A)
     else:
-        norm = None
-    
-    for i in range(1,dataDf.shape[1]):
-        R = np.array([dataDf.iloc[:,i].tolist()], dtype=float)
-        Rorig = np.copy(R)
-        
-        if dP.normalize:
-            R = norm.transform_valid_data_DAE(R)
-        
-        #----------------
-        # Direct call instead of .predict() to avoid the large per-call
-        # overhead of predict() on tiny inputs.
-        newR = keras.ops.convert_to_numpy(autoencoder(R.astype(np.float32), training=False))
-        
-        # Original call, suitable for very large inputs but with higher overhead
-        # Uses batches, rather than full input.
-        # Use this for large datasets
-        #newR = autoencoder.predict(R)
-        #-----------------
-        
-        #print("\nThis is the predicted R:",newR)
-        if dP.normalize:
-            newR = norm.transform_inverse(newR)
-        newDataDf[dataDf.columns[i]] = newR.flatten()
-    
-    print('\n  ==============================================================================')
-    print('  \033[1m Generated data\033[0m')
-    print('  ==============================================================================')
-    for i in range(1,dataDf.shape[1]):
-        tmp = pd.DataFrame(dataDf[dataDf.columns[0]])
-        tmp.rename(columns={ dataDf.columns[0]: dataDf.columns[i]}, inplace=True)
-        print('  --------------------------------------------------------------------------------')
-        tmp["input"] = dataDf[dataDf.columns[i]]
-        tmp["output"] = newDataDf[newDataDf.columns[i]]
-        print(tmp)
-    print('  --------------------------------------------------------------------------------\n')
-    
-    summaryCSVFileRoot = os.path.splitext(csvFile)[0]
-    summaryCSVFile = summaryCSVFileRoot+"_DAE_output"+str(datetime.now().strftime('_%Y-%m-%d_%H-%M-%S.csv'))
-    
-    newDataDf.rename(columns={ dataDf.columns[0]: "DAE output"}, inplace=True)
-    newDataDf.to_csv(summaryCSVFile, index=False, sep=',')
-    
-    print(f" DAE generated samples saved in: {summaryCSVFile}\n")
+        norm = 0
+        orig_physical_A = A
+
+    if A.shape[1] != M_raw.shape[1]:
+        print(f"\033[1m  Column count mismatch: model space has {A.shape[1]}, "
+              f"file has {M_raw.shape[1]}\033[0m\n")
+        return 1
+
+    A_min = getAmin(orig_physical_A)
+
+    # ------------------------------------------------------------------
+    # Generate
+    # ------------------------------------------------------------------
+    blocks = []
+    total = 0
+    for g in range(dP.numAdditions):
+        print(f"\n  Generation pass {g + 1}/{dP.numAdditions}")
+
+        A_tmp = generateData(dP, autoencoder, A, M, norm)
+
+        A_tmp = snap_discrete_features(orig_physical_A, A_tmp,
+                                       dP.discreteThreshold)
+        if A_tmp.shape[0] == 0:
+            print("  All generated rows were purged by snap_discrete_features.")
+            continue
+
+        blocks.append(A_tmp)
+        total += A_tmp.shape[0]
+        print(f"  Kept {A_tmp.shape[0]} rows (running total {total})")
+
+    if not blocks:
+        print("\n  No usable rows generated.\n")
+        return 1
+
+    newA = np.vstack(blocks)
+
+    # ------------------------------------------------------------------
+    # Spurious handling, with a policy and a guard
+    # ------------------------------------------------------------------
+    if dP.removeSpurious:
+        before = newA.shape[0]
+        offending = np.any(newA < A_min, axis=1)
+        frac_cells = float((newA < A_min).mean())
+
+        if policy == 'drop':
+            newA = newA[~offending]
+            print(f"\n  Spurious rows dropped: {before - newA.shape[0]}"
+                  f" of {before}")
+        elif policy == 'clip':
+            newA = np.maximum(newA, A_min)
+            print(f"\n  Spurious values clipped up to the column minimum")
+        else:
+            newA = removeSpurious(orig_physical_A, newA, dP)
+            print("\n  Spurious data removed (zeroed).")
+
+        if newA.shape[0] == 0 or frac_cells > 0.90:
+            print('\n  ==============================================')
+            print('   \033[1mABORTED - generated data is unusable\033[0m')
+            print('  ==============================================')
+            print(f"  {frac_cells:.0%} of generated cells fell below the"
+                  f" physical column minima.")
+            print("  Nothing was written.")
+            print("  removeSpurious = False to inspect the raw generated"
+                  " values.")
+            print("  See the CAUSE A / CAUSE B notes at the top of this file.\n")
+            return 1
+
+    newA = np.vstack([orig_physical_A, newA])
+    newTrain = np.vstack([En_orig, newA])
+
+    stamp = datetime.now().strftime('_%Y-%m-%d_%H-%M-%S')
+    rootFile = (dP.model_directory
+                + os.path.splitext(os.path.basename(learnFile))[0]
+                + '_DAEgen_numAdded' + str(newA.shape[0]
+                                           - orig_physical_A.shape[0]) + stamp)
+
+    saveLearnFile(dP, newTrain, rootFile, "")
+
+    n_synth = newA.shape[0] - orig_physical_A.shape[0]
+    print('\n  ==============================================================')
+    print('   \033[1mGenerated data\033[0m')
+    print('  ==============================================================')
+    print(f"  Seed rows       : {orig_physical_A.shape[0]}")
+    print(f"  Generated       : {total}")
+    print(f"  Kept            : {n_synth}")
+    print(f"  Rows written    : {newA.shape[0]}  (real + synthetic)")
+    print(f"  Model           : {dP.modelName}  (not retrained)")
+    print('  ==============================================================\n')
+
+    if dP.plotAugmData:
+        plotData(dP, orig_physical_A, newA, True, False,
+                 "DAE generated data", rootFile + "_plots.pdf")
+
+    return 0
         
 #***********************************************
 # Augment learning data via DAE
