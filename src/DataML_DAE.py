@@ -5,7 +5,7 @@
 * DataML_DAE
 * Generative AI via Denoising Autoencoder
 * Device config via shared DataML_Backend (TF / PyTorch / JAX), SLURM-aware
-* version: 2026.9.1.1
+* version: 2026.9.1.2
 * By: Nicola Ferralis <feranick@hotmail.com>
 ***********************************************
 '''
