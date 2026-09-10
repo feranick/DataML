@@ -2,7 +2,7 @@
 '''
 **************************************************
 * DataML_Backend - shared device / backend config
-* version: 2026.9.1.2
+* version: 2026.9.10.1
 * Backend-agnostic (TensorFlow / PyTorch / JAX), SLURM-aware.
 * By: Nicola Ferralis <feranick@hotmail.com>
 **************************************************
