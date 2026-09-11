@@ -4,7 +4,7 @@
 *****************************************************
 * DataML Decision Forests - Multi-Perf Regressor
 * pyscript version - SUPERSET (name-matched features)
-* version: 2026.9.10.1
+* version: 2026.9.11.1
 * Uses: sklearn
 * By: Nicola Ferralis <feranick@hotmail.com>
 *****************************************************
@@ -13,7 +13,7 @@
 import numpy as np
 import pandas as pd
 from io import BytesIO
-import sys, configparser, ast, io, csv
+import sys, configparser, ast, io, csv, re
 from js import document, Blob, URL
 from pyscript import fetch, document
 import _pickle as pickle
@@ -101,6 +101,21 @@ def get_feature_map():
     return fmap, order
 
 
+def natural_key(name):
+    """
+    Sort key mirroring naturalCompare() in ml.js: split into text/number
+    chunks so MAT_PAR2 < MAT_PAR10, ignoring spaces/underscores in the
+    text parts. Used only for display/reporting order.
+    """
+    key = []
+    for chunk in re.findall(r'\d+|\D+', str(name)):
+        if chunk[0].isdigit():
+            key.append((1, '', int(chunk)))
+        else:
+            key.append((0, re.sub(r'[\s_]+', '', chunk).upper(), 0))
+    return key
+
+
 async def get_model_features(folder):
     """Return this model's feature-name list (in the order the model expects)."""
     raw = await getFile(folder, "config.txt", False)
@@ -115,7 +130,7 @@ def build_R_from_map(model_feats, fmap):
     """
     missing = [f for f in model_feats if f not in fmap]
     if missing:
-        return None, "missing features: " + ", ".join(missing)
+        return None, "missing features: " + ", ".join(sorted(missing, key=natural_key))
     vals = []
     for f in model_feats:
         try:
@@ -296,7 +311,7 @@ async def batchPredict(event):
         # Every feature this model needs must exist in the CSV
         missing = [f for f in model_feats if f not in csv_feat_index]
         if missing:
-            msg = "MISSING: " + ", ".join(missing)
+            msg = "MISSING: " + ", ".join(sorted(missing, key=natural_key))
             for sn in sample_names:
                 matrix[sn][perfkey] = (msg, "")
             continue

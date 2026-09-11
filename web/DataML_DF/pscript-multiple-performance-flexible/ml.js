@@ -78,10 +78,33 @@ function createSelectors() {
   });
 }
 
+// Natural ("human") comparison: splits names into text/number chunks so that
+// e.g. MAT_PAR2 < MAT_PAR10, and groups prefixes together alphabetically.
+function naturalCompare(a, b) {
+  const chunk = s => String(s).match(/(\d+|\D+)/g) || [];
+  const ca = chunk(a), cb = chunk(b);
+  const n = Math.min(ca.length, cb.length);
+  for (let i = 0; i < n; i++) {
+    const x = ca[i], y = cb[i];
+    const xn = /^\d/.test(x), yn = /^\d/.test(y);
+    if (xn && yn) {
+      const d = parseInt(x, 10) - parseInt(y, 10);
+      if (d !== 0) return d;
+    } else {
+      // Compare text chunks case-insensitively, ignoring separators/spaces
+      const xs = x.replace(/[\s_]+/g, '').toUpperCase();
+      const ys = y.replace(/[\s_]+/g, '').toUpperCase();
+      if (xs !== ys) return xs < ys ? -1 : 1;
+      if (x !== y) return x < y ? -1 : 1;
+    }
+  }
+  return ca.length - cb.length;
+}
+
 // Build the (shared) input parameter fields once, as the UNION (superset)
 // of every model's config.txt. Each model later consumes just the subset it
-// needs, matched BY NAME (see main.py). Fields are laid out in first-appearance
-// order over the folders (already sorted) for a stable, deterministic layout.
+// needs, matched BY NAME (see main.py), so the display order below is free
+// to be sorted for readability without affecting predictions.
 async function buildFeatureEntries() {
   if (sortedKeys.length === 0) return;
 
@@ -102,17 +125,17 @@ async function buildFeatureEntries() {
       })
   ));
 
-  // Union the feature names, preserving first-appearance order
-  const union = [];
+  // Union the feature names
   const seen = new Set();
   texts.forEach(text => {
     text.trim().split(",")
       .map(s => s.trim())
       .filter(Boolean)
-      .forEach(f => {
-        if (!seen.has(f)) { seen.add(f); union.push(f); }
-      });
+      .forEach(f => seen.add(f));
   });
+
+  // Display in natural (progressive) order: MAT_PAR1, MAT_PAR2, ... MAT_PAR10
+  const union = Array.from(seen).sort(naturalCompare);
 
   if (union.length === 0) {
     console.error("No features found in any model config.txt.");
