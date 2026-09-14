@@ -5,7 +5,8 @@
 * Create Random Cross Validation Datasets
 * Train + Test
 * version: 2025.04.05.2
-* By: Nicola Ferralis <feranick@hotmail.com>
+* Copyright (C) 2020-2026: Nicola Ferralis <feranick@hotmail.com> 
+* Licensed under the GNU GPL v3 or later
 ***********************************************
 '''
 print(__doc__)

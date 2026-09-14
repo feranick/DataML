@@ -4,7 +4,8 @@
 * Create Master Dataset from provided xlsx
 * 
 * version: v2025.11.26.1
-* By: Nicola Ferralis <feranick@hotmail.com>
+* Copyright (C) 2020-2026: Nicola Ferralis <feranick@hotmail.com> 
+* Licensed under the GNU GPL v3 or later
 **************************************************
 '''
 print(__doc__)

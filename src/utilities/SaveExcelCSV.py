@@ -4,7 +4,8 @@
 * SaveExcelCSV
 * Adds data from single file to Master Doc
 * version: v2023.12.15.1
-* By: Nicola Ferralis <feranick@hotmail.com>
+* Copyright (C) 2020-2026: Nicola Ferralis <feranick@hotmail.com> 
+* Licensed under the GNU GPL v3 or later
 ***********************************************
 '''
 print(__doc__)

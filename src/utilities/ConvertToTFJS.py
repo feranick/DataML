@@ -5,7 +5,8 @@
 * Convert TF models (TF, Keras) into TF.js
 * v2024.02.16.1
 * Uses: TensorFlow, Keras
-* By: Nicola Ferralis <feranick@hotmail.com>
+* Copyright (C) 2020-2026: Nicola Ferralis <feranick@hotmail.com> 
+* Licensed under the GNU GPL v3 or later
 **********************************************
 '''
 print(__doc__)

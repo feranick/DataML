@@ -5,8 +5,8 @@
 * CorrAnalysis
 * Correlation Analysis
 * version: 2026.9.11.2
-* By: Nicola Ferralis <feranick@hotmail.com>
-* Licence: GPL 2 or newer
+* Copyright (C) 2020-2026: Nicola Ferralis <feranick@hotmail.com> 
+* Licensed under the GNU GPL v3 or later
 ***********************************************
 '''
 print(__doc__)

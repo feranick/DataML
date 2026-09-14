@@ -5,7 +5,8 @@
 * Convert TF Keras V2 models into TF.Lite
 * v2024.02.28.1
 * Uses: TensorFlow
-* By: Nicola Ferralis <feranick@hotmail.com>
+* Copyright (C) 2020-2026: Nicola Ferralis <feranick@hotmail.com> 
+* Licensed under the GNU GPL v3 or later
 ***********************************************************
 '''
 print(__doc__)

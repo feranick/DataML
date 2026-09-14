@@ -5,7 +5,8 @@
 * PlotLearnData
 * Plot learning data
 * version: 2026.03.05.1
-* By: Nicola Ferralis <feranick@hotmail.com>
+* Copyright (C) 2020-2026: Nicola Ferralis <feranick@hotmail.com> 
+* Licensed under the GNU GPL v3 or later
 ***********************************************
 '''
 print(__doc__)

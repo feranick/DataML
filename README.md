@@ -1,4 +1,9 @@
 # DataML
+## License and Copyright
+Copyright (C) 2020-2026: Nicola Ferralis <feranick@hotmail.com> 
+Licensed under the GNU GPL v3 or later
+
+## Ind troduction
 DataML Regression and Classification of sparse data using Neural Networks of Decision Forests.
 - Currently supported ML architectures:
     - Classifier/Regressor (`Scikit-learn`, `TensorFlow`, `TensorFlow-Lite`)

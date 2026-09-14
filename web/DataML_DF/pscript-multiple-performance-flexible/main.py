@@ -6,7 +6,8 @@
 * pyscript version - SUPERSET (name-matched features)
 * version: 2026.9.11.2
 * Uses: sklearn
-* By: Nicola Ferralis <feranick@hotmail.com>
+* Copyright (C) 2020-2026: Nicola Ferralis <feranick@hotmail.com> 
+* Licensed under the GNU GPL v3 or later
 *****************************************************
 '''
 

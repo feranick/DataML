@@ -5,7 +5,8 @@
 * Add individual Perf sheets into CorrAnalysis Result master XLSX
 * v2026.5.8.1
 * Uses: Pandas
-* By: Nicola Ferralis <feranick@hotmail.com>
+* Copyright (C) 2020-2026: Nicola Ferralis <feranick@hotmail.com> 
+* Licensed under the GNU GPL v3 or later
 ******************************************************************
 '''
 print(__doc__)

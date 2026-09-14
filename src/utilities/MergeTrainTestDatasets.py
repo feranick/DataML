@@ -4,7 +4,8 @@
 *********************************************
 * MergeTrainTestDatasets
 * version: v2025.12.16.2
-* By: Nicola Ferralis <feranick@hotmail.com>
+* Copyright (C) 2020-2026: Nicola Ferralis <feranick@hotmail.com> 
+* Licensed under the GNU GPL v3 or later
 ***********************************************
 '''
 print(__doc__)

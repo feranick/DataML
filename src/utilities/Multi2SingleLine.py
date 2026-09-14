@@ -4,7 +4,8 @@
 ***************************************************
 * Convert from multiline string into single line
 * By: Nicola Ferralis <feranick@hotmail.com>
-* version v2025.04.7.1
+* Copyright (C) 2020-2026: Nicola Ferralis <feranick@hotmail.com> 
+* Licensed under the GNU GPL v3 or later
 ***************************************************
 '''
 #print(__doc__)

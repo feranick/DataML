@@ -5,8 +5,9 @@
 * Add data with random noise on all colums or
 * on selected ones.
 * Noise is a random percentage multiplier
-* * version: 2025.04.05.2
-* By: Nicola Ferralis <feranick@hotmail.com>
+* version: 2025.04.05.2
+* Copyright (C) 2020-2026: Nicola Ferralis <feranick@hotmail.com> 
+* Licensed under the GNU GPL v3 or later
 ***********************************************
 '''
 print(__doc__)
