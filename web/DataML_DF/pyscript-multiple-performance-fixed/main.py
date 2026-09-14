@@ -4,7 +4,7 @@
 *****************************************************
 * DataML Decision Forests - Multi-Perf Regressor
 * pyscript version
-* version: 2026.9.11.2
+* version: v2026.9.11.3
 * Uses: sklearn
 * Copyright (C) 2020-2026: Nicola Ferralis <feranick@hotmail.com> 
 * Licensed under the GNU GPL v3 or later
