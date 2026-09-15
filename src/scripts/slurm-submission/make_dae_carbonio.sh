@@ -13,7 +13,7 @@ fi
 
 INPUT_ARG="$1"
 BASE_DIR=$(pwd)
-SUB_SCRIPT="sub_DAE_gesdm.sh"
+SUB_SCRIPT="sub_DAE_carbonio.sh"
 
 echo "Starting submission loop with argument: $INPUT_ARG"
 echo "------------------------------------------------"
